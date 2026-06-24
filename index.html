@@ -226,5 +226,17 @@
     <script src="js/quiz.js"></script>
     <script src="js/api.js"></script>
     <script src="js/achievements.js"></script>
+
+        <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/QuizHub/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW failed:', err));
+            });
+        }
+    </script>
+    
 </body>
 </html>
