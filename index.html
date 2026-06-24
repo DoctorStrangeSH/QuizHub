@@ -11,7 +11,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="QuizHub">
-    <link rel="apple-touch-icon" href="assets/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -39,7 +39,7 @@
                 <a href="#" class="logo" data-screen="home">
                     <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
                 </a>
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
                     <!-- Таблица лидеров -->
                     <button class="btn btn-outline-accent btn-sm rounded-pill px-3" data-screen="leaderboard">
                         <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
@@ -205,7 +205,7 @@
     </div>
     
     <!-- Попап достижений -->
-    <div id="achievements-popup" style="display: none; position: fixed; top: 100px; right: 20px; z-index: 9999;"></div>
+    <div id="achievements-popup" style="display: none; position: fixed; top: 100px; right: 20px; z-index: 9999; max-width: 320px;"></div>
     
     <!-- Тост-контейнер -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
@@ -226,8 +226,8 @@
     <script src="js/quiz.js"></script>
     <script src="js/api.js"></script>
     <script src="js/achievements.js"></script>
-
-        <!-- PWA Service Worker -->
+    
+    <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -237,6 +237,5 @@
             });
         }
     </script>
-    
 </body>
 </html>

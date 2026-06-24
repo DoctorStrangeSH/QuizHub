@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNavigation();
   setupDifficultyButtons();
   setupStartButton();
-  setupLeaderboardButton();
+  setupHeaderButtons();
 });
 
 // ========== ЧАСТИЦЫ ФОНА ==========
@@ -64,12 +64,16 @@ function showScreen(screenName) {
   if (screenName === 'achievements') {
     renderAchievementsScreen();
   }
+  
+  // Если открыли лидеров — загружаем
+  if (screenName === 'leaderboard') {
+    loadLeaderboard();
+  }
 }
 
 // ========== КНОПКИ СЛОЖНОСТИ И ЯЗЫКА ==========
 
 function setupDifficultyButtons() {
-  // Сложность
   document.querySelectorAll('.btn-difficulty').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.btn-difficulty').forEach(b => b.classList.remove('active'));
@@ -78,7 +82,6 @@ function setupDifficultyButtons() {
     });
   });
   
-  // Язык
   document.querySelectorAll('.btn-language').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.btn-language').forEach(b => b.classList.remove('active'));
@@ -102,9 +105,7 @@ function setupStartButton() {
       nameInput.focus();
       nameInput.style.borderColor = 'var(--danger)';
       showToast('Введи своё имя перед стартом!', 'warning');
-      setTimeout(() => {
-        nameInput.style.borderColor = '';
-      }, 2000);
+      setTimeout(() => { nameInput.style.borderColor = ''; }, 2000);
       return;
     }
     
@@ -119,24 +120,30 @@ function setupStartButton() {
   }
 }
 
-// ========== ТАБЛИЦА ЛИДЕРОВ И АЧИВКИ ==========
+// ========== КНОПКИ ХЕДЕРА ==========
 
-let leaderboardUnsubscribe = null;
-
-function setupLeaderboardButton() {
+function setupHeaderButtons() {
+  // Лидеры
+  document.querySelectorAll('[data-screen="leaderboard"]').forEach(btn => {
+    btn.addEventListener('click', () => showScreen('leaderboard'));
+  });
+  
+  // Ачивки
+  document.querySelectorAll('[data-screen="achievements"]').forEach(btn => {
+    btn.addEventListener('click', () => showScreen('achievements'));
+  });
+  
+  // Кнопка «Таблица лидеров» на экране результата
   document.addEventListener('click', (e) => {
-    // Таблица лидеров
-    if (e.target.closest('[data-screen="leaderboard"]') || e.target.closest('#view-leaderboard')) {
+    if (e.target.closest('#view-leaderboard')) {
       showScreen('leaderboard');
-      loadLeaderboard();
-    }
-    
-    // Ачивки
-    if (e.target.closest('[data-screen="achievements"]')) {
-      showScreen('achievements');
     }
   });
 }
+
+// ========== ТАБЛИЦА ЛИДЕРОВ ==========
+
+let leaderboardUnsubscribe = null;
 
 async function loadLeaderboard() {
   const screen = document.getElementById('screen-leaderboard');
@@ -153,9 +160,7 @@ async function loadLeaderboard() {
     </div>
   `;
   
-  if (leaderboardUnsubscribe) {
-    leaderboardUnsubscribe();
-  }
+  if (leaderboardUnsubscribe) leaderboardUnsubscribe();
   
   leaderboardUnsubscribe = onLeaderboardUpdate(leaders => {
     renderLeaderboardScreen(leaders);
@@ -218,13 +223,7 @@ function renderLeaderboardScreen(leaders) {
           <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">
               <thead>
-                <tr>
-                  <th class="ps-4">#</th>
-                  <th>Игрок</th>
-                  <th>Очки</th>
-                  <th>Время</th>
-                  <th class="text-end pe-4">Сложность</th>
-                </tr>
+                <tr><th class="ps-4">#</th><th>Игрок</th><th>Очки</th><th>Время</th><th class="text-end pe-4">Сложность</th></tr>
               </thead>
               <tbody>
                 ${leaders.map((leader, i) => `
@@ -235,17 +234,14 @@ function renderLeaderboardScreen(leaders) {
                         ${leader.photoURL 
                           ? `<img src="${leader.photoURL}" width="28" height="28" class="rounded-circle">`
                           : `<div class="bg-accent bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
-                              <small class="text-accent fw-bold">${leader.playerName.charAt(0)}</small>
-                            </div>`
+                              <small class="text-accent fw-bold">${leader.playerName.charAt(0)}</small></div>`
                         }
                         <span class="fw-semibold">${leader.playerName}</span>
                       </div>
                     </td>
                     <td class="fw-bold">${leader.score}</td>
                     <td class="text-muted">${formatTime(leader.totalTime)}</td>
-                    <td class="text-end pe-4">
-                      <span>${leader.difficulty === 'easy' ? '🟢' : leader.difficulty === 'medium' ? '🟡' : '🔴'}</span>
-                    </td>
+                    <td class="text-end pe-4"><span>${leader.difficulty === 'easy' ? '🟢' : leader.difficulty === 'medium' ? '🟡' : '🔴'}</span></td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -266,11 +262,8 @@ function renderLeaderboardScreen(leaders) {
 
 function renderAchievementsScreen() {
   const countEl = document.getElementById('ach-count');
-  if (countEl) {
-    countEl.textContent = unlockedAchievements.length;
-  }
-  
-  renderAchievementsList();
+  if (countEl) countEl.textContent = unlockedAchievements.length;
+  if (typeof renderAchievementsList === 'function') renderAchievementsList();
 }
 
 // ========== ТОСТ-УВЕДОМЛЕНИЯ ==========
@@ -305,8 +298,7 @@ function showToast(message, type = 'info') {
   toastEl.innerHTML = `
     <div class="d-flex">
       <div class="toast-body d-flex align-items-center gap-2">
-        <i class="bi bi-${icons[type] || icons.info}"></i>
-        <span>${message}</span>
+        <i class="bi bi-${icons[type] || icons.info}"></i><span>${message}</span>
       </div>
       <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Закрыть"></button>
     </div>
@@ -315,7 +307,6 @@ function showToast(message, type = 'info') {
   container.appendChild(toastEl);
   const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
   toast.show();
-  
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
@@ -323,11 +314,8 @@ function showToast(message, type = 'info') {
 
 function spawnConfetti() {
   const colors = ['#FF6B9D', '#7B2FBE', '#FFD740', '#00E676', '#FF5252', '#40C4FF'];
-  
   for (let i = 0; i < 80; i++) {
     const confetti = document.createElement('div');
-    confetti.className = 'confetti-piece';
-    
     const color = colors[Math.floor(Math.random() * colors.length)];
     const left = Math.random() * 100;
     const delay = Math.random() * 2;
@@ -335,20 +323,13 @@ function spawnConfetti() {
     const size = Math.random() * 10 + 5;
     
     confetti.style.cssText = `
-      position: fixed;
-      top: -20px;
-      left: ${left}%;
-      width: ${size}px;
-      height: ${size}px;
-      background: ${color};
-      border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
-      z-index: 9999;
-      pointer-events: none;
+      position: fixed; top: -20px; left: ${left}%; width: ${size}px; height: ${size}px;
+      background: ${color}; border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+      z-index: 9999; pointer-events: none;
       animation: confettiFall ${duration}s ease-in ${delay}s forwards;
     `;
     
     document.body.appendChild(confetti);
-    
     setTimeout(() => confetti.remove(), (duration + delay) * 1000 + 500);
   }
 }
