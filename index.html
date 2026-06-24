@@ -36,16 +36,16 @@
         <!-- ХЕДЕР -->
         <header class="app-header">
             <div class="container d-flex justify-content-between align-items-center py-3">
-                <a href="#" class="logo" data-screen="home">
+                <a href="#" class="logo" onclick="showScreen('home'); return false;">
                     <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
                 </a>
                 <div class="d-flex align-items-center gap-2">
                     <!-- Таблица лидеров -->
-                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" data-screen="leaderboard">
+                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('leaderboard')">
                         <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
                     </button>
                     <!-- Ачивки -->
-                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" data-screen="achievements">
+                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('achievements')">
                         <i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Ачивки</span>
                     </button>
                     <!-- Кнопка звука -->

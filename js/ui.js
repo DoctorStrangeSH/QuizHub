@@ -7,10 +7,8 @@ let selectedLanguage = 'ru';
 
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
-  setupNavigation();
   setupDifficultyButtons();
   setupStartButton();
-  setupHeaderButtons();
 });
 
 // ========== ЧАСТИЦЫ ФОНА ==========
@@ -43,13 +41,6 @@ function createParticles() {
 
 // ========== НАВИГАЦИЯ ==========
 
-function setupNavigation() {
-  document.querySelector('.logo')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showScreen('home');
-  });
-}
-
 function showScreen(screenName) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById(`screen-${screenName}`);
@@ -60,12 +51,10 @@ function showScreen(screenName) {
     screen.style.animation = 'screenFadeIn 0.5s ease';
   }
   
-  // Если открыли экран ачивок — рендерим список
   if (screenName === 'achievements') {
     renderAchievementsScreen();
   }
   
-  // Если открыли лидеров — загружаем
   if (screenName === 'leaderboard') {
     loadLeaderboard();
   }
@@ -118,27 +107,6 @@ function setupStartButton() {
       nameInput.dataset.manual = 'true';
     });
   }
-}
-
-// ========== КНОПКИ ХЕДЕРА ==========
-
-function setupHeaderButtons() {
-  // Лидеры
-  document.querySelectorAll('[data-screen="leaderboard"]').forEach(btn => {
-    btn.addEventListener('click', () => showScreen('leaderboard'));
-  });
-  
-  // Ачивки
-  document.querySelectorAll('[data-screen="achievements"]').forEach(btn => {
-    btn.addEventListener('click', () => showScreen('achievements'));
-  });
-  
-  // Кнопка «Таблица лидеров» на экране результата
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('#view-leaderboard')) {
-      showScreen('leaderboard');
-    }
-  });
 }
 
 // ========== ТАБЛИЦА ЛИДЕРОВ ==========
