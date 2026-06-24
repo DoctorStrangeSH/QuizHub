@@ -5,7 +5,7 @@
   
   **Платформа для квизов с real-time рейтингом**
   
-  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-FF6B9D?style=for-the-badge&logo=github)](https://твой-логин.github.io/quizhub/)
+  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-FF6B9D?style=for-the-badge&logo=github)](https://doctorstrangesh.github.io/QuizHub/)
   [![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com)
   [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/ru/docs/Web/JavaScript)
 </div>
