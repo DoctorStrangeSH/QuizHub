@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizHub — Проверь свои знания!</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Кастомные стили -->
+    <link href="style.css" rel="stylesheet">
+
+        <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Скрипты QuizHub -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/quiz.js"></script>
+    <script src="js/api.js"></script>
+</head>
+<body>
+
+    <!-- ========== ОСНОВНОЙ КОНТЕЙНЕР ========== -->
+    <div class="app-container">
+        
+        <!-- Частицы фона -->
+        <div class="particles" id="particles"></div>
+        
+        <!-- ХЕДЕР -->
+        <header class="app-header">
+            <div class="container d-flex justify-content-between align-items-center py-3">
+                <a href="#" class="logo" data-screen="home">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
+                </a>
+                                <div class="d-flex align-items-center gap-3">
+                    <!-- Таблица лидеров -->
+                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" data-screen="leaderboard">
+                        <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
+                    </button>
+                    <div id="auth-area">
+                        <!-- Кнопка входа -->
+                        <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                            <i class="bi bi-google me-2"></i>Войти
+                        </button>
+                    </div>
+                </div>
+                <div id="auth-area">
+                    <!-- Кнопка входа (заглушка до Этапа 2) -->
+                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" id="login-btn" disabled>
+                        <i class="bi bi-google me-2"></i>Войти
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- ОСНОВНОЙ КОНТЕНТ -->
+        <main class="app-main">
+            <div class="container">
+                
+                <!-- ЭКРАН 1: ГЛАВНАЯ -->
+                <div class="screen active" id="screen-home">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-6 text-center">
+                            
+                            <div class="hero-icon mb-4">
+                                <i class="bi bi-brain fs-1"></i>
+                            </div>
+                            
+                            <h1 class="display-3 fw-bold font-display mb-3">
+                                Проверь свои <span class="text-accent">знания</span>
+                            </h1>
+                            <p class="lead text-muted mb-5">
+                                Выбери категорию, пройди квиз и займи место в таблице лидеров!
+                            </p>
+                            
+                            <!-- Форма настроек квиза -->
+                            <div class="quiz-setup bg-card rounded-4 p-4 p-md-5 mb-4">
+                                
+                                <!-- Имя -->
+                                <div class="mb-4 text-start">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="bi bi-person me-1 text-accent"></i>Твоё имя
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg rounded-pill px-4" 
+                                           id="player-name" placeholder="Владислав" maxlength="20">
+                                </div>
+                                
+                                <!-- Категория -->
+                                <div class="mb-4 text-start">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="bi bi-grid me-1 text-accent"></i>Категория
+                                    </label>
+<select class="form-select form-select-lg rounded-pill px-4" id="quiz-category">
+    <option value="any">Любая категория</option>
+    <option value="9">Общие знания</option>
+    <option value="17">Наука и природа</option>
+    <option value="21">Спорт</option>
+    <option value="23">История</option>
+    <option value="11">Кино</option>
+    <option value="14">Телевидение</option>
+    <option value="12">Музыка</option>
+    <option value="15">Видеоигры</option>
+    <option value="18">Компьютеры</option>
+    <option value="22">География</option>
+</select>
+                                </div>
+                                
+                                <!-- Сложность -->
+                                <div class="mb-4 text-start">
+                                    <label class="form-label small fw-semibold text-muted">
+                                        <i class="bi bi-speedometer2 me-1 text-accent"></i>Сложность
+                                    </label>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-difficulty active rounded-pill px-4" data-difficulty="easy">
+                                            🟢 Легко
+                                        </button>
+                                        <button class="btn btn-difficulty rounded-pill px-4" data-difficulty="medium">
+                                            🟡 Средне
+                                        </button>
+                                        <button class="btn btn-difficulty rounded-pill px-4" data-difficulty="hard">
+                                            🔴 Сложно
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Кнопка старта -->
+                                <button class="btn btn-accent btn-lg rounded-pill px-5 w-100 shadow-lg" id="start-quiz">
+                                    <i class="bi bi-play-fill me-2"></i>НАЧАТЬ КВИЗ
+                                </button>
+                                
+                            </div>
+                            
+                            <!-- Мини-статистика -->
+                            <div class="d-flex justify-content-center gap-4 text-muted small">
+                                <span><i class="bi bi-question-circle me-1 text-accent"></i>10 вопросов</span>
+                                <span><i class="bi bi-clock me-1 text-accent"></i>15 сек / вопрос</span>
+                                <span><i class="bi bi-trophy me-1 text-accent"></i>До 100 очков</span>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ЭКРАН 2: КВИЗ (заглушка) -->
+                <div class="screen" id="screen-quiz">
+                    <div class="text-center py-5">
+                        <i class="bi bi-hourglass-split fs-1 text-accent d-block mb-3"></i>
+                        <p class="text-muted">Экран квиза — Этап 4</p>
+                    </div>
+                </div>
+                
+                <!-- ЭКРАН 3: РЕЗУЛЬТАТ (заглушка) -->
+                <div class="screen" id="screen-result">
+                    <div class="text-center py-5">
+                        <i class="bi bi-trophy fs-1 text-accent d-block mb-3"></i>
+                        <p class="text-muted">Экран результата — Этап 5</p>
+                    </div>
+                </div>
+                
+                <!-- ЭКРАН 4: ТАБЛИЦА ЛИДЕРОВ (заглушка) -->
+                <div class="screen" id="screen-leaderboard">
+                    <div class="text-center py-5">
+                        <i class="bi bi-list-ol fs-1 text-accent d-block mb-3"></i>
+                        <p class="text-muted">Таблица лидеров — Этап 6</p>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+        
+        <!-- ФУТЕР -->
+        <footer class="app-footer">
+            <div class="container text-center py-3">
+                <small class="text-muted">
+                    © 2026 QuizHub. Вопросы предоставлены 
+                    <a href="https://opentdb.com" target="_blank" class="text-accent text-decoration-none">Open Trivia DB</a>
+                </small>
+            </div>
+        </footer>
+        
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Скрипты -->
+    <script src="js/ui.js"></script>
+</body>
+</html>
