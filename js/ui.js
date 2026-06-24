@@ -59,6 +59,11 @@ function showScreen(screenName) {
     screen.offsetHeight;
     screen.style.animation = 'screenFadeIn 0.5s ease';
   }
+  
+  // Если открыли экран ачивок — рендерим список
+  if (screenName === 'achievements') {
+    renderAchievementsScreen();
+  }
 }
 
 // ========== КНОПКИ СЛОЖНОСТИ И ЯЗЫКА ==========
@@ -114,15 +119,21 @@ function setupStartButton() {
   }
 }
 
-// ========== ТАБЛИЦА ЛИДЕРОВ ==========
+// ========== ТАБЛИЦА ЛИДЕРОВ И АЧИВКИ ==========
 
 let leaderboardUnsubscribe = null;
 
 function setupLeaderboardButton() {
   document.addEventListener('click', (e) => {
+    // Таблица лидеров
     if (e.target.closest('[data-screen="leaderboard"]') || e.target.closest('#view-leaderboard')) {
       showScreen('leaderboard');
       loadLeaderboard();
+    }
+    
+    // Ачивки
+    if (e.target.closest('[data-screen="achievements"]')) {
+      showScreen('achievements');
     }
   });
 }
@@ -251,6 +262,15 @@ function renderLeaderboardScreen(leaders) {
       </div>
     </div>
   `;
+}
+
+function renderAchievementsScreen() {
+  const countEl = document.getElementById('ach-count');
+  if (countEl) {
+    countEl.textContent = unlockedAchievements.length;
+  }
+  
+  renderAchievementsList();
 }
 
 // ========== ТОСТ-УВЕДОМЛЕНИЯ ==========

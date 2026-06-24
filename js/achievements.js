@@ -9,17 +9,16 @@ const ACHIEVEMENTS = [
   { id: 'polyglot', name: 'Полиглот', desc: 'Пройти на обоих языках', icon: '🌍', condition: (stats) => stats.languagesUsed >= 2 },
   { id: 'champion', name: 'Чемпион', desc: 'Занять 1 место', icon: '👑', condition: (stats) => stats.rank === 1 },
   { id: 'comeback', name: 'Камбэк', desc: 'Улучшить результат после неудачи', icon: '🔄', condition: (stats) => stats.improved === true },
-  { id: 'night_owl', name: 'Полуночник', desc: 'Пройти квиз после 00:00', icon: '🦉', condition: () => new Date().getHours() < 6 || new Date().getHours() >= 0 },
+  { id: 'night_owl', name: 'Полуночник', desc: 'Пройти квиз после 00:00', icon: '🦉', condition: () => { const h = new Date().getHours(); return h < 6 || h >= 0; } },
   { id: 'marathon', name: 'Марафонец', desc: 'Пройти 5 квизов за день', icon: '🏃', condition: (stats) => stats.quizzesToday >= 5 }
 ];
 
 let unlockedAchievements = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
-let quizStats = JSON.parse(localStorage.getItem('quizhub-stats') || '{"quizzesToday":0,"lastQuizDate":"","languagesUsed":[],"bestScore":0,"fastestAnswer":999}');
+let quizStats = JSON.parse(localStorage.getItem('quizhub-stats') || '{"quizzesToday":0,"lastQuizDate":"","languagesUsed":[],"bestScore":0,"fastestAnswer":999,"maxStreak":0,"improved":false}');
 
 function updateStats(result) {
   const today = new Date().toISOString().split('T')[0];
   
-  // Сброс счётчика квизов за день
   if (quizStats.lastQuizDate !== today) {
     quizStats.quizzesToday = 0;
     quizStats.lastQuizDate = today;
@@ -27,15 +26,12 @@ function updateStats(result) {
   
   quizStats.quizzesToday++;
   quizStats.correctAnswers = result.correctAnswers;
-  quizStats.fastestAnswer = 15; // пример
-  quizStats.maxStreak = 5; // пример
   
-  // Языки
+  if (!quizStats.languagesUsed) quizStats.languagesUsed = [];
   if (!quizStats.languagesUsed.includes(selectedLanguage)) {
     quizStats.languagesUsed.push(selectedLanguage);
   }
   
-  // Улучшение
   if (result.score > quizStats.bestScore && quizStats.bestScore > 0) {
     quizStats.improved = true;
   } else {
@@ -46,8 +42,6 @@ function updateStats(result) {
     quizStats.bestScore = result.score;
   }
   
-  quizStats.languagesUsed = quizStats.languagesUsed || [];
-  
   localStorage.setItem('quizhub-stats', JSON.stringify(quizStats));
 }
 
@@ -57,7 +51,7 @@ function checkAchievements(result) {
     maxStreak: quizStats.maxStreak || 0,
     correctAnswers: result.correctAnswers,
     languagesUsed: (quizStats.languagesUsed || []).length,
-    rank: 1, // Будет обновлено после загрузки лидеров
+    rank: 1,
     improved: quizStats.improved || false,
     quizzesToday: quizStats.quizzesToday || 0
   };
@@ -108,20 +102,22 @@ function renderAchievementsList() {
   const container = document.getElementById('achievements-list');
   if (!container) return;
   
-  if (unlockedAchievements.length === 0) {
-    container.innerHTML = '<p class="text-muted text-center">Пройди квиз, чтобы получить первые достижения!</p>';
-    return;
+  const countEl = document.getElementById('ach-count');
+  if (countEl) {
+    countEl.textContent = unlockedAchievements.length;
   }
   
-  container.innerHTML = ACHIEVEMENTS
-    .filter(ach => unlockedAchievements.includes(ach.id))
-    .map(ach => `
-      <div class="d-flex align-items-center gap-2 bg-card rounded-3 p-2">
-        <span class="fs-4">${ach.icon}</span>
-        <div>
-          <p class="fw-bold small mb-0">${ach.name}</p>
+  container.innerHTML = ACHIEVEMENTS.map(ach => {
+    const unlocked = unlockedAchievements.includes(ach.id);
+    return `
+      <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${unlocked ? 'bg-card' : 'bg-card opacity-50'}">
+        <span class="fs-2 ${unlocked ? '' : 'grayscale'}">${ach.icon}</span>
+        <div class="flex-grow-1">
+          <p class="fw-bold mb-0 ${unlocked ? 'text-accent' : 'text-muted'}">${ach.name}</p>
           <small class="text-muted">${ach.desc}</small>
         </div>
+        <span class="fs-4">${unlocked ? '✅' : '🔒'}</span>
       </div>
-    `).join('');
+    `;
+  }).join('');
 }
