@@ -12,14 +12,6 @@
 
 ---
 
-## 📸 Скриншоты
-
-<div align="center">
-  <img src="https://placehold.co/600x340/1A1A2E/FF6B9D?text=Главный+экран" alt="Главный экран" width="45%">
-  <img src="https://placehold.co/600x340/1A1A2E/FF6B9D?text=Экран+квиза" alt="Экран квиза" width="45%">
-</div>
-
----
 
 ## 📋 О проекте
 
@@ -82,20 +74,6 @@
 
 ---
 
-## 📁 Архитектура проекта
-quizhub/
-├── index.html # SPA (Single Page Application)
-├── style.css # Неоновая геймерская тема (CSS Variables)
-├── js/
-│ ├── firebase-config.js # Конфигурация Firebase
-│ ├── auth.js # Google OAuth 2.0
-│ ├── quiz.js # Движок квиза + русская база вопросов
-│ ├── api.js # Firestore CRUD + Real-time подписка
-│ └── ui.js # Управление экранами, тосты, конфетти
-├── assets/
-│ └── favicon.svg # Векторная иконка
-└── README.md
-
 text
 
 ### 🧩 Принципы проектирования
@@ -116,7 +94,7 @@ text
 
 ```bash
 # 1. Клонируй репозиторий
-git clone https://github.com/твой-логин/quizhub.git
+git clone https://doctorstrangesh.github.io/QuizHub/
 cd quizhub
 
 # 2. Замени конфиг Firebase

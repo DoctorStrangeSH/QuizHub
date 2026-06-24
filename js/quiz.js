@@ -9,6 +9,9 @@ let timerInterval = null;
 let timeLeft = 15;
 let totalTimeSpent = 0;
 let quizStartTime = 0;
+let currentStreak = 0;
+let maxStreak = 0;
+let fastestAnswer = 999;
 
 const QUIZ_SETTINGS = {
   totalQuestions: 10,
@@ -201,6 +204,9 @@ async function startQuiz() {
   currentQuestionIndex = 0;
   score = 0;
   totalTimeSpent = 0;
+  currentStreak = 0;
+  maxStreak = 0;
+  fastestAnswer = 999;
   
   showScreen('quiz');
   renderQuizScreen();
@@ -317,6 +323,9 @@ function updateTimerDisplay() {
   if (display) display.textContent = timeLeft;
   if (circle) {
     circle.classList.toggle('timer-danger', timeLeft <= 5);
+    if (timeLeft <= 5 && timeLeft > 0) {
+      playTickSound();
+    }
   }
 }
 
@@ -327,6 +336,7 @@ function handleTimeout() {
     if (i === question.correctIndex) btn.classList.add('correct');
   });
   
+  currentStreak = 0;
   setTimeout(() => moveToNextQuestion(), 2000);
 }
 
@@ -337,21 +347,33 @@ function handleAnswer(selectedIndex) {
   
   const question = quizQuestions[currentQuestionIndex];
   const isCorrect = selectedIndex === question.correctIndex;
+  const answerTime = QUIZ_SETTINGS.timePerQuestion - timeLeft;
   
   document.querySelectorAll('.btn-answer').forEach((btn, i) => {
     btn.disabled = true;
     if (i === question.correctIndex) btn.classList.add('correct');
-    if (i === selectedIndex && !isCorrect) btn.classList.add('wrong');
+    if (i === selectedIndex && !isCorrect) {
+      btn.classList.add('wrong');
+      playWrongSound();
+    }
   });
   
   if (isCorrect) {
+    playCorrectSound();
+    
+    currentStreak++;
+    if (currentStreak > maxStreak) maxStreak = currentStreak;
+    if (answerTime < fastestAnswer) fastestAnswer = answerTime;
+    
     const timeBonus = Math.floor(timeLeft / QUIZ_SETTINGS.timePerQuestion * 5);
     const difficultyMultiplier = { easy: 1, medium: 1.5, hard: 2 };
     const multiplier = difficultyMultiplier[question.difficulty] || 1;
     score += Math.floor((10 + timeBonus) * multiplier);
+  } else {
+    currentStreak = 0;
   }
   
-  totalTimeSpent += (QUIZ_SETTINGS.timePerQuestion - timeLeft);
+  totalTimeSpent += answerTime;
   
   setTimeout(() => moveToNextQuestion(), isCorrect ? 800 : 2000);
 }
@@ -359,6 +381,7 @@ function handleAnswer(selectedIndex) {
 function skipQuestion() {
   clearInterval(timerInterval);
   totalTimeSpent += (QUIZ_SETTINGS.timePerQuestion - timeLeft);
+  currentStreak = 0;
   moveToNextQuestion();
 }
 
@@ -401,6 +424,12 @@ async function finishQuiz() {
   
   showScreen('result');
   renderResultScreen(result);
+  
+  // Статистика и ачивки
+  updateStats(result);
+  quizStats.maxStreak = maxStreak;
+  quizStats.fastestAnswer = fastestAnswer;
+  checkAchievements(result);
 }
 
 // ========== ЭКРАН РЕЗУЛЬТАТА ==========
@@ -411,7 +440,10 @@ function renderResultScreen(result) {
   
   const grade = getGrade(result.score);
   
-  if (result.score >= 70) spawnConfetti();
+  if (result.score >= 70) {
+    spawnConfetti();
+    playFanfareSound();
+  }
   
   screen.innerHTML = `
     <div class="row justify-content-center">
