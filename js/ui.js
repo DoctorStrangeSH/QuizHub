@@ -3,6 +3,7 @@
 // ============================================
 
 let selectedDifficulty = 'easy';
+let selectedLanguage = 'ru';
 
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
@@ -60,14 +61,24 @@ function showScreen(screenName) {
   }
 }
 
-// ========== КНОПКИ СЛОЖНОСТИ ==========
+// ========== КНОПКИ СЛОЖНОСТИ И ЯЗЫКА ==========
 
 function setupDifficultyButtons() {
+  // Сложность
   document.querySelectorAll('.btn-difficulty').forEach(btn => {
     btn.addEventListener('click', function() {
       document.querySelectorAll('.btn-difficulty').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       selectedDifficulty = this.dataset.difficulty;
+    });
+  });
+  
+  // Язык
+  document.querySelectorAll('.btn-language').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.btn-language').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      selectedLanguage = this.dataset.lang;
     });
   });
 }

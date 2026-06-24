@@ -10,7 +10,6 @@ auth.onAuthStateChanged(user => {
   updateAuthUI(user);
   
   if (user) {
-    // Заполняем имя из профиля Google
     const nameInput = document.getElementById('player-name');
     if (nameInput && !nameInput.dataset.manual) {
       nameInput.value = user.displayName || '';
@@ -49,7 +48,6 @@ function updateAuthUI(user) {
   if (!authArea) return;
   
   if (user) {
-    // Пользователь вошёл
     authArea.innerHTML = `
       <div class="d-flex align-items-center gap-2">
         <img src="${user.photoURL || 'https://placehold.co/32x32/FF6B9D/white?text=U'}" 
@@ -63,7 +61,6 @@ function updateAuthUI(user) {
       </div>
     `;
   } else {
-    // Гость
     authArea.innerHTML = `
       <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
         <i class="bi bi-google me-2"></i>Войти
