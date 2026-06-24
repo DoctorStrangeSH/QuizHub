@@ -475,3 +475,10 @@ body {
     .leader-card { padding: 1rem !important; }
     .leader-card .fs-4 { font-size: 1.2rem !important; }
 }
+
+/* ----- 20. ФИКС КНОПОК ДЛЯ ЯНДЕКС.БРАУЗЕРА ----- */
+.app-header button {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
+}

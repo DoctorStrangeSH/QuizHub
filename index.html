@@ -41,19 +41,19 @@
                 </a>
                 <div class="d-flex align-items-center gap-2">
                     <!-- Таблица лидеров -->
-                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('leaderboard')">
+                    <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('leaderboard')" style="cursor: pointer; pointer-events: auto;">
                         <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
                     </button>
                     <!-- Ачивки -->
-                    <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('achievements')">
+                    <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('achievements')" style="cursor: pointer; pointer-events: auto;">
                         <i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Ачивки</span>
                     </button>
                     <!-- Кнопка звука -->
-                    <button class="btn btn-outline-accent btn-sm rounded-pill px-2" id="sound-toggle" onclick="toggleSound()" title="Звук">
+                    <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" id="sound-toggle" onclick="toggleSound()" title="Звук" style="cursor: pointer; pointer-events: auto;">
                         <i class="bi bi-volume-up-fill"></i>
                     </button>
                     <div id="auth-area">
-                        <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()" style="cursor: pointer; pointer-events: auto;">
                             <i class="bi bi-google me-2"></i>Войти
                         </button>
                     </div>
@@ -117,13 +117,13 @@
                                         <i class="bi bi-speedometer2 me-1 text-accent"></i>Сложность
                                     </label>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-difficulty active rounded-pill px-4" data-difficulty="easy">
+                                        <button type="button" class="btn btn-difficulty active rounded-pill px-4" data-difficulty="easy">
                                             🟢 Легко
                                         </button>
-                                        <button class="btn btn-difficulty rounded-pill px-4" data-difficulty="medium">
+                                        <button type="button" class="btn btn-difficulty rounded-pill px-4" data-difficulty="medium">
                                             🟡 Средне
                                         </button>
-                                        <button class="btn btn-difficulty rounded-pill px-4" data-difficulty="hard">
+                                        <button type="button" class="btn btn-difficulty rounded-pill px-4" data-difficulty="hard">
                                             🔴 Сложно
                                         </button>
                                     </div>
@@ -135,17 +135,17 @@
                                         <i class="bi bi-translate me-1 text-accent"></i>Язык вопросов
                                     </label>
                                     <div class="d-flex gap-2">
-                                        <button class="btn btn-language active rounded-pill px-4" data-lang="ru">
+                                        <button type="button" class="btn btn-language active rounded-pill px-4" data-lang="ru">
                                             🇷🇺 Русский
                                         </button>
-                                        <button class="btn btn-language rounded-pill px-4" data-lang="en">
+                                        <button type="button" class="btn btn-language rounded-pill px-4" data-lang="en">
                                             🇬🇧 English
                                         </button>
                                     </div>
                                 </div>
                                 
                                 <!-- Кнопка старта -->
-                                <button class="btn btn-accent btn-lg rounded-pill px-5 w-100 shadow-lg" id="start-quiz">
+                                <button type="button" class="btn btn-accent btn-lg rounded-pill px-5 w-100 shadow-lg" id="start-quiz">
                                     <i class="bi bi-play-fill me-2"></i>НАЧАТЬ КВИЗ
                                 </button>
                                 
@@ -181,7 +181,7 @@
                             </div>
                             <div class="d-grid gap-2" id="achievements-list"></div>
                             <div class="text-center mt-4">
-                                <button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
+                                <button type="button" class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
                                     <i class="bi bi-play-fill me-2"></i>Пройти квиз
                                 </button>
                             </div>
