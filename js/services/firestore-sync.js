@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Синхронизация через Firestore v2.0
+// QuizHub — Синхронизация через Firestore v2.1
 // ============================================
 
 async function saveUserDataToFirestore() {
@@ -10,19 +10,37 @@ async function saveUserDataToFirestore() {
     displayName: currentUser.displayName || 'Игрок',
     photoURL: currentUser.photoURL || null,
     email: currentUser.email || null,
+    
+    // Монеты
     coins: parseInt(localStorage.getItem('quizhub-coins') || '0'),
+    
+    // Статистика
     totalXP: (typeof quizStats !== 'undefined' ? quizStats.totalXP : 0) || 0,
     bestScore: (typeof quizStats !== 'undefined' ? quizStats.bestScore : 0) || 0,
     totalQuizzes: (typeof quizStats !== 'undefined' ? quizStats.totalQuizzes : 0) || 0,
     dayStreak: (typeof quizStats !== 'undefined' ? quizStats.dayStreak : 0) || 0,
+    
+    // Достижения
     achievements: JSON.parse(localStorage.getItem('quizhub-achievements') || '[]'),
+    
+    // Покупки
+    purchases: JSON.parse(localStorage.getItem('quizhub-purchases') || '[]'),
+    
+    // Активная тема
+    customTheme: localStorage.getItem('quizhub-custom-theme') || null,
+    
+    // Статистика
     stats: typeof quizStats !== 'undefined' ? quizStats : {},
+    
+    // Настройки
     settings: {
       theme: localStorage.getItem('quizhub-theme') || 'dark',
       locale: localStorage.getItem('quizhub-locale') || 'ru',
     },
-    purchases: JSON.parse(localStorage.getItem('quizhub-purchases') || '[]'),
+    
+    // Друзья
     friends: JSON.parse(localStorage.getItem('quizhub-friends') || '[]'),
+    
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
   
@@ -44,56 +62,152 @@ async function loadUserDataFromFirestore() {
     const data = doc.data();
     console.log('📥 Данные загружены из Firestore');
     
+    // === МОНЕТЫ ===
     if (typeof data.coins === 'number') {
-      localStorage.setItem('quizhub-coins', data.coins.toString());
-      if (typeof userCoins !== 'undefined') userCoins = data.coins;
+      const localCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
+      const bestCoins = Math.max(data.coins, localCoins);
+      localStorage.setItem('quizhub-coins', bestCoins.toString());
+      if (typeof userCoins !== 'undefined') userCoins = bestCoins;
       if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+      console.log('🪙 Монеты:', bestCoins);
     }
     
+    // === ДОСТИЖЕНИЯ ===
     if (data.achievements) {
       const local = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
       const merged = [...new Set([...local, ...data.achievements])];
       localStorage.setItem('quizhub-achievements', JSON.stringify(merged));
       if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = merged;
+      console.log('🏆 Достижения:', merged.length);
     }
     
+    // === ПОКУПКИ ===
+    if (data.purchases) {
+      const localPurchases = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
+      const mergedPurchases = [...new Set([...localPurchases, ...data.purchases])];
+      localStorage.setItem('quizhub-purchases', JSON.stringify(mergedPurchases));
+      if (typeof purchasedItems !== 'undefined') purchasedItems = mergedPurchases;
+      console.log('🛍️ Покупки:', mergedPurchases);
+    }
+    
+    // === АКТИВНАЯ ТЕМА ===
+    if (data.customTheme) {
+      localStorage.setItem('quizhub-custom-theme', data.customTheme);
+      if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = data.customTheme;
+      if (typeof initCustomTheme === 'function') initCustomTheme();
+      console.log('🎨 Тема:', data.customTheme);
+    }
+    
+    // === СТАТИСТИКА ===
     if (data.stats) {
       const localStats = JSON.parse(localStorage.getItem('quizhub-stats') || '{}');
-      const merged = { ...data.stats, ...localStats, bestScore: Math.max(data.stats.bestScore||0, localStats.bestScore||0), totalXP: Math.max(data.stats.totalXP||0, localStats.totalXP||0) };
+      const merged = {
+        ...data.stats,
+        ...localStats,
+        bestScore: Math.max(data.stats.bestScore || 0, localStats.bestScore || 0),
+        totalXP: Math.max(data.stats.totalXP || 0, localStats.totalXP || 0),
+        totalQuizzes: Math.max(data.stats.totalQuizzes || 0, localStats.totalQuizzes || 0),
+        dayStreak: Math.max(data.stats.dayStreak || 0, localStats.dayStreak || 0),
+      };
       localStorage.setItem('quizhub-stats', JSON.stringify(merged));
       if (typeof quizStats !== 'undefined') Object.assign(quizStats, merged);
     }
     
-    if (data.settings?.theme) { localStorage.setItem('quizhub-theme', data.settings.theme); if (typeof initTheme === 'function') initTheme(); }
-    if (data.settings?.locale) { localStorage.setItem('quizhub-locale', data.settings.locale); if (typeof setLocale === 'function') setLocale(data.settings.locale); }
-    if (data.purchases) { localStorage.setItem('quizhub-purchases', JSON.stringify(data.purchases)); }
-    if (data.friends) { localStorage.setItem('quizhub-friends', JSON.stringify(data.friends)); if (typeof friendsList !== 'undefined') friendsList = data.friends; }
+    // === НАСТРОЙКИ ===
+    if (data.settings?.theme && !localStorage.getItem('quizhub-theme')) {
+      localStorage.setItem('quizhub-theme', data.settings.theme);
+      if (typeof initTheme === 'function') initTheme();
+    }
+    if (data.settings?.locale && !localStorage.getItem('quizhub-locale')) {
+      localStorage.setItem('quizhub-locale', data.settings.locale);
+      if (typeof setLocale === 'function') setLocale(data.settings.locale);
+    }
+    
+    // === ДРУЗЬЯ ===
+    if (data.friends) {
+      const localFriends = JSON.parse(localStorage.getItem('quizhub-friends') || '[]');
+      const mergedFriends = [...new Set([...localFriends, ...data.friends])];
+      localStorage.setItem('quizhub-friends', JSON.stringify(mergedFriends));
+      if (typeof friendsList !== 'undefined') friendsList = mergedFriends;
+    }
+    
+    console.log('✅ Синхронизация завершена');
     
   } catch (error) { console.error('Ошибка загрузки:', error); }
 }
 
 function listenToUserDataChanges() {
   if (typeof currentUser === 'undefined' || !currentUser) return;
+  
   db.collection('users').doc(currentUser.uid).onSnapshot(doc => {
     if (!doc.exists) return;
     const data = doc.data();
-    if (typeof data.coins === 'number' && data.coins !== parseInt(localStorage.getItem('quizhub-coins')||'0')) {
-      localStorage.setItem('quizhub-coins', data.coins.toString());
-      if (typeof userCoins !== 'undefined') userCoins = data.coins;
-      if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+    
+    // Монеты в реальном времени
+    if (typeof data.coins === 'number') {
+      const localCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
+      if (data.coins > localCoins) {
+        localStorage.setItem('quizhub-coins', data.coins.toString());
+        if (typeof userCoins !== 'undefined') userCoins = data.coins;
+        if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+      }
+    }
+    
+    // Покупки в реальном времени
+    if (data.purchases) {
+      const localPurchases = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
+      const merged = [...new Set([...localPurchases, ...data.purchases])];
+      if (merged.length > localPurchases.length) {
+        localStorage.setItem('quizhub-purchases', JSON.stringify(merged));
+        if (typeof purchasedItems !== 'undefined') purchasedItems = merged;
+      }
+    }
+    
+    // Тема в реальном времени
+    if (data.customTheme && data.customTheme !== localStorage.getItem('quizhub-custom-theme')) {
+      localStorage.setItem('quizhub-custom-theme', data.customTheme);
+      if (typeof initCustomTheme === 'function') initCustomTheme();
     }
   });
 }
 
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
-setTimeout(() => {
-  if (typeof currentUser !== 'undefined' && currentUser) {
-    loadUserDataFromFirestore().then(() => listenToUserDataChanges());
-  }
-}, 1000);
+// ========== АВТОСОХРАНЕНИЕ ==========
 
+// Сохраняем при важных действиях
+setInterval(() => {
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    saveUserDataToFirestore();
+  }
+}, 60000); // Каждую минуту
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+
+// Ждём авторизацию
+const checkAuthInterval = setInterval(() => {
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    clearInterval(checkAuthInterval);
+    loadUserDataFromFirestore().then(() => {
+      listenToUserDataChanges();
+    });
+  }
+}, 500);
+
+setTimeout(() => clearInterval(checkAuthInterval), 15000);
+
+// Слушаем изменения авторизации
 if (typeof auth !== 'undefined') {
   auth.onAuthStateChanged(user => {
-    if (user) { loadUserDataFromFirestore().then(() => listenToUserDataChanges()); }
+    if (user) {
+      loadUserDataFromFirestore().then(() => {
+        listenToUserDataChanges();
+      });
+    }
   });
 }
+
+// Сохраняем при выходе
+window.addEventListener('beforeunload', () => {
+  if (typeof currentUser !== 'undefined' && currentUser) {
+    saveUserDataToFirestore();
+  }
+});

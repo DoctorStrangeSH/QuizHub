@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Аутентификация Google v2.0
+// QuizHub — Аутентификация Google v2.1
 // ============================================
 
 let currentUser = null;
@@ -33,14 +33,12 @@ function signInWithGoogle() {
   provider.setCustomParameters({ prompt: 'select_account' });
   
   auth.signInWithPopup(provider)
-    .then(result => {
-      console.log('✅ Вход:', result.user.displayName);
-    })
+    .then(result => console.log('✅ Вход:', result.user.displayName))
     .catch(error => {
       console.error('Ошибка входа:', error);
-      let message = 'Не удалось войти';
-      if (error.code === 'auth/popup-closed-by-user') message = 'Окно входа было закрыто';
-      showToast(message, 'danger');
+      let msg = 'Не удалось войти';
+      if (error.code === 'auth/popup-closed-by-user') msg = 'Окно входа было закрыто';
+      showToast(msg, 'danger');
     });
 }
 
@@ -48,9 +46,7 @@ async function signOut() {
   try {
     if (typeof saveUserDataToFirestore === 'function') await saveUserDataToFirestore();
     await auth.signOut();
-  } catch (error) {
-    console.error('Ошибка выхода:', error);
-  }
+  } catch (error) { console.error('Ошибка выхода:', error); }
 }
 
 function updateAuthUI(user) {
@@ -61,9 +57,9 @@ function updateAuthUI(user) {
     const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName||'U')}&background=FF6B9D&color=fff&size=32`;
     authArea.innerHTML = `
       <div class="d-flex align-items-center gap-2">
-        <img src="${photoURL}" class="rounded-circle" width="32" height="32" style="border:2px solid var(--accent);object-fit:cover;">
-        <span class="d-none d-lg-inline small fw-semibold">${user.displayName||'Гость'}</span>
-        <button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signOut()"><i class="bi bi-box-arrow-right"></i></button>
+        <img src="${photoURL}" class="rounded-circle" width="32" height="32" style="border:2px solid var(--accent);object-fit:cover;" onerror="this.src='https://ui-avatars.com/api/?name=U&background=FF6B9D&color=fff&size=32'">
+        <span class="d-none d-lg-inline small fw-semibold user-name">${user.displayName||'Гость'}</span>
+        <button class="btn btn-outline-accent btn-sm rounded-pill px-3 ms-1" onclick="signOut()"><i class="bi bi-box-arrow-right"></i></button>
       </div>`;
   } else {
     authArea.innerHTML = `<button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()"><i class="bi bi-google me-2"></i>Войти</button>`;

@@ -1,5 +1,5 @@
 /* ============================================
-   QuizHub — Стили чата v2.0
+   QuizHub — Стили чата v2.1
    ============================================ */
 
 /* Кнопка открытия чата */
@@ -171,7 +171,7 @@
 
 .chat-messages::-webkit-scrollbar { width: 3px; }
 .chat-messages::-webkit-scrollbar-track { background: transparent; }
-.chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
 
 .chat-message {
     display: flex;
@@ -240,7 +240,7 @@
 }
 
 .chat-bubble.own .chat-name {
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .chat-text {
@@ -255,13 +255,13 @@
 
 .chat-time {
     font-size: 0.65rem;
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.4);
     margin-top: 3px;
     text-align: right;
 }
 
 .chat-bubble.own .chat-time {
-    color: rgba(255,255,255,0.7);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Ввод сообщения */
@@ -272,6 +272,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    background: var(--bg-card);
 }
 
 .chat-input {
@@ -292,7 +293,7 @@
 }
 
 .chat-input::placeholder {
-    color: rgba(255,255,255,0.3);
+    color: rgba(255, 255, 255, 0.3);
     font-size: 0.8rem;
 }
 
@@ -334,21 +335,48 @@
 
 .chat-close-btn:hover {
     color: var(--text-primary);
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
-/* Адаптив */
+/* Адаптив — на мобильных чат на весь экран */
 @media (max-width: 480px) {
     .chat-widget {
-        width: 100%;
-        max-width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
         right: 0;
         bottom: 0;
-        height: 60vh;
-        border-radius: 20px 20px 0 0;
-        border-bottom: none;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        z-index: 999;
     }
-    
+
+    .chat-widget.open {
+        display: flex;
+    }
+
+    .chat-close-btn {
+        font-size: 1.5rem;
+        padding: 8px;
+    }
+
+    .chat-input-area {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg-card);
+        padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    .chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding-bottom: 20px;
+    }
+
     .chat-toggle-btn {
         bottom: 16px;
         right: 16px;
@@ -356,7 +384,7 @@
         height: 48px;
         font-size: 1.3rem;
     }
-    
+
     .chat-widget.open ~ .chat-toggle-btn {
         display: none;
     }
