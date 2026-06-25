@@ -88,6 +88,7 @@ function showScreen(screenName) {
 function restoreScreenFromHash() {
   const hash = window.location.hash.replace('#', '');
   
+  // Квиз — особая обработка
   if (hash === 'quiz') {
     if (typeof checkSavedQuiz === 'function') {
       const saved = typeof getQuizProgress === 'function' ? getQuizProgress() : null;
@@ -100,9 +101,13 @@ function restoreScreenFromHash() {
     return;
   }
   
+  // Все остальные экраны
   if (hash && document.getElementById(`screen-${hash}`)) {
     setTimeout(() => showScreen(hash), 100);
+    return;
   }
+  
+  // Если hash пустой или экран не найден — остаёмся на главной (она уже active)
 }
 
 window.addEventListener('hashchange', () => {

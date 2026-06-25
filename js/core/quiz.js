@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Логика квиза v3.1
+// QuizHub — Логика квиза v3.2
 // ============================================
 
 let quizQuestions = [];
@@ -18,6 +18,28 @@ let correctAnswersCount = 0;
 let animationType = localStorage.getItem('quizhub-animation') || 'flip';
 
 const QUIZ_SETTINGS = { totalQuestions: 10, timePerQuestion: 15, maxScore: 100 };
+
+// ========== НАЗВАНИЯ КАТЕГОРИЙ ==========
+
+const CATEGORY_NAMES = {
+  'any': '📋 Общие знания',
+  'science': '🔬 Наука',
+  'history': '📜 История',
+  'geography': '🌍 География',
+  'sport': '⚽ Спорт',
+  'cinema': '🎬 Кино',
+  'art': '🎨 Искусство',
+  'music': '🎵 Музыка',
+  'it': '💻 IT и технологии',
+  'literature': '📚 Литература',
+  'food': '🍔 Еда и кулинария',
+  'animals': '🐾 Животные',
+  'space': '🚀 Космос',
+};
+
+function getCategoryName(categoryKey) {
+  return CATEGORY_NAMES[categoryKey] || categoryKey || 'Общие знания';
+}
 
 // ========== ЗАГРУЗКА ВОПРОСОВ ==========
 
@@ -90,7 +112,9 @@ function renderQuizScreen() {
       <div class="progress mb-4" style="height:6px;"><div class="progress-bar bg-accent progress-animated" style="width:${progress}%;"></div></div>
       <div class="d-flex justify-content-center mb-4">${createCircularTimer(QUIZ_SETTINGS.timePerQuestion)}</div>
       <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
-        <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">${question.category||'Общие знания'} • ${getDifficultyLabel(question.difficulty)}</span>
+        <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
+          ${getCategoryName(question.category)} • ${getDifficultyLabel(question.difficulty)}
+        </span>
         <h3 class="fw-bold mb-4">${question.question}</h3>
         <div class="d-grid gap-3" id="answers-container">
           ${question.answers.map((a,i) => `<button class="btn btn-answer rounded-4 p-3 text-start" data-index="${i}"><span class="answer-letter">${String.fromCharCode(65+i)}</span><span class="answer-text">${a}</span></button>`).join('')}
@@ -109,7 +133,12 @@ function renderQuizScreen() {
   
   // Автосохранение
   if (typeof saveQuizProgress === 'function') {
-    saveQuizProgress({ currentQuestionIndex, score, currentStreak, maxStreak, fastestAnswer, correctAnswersCount, difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy', category: document.getElementById('quiz-category')?.value });
+    saveQuizProgress({ 
+      currentQuestionIndex, score, currentStreak, maxStreak, fastestAnswer, 
+      correctAnswersCount, timeLeft,
+      difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy', 
+      category: document.getElementById('quiz-category')?.value 
+    });
   }
 }
 
@@ -311,17 +340,23 @@ function checkSavedQuiz() {
   const age = (Date.now() - saved.timestamp) / 1000;
   if (age > 1800) { localStorage.removeItem('quizhub-quiz-progress'); return; }
   
+  const elapsedSinceSave = Math.floor(age);
+  
   currentQuestionIndex = saved.currentQuestionIndex || 0;
   score = saved.score || 0;
   currentStreak = saved.currentStreak || 0;
   maxStreak = saved.maxStreak || 0;
   fastestAnswer = saved.fastestAnswer || 999;
   correctAnswersCount = saved.correctAnswersCount || 0;
+  
+  const savedTimeLeft = saved.timeLeft || 15;
+  timeLeft = Math.max(1, savedTimeLeft - elapsedSinceSave);
+  
   if (saved.difficulty && typeof selectedDifficulty !== 'undefined') selectedDifficulty = saved.difficulty;
   
-  // Загружаем вопросы заново
   const category = saved.category || 'any';
   const difficulty = saved.difficulty || 'easy';
+  
   fetchQuestions(category, difficulty, 10).then(qs => {
     if (qs.length > 0) {
       quizQuestions = qs;
@@ -358,7 +393,9 @@ function renderTimedModeScreen() {
       <div class="d-flex justify-content-between align-items-center mb-3"><small class="text-muted">⏱ Режим на время</small><small class="text-muted">🏆 ${score} очков</small></div>
       <div class="d-flex justify-content-center mb-4"><div class="timer-circle ${globalTimeLeft<=10?'timer-danger':''}"><span class="timer-text" id="global-timer">${globalTimeLeft}</span></div></div>
       <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
-        <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">${q.category||'Общие знания'} • Вопрос ${currentQuestionIndex+1}</span>
+        <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
+          ${getCategoryName(q.category)} • Вопрос ${currentQuestionIndex+1}
+        </span>
         <h3 class="fw-bold mb-4">${q.question}</h3>
         <div class="d-grid gap-3">${q.answers.map((a,i) => `<button class="btn btn-answer rounded-4 p-3 text-start" data-index="${i}"><span class="answer-letter">${String.fromCharCode(65+i)}</span><span class="answer-text">${a}</span></button>`).join('')}</div>
       </div>

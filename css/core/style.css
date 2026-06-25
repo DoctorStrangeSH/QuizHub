@@ -719,3 +719,9 @@ canvas { max-width: 100%; }
 .app-loading-bar {
     z-index: 10001 !important;
 }
+
+/* Бейдж категории */
+.badge.bg-accent.bg-opacity-25 {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
