@@ -7,7 +7,11 @@ let soundsEnabled = true;
 
 function initAudio() {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.warn('Web Audio API не поддерживается');
+    }
   }
 }
 
@@ -28,7 +32,6 @@ function playCorrectSound() {
   
   const now = audioCtx.currentTime;
   
-  // Восходящий тон
   [523.25, 659.25, 783.99].forEach((freq, i) => {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -84,7 +87,7 @@ function playTickSound() {
   osc.stop(now + 0.1);
 }
 
-// Конфетти — фанфары
+// Конфетти/уровень — фанфары
 function playFanfareSound() {
   if (!soundsEnabled || !audioCtx) return;
   
@@ -107,6 +110,29 @@ function playFanfareSound() {
   });
 }
 
-// Инициализация при первом клике (требование браузеров)
+// Достижение — особый звук
+function playAchievementSound() {
+  if (!soundsEnabled || !audioCtx) return;
+  
+  const now = audioCtx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5, 783.99];
+  
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, now + i * 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.12 + 0.3);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.12);
+    osc.stop(now + i * 0.12 + 0.3);
+  });
+}
+
+// Инициализация при первом клике
 document.addEventListener('click', initAudio, { once: true });
 document.addEventListener('touchstart', initAudio, { once: true });

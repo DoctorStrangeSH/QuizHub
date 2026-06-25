@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Логика квиза (рус/eng)
+// QuizHub — Логика квиза v2.0
 // ============================================
 
 let quizQuestions = [];
@@ -12,6 +12,8 @@ let quizStartTime = 0;
 let currentStreak = 0;
 let maxStreak = 0;
 let fastestAnswer = 999;
+let timedMode = false;
+let globalTimeLeft = 60;
 
 const QUIZ_SETTINGS = {
   totalQuestions: 10,
@@ -38,11 +40,9 @@ const russianQuestions = {
     { question: 'Какой химический элемент обозначается символом O?', answers: ['Золото', 'Кислород', 'Олово', 'Осмий'], correctIndex: 1, category: 'Наука', difficulty: 'easy' },
     { question: 'Какая частица имеет положительный заряд?', answers: ['Электрон', 'Нейтрон', 'Протон', 'Фотон'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
     { question: 'Сколько костей в теле взрослого человека?', answers: ['186', '206', '226', '256'], correctIndex: 1, category: 'Наука', difficulty: 'medium' },
-    { question: 'Как называется самая твёрдая ткань в организме человека?', answers: ['Кость', 'Ноготь', 'Эмаль зуба', 'Хрящ'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
     { question: 'Какая планета самая близкая к Солнцу?', answers: ['Венера', 'Земля', 'Меркурий', 'Марс'], correctIndex: 2, category: 'Наука', difficulty: 'easy' },
     { question: 'Что измеряется в Ньютонах?', answers: ['Масса', 'Сила', 'Давление', 'Скорость'], correctIndex: 1, category: 'Наука', difficulty: 'medium' },
     { question: 'Какой витамин вырабатывается под воздействием солнца?', answers: ['Витамин A', 'Витамин C', 'Витамин D', 'Витамин B12'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
-    { question: 'Сколько хромосом у человека?', answers: ['23', '44', '46', '48'], correctIndex: 2, category: 'Наука', difficulty: 'hard' },
   ],
   history: [
     { question: 'В каком году Юрий Гагарин полетел в космос?', answers: ['1957', '1961', '1965', '1969'], correctIndex: 1, category: 'История', difficulty: 'medium' },
@@ -50,45 +50,34 @@ const russianQuestions = {
     { question: 'В каком году распался СССР?', answers: ['1989', '1990', '1991', '1993'], correctIndex: 2, category: 'История', difficulty: 'medium' },
     { question: 'Кто основал Москву?', answers: ['Пётр I', 'Юрий Долгорукий', 'Иван Грозный', 'Александр Невский'], correctIndex: 1, category: 'История', difficulty: 'medium' },
     { question: 'Какая битва считается переломной в Великой Отечественной войне?', answers: ['Битва за Москву', 'Курская битва', 'Сталинградская битва', 'Битва за Берлин'], correctIndex: 2, category: 'История', difficulty: 'medium' },
-    { question: 'В каком году отменили крепостное право в России?', answers: ['1801', '1825', '1861', '1905'], correctIndex: 2, category: 'История', difficulty: 'hard' },
   ],
   sport: [
     { question: 'Сколько игроков в футбольной команде на поле?', answers: ['9', '10', '11', '12'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
     { question: 'Как часто проходят Олимпийские игры?', answers: ['Каждый год', 'Раз в 2 года', 'Раз в 4 года', 'Раз в 6 лет'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
     { question: 'В каком виде спорта самый большой мяч?', answers: ['Футбол', 'Баскетбол', 'Волейбол', 'Регби'], correctIndex: 1, category: 'Спорт', difficulty: 'easy' },
     { question: 'Сколько колец в олимпийской эмблеме?', answers: ['3', '4', '5', '6'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
-    { question: 'Какая страна выиграла ЧМ-2022 по футболу?', answers: ['Франция', 'Бразилия', 'Аргентина', 'Германия'], correctIndex: 2, category: 'Спорт', difficulty: 'medium' },
-    { question: 'Как называется хоккей на траве?', answers: ['Флорбол', 'Гандбол', 'Хоккей на траве', 'Поло'], correctIndex: 2, category: 'Спорт', difficulty: 'medium' },
   ],
   cinema: [
     { question: 'Кто снял фильм «Титаник»?', answers: ['Стивен Спилберг', 'Джеймс Кэмерон', 'Кристофер Нолан', 'Ридли Скотт'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
     { question: 'Как зовут главного героя «Гарри Поттера»?', answers: ['Рон', 'Гарри', 'Драко', 'Невилл'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
     { question: 'Какой фильм получил Оскар-2024 как лучший?', answers: ['Барби', 'Оппенгеймер', 'Убийцы цветочной луны', 'Бедные-несчастные'], correctIndex: 1, category: 'Кино', difficulty: 'hard' },
-    { question: 'Кто сыграл Джокера в «Тёмном рыцаре»?', answers: ['Джек Николсон', 'Хоакин Феникс', 'Хит Леджер', 'Джаред Лето'], correctIndex: 2, category: 'Кино', difficulty: 'medium' },
-    { question: 'Сколько фильмов в серии «Звёздные войны» (основная сага)?', answers: ['6', '7', '8', '9'], correctIndex: 3, category: 'Кино', difficulty: 'medium' },
   ],
-  music: [
-    { question: 'Сколько клавиш у стандартного пианино?', answers: ['76', '88', '96', '104'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
-    { question: 'Кто исполнитель песни «Shape of You»?', answers: ['Эд Ширан', 'Джастин Бибер', 'Бруно Марс', 'Дрейк'], correctIndex: 0, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Как называется самая популярная соцсеть для коротких видео?', answers: ['YouTube', 'Instagram', 'TikTok', 'VK Клипы'], correctIndex: 2, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Какой музыкальный инструмент у Страдивари?', answers: ['Фортепиано', 'Скрипка', 'Виолончель', 'Арфа'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
+  it: [
+    { question: 'Что означает аббревиатура HTML?', answers: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], correctIndex: 0, category: 'IT', difficulty: 'easy' },
+    { question: 'Сколько бит в одном байте?', answers: ['4', '8', '16', '32'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
+    { question: 'Какой протокол используется для передачи веб-страниц?', answers: ['FTP', 'SMTP', 'HTTP', 'TCP'], correctIndex: 2, category: 'IT', difficulty: 'easy' },
+    { question: 'Что такое CSS?', answers: ['Язык программирования', 'Каскадные таблицы стилей', 'База данных', 'Фреймворк'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
   ],
   geography: [
     { question: 'Какая страна самая большая по площади?', answers: ['США', 'Китай', 'Россия', 'Канада'], correctIndex: 2, category: 'География', difficulty: 'easy' },
     { question: 'Столица Японии?', answers: ['Пекин', 'Сеул', 'Токио', 'Бангкок'], correctIndex: 2, category: 'География', difficulty: 'easy' },
     { question: 'Какая река самая длинная в мире?', answers: ['Амазонка', 'Нил', 'Миссисипи', 'Янцзы'], correctIndex: 1, category: 'География', difficulty: 'medium' },
-    { question: 'Сколько стран граничат с Россией по суше?', answers: ['12', '14', '16', '18'], correctIndex: 2, category: 'География', difficulty: 'hard' },
     { question: 'Какое море самое солёное?', answers: ['Чёрное', 'Средиземное', 'Красное', 'Мёртвое'], correctIndex: 3, category: 'География', difficulty: 'medium' },
   ],
-  it: [
-    { question: 'Какой язык программирования создал Брендан Айк?', answers: ['Python', 'Java', 'JavaScript', 'C++'], correctIndex: 2, category: 'IT', difficulty: 'medium' },
-    { question: 'Что означает аббревиатура HTML?', answers: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], correctIndex: 0, category: 'IT', difficulty: 'easy' },
-    { question: 'Сколько бит в одном байте?', answers: ['4', '8', '16', '32'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
-    { question: 'В каком году основана компания Apple?', answers: ['1975', '1976', '1977', '1980'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
-    { question: 'Что такое API?', answers: ['Приложение', 'Интерфейс программирования', 'База данных', 'Язык программирования'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
-    { question: 'Какой протокол используется для передачи веб-страниц?', answers: ['FTP', 'SMTP', 'HTTP', 'TCP'], correctIndex: 2, category: 'IT', difficulty: 'easy' },
-    { question: 'Что такое CSS?', answers: ['Язык программирования', 'Каскадные таблицы стилей', 'База данных', 'Фреймворк'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
-    { question: 'Кто создал Linux?', answers: ['Билл Гейтс', 'Стив Джобс', 'Линус Торвальдс', 'Марк Цукерберг'], correctIndex: 2, category: 'IT', difficulty: 'medium' },
+  music: [
+    { question: 'Кто исполнитель песни «Shape of You»?', answers: ['Эд Ширан', 'Джастин Бибер', 'Бруно Марс', 'Дрейк'], correctIndex: 0, category: 'Музыка', difficulty: 'easy' },
+    { question: 'Как называется самая популярная соцсеть для коротких видео?', answers: ['YouTube', 'Instagram', 'TikTok', 'VK Клипы'], correctIndex: 2, category: 'Музыка', difficulty: 'easy' },
+    { question: 'Сколько клавиш у стандартного пианино?', answers: ['76', '88', '96', '104'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
   ]
 };
 
@@ -107,12 +96,8 @@ async function fetchEnglishQuestions(category, difficulty) {
     url.searchParams.set('amount', QUIZ_SETTINGS.totalQuestions);
     url.searchParams.set('type', 'multiple');
     
-    if (category && category !== 'any') {
-      url.searchParams.set('category', category);
-    }
-    if (difficulty && difficulty !== 'any') {
-      url.searchParams.set('difficulty', difficulty);
-    }
+    if (category && category !== 'any') url.searchParams.set('category', category);
+    if (difficulty && difficulty !== 'any') url.searchParams.set('difficulty', difficulty);
     
     const response = await fetch(url);
     const data = await response.json();
@@ -207,6 +192,7 @@ async function startQuiz() {
   currentStreak = 0;
   maxStreak = 0;
   fastestAnswer = 999;
+  timedMode = false;
   
   showScreen('quiz');
   renderQuizScreen();
@@ -252,9 +238,7 @@ function renderQuizScreen() {
         </div>
         
         <div class="d-flex justify-content-center mb-4">
-          <div class="timer-circle ${timeLeft <= 5 ? 'timer-danger' : ''}">
-            <span class="timer-text" id="timer-display">${timeLeft}</span>
-          </div>
+          ${createCircularTimer(QUIZ_SETTINGS.timePerQuestion)}
         </div>
         
         <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
@@ -273,7 +257,7 @@ function renderQuizScreen() {
           </div>
         </div>
         
-        <div class="text-center">
+        <div class="text-center d-flex justify-content-center gap-2">
           <button class="btn btn-outline-accent rounded-pill px-4" id="skip-question">
             <i class="bi bi-skip-forward me-2"></i>Пропустить
           </button>
@@ -291,11 +275,41 @@ function renderQuizScreen() {
   });
   
   document.getElementById('skip-question')?.addEventListener('click', skipQuestion);
+  
+  // Добавляем кнопку голосового ввода
+  setTimeout(() => {
+    if (typeof addVoiceButton === 'function') addVoiceButton();
+  }, 100);
+  
+  // Автосохранение прогресса
+  if (typeof saveQuizProgress === 'function') {
+    saveQuizProgress({
+      currentQuestionIndex,
+      score,
+      currentStreak,
+      maxStreak,
+      fastestAnswer,
+      difficulty: selectedDifficulty,
+      category: document.getElementById('quiz-category')?.value
+    });
+  }
 }
 
-function getDifficultyLabel(difficulty) {
-  const labels = { easy: '🟢 Легко', medium: '🟡 Средне', hard: '🔴 Сложно' };
-  return labels[difficulty] || difficulty;
+function createCircularTimer(totalSeconds) {
+  const circumference = 2 * Math.PI * 36;
+  
+  return `
+    <div class="timer-circle-advanced">
+      <svg viewBox="0 0 80 80">
+        <circle class="timer-circle-bg" cx="40" cy="40" r="36"/>
+        <circle class="timer-circle-progress" id="timer-progress-circle" 
+                cx="40" cy="40" r="36"
+                stroke-dasharray="${circumference}" 
+                stroke-dashoffset="0"/>
+      </svg>
+      <span class="timer-circle-text" id="timer-display">${totalSeconds}</span>
+    </div>
+  `;
 }
 
 // ========== ТАЙМЕР ==========
@@ -317,15 +331,21 @@ function startTimer() {
 }
 
 function updateTimerDisplay() {
+  const circle = document.getElementById('timer-progress-circle');
   const display = document.getElementById('timer-display');
-  const circle = document.querySelector('.timer-circle');
+  
+  if (circle) {
+    const circumference = 2 * Math.PI * 36;
+    const offset = circumference * (1 - timeLeft / QUIZ_SETTINGS.timePerQuestion);
+    circle.style.strokeDashoffset = offset;
+    
+    circle.classList.toggle('danger', timeLeft <= 5);
+  }
   
   if (display) display.textContent = timeLeft;
-  if (circle) {
-    circle.classList.toggle('timer-danger', timeLeft <= 5);
-    if (timeLeft <= 5 && timeLeft > 0) {
-      playTickSound();
-    }
+  
+  if (timeLeft <= 5 && timeLeft > 0) {
+    if (typeof playTickSound === 'function') playTickSound();
   }
 }
 
@@ -349,21 +369,29 @@ function handleAnswer(selectedIndex) {
   const isCorrect = selectedIndex === question.correctIndex;
   const answerTime = QUIZ_SETTINGS.timePerQuestion - timeLeft;
   
-  document.querySelectorAll('.btn-answer').forEach((btn, i) => {
+  const buttons = document.querySelectorAll('.btn-answer');
+  buttons.forEach((btn, i) => {
     btn.disabled = true;
-    if (i === question.correctIndex) btn.classList.add('correct');
+    if (i === question.correctIndex) {
+      btn.classList.add('correct');
+      if (typeof showCorrectGlow === 'function') showCorrectGlow(btn);
+    }
     if (i === selectedIndex && !isCorrect) {
       btn.classList.add('wrong');
-      playWrongSound();
+      if (typeof showGlassBreakEffect === 'function') showGlassBreakEffect(btn);
+      if (typeof playWrongSound === 'function') playWrongSound();
+      if (typeof vibrateWrong === 'function') vibrateWrong();
     }
   });
   
   if (isCorrect) {
-    playCorrectSound();
+    if (typeof playCorrectSound === 'function') playCorrectSound();
+    if (typeof vibrateCorrect === 'function') vibrateCorrect();
     
     currentStreak++;
     if (currentStreak > maxStreak) maxStreak = currentStreak;
     if (answerTime < fastestAnswer) fastestAnswer = answerTime;
+    if (answerTime < 3) quizStats.fastAnswersCount = (quizStats.fastAnswersCount || 0) + 1;
     
     const timeBonus = Math.floor(timeLeft / QUIZ_SETTINGS.timePerQuestion * 5);
     const difficultyMultiplier = { easy: 1, medium: 1.5, hard: 2 };
@@ -389,8 +417,15 @@ function moveToNextQuestion() {
   currentQuestionIndex++;
   
   if (currentQuestionIndex < QUIZ_SETTINGS.totalQuestions) {
-    renderQuizScreen();
-    startTimer();
+    if (typeof animateQuestionTransition === 'function') {
+      animateQuestionTransition(() => {
+        renderQuizScreen();
+        startTimer();
+      });
+    } else {
+      renderQuizScreen();
+      startTimer();
+    }
   } else {
     finishQuiz();
   }
@@ -420,16 +455,36 @@ async function finishQuiz() {
     userId: currentUser ? currentUser.uid : null
   };
   
-  await saveResult(result);
+  // Сохраняем результат
+  if (typeof isOnline !== 'undefined' && isOnline) {
+    await saveResult(result);
+  } else if (typeof saveResultOffline === 'function') {
+    await saveResultOffline(result);
+  } else {
+    await saveResult(result);
+  }
+  
+  // Очищаем сохранённый прогресс
+  localStorage.removeItem('quizhub-quiz-progress');
   
   showScreen('result');
   renderResultScreen(result);
   
   // Статистика и ачивки
-  updateStats(result);
+  if (typeof updateStats === 'function') updateStats(result);
   quizStats.maxStreak = maxStreak;
   quizStats.fastestAnswer = fastestAnswer;
-  checkAchievements(result);
+  localStorage.setItem('quizhub-stats', JSON.stringify(quizStats));
+  if (typeof checkAchievements === 'function') checkAchievements(result);
+  if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
+  if (typeof updateDailyQuestProgress === 'function') {
+    updateDailyQuestProgress('fast_answers', quizStats.fastAnswersCount || 0);
+  }
+  
+  // Вибрация
+  if (result.score >= 70 && typeof vibrateAchievement === 'function') {
+    vibrateAchievement();
+  }
 }
 
 // ========== ЭКРАН РЕЗУЛЬТАТА ==========
@@ -442,7 +497,7 @@ function renderResultScreen(result) {
   
   if (result.score >= 70) {
     spawnConfetti();
-    playFanfareSound();
+    if (typeof playFanfareSound === 'function') playFanfareSound();
   }
   
   screen.innerHTML = `
@@ -499,15 +554,197 @@ function renderResultScreen(result) {
   });
 }
 
-function getGrade(score) {
-  if (score >= 90) return { title: 'Легенда!', message: 'Потрясающий результат,', icon: 'trophy-fill', color: 'grade-gold' };
-  if (score >= 70) return { title: 'Отлично!', message: 'Ты настоящий знаток,', icon: 'star-fill', color: 'grade-silver' };
-  if (score >= 50) return { title: 'Неплохо!', message: 'Хорошая попытка,', icon: 'hand-thumbs-up-fill', color: 'grade-bronze' };
-  return { title: 'Попробуй ещё!', message: 'Не расстраивайся,', icon: 'emoji-smile-fill', color: 'grade-default' };
+// ========== РЕЖИМ "НА ВРЕМЯ" ==========
+
+async function startTimedMode() {
+  const nameInput = document.getElementById('player-name');
+  const name = nameInput.value.trim();
+  
+  if (!name) {
+    nameInput.focus();
+    showToast('Введи своё имя перед стартом!', 'warning');
+    return;
+  }
+  
+  timedMode = true;
+  QUIZ_SETTINGS.totalQuestions = 999;
+  QUIZ_SETTINGS.timePerQuestion = 999;
+  globalTimeLeft = 60;
+  
+  const category = document.getElementById('quiz-category').value;
+  quizQuestions = await fetchQuestions(category, 'any');
+  
+  while (quizQuestions.length < 50) {
+    const more = await fetchQuestions(category, 'any');
+    quizQuestions = [...quizQuestions, ...more];
+  }
+  
+  currentQuestionIndex = 0;
+  score = 0;
+  maxStreak = 0;
+  fastestAnswer = 999;
+  
+  showScreen('quiz');
+  renderTimedModeScreen();
+  startGlobalTimer();
+  
+  quizStartTime = Date.now();
 }
 
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+function renderTimedModeScreen() {
+  const screen = document.getElementById('screen-quiz');
+  if (!screen) return;
+  
+  const question = quizQuestions[currentQuestionIndex];
+  
+  screen.innerHTML = `
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <small class="text-muted">⏱ Режим на время</small>
+          <small class="text-muted">🏆 ${score} очков</small>
+        </div>
+        
+        <div class="d-flex justify-content-center mb-4">
+          <div class="timer-circle ${globalTimeLeft <= 10 ? 'timer-danger' : ''}">
+            <span class="timer-text" id="global-timer">${globalTimeLeft}</span>
+          </div>
+        </div>
+        
+        <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
+          <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
+            ${question.category} • Вопрос ${currentQuestionIndex + 1}
+          </span>
+          <h3 class="fw-bold mb-4">${question.question}</h3>
+          
+          <div class="d-grid gap-3" id="answers-container">
+            ${question.answers.map((answer, i) => `
+              <button class="btn btn-answer rounded-4 p-3 text-start" data-index="${i}">
+                <span class="answer-letter">${String.fromCharCode(65 + i)}</span>
+                <span class="answer-text">${answer}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  `;
+  
+  document.querySelectorAll('.btn-answer').forEach(btn => {
+    btn.addEventListener('click', function() {
+      handleTimedAnswer(parseInt(this.dataset.index));
+    });
+  });
+  
+  if (typeof addVoiceButton === 'function') addVoiceButton();
+}
+
+function startGlobalTimer() {
+  updateGlobalTimerDisplay();
+  
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    globalTimeLeft--;
+    updateGlobalTimerDisplay();
+    
+    if (globalTimeLeft <= 0) {
+      clearInterval(timerInterval);
+      finishTimedMode();
+    }
+  }, 1000);
+}
+
+function updateGlobalTimerDisplay() {
+  const display = document.getElementById('global-timer');
+  const circle = document.querySelector('.timer-circle');
+  
+  if (display) display.textContent = globalTimeLeft;
+  if (circle) circle.classList.toggle('timer-danger', globalTimeLeft <= 10);
+}
+
+function handleTimedAnswer(selectedIndex) {
+  const question = quizQuestions[currentQuestionIndex];
+  const isCorrect = selectedIndex === question.correctIndex;
+  
+  document.querySelectorAll('.btn-answer').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === question.correctIndex) {
+      btn.classList.add('correct');
+      if (typeof showCorrectGlow === 'function') showCorrectGlow(btn);
+    }
+    if (i === selectedIndex && !isCorrect) {
+      btn.classList.add('wrong');
+      if (typeof showGlassBreakEffect === 'function') showGlassBreakEffect(btn);
+      if (typeof playWrongSound === 'function') playWrongSound();
+    }
+  });
+  
+  if (isCorrect) {
+    if (typeof playCorrectSound === 'function') playCorrectSound();
+    if (typeof vibrateCorrect === 'function') vibrateCorrect();
+    score += 10;
+  } else {
+    if (typeof vibrateWrong === 'function') vibrateWrong();
+  }
+  
+  setTimeout(() => {
+    currentQuestionIndex++;
+    
+    if (currentQuestionIndex >= quizQuestions.length - 5) {
+      fetchQuestions('any', 'any').then(more => {
+        quizQuestions = [...quizQuestions, ...more];
+      });
+    }
+    
+    renderTimedModeScreen();
+  }, isCorrect ? 500 : 1000);
+}
+
+async function finishTimedMode() {
+  clearInterval(timerInterval);
+  timedMode = false;
+  
+  const result = {
+    playerName: document.getElementById('player-name').value.trim() || 'Гость',
+    score: score,
+    totalTime: 60,
+    correctAnswers: Math.floor(score / 10),
+    difficulty: 'timed',
+    category: 'На время',
+    date: new Date().toISOString(),
+    userId: currentUser ? currentUser.uid : null
+  };
+  
+  if (typeof isOnline !== 'undefined' && isOnline) {
+    await saveResult(result);
+  } else if (typeof saveResultOffline === 'function') {
+    await saveResultOffline(result);
+  }
+  
+  showScreen('result');
+  
+  const screen = document.getElementById('screen-result');
+  if (screen) {
+    screen.innerHTML = `
+      <div class="row justify-content-center">
+        <div class="col-lg-6 text-center py-5">
+          <h2 class="fw-bold font-display mb-3">⏱ Время вышло!</h2>
+          <div class="bg-card rounded-4 p-4 mb-4">
+            <p class="display-3 fw-bold text-accent mb-0">${result.score}</p>
+            <p class="text-muted">очков за 60 секунд</p>
+          </div>
+          <button class="btn btn-accent rounded-pill px-4" onclick="startTimedMode()">
+            <i class="bi bi-arrow-repeat me-2"></i>Ещё раз
+          </button>
+          <button class="btn btn-outline-accent rounded-pill px-4 mt-2" onclick="showScreen('home')">
+            <i class="bi bi-house me-2"></i>На главную
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
 }
