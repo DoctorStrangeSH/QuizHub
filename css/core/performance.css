@@ -1,0 +1,79 @@
+/* ============================================
+   QuizHub — Оптимизации CSS
+   ============================================ */
+
+/* Использование GPU для анимаций */
+.question-card-inner,
+.btn-answer,
+.hero-icon,
+.timer-circle,
+.leader-card {
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Отключаем тяжёлые анимации на слабых устройствах */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .particle {
+        display: none;
+    }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+.reduce-motion .particle {
+    display: none;
+}
+
+/* Оптимизация для дисплеев с высокой частотой */
+@media (min-refresh-rate: 120Hz) {
+    .timer-circle-progress {
+        transition: stroke-dashoffset 0.5s linear;
+    }
+}
+
+/* Content-Visibility для длинных списков */
+.leaderboard-table-wrapper tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 48px;
+}
+
+.achievements-list > * {
+    content-visibility: auto;
+    contain-intrinsic-size: 72px;
+}
+
+/* Оптимизация рендеринга текста */
+body {
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Отключаем тени на слабых устройствах */
+@media (max-width: 480px) {
+    .leader-card,
+    .bg-card,
+    .btn-accent {
+        box-shadow: none !important;
+    }
+    
+    .hero-icon {
+        box-shadow: 0 0 20px var(--accent-glow) !important;
+    }
+}

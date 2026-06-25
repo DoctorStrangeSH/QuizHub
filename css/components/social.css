@@ -1,0 +1,29 @@
+/* ============================================
+   QuizHub — Социальные стили
+   ============================================ */
+
+.streamer-mode .user-email,
+.streamer-mode .user-fullname,
+.streamer-mode #auth-area .small {
+    display: none !important;
+}
+
+.streamer-overlay {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10000; pointer-events: none;
+}
+
+.streamer-bar {
+    background: rgba(255, 82, 82, 0.9); color: #fff; padding: 6px 16px;
+    text-align: center; font-size: 0.85rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.streamer-bar button { pointer-events: all; }
+
+.share-buttons {
+    border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 16px; margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+    .share-buttons .btn { font-size: 0.75rem; padding: 0.4rem 0.75rem; }
+}

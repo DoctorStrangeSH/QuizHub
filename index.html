@@ -24,8 +24,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Кастомные стили -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/themes.css" rel="stylesheet">
+    <link href="css/core/style.css" rel="stylesheet">
+    <link href="css/core/themes.css" rel="stylesheet">
+    <link href="css/core/performance.css" rel="stylesheet">
+    <link href="css/components/chat.css" rel="stylesheet">
+    <link href="css/components/social.css" rel="stylesheet">
+    <link href="css/components/events.css" rel="stylesheet">
 </head>
 <body>
 
@@ -35,69 +39,76 @@
         <!-- Частицы фона -->
         <div class="particles" id="particles"></div>
         
-       <!-- ХЕДЕР -->
-<header class="app-header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center py-3">
-            <a href="#" class="logo parallax-layer" data-speed="0.3" onclick="showScreen('home'); return false;">
-                <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
-            </a>
-            
-            <!-- Мобильная кнопка меню -->
-            <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Меню">
-                <i class="bi bi-list"></i>
-            </button>
-            
-            <!-- Действия -->
-            <div class="header-actions-collapsible" id="header-actions">
-                
-                <!-- Переключатель темы -->
-                <div class="theme-toggle-wrapper me-1">
-                    <div class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Переключить тему">
-                        <!-- Звёзды -->
-                        <div class="stars-container">
-                            <span class="star"></span>
-                            <span class="star"></span>
-                            <span class="star"></span>
-                            <span class="star"></span>
-                            <span class="star"></span>
-                            <span class="star"></span>
-                            <span class="star"></span>
+        <!-- ХЕДЕР -->
+        <header class="app-header">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center py-3">
+                    <a href="#" class="logo parallax-layer" data-speed="0.3" onclick="showScreen('home'); return false;">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
+                    </a>
+                    
+                    <!-- Мобильная кнопка меню -->
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Меню">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    
+                    <!-- Действия (скрываются на мобилках) -->
+                    <div class="header-actions-collapsible" id="header-actions">
+                        
+                        <!-- Языки -->
+                        <button type="button" class="btn btn-locale btn-sm rounded-pill px-2 active" data-locale="ru" title="Русский">🇷🇺</button>
+                        <button type="button" class="btn btn-locale btn-sm rounded-pill px-2" data-locale="en" title="English">🇬🇧</button>
+                        
+                        <!-- Переключатель темы -->
+                        <div class="theme-toggle-wrapper me-1">
+                            <div class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Переключить тему">
+                                <div class="stars-container">
+                                    <span class="star"></span><span class="star"></span><span class="star"></span>
+                                    <span class="star"></span><span class="star"></span><span class="star"></span><span class="star"></span>
+                                </div>
+                                <div class="clouds-container">
+                                    <div class="cloud cloud-1"></div>
+                                    <div class="cloud cloud-2"></div>
+                                </div>
+                            </div>
                         </div>
-                        <!-- Облака -->
-                        <div class="clouds-container">
-                            <div class="cloud cloud-1"></div>
-                            <div class="cloud cloud-2"></div>
+                        
+                        <!-- Навигация -->
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('leaderboard')">
+                            <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('achievements')">
+                            <i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Ачивки</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('stats')">
+                            <i class="bi bi-graph-up me-1"></i><span class="d-none d-md-inline">Статистика</span>
+                        </button>
+                        
+                        <!-- Друзья -->
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showFriendsScreen()">
+                            <i class="bi bi-people-fill me-1"></i><span class="d-none d-md-inline">Друзья</span>
+                        </button>
+                        
+                        <!-- Магазин (монеты) -->
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" onclick="showShopScreen()" title="Магазин">
+                            🪙<span id="coins-display">0</span>
+                        </button>
+                        
+                        <!-- Звук -->
+                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" id="sound-toggle" onclick="toggleSound()" title="Звук">
+                            <i class="bi bi-volume-up-fill"></i>
+                        </button>
+                        
+                        <!-- Авторизация -->
+                        <div id="auth-area">
+                            <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                                <i class="bi bi-google me-2"></i>Войти
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                        onclick="showScreen('leaderboard')">
-                    <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
-                </button>
-                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                        onclick="showScreen('achievements')">
-                    <i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Ачивки</span>
-                </button>
-                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                        onclick="showScreen('stats')">
-                    <i class="bi bi-graph-up me-1"></i><span class="d-none d-md-inline">Статистика</span>
-                </button>
-                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" 
-                        id="sound-toggle" onclick="toggleSound()" title="Звук">
-                    <i class="bi bi-volume-up-fill"></i>
-                </button>
-                <div id="auth-area">
-                    <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                            onclick="signInWithGoogle()">
-                        <i class="bi bi-google me-2"></i>Войти
-                    </button>
-                </div>
             </div>
-        </div>
-    </div>
-</header>
+        </header>
         
         <!-- ОСНОВНОЙ КОНТЕНТ -->
         <main class="app-main">
@@ -136,16 +147,17 @@
                                     </label>
                                     <select class="form-select form-select-lg rounded-pill px-4" id="quiz-category">
                                         <option value="any">Любая категория</option>
-                                        <option value="9">Общие знания</option>
-                                        <option value="17">Наука и природа</option>
-                                        <option value="21">Спорт</option>
-                                        <option value="23">История</option>
-                                        <option value="11">Кино</option>
-                                        <option value="14">Телевидение</option>
-                                        <option value="12">Музыка</option>
-                                        <option value="15">Видеоигры</option>
-                                        <option value="18">Компьютеры</option>
-                                        <option value="22">География</option>
+                                        <option value="science">🔬 Наука</option>
+                                        <option value="history">📜 История</option>
+                                        <option value="geography">🌍 География</option>
+                                        <option value="sport">⚽ Спорт</option>
+                                        <option value="cinema">🎬 Кино и искусство</option>
+                                        <option value="music">🎵 Музыка</option>
+                                        <option value="it">💻 IT и технологии</option>
+                                        <option value="literature">📚 Литература</option>
+                                        <option value="food">🍔 Еда и кулинария</option>
+                                        <option value="animals">🐾 Животные</option>
+                                        <option value="space">🚀 Космос</option>
                                     </select>
                                 </div>
                                 
@@ -167,21 +179,6 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Язык -->
-                                <div class="mb-4 text-start">
-                                    <label class="form-label small fw-semibold text-muted">
-                                        <i class="bi bi-translate me-1 text-accent"></i>Язык вопросов
-                                    </label>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-language active rounded-pill px-4" data-lang="ru">
-                                            🇷🇺 Русский
-                                        </button>
-                                        <button type="button" class="btn btn-language rounded-pill px-4" data-lang="en">
-                                            🇬🇧 English
-                                        </button>
-                                    </div>
-                                </div>
-                                
                                 <!-- Кнопка старта -->
                                 <button type="button" class="btn btn-accent btn-lg rounded-pill px-5 w-100 shadow-lg" id="start-quiz">
                                     <i class="bi bi-play-fill me-2"></i>НАЧАТЬ КВИЗ
@@ -191,14 +188,20 @@
                             
                             <!-- Режимы игры -->
                             <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
-                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="createDuelRoom()" data-tooltip="Игра против друга">
-                                    <i class="bi bi-controller me-2"></i>Дуэль
+                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="startSurvivalMode()">
+                                    💀 Выживание
                                 </button>
-                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="showJoinDuelForm()" data-tooltip="Присоединиться по коду">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>Код
+                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="showAISelectScreen()">
+                                    🤖 vs AI
                                 </button>
-                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="startTimedMode()" data-tooltip="60 секунд на рекорд">
-                                    <i class="bi bi-stopwatch me-2"></i>На время
+                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="startTimedMode()">
+                                    ⏱ На время
+                                </button>
+                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="showTournamentScreen()">
+                                    🏆 Турниры
+                                </button>
+                                <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="showTeamScreen()">
+                                    👥 Команда
                                 </button>
                             </div>
                             
@@ -206,7 +209,7 @@
                             <div class="d-flex justify-content-center gap-4 text-muted small flex-wrap">
                                 <span><i class="bi bi-question-circle me-1 text-accent"></i>10 вопросов</span>
                                 <span><i class="bi bi-clock me-1 text-accent"></i>15 сек / вопрос</span>
-                                <span><i class="bi bi-trophy me-1 text-accent"></i>Бонусы за скорость</span>
+                                <span><i class="bi bi-star-fill me-1 text-accent"></i>Бонусы за скорость</span>
                             </div>
                             
                         </div>
@@ -228,6 +231,18 @@
                 <!-- ЭКРАН 6: СТАТИСТИКА -->
                 <div class="screen" id="screen-stats"></div>
                 
+                <!-- ЭКРАН 7: КОМАНДА -->
+                <div class="screen" id="screen-team"></div>
+                
+                <!-- ЭКРАН 8: ТУРНИРЫ -->
+                <div class="screen" id="screen-tournament"></div>
+                
+                <!-- ЭКРАН 9: МАГАЗИН -->
+                <div class="screen" id="screen-shop"></div>
+                
+                <!-- ЭКРАН 10: ДРУЗЬЯ -->
+                <div class="screen" id="screen-friends"></div>
+                
             </div>
         </main>
         
@@ -235,9 +250,8 @@
         <footer class="app-footer">
             <div class="container text-center py-3">
                 <small class="text-muted">
-                    © 2026 QuizHub. Вопросы предоставлены 
-                    <a href="https://opentdb.com" target="_blank" class="text-accent text-decoration-none">Open Trivia DB</a>
-                    • <span class="live-dot"></span> Real-time
+                    © 2026 QuizHub • Вопросы из Open Trivia DB и сообщества • 
+                    <span class="live-dot"></span> Real-time
                 </small>
             </div>
         </footer>
@@ -250,6 +264,8 @@
     <!-- Тост-контейнер -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
     
+    <!-- ==================== СКРИПТЫ ==================== -->
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -261,42 +277,52 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Скрипты QuizHub -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/sounds.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/offline.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/quiz.js"></script>
-    <script src="js/voice.js"></script>
-    <script src="js/stats.js"></script>
-    <script src="js/duel.js"></script>
-    <script src="js/achievements.js"></script>
+    <!-- ===== ЯДРО (core) ===== -->
+    <script src="js/core/firebase-config.js"></script>
+    <script src="js/core/i18n.js"></script>
+    
+    <!-- ===== СЕРВИСЫ (services) ===== -->
+    <script src="js/services/sounds.js"></script>
+    <script src="js/services/animations.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/api.js"></script>
+    
+    <!-- ===== СОЦИАЛЬНОЕ (social) ===== -->
+    <script src="js/social/auth.js"></script>
+    <script src="js/social/social.js"></script>
+    <script src="js/social/teams.js"></script>
+    <script src="js/social/tournaments.js"></script>
+    <script src="js/social/chat.js"></script>
+    <script src="js/social/events.js"></script>
+    
+    <!-- ===== ФИЧИ (features) ===== -->
+    <script src="js/features/achievements.js"></script>
+    <script src="js/features/quests.js"></script>
+    <script src="js/features/coins.js"></script>
+    <script src="js/features/survival.js"></script>
+    <script src="js/features/ai.js"></script>
+    <script src="js/features/duel.js"></script>
+    <script src="js/features/stats.js"></script>
+    <script src="js/features/voice.js"></script>
+    <script src="js/features/swipe.js"></script>
+    
+    <!-- ===== СЕРВИСЫ (продолжение) ===== -->
+    <script src="js/services/firestore-sync.js"></script>
+    <script src="js/services/performance.js"></script>
+    <script src="js/services/bundle-optimizer.js"></script>
+    <script src="js/services/security.js"></script>
+    
+    <!-- ===== ЯДРО (после всех зависимостей) ===== -->
+    <script src="js/core/ui.js"></script>
+    <script src="js/core/quiz.js"></script>
     
     <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/QuizHub/sw.js')
-                    .then(reg => {
-                        console.log('SW registered:', reg.scope);
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    showToast('Доступна новая версия! Обновите страницу 🔄', 'info');
-                                }
-                            });
-                        });
-                    })
+                    .then(reg => console.log('SW registered:', reg.scope))
                     .catch(err => console.log('SW failed:', err));
-            });
-            
-            navigator.serviceWorker.ready.then(reg => {
-                if ('sync' in reg) console.log('[PWA] Background Sync поддерживается');
-                if ('periodicSync' in reg) console.log('[PWA] Periodic Sync поддерживается');
             });
         }
     </script>

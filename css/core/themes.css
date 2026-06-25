@@ -1,0 +1,325 @@
+/* ============================================
+   QuizHub — Система тем v2.0
+   Красивый переключатель Луна/Солнце
+   ============================================ */
+
+/* ----- СВЕТЛАЯ ТЕМА ----- */
+[data-theme="light"] {
+    --bg-primary: #F5F5FA;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F0F0F5;
+    --text-primary: #1A1A2E;
+    --text-muted: #6B6B80;
+    --accent: #E91E63;
+    --accent-glow: rgba(233, 30, 99, 0.3);
+    --secondary: #7B2FBE;
+    --success: #00C853;
+    --warning: #FF8F00;
+    --danger: #D32F2F;
+    --info: #0288D1;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
+[data-theme="light"] body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .app-header {
+    background: rgba(245, 245, 250, 0.85);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .app-footer {
+    background: rgba(245, 245, 250, 0.85);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .bg-card {
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select {
+    background: var(--bg-card);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-select:focus {
+    background: var(--bg-card);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+[data-theme="light"] .btn-difficulty,
+[data-theme="light"] .btn-language {
+    background: var(--bg-card-hover);
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .btn-difficulty.active,
+[data-theme="light"] .btn-language.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .btn-answer {
+    background: var(--bg-card);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .btn-answer:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .table-dark {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: rgba(233, 30, 99, 0.05);
+    --bs-table-color: var(--text-primary);
+    --bs-table-border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .leader-card {
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .particle {
+    background: var(--accent);
+    opacity: 0.4;
+}
+
+[data-theme="light"] .skeleton {
+    background: linear-gradient(90deg,
+        var(--bg-card-hover) 25%,
+        var(--bg-card) 50%,
+        var(--bg-card-hover) 75%
+    );
+}
+
+[data-theme="light"] .online-indicator.offline {
+    background: rgba(211, 47, 47, 0.9);
+}
+
+[data-theme="light"] .leaderboard-table-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Плавные переходы */
+body, 
+.app-header, 
+.app-footer, 
+.bg-card, 
+.btn-answer, 
+.form-control, 
+.form-select,
+.btn-difficulty,
+.btn-language,
+.table-dark,
+.leader-card,
+.text-muted,
+.lead {
+    transition: 
+        background-color 0.4s ease,
+        color 0.4s ease,
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+
+/* ============================================
+   ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ — ЛУНА/СОЛНЦЕ
+   ============================================ */
+
+.theme-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn {
+    width: 56px;
+    height: 28px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1a1a3e, #0d0d2b);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.theme-toggle-btn.light {
+    background: linear-gradient(135deg, #87CEEB, #4A90D9);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 12px rgba(74, 144, 217, 0.4);
+}
+
+/* Кружок (Луна/Солнце) */
+.theme-toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFFDE7, #FFF9C4);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 12px rgba(255, 253, 231, 0.5);
+}
+
+.theme-toggle-btn.light::after {
+    left: 30px;
+    background: linear-gradient(135deg, #FFD740, #FFAB00);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 171, 0, 0.8), 0 0 40px rgba(255, 215, 64, 0.5);
+    width: 24px;
+    height: 24px;
+    top: 1px;
+}
+
+/* Звёзды (тёмная тема) */
+.stars-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.theme-toggle-btn.light .stars-container {
+    opacity: 0;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+.star:nth-child(1) { top: 5px; left: 35px; animation-delay: 0s; }
+.star:nth-child(2) { top: 12px; left: 32px; animation-delay: 0.5s; width: 1.5px; height: 1.5px; }
+.star:nth-child(3) { top: 8px; left: 42px; animation-delay: 1s; }
+.star:nth-child(4) { top: 16px; left: 38px; animation-delay: 0.3s; width: 1.5px; height: 1.5px; }
+.star:nth-child(5) { top: 3px; left: 40px; animation-delay: 1.5s; width: 1px; height: 1px; }
+.star:nth-child(6) { top: 18px; left: 45px; animation-delay: 0.8s; width: 1px; height: 1px; }
+.star:nth-child(7) { top: 10px; left: 28px; animation-delay: 1.2s; width: 1.5px; height: 1.5px; }
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* Кратер на луне */
+.theme-toggle-btn:not(.light)::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    top: 7px;
+    left: 9px;
+    z-index: 3;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn.light::before {
+    left: 37px;
+    top: 8px;
+    opacity: 0;
+}
+
+/* Облака (светлая тема) */
+.clouds-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.2s;
+    pointer-events: none;
+}
+
+.theme-toggle-btn.light .clouds-container {
+    opacity: 1;
+}
+
+.cloud {
+    position: absolute;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.cloud-1 {
+    width: 14px;
+    height: 5px;
+    top: 5px;
+    left: 4px;
+    animation: cloudFloat 4s ease-in-out infinite;
+}
+
+.cloud-1::before {
+    width: 6px;
+    height: 6px;
+    top: -3px;
+    left: 2px;
+}
+
+.cloud-1::after {
+    width: 5px;
+    height: 5px;
+    top: -2px;
+    left: 7px;
+}
+
+.cloud-2 {
+    width: 10px;
+    height: 4px;
+    top: 13px;
+    left: 6px;
+    animation: cloudFloat 5s ease-in-out infinite 1s;
+}
+
+.cloud-2::before {
+    width: 5px;
+    height: 5px;
+    top: -2px;
+    left: 1px;
+}
+
+.cloud-2::after {
+    width: 4px;
+    height: 4px;
+    top: -2px;
+    left: 5px;
+}
+
+@keyframes cloudFloat {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}

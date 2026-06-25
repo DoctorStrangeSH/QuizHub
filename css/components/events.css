@@ -1,0 +1,166 @@
+/* ============================================
+   QuizHub — Стили событий
+   ============================================ */
+
+#event-banner-container {
+    margin-bottom: 16px;
+    animation: eventBannerIn 0.5s ease-out;
+}
+
+@keyframes eventBannerIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.event-banner-card {
+    background: linear-gradient(135deg, var(--event-color, var(--accent)), rgba(26, 26, 46, 0.95));
+    border: 1.5px solid var(--event-color, var(--accent));
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.event-banner-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 120px;
+    height: 120px;
+    background: var(--event-color, var(--accent));
+    opacity: 0.15;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.event-banner-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 107, 157, 0.2);
+    border-color: var(--accent);
+}
+
+.event-banner-card:active {
+    transform: translateY(-1px);
+}
+
+.event-banner-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+    animation: eventIconBounce 2s ease-in-out infinite;
+}
+
+@keyframes eventIconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.event-banner-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.event-banner-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+}
+
+.event-banner-desc {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.event-banner-bonuses {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.event-bonus {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    backdrop-filter: blur(5px);
+}
+
+.event-banner-arrow {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.event-banner-card:hover .event-banner-arrow {
+    transform: translateX(5px);
+    color: #fff;
+}
+
+/* Адаптив */
+@media (max-width: 576px) {
+    .event-banner-card {
+        padding: 12px 14px;
+        gap: 10px;
+        border-radius: 16px;
+    }
+    
+    .event-banner-icon {
+        font-size: 2rem;
+    }
+    
+    .event-banner-title {
+        font-size: 0.95rem;
+    }
+    
+    .event-banner-desc {
+        font-size: 0.75rem;
+    }
+    
+    .event-bonus {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+    }
+}
+
+/* Светлая тема */
+[data-theme="light"] .event-banner-card {
+    background: linear-gradient(135deg, var(--event-color, var(--accent)), rgba(255, 255, 255, 0.9));
+    border-color: var(--event-color, var(--accent));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .event-banner-title {
+    color: #1a1a2e;
+}
+
+[data-theme="light"] .event-banner-desc {
+    color: rgba(26, 26, 46, 0.8);
+}
+
+[data-theme="light"] .event-bonus {
+    background: rgba(0, 0, 0, 0.08);
+    color: #1a1a2e;
+}
+
+[data-theme="light"] .event-banner-arrow {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .event-banner-card:hover .event-banner-arrow {
+    color: #1a1a2e;
+}
