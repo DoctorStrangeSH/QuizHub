@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Управление экранами и UI v3.0
+// QuizHub — Управление экранами и UI v3.1
 // ============================================
 
 let selectedDifficulty = 'easy';
@@ -87,7 +87,22 @@ function showScreen(screenName) {
 
 function restoreScreenFromHash() {
   const hash = window.location.hash.replace('#', '');
-  if (hash && document.getElementById(`screen-${hash}`)) setTimeout(() => showScreen(hash), 100);
+  
+  if (hash === 'quiz') {
+    if (typeof checkSavedQuiz === 'function') {
+      const saved = typeof getQuizProgress === 'function' ? getQuizProgress() : null;
+      if (saved && (Date.now() - saved.timestamp) / 1000 < 1800) {
+        setTimeout(() => checkSavedQuiz(), 200);
+        return;
+      }
+    }
+    setTimeout(() => showScreen('home'), 100);
+    return;
+  }
+  
+  if (hash && document.getElementById(`screen-${hash}`)) {
+    setTimeout(() => showScreen(hash), 100);
+  }
 }
 
 window.addEventListener('hashchange', () => {
@@ -163,7 +178,7 @@ function renderLeaderboardScreen(leaders, difficulty) {
       <div class="text-center mb-4"><h2 class="fw-bold font-display mb-2">🏆 Таблица лидеров</h2><p class="text-muted">${labels[difficulty]} <span class="live-dot"></span></p></div>
       <div class="d-flex gap-2 justify-content-center mb-4">${['easy','medium','hard'].map(d=>`<button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty===d?'active':''}" onclick="switchLeaderboardDifficulty('${d}')">${labels[d]}</button>`).join('')}</div>
       <div class="row g-3 mb-4">${leaders.slice(0,3).map((l,i)=>`<div class="col-md-4"><div class="bg-card rounded-4 p-4 text-center leader-card leader-top-${i+1}"><span class="fs-1">${medals[i]}</span><h5 class="fw-bold mb-1">${l.playerName}</h5><p class="text-accent fw-bold fs-4 mb-1">${l.score}</p><small class="text-muted">${formatTime(l.totalTime)}</small></div></div>`).join('')}</div>
-      <div class="bg-card rounded-4 overflow-hidden"><div class="leaderboard-table-wrapper"><table class="table table-dark table-hover mb-0"><thead><tr><th class="ps-3">#</th><th>Игрок</th><th>Очки</th><th>Время</th></tr></thead><tbody>${leaders.map((l,i)=>{const d=l.date?.seconds?new Date(l.date.seconds*1000):new Date();return`<tr class="${currentUser&&l.userId===currentUser.uid?'table-active-row':''}"><td class="ps-3 fw-bold">${i<3?medals[i]:i+1}</td><td>${l.playerName}${currentUser&&l.userId===currentUser.uid?' <small class="text-accent">(вы)</small>':''}</td><td class="fw-bold">${l.score}</td><td class="text-muted">${formatTime(l.totalTime)}</td></tr>`;}).join('')}</tbody></table></div></div>
+      <div class="bg-card rounded-4 overflow-hidden"><div class="leaderboard-table-wrapper"><table class="table table-dark table-hover mb-0"><thead><tr><th class="ps-3">#</th><th>Игрок</th><th>Очки</th><th>Время</th></tr></thead><tbody>${leaders.map((l,i)=>{return`<tr class="${currentUser&&l.userId===currentUser.uid?'table-active-row':''}"><td class="ps-3 fw-bold">${i<3?medals[i]:i+1}</td><td>${l.playerName}${currentUser&&l.userId===currentUser.uid?' <small class="text-accent">(вы)</small>':''}</td><td class="fw-bold">${l.score}</td><td class="text-muted">${formatTime(l.totalTime)}</td></tr>`;}).join('')}</tbody></table></div></div>
       <div class="text-center mt-4"><button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">Пройти квиз</button></div>
     </div></div>`;
 }

@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Логика квиза v3.0
+// QuizHub — Логика квиза v3.1
 // ============================================
 
 let quizQuestions = [];
@@ -106,6 +106,11 @@ function renderQuizScreen() {
   });
   document.getElementById('skip-question')?.addEventListener('click', skipQuestion);
   setTimeout(() => { if (typeof addVoiceButton === 'function') addVoiceButton(); }, 100);
+  
+  // Автосохранение
+  if (typeof saveQuizProgress === 'function') {
+    saveQuizProgress({ currentQuestionIndex, score, currentStreak, maxStreak, fastestAnswer, correctAnswersCount, difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy', category: document.getElementById('quiz-category')?.value });
+  }
 }
 
 function createCircularTimer(totalSeconds) {
@@ -218,6 +223,7 @@ async function finishQuiz() {
     if (typeof saveResult === 'function') await saveResult(result);
   } else if (typeof saveResultOffline === 'function') await saveResultOffline(result);
   
+  localStorage.removeItem('quizhub-quiz-progress');
   showScreen('result');
   renderResultScreen(result);
   
@@ -254,13 +260,10 @@ async function finishQuiz() {
     }
     if (typeof userCoins !== 'undefined') updateQuestProgressByType('coins_month', userCoins);
     
-    // Категории
     const catValue = category?.value || '';
     if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
     if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
     if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgressByType('category_cinema');
-    
-    // Обновляем категории для недельных/месячных заданий
     updateQuestProgressByType('categories_week', 1);
     updateQuestProgressByType('difficulties_week', 1);
   }
@@ -296,6 +299,40 @@ function renderResultScreen(result) {
     </div></div>`;
   
   document.getElementById('view-leaderboard')?.addEventListener('click', () => { showScreen('leaderboard'); if (typeof loadLeaderboard === 'function') loadLeaderboard(); });
+}
+
+// ========== ВОССТАНОВЛЕНИЕ КВИЗА ==========
+
+function checkSavedQuiz() {
+  if (typeof getQuizProgress !== 'function') return;
+  const saved = getQuizProgress();
+  if (!saved) return;
+  
+  const age = (Date.now() - saved.timestamp) / 1000;
+  if (age > 1800) { localStorage.removeItem('quizhub-quiz-progress'); return; }
+  
+  currentQuestionIndex = saved.currentQuestionIndex || 0;
+  score = saved.score || 0;
+  currentStreak = saved.currentStreak || 0;
+  maxStreak = saved.maxStreak || 0;
+  fastestAnswer = saved.fastestAnswer || 999;
+  correctAnswersCount = saved.correctAnswersCount || 0;
+  if (saved.difficulty && typeof selectedDifficulty !== 'undefined') selectedDifficulty = saved.difficulty;
+  
+  // Загружаем вопросы заново
+  const category = saved.category || 'any';
+  const difficulty = saved.difficulty || 'easy';
+  fetchQuestions(category, difficulty, 10).then(qs => {
+    if (qs.length > 0) {
+      quizQuestions = qs;
+      QUIZ_SETTINGS.totalQuestions = 10;
+      QUIZ_SETTINGS.timePerQuestion = 15;
+      showScreen('quiz');
+      renderQuizScreen();
+      startTimer();
+      showToast('Квиз восстановлен! ⏱', 'info');
+    }
+  });
 }
 
 // ========== РЕЖИМ НА ВРЕМЯ ==========

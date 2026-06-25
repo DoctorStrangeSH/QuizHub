@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Виртуальная валюта v2.0
+// QuizHub — Виртуальная валюта v2.1
 // ============================================
 
 let userCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
@@ -47,8 +47,8 @@ function buyItem(itemId) {
     return;
   }
   
-  if (purchasedItems.includes(itemId) && item.type !== 'booster') {
-    showToast('Уже куплено!', 'info');
+  if (item.type !== 'booster' && purchasedItems.includes(itemId)) {
+    showToast('Уже куплено! Нажми «Применить» для использования.', 'info');
     return;
   }
   
@@ -59,15 +59,32 @@ function buyItem(itemId) {
   }
   localStorage.setItem('quizhub-purchases', JSON.stringify(purchasedItems));
   
-  if (item.type === 'theme') {
-    applyTheme(itemId);
-  } else if (item.type === 'booster') {
-    activateBooster(item);
-  } else if (item.type === 'cosmetic') {
-    applyCosmetic(itemId);
+  showToast(`Куплено: ${item.name}! Нажми «Применить» 🎉`, 'success');
+  renderShop();
+}
+
+// ========== ПРИМЕНИТЬ ==========
+
+function applyItem(itemId) {
+  const item = SHOP_ITEMS.find(i => i.id === itemId);
+  if (!item) return;
+  
+  if (!purchasedItems.includes(itemId) && item.type !== 'booster') {
+    showToast('Сначала купите этот предмет! 🛍️', 'warning');
+    return;
   }
   
-  showToast(`Куплено: ${item.name}! 🎉`, 'success');
+  if (item.type === 'theme') {
+    applyTheme(itemId);
+    showToast(`Тема «${item.name}» применена! 🎨`, 'success');
+  } else if (item.type === 'booster') {
+    activateBooster(item);
+    showToast(`Бустер «${item.name}» активирован! ⚡`, 'success');
+  } else if (item.type === 'cosmetic') {
+    applyCosmetic(itemId);
+    showToast(`Косметика «${item.name}» применена! ✨`, 'success');
+  }
+  
   renderShop();
 }
 
@@ -105,8 +122,6 @@ function applyTheme(themeId) {
   Object.entries(theme).forEach(([key, value]) => {
     document.documentElement.style.setProperty(key, value);
   });
-  
-  showToast('Тема применена! 🎨', 'success');
 }
 
 function resetTheme() {
@@ -117,7 +132,8 @@ function resetTheme() {
   }
   activeCustomTheme = null;
   localStorage.removeItem('quizhub-custom-theme');
-  showToast('Тема сброшена', 'info');
+  showToast('Тема сброшена ✅', 'info');
+  renderShop();
 }
 
 // ========== БУСТЕРЫ ==========
@@ -156,7 +172,6 @@ function applyCosmetic(cosmeticId) {
   if (cosmeticId === 'avatar_gold') settings.avatarFrame = 'gold';
   else if (cosmeticId === 'title_master') settings.title = 'Мастер';
   localStorage.setItem('quizhub-theme-settings', JSON.stringify(settings));
-  showToast('Косметика применена! ✨', 'success');
 }
 
 // ========== НАЧИСЛЕНИЕ МОНЕТ ==========
@@ -194,18 +209,26 @@ function renderShop() {
       </div>
       <div class="d-grid gap-3">
         ${SHOP_ITEMS.map(item => {
-          const purchased = purchasedItems.includes(item.id) && item.type !== 'booster';
+          const purchased = purchasedItems.includes(item.id);
+          const isActive = item.type === 'theme' && activeCustomTheme === item.id;
+          let btnHTML = '';
+          
+          if (!purchased) {
+            btnHTML = `<button class="btn btn-accent btn-sm rounded-pill px-3" onclick="buyItem('${item.id}')">${item.price} 🪙</button>`;
+          } else if (isActive) {
+            btnHTML = `<button class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="resetTheme()">Сбросить</button>`;
+          } else {
+            btnHTML = `<button class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="applyItem('${item.id}')">Применить</button>`;
+          }
+          
           return `
             <div class="bg-card rounded-4 p-3 d-flex align-items-center gap-3">
               <span class="fs-2">${item.icon}</span>
               <div class="flex-grow-1 text-start">
-                <p class="fw-bold mb-0">${item.name}</p>
+                <p class="fw-bold mb-0">${item.name} ${isActive ? '✅' : ''}</p>
                 <small class="text-muted">${item.desc}</small>
               </div>
-              ${purchased 
-                ? '<span class="badge bg-success">Куплено</span>'
-                : `<button class="btn btn-accent btn-sm rounded-pill px-3" onclick="buyItem('${item.id}')">${item.price} 🪙</button>`
-              }
+              ${btnHTML}
             </div>
           `;
         }).join('')}
