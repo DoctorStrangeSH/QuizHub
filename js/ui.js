@@ -32,7 +32,7 @@ function initTheme() {
   const savedTheme = localStorage.getItem('quizhub-theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
   
-  const toggle = document.getElementById('theme-toggle');
+  const toggle = document.getElementById('theme-toggle-btn');
   if (toggle) {
     toggle.classList.toggle('light', savedTheme === 'light');
   }
@@ -45,13 +45,16 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('quizhub-theme', next);
   
-  const toggle = document.getElementById('theme-toggle');
+  const toggle = document.getElementById('theme-toggle-btn');
   if (toggle) {
     toggle.classList.toggle('light', next === 'light');
   }
   
-  if (typeof renderScoreChart === 'function') renderScoreChart();
-  if (typeof renderWeeklyChart === 'function') renderWeeklyChart();
+  // Обновляем графики при смене темы
+  setTimeout(() => {
+    if (typeof renderScoreChart === 'function') renderScoreChart();
+    if (typeof renderWeeklyChart === 'function') renderWeeklyChart();
+  }, 500);
 }
 
 // ========== МОБИЛЬНОЕ МЕНЮ ==========

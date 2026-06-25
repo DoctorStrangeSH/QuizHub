@@ -139,29 +139,46 @@ function getLocalQuestionsFromJSON(data, category, difficulty, count) {
   
   let pool = [...data.questions];
   
-  // Фильтруем по категории
-  if (category && category !== 'any') {
-    pool = pool.filter(q => q.category === category);
-  }
-  
-  // Фильтруем по сложности
+  // Сначала фильтруем по сложности (строго!)
   if (difficulty && difficulty !== 'any') {
-    pool = pool.filter(q => q.difficulty === difficulty);
-  }
-  
-  // Если не хватает вопросов, расширяем пул
-  if (pool.length < count) {
-    pool = [...data.questions];
-    if (difficulty && difficulty !== 'any') {
-      const diffPool = pool.filter(q => q.difficulty === difficulty);
-      if (diffPool.length >= count) {
-        pool = diffPool;
-      }
+    const diffPool = pool.filter(q => q.difficulty === difficulty);
+    
+    // Если вопросов нужной сложности достаточно — используем только их
+    if (diffPool.length >= count) {
+      pool = diffPool;
+    } else if (diffPool.length > 0) {
+      // Если не хватает — берём все нужной сложности + добираем из других
+      const remaining = pool.filter(q => q.difficulty !== difficulty);
+      pool = [...diffPool, ...shuffleArray(remaining).slice(0, count - diffPool.length)];
+    }
+    // Если вопросов нужной сложности нет вообще — показываем предупреждение
+    else {
+      console.warn(`Нет вопросов сложности "${difficulty}", используем все доступные`);
+      showToast(`Мало вопросов сложности "${difficulty}". Добавлены другие.`, 'warning');
     }
   }
   
-  // Выбираем нужное количество
-  const selected = shuffleArray(pool).slice(0, count);
+  // Затем фильтруем по категории
+  if (category && category !== 'any') {
+    const catPool = pool.filter(q => q.category === category);
+    
+    if (catPool.length >= count) {
+      pool = catPool;
+    } else if (catPool.length > 0) {
+      const remaining = pool.filter(q => q.category !== category);
+      pool = [...catPool, ...shuffleArray(remaining).slice(0, count - catPool.length)];
+    }
+  }
+  
+  // Убираем дубликаты
+  pool = pool.filter((q, i, self) => self.findIndex(t => t.question === q.question) === i);
+  
+  // Берём нужное количество
+  const selected = shuffleArray(pool).slice(0, Math.min(count, pool.length));
+  
+  // Логируем для отладки
+  console.log(`Выбрано ${selected.length} вопросов (сложность: ${difficulty}, категория: ${category})`);
+  console.log('Сложности выбранных вопросов:', selected.map(q => q.difficulty).join(', '));
   
   // Перемешиваем ответы
   return selected.map(q => {

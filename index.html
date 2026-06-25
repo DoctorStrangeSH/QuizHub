@@ -35,61 +35,69 @@
         <!-- Частицы фона -->
         <div class="particles" id="particles"></div>
         
-        <!-- ХЕДЕР -->
-        <header class="app-header">
-            <div class="container">
-                <div class="d-flex justify-content-between align-items-center py-3">
-                    <a href="#" class="logo parallax-layer" data-speed="0.3" onclick="showScreen('home'); return false;">
-                        <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
-                    </a>
-                    
-                    <!-- Мобильная кнопка меню -->
-                    <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Меню">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    
-                    <!-- Действия (скрываются на мобилках) -->
-                    <div class="header-actions-collapsible" id="header-actions">
-                        <!-- Тема -->
-                        <div class="theme-switch" id="theme-toggle" onclick="toggleTheme()" title="Переключить тему">
-                            <div class="stars">
-                                <span class="star-dot"></span>
-                                <span class="star-dot"></span>
-                                <span class="star-dot"></span>
-                                <span class="star-dot"></span>
-                            </div>
-                            <div class="clouds">
-                                <div class="cloud cloud-1"></div>
-                                <div class="cloud cloud-2"></div>
-                            </div>
+       <!-- ХЕДЕР -->
+<header class="app-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center py-3">
+            <a href="#" class="logo parallax-layer" data-speed="0.3" onclick="showScreen('home'); return false;">
+                <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
+            </a>
+            
+            <!-- Мобильная кнопка меню -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Меню">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <!-- Действия -->
+            <div class="header-actions-collapsible" id="header-actions">
+                
+                <!-- Переключатель темы -->
+                <div class="theme-toggle-wrapper me-1">
+                    <div class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Переключить тему">
+                        <!-- Звёзды -->
+                        <div class="stars-container">
+                            <span class="star"></span>
+                            <span class="star"></span>
+                            <span class="star"></span>
+                            <span class="star"></span>
+                            <span class="star"></span>
+                            <span class="star"></span>
+                            <span class="star"></span>
                         </div>
-                        
-                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                                onclick="showScreen('leaderboard')">
-                            <i class="bi bi-trophy me-1"></i><span>Лидеры</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                                onclick="showScreen('achievements')">
-                            <i class="bi bi-award me-1"></i><span>Ачивки</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                                onclick="showScreen('stats')">
-                            <i class="bi bi-graph-up me-1"></i><span>Статистика</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" 
-                                id="sound-toggle" onclick="toggleSound()" title="Звук">
-                            <i class="bi bi-volume-up-fill"></i>
-                        </button>
-                        <div id="auth-area">
-                            <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
-                                    onclick="signInWithGoogle()">
-                                <i class="bi bi-google me-2"></i>Войти
-                            </button>
+                        <!-- Облака -->
+                        <div class="clouds-container">
+                            <div class="cloud cloud-1"></div>
+                            <div class="cloud cloud-2"></div>
                         </div>
                     </div>
                 </div>
+                
+                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
+                        onclick="showScreen('leaderboard')">
+                    <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
+                </button>
+                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
+                        onclick="showScreen('achievements')">
+                    <i class="bi bi-award me-1"></i><span class="d-none d-md-inline">Ачивки</span>
+                </button>
+                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
+                        onclick="showScreen('stats')">
+                    <i class="bi bi-graph-up me-1"></i><span class="d-none d-md-inline">Статистика</span>
+                </button>
+                <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" 
+                        id="sound-toggle" onclick="toggleSound()" title="Звук">
+                    <i class="bi bi-volume-up-fill"></i>
+                </button>
+                <div id="auth-area">
+                    <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" 
+                            onclick="signInWithGoogle()">
+                        <i class="bi bi-google me-2"></i>Войти
+                    </button>
+                </div>
             </div>
-        </header>
+        </div>
+    </div>
+</header>
         
         <!-- ОСНОВНОЙ КОНТЕНТ -->
         <main class="app-main">

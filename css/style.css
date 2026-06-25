@@ -118,6 +118,20 @@ body {
     50% { text-shadow: 0 0 25px var(--accent-glow), 0 0 50px rgba(255, 107, 157, 0.3); }
 }
 
+/* Улучшенные кнопки в хедере */
+.header-actions-collapsible {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+    .header-actions-collapsible {
+        gap: 8px;
+    }
+}
+
 
 /* ----- 4. КНОПКИ ----- */
 .btn-accent {

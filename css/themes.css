@@ -1,5 +1,6 @@
 /* ============================================
-   QuizHub — Система тем
+   QuizHub — Система тем v2.0
+   Красивый переключатель Луна/Солнце
    ============================================ */
 
 /* ----- СВЕТЛАЯ ТЕМА ----- */
@@ -112,133 +113,7 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
-/* ----- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ ----- */
-.theme-switch {
-    width: 48px;
-    height: 26px;
-    border-radius: 13px;
-    background: var(--bg-card);
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
-    position: relative;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.theme-switch::before {
-    content: '';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #FFD740, #FF8F00);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.theme-switch.light::before {
-    left: 24px;
-    background: linear-gradient(135deg, #FFD740, #FFAB00);
-    box-shadow: 0 0 8px rgba(255, 171, 0, 0.6);
-}
-
-.theme-switch .stars {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transition: opacity 0.4s ease;
-    opacity: 1;
-}
-
-.theme-switch.light .stars {
-    opacity: 0;
-}
-
-.theme-switch .clouds {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transition: opacity 0.4s ease;
-    opacity: 0;
-}
-
-.theme-switch.light .clouds {
-    opacity: 1;
-}
-
-.star-dot {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: #fff;
-    border-radius: 50%;
-}
-
-.star-dot:nth-child(1) { top: 4px; left: 30px; }
-.star-dot:nth-child(2) { top: 12px; left: 36px; }
-.star-dot:nth-child(3) { top: 8px; left: 40px; }
-.star-dot:nth-child(4) { top: 16px; left: 32px; }
-
-.cloud {
-    position: absolute;
-    background: #fff;
-    border-radius: 10px;
-}
-
-.cloud::before,
-.cloud::after {
-    content: '';
-    position: absolute;
-    background: #fff;
-    border-radius: 50%;
-}
-
-.cloud-1 {
-    width: 16px;
-    height: 6px;
-    top: 8px;
-    left: 26px;
-}
-.cloud-1::before {
-    width: 8px;
-    height: 8px;
-    top: -4px;
-    left: 2px;
-}
-.cloud-1::after {
-    width: 6px;
-    height: 6px;
-    top: -3px;
-    left: 8px;
-}
-
-.cloud-2 {
-    width: 10px;
-    height: 4px;
-    top: 14px;
-    left: 34px;
-}
-.cloud-2::before {
-    width: 5px;
-    height: 5px;
-    top: -3px;
-    left: 1px;
-}
-
-[data-theme="light"] .theme-switch {
-    border-color: rgba(0, 0, 0, 0.15);
-    background: var(--bg-card-hover);
-}
-
-/* Плавные переходы для всех элементов */
+/* Плавные переходы */
 body, 
 .app-header, 
 .app-footer, 
@@ -257,4 +132,194 @@ body,
         color 0.4s ease,
         border-color 0.4s ease,
         box-shadow 0.4s ease;
+}
+
+
+/* ============================================
+   ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ — ЛУНА/СОЛНЦЕ
+   ============================================ */
+
+.theme-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn {
+    width: 56px;
+    height: 28px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1a1a3e, #0d0d2b);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.theme-toggle-btn.light {
+    background: linear-gradient(135deg, #87CEEB, #4A90D9);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 12px rgba(74, 144, 217, 0.4);
+}
+
+/* Кружок (Луна/Солнце) */
+.theme-toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFFDE7, #FFF9C4);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 12px rgba(255, 253, 231, 0.5);
+}
+
+.theme-toggle-btn.light::after {
+    left: 30px;
+    background: linear-gradient(135deg, #FFD740, #FFAB00);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 171, 0, 0.8), 0 0 40px rgba(255, 215, 64, 0.5);
+    width: 24px;
+    height: 24px;
+    top: 1px;
+}
+
+/* Звёзды (тёмная тема) */
+.stars-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    transition: opacity 0.3s ease 0.1s;
+}
+
+.theme-toggle-btn.light .stars-container {
+    opacity: 0;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+.star:nth-child(1) { top: 5px; left: 35px; animation-delay: 0s; }
+.star:nth-child(2) { top: 12px; left: 32px; animation-delay: 0.5s; width: 1.5px; height: 1.5px; }
+.star:nth-child(3) { top: 8px; left: 42px; animation-delay: 1s; }
+.star:nth-child(4) { top: 16px; left: 38px; animation-delay: 0.3s; width: 1.5px; height: 1.5px; }
+.star:nth-child(5) { top: 3px; left: 40px; animation-delay: 1.5s; width: 1px; height: 1px; }
+.star:nth-child(6) { top: 18px; left: 45px; animation-delay: 0.8s; width: 1px; height: 1px; }
+.star:nth-child(7) { top: 10px; left: 28px; animation-delay: 1.2s; width: 1.5px; height: 1.5px; }
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+/* Кратер на луне */
+.theme-toggle-btn:not(.light)::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    top: 7px;
+    left: 9px;
+    z-index: 3;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn.light::before {
+    left: 37px;
+    top: 8px;
+    opacity: 0;
+}
+
+/* Облака (светлая тема) */
+.clouds-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease 0.2s;
+    pointer-events: none;
+}
+
+.theme-toggle-btn.light .clouds-container {
+    opacity: 1;
+}
+
+.cloud {
+    position: absolute;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.cloud-1 {
+    width: 14px;
+    height: 5px;
+    top: 5px;
+    left: 4px;
+    animation: cloudFloat 4s ease-in-out infinite;
+}
+
+.cloud-1::before {
+    width: 6px;
+    height: 6px;
+    top: -3px;
+    left: 2px;
+}
+
+.cloud-1::after {
+    width: 5px;
+    height: 5px;
+    top: -2px;
+    left: 7px;
+}
+
+.cloud-2 {
+    width: 10px;
+    height: 4px;
+    top: 13px;
+    left: 6px;
+    animation: cloudFloat 5s ease-in-out infinite 1s;
+}
+
+.cloud-2::before {
+    width: 5px;
+    height: 5px;
+    top: -2px;
+    left: 1px;
+}
+
+.cloud-2::after {
+    width: 4px;
+    height: 4px;
+    top: -2px;
+    left: 5px;
+}
+
+@keyframes cloudFloat {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
 }
