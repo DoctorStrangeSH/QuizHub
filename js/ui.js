@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Управление экранами и UI v2.0
+// QuizHub — Управление экранами и UI v2.1
 // ============================================
 
 let selectedDifficulty = 'easy';
@@ -50,7 +50,6 @@ function toggleTheme() {
     toggle.classList.toggle('light', next === 'light');
   }
   
-  // Обновляем графики если они есть
   if (typeof renderScoreChart === 'function') renderScoreChart();
   if (typeof renderWeeklyChart === 'function') renderWeeklyChart();
 }
@@ -137,34 +136,9 @@ function showScreen(screenName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   
-  // Рендерим содержимое экранов
   if (screenName === 'achievements') {
-    // Используем функцию из achievements.js
     if (typeof renderAchievementsScreen === 'function') {
       renderAchievementsScreen();
-    } else {
-      // Fallback: рендерим базовую структуру
-      const screen = document.getElementById('screen-achievements');
-      if (screen) {
-        screen.innerHTML = `
-          <div class="row justify-content-center">
-            <div class="col-lg-6">
-              <div class="text-center mb-4">
-                <h2 class="fw-bold font-display mb-2">🏆 Мои достижения</h2>
-                <p class="text-muted">Разблокировано: <span id="ach-count">${unlockedAchievements?.length || 0}</span> из <span id="ach-total">${ACHIEVEMENTS?.length || 20}</span></p>
-              </div>
-              <div class="d-grid gap-2" id="achievements-list">
-                <p class="text-muted text-center py-4">Загрузка достижений...</p>
-              </div>
-              <div class="text-center mt-4">
-                <button type="button" class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
-                  <i class="bi bi-play-fill me-2"></i>Пройти квиз
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      }
     }
   }
   
@@ -231,7 +205,6 @@ function setupStartButton() {
       document.activeElement.blur();
     }
     
-    // Сбрасываем режимы
     timedMode = false;
     QUIZ_SETTINGS.totalQuestions = 10;
     QUIZ_SETTINGS.timePerQuestion = 15;
@@ -247,16 +220,18 @@ function setupStartButton() {
   }
 }
 
-// ========== ТАБЛИЦА ЛИДЕРОВ (с фильтром по сложности) ==========
+// ========== ТАБЛИЦА ЛИДЕРОВ ==========
 
 let leaderboardUnsubscribe = null;
 let currentLeaderboardDifficulty = 'easy';
 
-async function loadLeaderboard(difficulty = 'easy') {
+async function loadLeaderboard(difficulty) {
+  if (difficulty) {
+    currentLeaderboardDifficulty = difficulty;
+  }
+  
   const screen = document.getElementById('screen-leaderboard');
   if (!screen) return;
-  
-  currentLeaderboardDifficulty = difficulty;
   
   screen.innerHTML = `
     <div class="row justify-content-center">
@@ -269,11 +244,25 @@ async function loadLeaderboard(difficulty = 'easy') {
     </div>
   `;
   
-  if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+  if (leaderboardUnsubscribe) {
+    leaderboardUnsubscribe();
+    leaderboardUnsubscribe = null;
+  }
   
-  leaderboardUnsubscribe = onLeaderboardUpdate(leaders => {
-    renderLeaderboardScreen(leaders, difficulty);
-  }, difficulty, 20);
+  leaderboardUnsubscribe = onLeaderboardUpdate((leaders) => {
+    const currentScreen = document.getElementById('screen-leaderboard');
+    if (currentScreen && currentScreen.classList.contains('active')) {
+      renderLeaderboardScreen(leaders, currentLeaderboardDifficulty);
+    }
+  }, currentLeaderboardDifficulty, 20);
+}
+
+function switchLeaderboardDifficulty(difficulty) {
+  document.querySelectorAll('#screen-leaderboard .btn-difficulty').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  loadLeaderboard(difficulty);
 }
 
 function renderLeaderboardScreen(leaders, difficulty) {
@@ -286,13 +275,23 @@ function renderLeaderboardScreen(leaders, difficulty) {
     'hard': '🔴 Сложный'
   };
   
-  if (leaders.length === 0) {
+  if (!leaders || leaders.length === 0) {
     screen.innerHTML = `
       <div class="row justify-content-center">
         <div class="col-lg-6 text-center py-5">
           <i class="bi bi-trophy fs-1 text-muted d-block mb-3"></i>
           <h3 class="fw-bold mb-2">Пока никого нет</h3>
-          <p class="text-muted mb-4">Стань первым в таблице лидеров!</p>
+          <p class="text-muted mb-4">Стань первым в таблице лидеров на уровне «${difficultyLabels[difficulty]}»!</p>
+          
+          <div class="d-flex gap-2 justify-content-center mb-4">
+            <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'easy' ? 'active' : ''}" 
+                    onclick="switchLeaderboardDifficulty('easy')">🟢 Лёгкий</button>
+            <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'medium' ? 'active' : ''}" 
+                    onclick="switchLeaderboardDifficulty('medium')">🟡 Средний</button>
+            <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'hard' ? 'active' : ''}" 
+                    onclick="switchLeaderboardDifficulty('hard')">🔴 Сложный</button>
+          </div>
+          
           <button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
             <i class="bi bi-play-fill me-2"></i>Пройти квиз
           </button>
@@ -310,38 +309,22 @@ function renderLeaderboardScreen(leaders, difficulty) {
         
         <div class="text-center mb-4">
           <h2 class="fw-bold font-display mb-2">🏆 Таблица лидеров</h2>
-          <p class="text-muted">Лучшие из лучших <span class="live-dot"></span></p>
+          <p class="text-muted">${difficultyLabels[difficulty]} уровень <span class="live-dot"></span></p>
         </div>
         
-        <!-- Табы сложности -->
         <div class="d-flex gap-2 justify-content-center mb-4">
           <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'easy' ? 'active' : ''}" 
-                  onclick="switchLeaderboardDifficulty('easy')">
-            🟢 Лёгкий
-          </button>
+                  onclick="switchLeaderboardDifficulty('easy')">🟢 Лёгкий</button>
           <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'medium' ? 'active' : ''}" 
-                  onclick="switchLeaderboardDifficulty('medium')">
-            🟡 Средний
-          </button>
+                  onclick="switchLeaderboardDifficulty('medium')">🟡 Средний</button>
           <button class="btn btn-difficulty rounded-pill px-4 ${currentLeaderboardDifficulty === 'hard' ? 'active' : ''}" 
-                  onclick="switchLeaderboardDifficulty('hard')">
-            🔴 Сложный
-          </button>
+                  onclick="switchLeaderboardDifficulty('hard')">🔴 Сложный</button>
         </div>
         
-        <!-- Топ-3 -->
         <div class="row g-3 mb-4">
           ${leaders.slice(0, 3).map((leader, i) => `
             <div class="col-md-4">
               <div class="bg-card rounded-4 p-4 text-center leader-card leader-top-${i + 1}">
-                <div class="leader-avatar mx-auto mb-2">
-                  ${leader.photoURL 
-                    ? `<img src="${leader.photoURL}" alt="${leader.playerName}" class="rounded-circle" width="60" height="60" style="border: 3px solid var(--accent); object-fit: cover;">`
-                    : `<div class="bg-accent bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 60px; height: 60px; border: 3px solid var(--accent);">
-                        <span class="fw-bold text-accent fs-5">${leader.playerName.charAt(0).toUpperCase()}</span>
-                      </div>`
-                  }
-                </div>
                 <span class="fs-1">${medals[i]}</span>
                 <h5 class="fw-bold mb-1 text-truncate">${leader.playerName}</h5>
                 <p class="text-accent fw-bold fs-4 mb-1">${leader.score}</p>
@@ -351,7 +334,6 @@ function renderLeaderboardScreen(leaders, difficulty) {
           `).join('')}
         </div>
         
-        <!-- Полная таблица -->
         <div class="bg-card rounded-4 overflow-hidden">
           <div class="leaderboard-table-wrapper">
             <table class="table table-dark table-hover mb-0">
@@ -361,32 +343,25 @@ function renderLeaderboardScreen(leaders, difficulty) {
                   <th>Игрок</th>
                   <th>Очки</th>
                   <th>Время</th>
-                  <th>Категория</th>
                   <th class="text-end pe-3">Дата</th>
                 </tr>
               </thead>
               <tbody>
                 ${leaders.map((leader, i) => {
-                  const date = leader.date ? new Date(leader.date.seconds * 1000) : new Date();
+                  const date = leader.date?.seconds 
+                    ? new Date(leader.date.seconds * 1000) 
+                    : new Date();
                   const dateStr = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
                   
                   return `
                   <tr class="${currentUser && leader.userId === currentUser.uid ? 'table-active-row' : ''}">
                     <td class="ps-3 fw-bold">${i < 3 ? medals[i] : i + 1}</td>
                     <td>
-                      <div class="d-flex align-items-center gap-2">
-                        ${leader.photoURL 
-                          ? `<img src="${leader.photoURL}" width="28" height="28" class="rounded-circle flex-shrink-0" style="object-fit: cover;">`
-                          : `<div class="bg-accent bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">
-                              <small class="text-accent fw-bold">${leader.playerName.charAt(0)}</small></div>`
-                        }
-                        <span class="fw-semibold text-truncate" style="max-width: 100px;">${leader.playerName}</span>
-                        ${currentUser && leader.userId === currentUser.uid ? '<small class="text-accent">(вы)</small>' : ''}
-                      </div>
+                      <span class="fw-semibold">${leader.playerName}</span>
+                      ${currentUser && leader.userId === currentUser.uid ? '<small class="text-accent ms-1">(вы)</small>' : ''}
                     </td>
                     <td class="fw-bold">${leader.score}</td>
                     <td class="text-muted">${formatTime(leader.totalTime)}</td>
-                    <td><span class="badge bg-accent bg-opacity-25 text-accent rounded-pill">${leader.category || 'Любая'}</span></td>
                     <td class="text-end pe-3"><small class="text-muted">${dateStr}</small></td>
                   </tr>
                 `;
@@ -407,149 +382,7 @@ function renderLeaderboardScreen(leaders, difficulty) {
   `;
 }
 
-function switchLeaderboardDifficulty(difficulty) {
-  currentLeaderboardDifficulty = difficulty;
-  loadLeaderboard(difficulty);
-}
-
-// ========== ЭКРАН АЧИВОК ==========
-
-function renderAchievementsScreen() {
-  const screen = document.getElementById('screen-achievements');
-  if (!screen) return;
-  
-  const level = typeof getCurrentLevel === 'function' ? getCurrentLevel() : { level: 1, name: 'Новичок', icon: '🌱', color: '#00E676' };
-  const nextLevel = typeof getNextLevel === 'function' ? getNextLevel() : null;
-  const xp = quizStats?.totalXP || 0;
-  
-  let progress = 100;
-  let xpProgress = '';
-  
-  if (nextLevel) {
-    const xpInLevel = xp - level.xpRequired;
-    const xpNeeded = nextLevel.xpRequired - level.xpRequired;
-    progress = Math.floor((xpInLevel / xpNeeded) * 100);
-    xpProgress = `${xpInLevel} / ${xpNeeded} XP`;
-  } else {
-    xpProgress = `${xp} XP (макс.)`;
-  }
-  
-  screen.innerHTML = `
-    <div class="row justify-content-center">
-      <div class="col-lg-6">
-        
-        <div class="text-center mb-4">
-          <h2 class="fw-bold font-display mb-2">🏆 Достижения</h2>
-          <p class="text-muted">Разблокировано: <span id="ach-count">${unlockedAchievements?.length || 0}</span> из <span id="ach-total">${ACHIEVEMENTS?.length || 0}</span></p>
-        </div>
-        
-        <!-- Карточка уровня -->
-        <div class="bg-card rounded-4 p-4 mb-4">
-          <h5 class="fw-bold mb-3">🎮 Прогресс игрока</h5>
-          <div id="player-level">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="fs-4">${level.icon}</span>
-              <div>
-                <span class="fw-bold" style="color: ${level.color}">${level.name}</span>
-                <small class="text-muted ms-2">Ур. ${level.level}</small>
-              </div>
-            </div>
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar" style="width: ${progress}%; background: ${level.color};"></div>
-            </div>
-            <small class="text-muted">${xpProgress}</small>
-          </div>
-          <div class="row g-2 mt-3">
-            <div class="col-4">
-              <div class="bg-card-hover rounded-3 p-2 text-center">
-                <p class="fw-bold text-accent mb-0">${quizStats?.totalQuizzes || 0}</p>
-                <small class="text-muted">Квизов</small>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="bg-card-hover rounded-3 p-2 text-center">
-                <p class="fw-bold text-warning mb-0">${quizStats?.dayStreak || 0} дн.</p>
-                <small class="text-muted">Серия</small>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="bg-card-hover rounded-3 p-2 text-center">
-                <p class="fw-bold text-success mb-0">${quizStats?.bestScore || 0}</p>
-                <small class="text-muted">Рекорд</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Ежедневные задания -->
-        ${typeof getDailyQuestsHTML === 'function' ? getDailyQuestsHTML() : ''}
-        
-        <!-- Все достижения -->
-        <h5 class="fw-bold mb-3 mt-4">🏆 Все достижения</h5>
-        <div class="d-grid gap-2" id="achievements-list">
-          ${ACHIEVEMENTS ? ACHIEVEMENTS.map(ach => {
-            const unlocked = unlockedAchievements?.includes(ach.id);
-            return `
-              <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${unlocked ? 'bg-card' : 'bg-card opacity-50'}">
-                <span class="fs-2 ${unlocked ? '' : 'grayscale'}">${ach.icon}</span>
-                <div class="flex-grow-1">
-                  <p class="fw-bold mb-0 ${unlocked ? 'text-accent' : 'text-muted'}">${ach.name}</p>
-                  <small class="text-muted">${ach.desc}</small>
-                </div>
-                <span class="fs-4">${unlocked ? '✅' : '🔒'}</span>
-              </div>
-            `;
-          }).join('') : '<p class="text-muted text-center">Загрузка...</p>'}
-        </div>
-        
-        <div class="text-center mt-4">
-          <button type="button" class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
-            <i class="bi bi-play-fill me-2"></i>Пройти квиз
-          </button>
-        </div>
-        
-      </div>
-    </div>
-  `;
-}
-
-function getDailyQuestsHTML() {
-  if (typeof dailyQuestDate === 'undefined' || typeof dailyQuests === 'undefined') return '';
-  
-  const today = new Date().toISOString().split('T')[0];
-  if (dailyQuestDate !== today && typeof generateDailyQuests === 'function') generateDailyQuests();
-  
-  if (!dailyQuests || dailyQuests.length === 0) return '';
-  
-  return `
-    <div class="bg-card rounded-4 p-4 mb-4">
-      <h5 class="fw-bold mb-3">📋 Ежедневные задания</h5>
-      <div class="d-grid gap-2">
-        ${dailyQuests.map(q => {
-          const progress = dailyQuestProgress?.[q.id] || 0;
-          const done = dailyQuestProgress?.[q.id + '_done'] || false;
-          const pct = Math.min((progress / q.target) * 100, 100);
-          return `
-            <div class="d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'bg-success bg-opacity-10' : ''}">
-              <span class="fs-4">${q.icon}</span>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between">
-                  <span class="fw-semibold ${done ? 'text-success' : ''}">${q.name}</span>
-                  <small class="text-muted">+${q.reward} XP</small>
-                </div>
-                <div class="progress mt-1" style="height: 4px;">
-                  <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width: ${pct}%;"></div>
-                </div>
-                <small class="text-muted">${progress}/${q.target} • ${q.desc}</small>
-              </div>
-              ${done ? '<span class="fs-5">✅</span>' : ''}
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
-}
+// ========== ЭКРАН АЧИВОК (заглушка, основная в achievements.js) ==========
 
 // ========== ТОСТ-УВЕДОМЛЕНИЯ ==========
 
@@ -595,7 +428,7 @@ function showToast(message, type = 'info') {
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 
-// ========== КОНФЕТТИ (заглушка, основная в animations.js) ==========
+// ========== КОНФЕТТИ ==========
 
 function spawnConfetti() {
   if (typeof spawnConfettiAdvanced === 'function') {

@@ -1,26 +1,22 @@
 // ============================================
-// QuizHub — Работа с Firestore v2.0
-// Лидеры по сложности, без повторов
+// QuizHub — Работа с Firestore v2.2
 // ============================================
 
-// Сохранение результата в Firestore
+// Сохранение результата
 async function saveResult(result) {
   try {
     const userId = result.userId || 'anonymous';
     const difficulty = result.difficulty || 'easy';
     
-    // Ищем существующий результат этого пользователя на этой сложности
     const existingQuery = await db.collection('leaderboard')
       .where('userId', '==', userId)
       .where('difficulty', '==', difficulty)
       .get();
     
     if (!existingQuery.empty) {
-      // Пользователь уже есть в этой категории сложности
       const existingDoc = existingQuery.docs[0];
       const existingData = existingDoc.data();
       
-      // Обновляем ТОЛЬКО если новый результат ЛУЧШЕ
       if (result.score > existingData.score || 
           (result.score === existingData.score && result.totalTime < existingData.totalTime)) {
         
@@ -35,15 +31,14 @@ async function saveResult(result) {
         });
         
         console.log(`Результат улучшен (${difficulty}):`, result.score);
-        showToast(`Результат улучшен! 🎉`, 'success');
+        showToast(`Новый рекорд: ${result.score} очков! 🎉`, 'success');
         return existingDoc.id;
       } else {
-        console.log(`Результат не улучшен (${difficulty}), оставляем старый`);
-        showToast(`Текущий рекорд: ${existingData.score} очков. Не побит 😅`, 'info');
+        console.log(`Результат не улучшен (${difficulty})`);
+        showToast(`Рекорд ${existingData.score} очков не побит 😅`, 'info');
         return existingDoc.id;
       }
     } else {
-      // Новый пользователь в этой сложности
       const docRef = await db.collection('leaderboard').add({
         playerName: result.playerName,
         score: result.score,
@@ -56,7 +51,7 @@ async function saveResult(result) {
         photoURL: currentUser ? currentUser.photoURL : null
       });
       
-      console.log('Новый результат сохранён:', docRef.id);
+      console.log('Новый результат:', docRef.id);
       return docRef.id;
     }
   } catch (error) {
@@ -66,42 +61,49 @@ async function saveResult(result) {
   }
 }
 
-// Получение таблицы лидеров по сложности
+// Получение лидеров (без составного индекса)
 function getLeaderboard(difficulty = 'easy', limit = 20) {
   return db.collection('leaderboard')
     .where('difficulty', '==', difficulty)
-    .orderBy('score', 'desc')
-    .orderBy('totalTime', 'asc')
-    .limit(limit)
     .get()
     .then(snapshot => {
       const results = [];
       snapshot.forEach(doc => {
         results.push({ id: doc.id, ...doc.data() });
       });
-      return results;
+      
+      results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.totalTime - b.totalTime;
+      });
+      
+      return results.slice(0, limit);
     })
     .catch(error => {
-      console.error('Ошибка загрузки лидеров:', error);
+      console.error('Ошибка загрузки:', error);
       return [];
     });
 }
 
-// Real-time подписка на таблицу лидеров
+// Real-time подписка
 function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
   return db.collection('leaderboard')
     .where('difficulty', '==', difficulty)
-    .orderBy('score', 'desc')
-    .orderBy('totalTime', 'asc')
-    .limit(limit)
     .onSnapshot(snapshot => {
       const results = [];
       snapshot.forEach(doc => {
         results.push({ id: doc.id, ...doc.data() });
       });
-      callback(results);
+      
+      results.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.totalTime - b.totalTime;
+      });
+      
+      callback(results.slice(0, limit));
     }, error => {
       console.error('Ошибка подписки:', error);
+      callback([]);
     });
 }
 

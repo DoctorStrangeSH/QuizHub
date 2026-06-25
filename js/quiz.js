@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Логика квиза v2.0
+// QuizHub — Логика квиза v2.1
 // ============================================
 
 let quizQuestions = [];
@@ -14,6 +14,7 @@ let maxStreak = 0;
 let fastestAnswer = 999;
 let timedMode = false;
 let globalTimeLeft = 60;
+let correctAnswersCount = 0;
 
 const QUIZ_SETTINGS = {
   totalQuestions: 10,
@@ -43,6 +44,7 @@ const russianQuestions = {
     { question: 'Какая планета самая близкая к Солнцу?', answers: ['Венера', 'Земля', 'Меркурий', 'Марс'], correctIndex: 2, category: 'Наука', difficulty: 'easy' },
     { question: 'Что измеряется в Ньютонах?', answers: ['Масса', 'Сила', 'Давление', 'Скорость'], correctIndex: 1, category: 'Наука', difficulty: 'medium' },
     { question: 'Какой витамин вырабатывается под воздействием солнца?', answers: ['Витамин A', 'Витамин C', 'Витамин D', 'Витамин B12'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
+    { question: 'Сколько хромосом у человека?', answers: ['23', '44', '46', '48'], correctIndex: 2, category: 'Наука', difficulty: 'hard' },
   ],
   history: [
     { question: 'В каком году Юрий Гагарин полетел в космос?', answers: ['1957', '1961', '1965', '1969'], correctIndex: 1, category: 'История', difficulty: 'medium' },
@@ -50,34 +52,43 @@ const russianQuestions = {
     { question: 'В каком году распался СССР?', answers: ['1989', '1990', '1991', '1993'], correctIndex: 2, category: 'История', difficulty: 'medium' },
     { question: 'Кто основал Москву?', answers: ['Пётр I', 'Юрий Долгорукий', 'Иван Грозный', 'Александр Невский'], correctIndex: 1, category: 'История', difficulty: 'medium' },
     { question: 'Какая битва считается переломной в Великой Отечественной войне?', answers: ['Битва за Москву', 'Курская битва', 'Сталинградская битва', 'Битва за Берлин'], correctIndex: 2, category: 'История', difficulty: 'medium' },
+    { question: 'В каком году отменили крепостное право в России?', answers: ['1801', '1825', '1861', '1905'], correctIndex: 2, category: 'История', difficulty: 'hard' },
   ],
   sport: [
     { question: 'Сколько игроков в футбольной команде на поле?', answers: ['9', '10', '11', '12'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
     { question: 'Как часто проходят Олимпийские игры?', answers: ['Каждый год', 'Раз в 2 года', 'Раз в 4 года', 'Раз в 6 лет'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
     { question: 'В каком виде спорта самый большой мяч?', answers: ['Футбол', 'Баскетбол', 'Волейбол', 'Регби'], correctIndex: 1, category: 'Спорт', difficulty: 'easy' },
     { question: 'Сколько колец в олимпийской эмблеме?', answers: ['3', '4', '5', '6'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
+    { question: 'Какая страна выиграла ЧМ-2022 по футболу?', answers: ['Франция', 'Бразилия', 'Аргентина', 'Германия'], correctIndex: 2, category: 'Спорт', difficulty: 'medium' },
   ],
   cinema: [
     { question: 'Кто снял фильм «Титаник»?', answers: ['Стивен Спилберг', 'Джеймс Кэмерон', 'Кристофер Нолан', 'Ридли Скотт'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
     { question: 'Как зовут главного героя «Гарри Поттера»?', answers: ['Рон', 'Гарри', 'Драко', 'Невилл'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
     { question: 'Какой фильм получил Оскар-2024 как лучший?', answers: ['Барби', 'Оппенгеймер', 'Убийцы цветочной луны', 'Бедные-несчастные'], correctIndex: 1, category: 'Кино', difficulty: 'hard' },
+    { question: 'Кто сыграл Джокера в «Тёмном рыцаре»?', answers: ['Джек Николсон', 'Хоакин Феникс', 'Хит Леджер', 'Джаред Лето'], correctIndex: 2, category: 'Кино', difficulty: 'medium' },
+    { question: 'Сколько фильмов в серии «Звёздные войны» (основная сага)?', answers: ['6', '7', '8', '9'], correctIndex: 3, category: 'Кино', difficulty: 'medium' },
+  ],
+  music: [
+    { question: 'Сколько клавиш у стандартного пианино?', answers: ['76', '88', '96', '104'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
+    { question: 'Кто исполнитель песни «Shape of You»?', answers: ['Эд Ширан', 'Джастин Бибер', 'Бруно Марс', 'Дрейк'], correctIndex: 0, category: 'Музыка', difficulty: 'easy' },
+    { question: 'Как называется самая популярная соцсеть для коротких видео?', answers: ['YouTube', 'Instagram', 'TikTok', 'VK Клипы'], correctIndex: 2, category: 'Музыка', difficulty: 'easy' },
+    { question: 'Какой музыкальный инструмент у Страдивари?', answers: ['Фортепиано', 'Скрипка', 'Виолончель', 'Арфа'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
+  ],
+  geography: [
+    { question: 'Какая страна самая большая по площади?', answers: ['США', 'Китай', 'Россия', 'Канада'], correctIndex: 2, category: 'География', difficulty: 'easy' },
+    { question: 'Столица Японии?', answers: ['Пекин', 'Сеул', 'Токио', 'Бангкок'], correctIndex: 2, category: 'География', difficulty: 'easy' },
+    { question: 'Какая река самая длинная в мире?', answers: ['Амазонка', 'Нил', 'Миссисипи', 'Янцзы'], correctIndex: 1, category: 'География', difficulty: 'medium' },
+    { question: 'Сколько стран граничат с Россией по суше?', answers: ['12', '14', '16', '18'], correctIndex: 2, category: 'География', difficulty: 'hard' },
+    { question: 'Какое море самое солёное?', answers: ['Чёрное', 'Средиземное', 'Красное', 'Мёртвое'], correctIndex: 3, category: 'География', difficulty: 'medium' },
   ],
   it: [
     { question: 'Что означает аббревиатура HTML?', answers: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], correctIndex: 0, category: 'IT', difficulty: 'easy' },
     { question: 'Сколько бит в одном байте?', answers: ['4', '8', '16', '32'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
     { question: 'Какой протокол используется для передачи веб-страниц?', answers: ['FTP', 'SMTP', 'HTTP', 'TCP'], correctIndex: 2, category: 'IT', difficulty: 'easy' },
     { question: 'Что такое CSS?', answers: ['Язык программирования', 'Каскадные таблицы стилей', 'База данных', 'Фреймворк'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
-  ],
-  geography: [
-    { question: 'Какая страна самая большая по площади?', answers: ['США', 'Китай', 'Россия', 'Канада'], correctIndex: 2, category: 'География', difficulty: 'easy' },
-    { question: 'Столица Японии?', answers: ['Пекин', 'Сеул', 'Токио', 'Бангкок'], correctIndex: 2, category: 'География', difficulty: 'easy' },
-    { question: 'Какая река самая длинная в мире?', answers: ['Амазонка', 'Нил', 'Миссисипи', 'Янцзы'], correctIndex: 1, category: 'География', difficulty: 'medium' },
-    { question: 'Какое море самое солёное?', answers: ['Чёрное', 'Средиземное', 'Красное', 'Мёртвое'], correctIndex: 3, category: 'География', difficulty: 'medium' },
-  ],
-  music: [
-    { question: 'Кто исполнитель песни «Shape of You»?', answers: ['Эд Ширан', 'Джастин Бибер', 'Бруно Марс', 'Дрейк'], correctIndex: 0, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Как называется самая популярная соцсеть для коротких видео?', answers: ['YouTube', 'Instagram', 'TikTok', 'VK Клипы'], correctIndex: 2, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Сколько клавиш у стандартного пианино?', answers: ['76', '88', '96', '104'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
+    { question: 'В каком году основана компания Apple?', answers: ['1975', '1976', '1977', '1980'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
+    { question: 'Что такое API?', answers: ['Приложение', 'Интерфейс программирования', 'База данных', 'Язык программирования'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
+    { question: 'Кто создал Linux?', answers: ['Билл Гейтс', 'Стив Джобс', 'Линус Торвальдс', 'Марк Цукерберг'], correctIndex: 2, category: 'IT', difficulty: 'medium' },
   ]
 };
 
@@ -193,6 +204,7 @@ async function startQuiz() {
   maxStreak = 0;
   fastestAnswer = 999;
   timedMode = false;
+  correctAnswersCount = 0;
   
   showScreen('quiz');
   renderQuizScreen();
@@ -276,12 +288,10 @@ function renderQuizScreen() {
   
   document.getElementById('skip-question')?.addEventListener('click', skipQuestion);
   
-  // Добавляем кнопку голосового ввода
   setTimeout(() => {
     if (typeof addVoiceButton === 'function') addVoiceButton();
   }, 100);
   
-  // Автосохранение прогресса
   if (typeof saveQuizProgress === 'function') {
     saveQuizProgress({
       currentQuestionIndex,
@@ -338,7 +348,6 @@ function updateTimerDisplay() {
     const circumference = 2 * Math.PI * 36;
     const offset = circumference * (1 - timeLeft / QUIZ_SETTINGS.timePerQuestion);
     circle.style.strokeDashoffset = offset;
-    
     circle.classList.toggle('danger', timeLeft <= 5);
   }
   
@@ -385,13 +394,17 @@ function handleAnswer(selectedIndex) {
   });
   
   if (isCorrect) {
+    correctAnswersCount++;
+    
     if (typeof playCorrectSound === 'function') playCorrectSound();
     if (typeof vibrateCorrect === 'function') vibrateCorrect();
     
     currentStreak++;
     if (currentStreak > maxStreak) maxStreak = currentStreak;
     if (answerTime < fastestAnswer) fastestAnswer = answerTime;
-    if (answerTime < 3) quizStats.fastAnswersCount = (quizStats.fastAnswersCount || 0) + 1;
+    if (answerTime < 3 && typeof quizStats !== 'undefined') {
+      quizStats.fastAnswersCount = (quizStats.fastAnswersCount || 0) + 1;
+    }
     
     const timeBonus = Math.floor(timeLeft / QUIZ_SETTINGS.timePerQuestion * 5);
     const difficultyMultiplier = { easy: 1, medium: 1.5, hard: 2 };
@@ -437,9 +450,8 @@ async function finishQuiz() {
   clearInterval(timerInterval);
   const totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
   
-  const maxPossibleScore = QUIZ_SETTINGS.totalQuestions * 15;
-  const correctAnswers = Math.round((score / maxPossibleScore) * QUIZ_SETTINGS.totalQuestions);
-  const actualCorrect = Math.min(correctAnswers, QUIZ_SETTINGS.totalQuestions);
+  // Точный подсчёт правильных ответов
+  const actualCorrect = correctAnswersCount;
   
   const category = document.getElementById('quiz-category');
   const categoryText = category ? category.options[category.selectedIndex].text : 'Любая';
@@ -455,6 +467,14 @@ async function finishQuiz() {
     userId: currentUser ? currentUser.uid : null
   };
   
+  console.log('Результат квиза:', {
+    score,
+    totalTime,
+    correctAnswers: actualCorrect,
+    difficulty: selectedDifficulty,
+    maxStreak
+  });
+  
   // Сохраняем результат
   if (typeof isOnline !== 'undefined' && isOnline) {
     await saveResult(result);
@@ -464,7 +484,7 @@ async function finishQuiz() {
     await saveResult(result);
   }
   
-  // Очищаем сохранённый прогресс
+  // Очищаем прогресс
   localStorage.removeItem('quizhub-quiz-progress');
   
   showScreen('result');
@@ -472,16 +492,27 @@ async function finishQuiz() {
   
   // Статистика и ачивки
   if (typeof updateStats === 'function') updateStats(result);
-  quizStats.maxStreak = maxStreak;
-  quizStats.fastestAnswer = fastestAnswer;
-  localStorage.setItem('quizhub-stats', JSON.stringify(quizStats));
+  if (typeof quizStats !== 'undefined') {
+    quizStats.maxStreak = maxStreak;
+    quizStats.fastestAnswer = fastestAnswer;
+    localStorage.setItem('quizhub-stats', JSON.stringify(quizStats));
+  }
   if (typeof checkAchievements === 'function') checkAchievements(result);
   if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
+  
+  // Ежедневные задания
   if (typeof updateDailyQuestProgress === 'function') {
-    updateDailyQuestProgress('fast_answers', quizStats.fastAnswersCount || 0);
+    updateDailyQuestProgress('quizzes_today', 1);
+    if (result.score >= 50) updateDailyQuestProgress('score_50');
+    if (result.score >= 100) updateDailyQuestProgress('score_100');
+    if (actualCorrect === 10) updateDailyQuestProgress('perfect');
+    if (selectedDifficulty === 'hard') updateDailyQuestProgress('hard_quiz');
+    if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateDailyQuestProgress('english');
+    if (maxStreak >= 5) updateDailyQuestProgress('streak_5');
+    if ((quizStats?.fastAnswersCount || 0) >= 3) updateDailyQuestProgress('fast_answers', quizStats.fastAnswersCount || 0);
   }
   
-  // Вибрация
+  // Вибрация при хорошем результате
   if (result.score >= 70 && typeof vibrateAchievement === 'function') {
     vibrateAchievement();
   }
@@ -496,7 +527,11 @@ function renderResultScreen(result) {
   const grade = getGrade(result.score);
   
   if (result.score >= 70) {
-    spawnConfetti();
+    if (typeof spawnConfettiAdvanced === 'function') {
+      spawnConfettiAdvanced(80);
+    } else if (typeof spawnConfetti === 'function') {
+      spawnConfetti();
+    }
     if (typeof playFanfareSound === 'function') playFanfareSound();
   }
   
@@ -567,6 +602,7 @@ async function startTimedMode() {
   }
   
   timedMode = true;
+  correctAnswersCount = 0;
   QUIZ_SETTINGS.totalQuestions = 999;
   QUIZ_SETTINGS.timePerQuestion = 999;
   globalTimeLeft = 60;
@@ -682,6 +718,7 @@ function handleTimedAnswer(selectedIndex) {
   });
   
   if (isCorrect) {
+    correctAnswersCount++;
     if (typeof playCorrectSound === 'function') playCorrectSound();
     if (typeof vibrateCorrect === 'function') vibrateCorrect();
     score += 10;
@@ -710,7 +747,7 @@ async function finishTimedMode() {
     playerName: document.getElementById('player-name').value.trim() || 'Гость',
     score: score,
     totalTime: 60,
-    correctAnswers: Math.floor(score / 10),
+    correctAnswers: correctAnswersCount,
     difficulty: 'timed',
     category: 'На время',
     date: new Date().toISOString(),
