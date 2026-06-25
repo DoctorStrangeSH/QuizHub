@@ -1,5 +1,6 @@
 // ============================================
-// QuizHub — Логика квиза v2.1
+// QuizHub — Логика квиза v3.0
+// Вопросы загружаются из data/questions-ru.json
 // ============================================
 
 let quizQuestions = [];
@@ -22,169 +23,26 @@ const QUIZ_SETTINGS = {
   maxScore: 100
 };
 
-// ========== БАЗА РУССКИХ ВОПРОСОВ ==========
-
-const russianQuestions = {
-  any: [
-    { question: 'Сколько цветов в радуге?', answers: ['5', '6', '7', '8'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Какой океан самый большой?', answers: ['Атлантический', 'Индийский', 'Тихий', 'Северный Ледовитый'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Сколько секунд в одном часе?', answers: ['600', '360', '3600', '60'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Как называется столица Франции?', answers: ['Лондон', 'Берлин', 'Мадрид', 'Париж'], correctIndex: 3, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Сколько дней в високосном году?', answers: ['364', '365', '366', '367'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Какой газ преобладает в атмосфере Земли?', answers: ['Кислород', 'Азот', 'Углекислый газ', 'Водород'], correctIndex: 1, category: 'Общие знания', difficulty: 'medium' },
-    { question: 'Какая планета самая большая в Солнечной системе?', answers: ['Земля', 'Марс', 'Юпитер', 'Сатурн'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'Сколько континентов на Земле?', answers: ['5', '6', '7', '8'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-    { question: 'В каком году началась Вторая мировая война?', answers: ['1937', '1939', '1941', '1945'], correctIndex: 1, category: 'Общие знания', difficulty: 'medium' },
-    { question: 'Кто написал картину «Мона Лиза»?', answers: ['Ван Гог', 'Пикассо', 'Леонардо да Винчи', 'Рембрандт'], correctIndex: 2, category: 'Общие знания', difficulty: 'easy' },
-  ],
-  science: [
-    { question: 'Какой химический элемент обозначается символом O?', answers: ['Золото', 'Кислород', 'Олово', 'Осмий'], correctIndex: 1, category: 'Наука', difficulty: 'easy' },
-    { question: 'Какая частица имеет положительный заряд?', answers: ['Электрон', 'Нейтрон', 'Протон', 'Фотон'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
-    { question: 'Сколько костей в теле взрослого человека?', answers: ['186', '206', '226', '256'], correctIndex: 1, category: 'Наука', difficulty: 'medium' },
-    { question: 'Какая планета самая близкая к Солнцу?', answers: ['Венера', 'Земля', 'Меркурий', 'Марс'], correctIndex: 2, category: 'Наука', difficulty: 'easy' },
-    { question: 'Что измеряется в Ньютонах?', answers: ['Масса', 'Сила', 'Давление', 'Скорость'], correctIndex: 1, category: 'Наука', difficulty: 'medium' },
-    { question: 'Какой витамин вырабатывается под воздействием солнца?', answers: ['Витамин A', 'Витамин C', 'Витамин D', 'Витамин B12'], correctIndex: 2, category: 'Наука', difficulty: 'medium' },
-    { question: 'Сколько хромосом у человека?', answers: ['23', '44', '46', '48'], correctIndex: 2, category: 'Наука', difficulty: 'hard' },
-  ],
-  history: [
-    { question: 'В каком году Юрий Гагарин полетел в космос?', answers: ['1957', '1961', '1965', '1969'], correctIndex: 1, category: 'История', difficulty: 'medium' },
-    { question: 'Кто был первым президентом России?', answers: ['Горбачёв', 'Ельцин', 'Путин', 'Медведев'], correctIndex: 1, category: 'История', difficulty: 'easy' },
-    { question: 'В каком году распался СССР?', answers: ['1989', '1990', '1991', '1993'], correctIndex: 2, category: 'История', difficulty: 'medium' },
-    { question: 'Кто основал Москву?', answers: ['Пётр I', 'Юрий Долгорукий', 'Иван Грозный', 'Александр Невский'], correctIndex: 1, category: 'История', difficulty: 'medium' },
-    { question: 'Какая битва считается переломной в Великой Отечественной войне?', answers: ['Битва за Москву', 'Курская битва', 'Сталинградская битва', 'Битва за Берлин'], correctIndex: 2, category: 'История', difficulty: 'medium' },
-    { question: 'В каком году отменили крепостное право в России?', answers: ['1801', '1825', '1861', '1905'], correctIndex: 2, category: 'История', difficulty: 'hard' },
-  ],
-  sport: [
-    { question: 'Сколько игроков в футбольной команде на поле?', answers: ['9', '10', '11', '12'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
-    { question: 'Как часто проходят Олимпийские игры?', answers: ['Каждый год', 'Раз в 2 года', 'Раз в 4 года', 'Раз в 6 лет'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
-    { question: 'В каком виде спорта самый большой мяч?', answers: ['Футбол', 'Баскетбол', 'Волейбол', 'Регби'], correctIndex: 1, category: 'Спорт', difficulty: 'easy' },
-    { question: 'Сколько колец в олимпийской эмблеме?', answers: ['3', '4', '5', '6'], correctIndex: 2, category: 'Спорт', difficulty: 'easy' },
-    { question: 'Какая страна выиграла ЧМ-2022 по футболу?', answers: ['Франция', 'Бразилия', 'Аргентина', 'Германия'], correctIndex: 2, category: 'Спорт', difficulty: 'medium' },
-  ],
-  cinema: [
-    { question: 'Кто снял фильм «Титаник»?', answers: ['Стивен Спилберг', 'Джеймс Кэмерон', 'Кристофер Нолан', 'Ридли Скотт'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
-    { question: 'Как зовут главного героя «Гарри Поттера»?', answers: ['Рон', 'Гарри', 'Драко', 'Невилл'], correctIndex: 1, category: 'Кино', difficulty: 'easy' },
-    { question: 'Какой фильм получил Оскар-2024 как лучший?', answers: ['Барби', 'Оппенгеймер', 'Убийцы цветочной луны', 'Бедные-несчастные'], correctIndex: 1, category: 'Кино', difficulty: 'hard' },
-    { question: 'Кто сыграл Джокера в «Тёмном рыцаре»?', answers: ['Джек Николсон', 'Хоакин Феникс', 'Хит Леджер', 'Джаред Лето'], correctIndex: 2, category: 'Кино', difficulty: 'medium' },
-    { question: 'Сколько фильмов в серии «Звёздные войны» (основная сага)?', answers: ['6', '7', '8', '9'], correctIndex: 3, category: 'Кино', difficulty: 'medium' },
-  ],
-  music: [
-    { question: 'Сколько клавиш у стандартного пианино?', answers: ['76', '88', '96', '104'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
-    { question: 'Кто исполнитель песни «Shape of You»?', answers: ['Эд Ширан', 'Джастин Бибер', 'Бруно Марс', 'Дрейк'], correctIndex: 0, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Как называется самая популярная соцсеть для коротких видео?', answers: ['YouTube', 'Instagram', 'TikTok', 'VK Клипы'], correctIndex: 2, category: 'Музыка', difficulty: 'easy' },
-    { question: 'Какой музыкальный инструмент у Страдивари?', answers: ['Фортепиано', 'Скрипка', 'Виолончель', 'Арфа'], correctIndex: 1, category: 'Музыка', difficulty: 'medium' },
-  ],
-  geography: [
-    { question: 'Какая страна самая большая по площади?', answers: ['США', 'Китай', 'Россия', 'Канада'], correctIndex: 2, category: 'География', difficulty: 'easy' },
-    { question: 'Столица Японии?', answers: ['Пекин', 'Сеул', 'Токио', 'Бангкок'], correctIndex: 2, category: 'География', difficulty: 'easy' },
-    { question: 'Какая река самая длинная в мире?', answers: ['Амазонка', 'Нил', 'Миссисипи', 'Янцзы'], correctIndex: 1, category: 'География', difficulty: 'medium' },
-    { question: 'Сколько стран граничат с Россией по суше?', answers: ['12', '14', '16', '18'], correctIndex: 2, category: 'География', difficulty: 'hard' },
-    { question: 'Какое море самое солёное?', answers: ['Чёрное', 'Средиземное', 'Красное', 'Мёртвое'], correctIndex: 3, category: 'География', difficulty: 'medium' },
-  ],
-  it: [
-    { question: 'Что означает аббревиатура HTML?', answers: ['Hyper Text Markup Language', 'High Tech Modern Language', 'Hyper Transfer Markup Language', 'Home Tool Markup Language'], correctIndex: 0, category: 'IT', difficulty: 'easy' },
-    { question: 'Сколько бит в одном байте?', answers: ['4', '8', '16', '32'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
-    { question: 'Какой протокол используется для передачи веб-страниц?', answers: ['FTP', 'SMTP', 'HTTP', 'TCP'], correctIndex: 2, category: 'IT', difficulty: 'easy' },
-    { question: 'Что такое CSS?', answers: ['Язык программирования', 'Каскадные таблицы стилей', 'База данных', 'Фреймворк'], correctIndex: 1, category: 'IT', difficulty: 'easy' },
-    { question: 'В каком году основана компания Apple?', answers: ['1975', '1976', '1977', '1980'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
-    { question: 'Что такое API?', answers: ['Приложение', 'Интерфейс программирования', 'База данных', 'Язык программирования'], correctIndex: 1, category: 'IT', difficulty: 'medium' },
-    { question: 'Кто создал Linux?', answers: ['Билл Гейтс', 'Стив Джобс', 'Линус Торвальдс', 'Марк Цукерберг'], correctIndex: 2, category: 'IT', difficulty: 'medium' },
-  ]
-};
-
 // ========== ЗАГРУЗКА ВОПРОСОВ ==========
 
-async function fetchQuestions(category, difficulty) {
+async function fetchQuestions(category, difficulty, count = 10) {
   if (selectedLanguage === 'en') {
     return await fetchEnglishQuestions(category, difficulty);
   }
-  return getLocalQuestions(category, difficulty);
-}
-
-async function fetchEnglishQuestions(category, difficulty) {
-  try {
-    const url = new URL('https://opentdb.com/api.php');
-    url.searchParams.set('amount', QUIZ_SETTINGS.totalQuestions);
-    url.searchParams.set('type', 'multiple');
-    
-    if (category && category !== 'any') url.searchParams.set('category', category);
-    if (difficulty && difficulty !== 'any') url.searchParams.set('difficulty', difficulty);
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.response_code === 0 && data.results.length > 0) {
-      return data.results.map(formatEnglishQuestion);
+  
+  // Русские вопросы — из JSON
+  const data = await loadRussianQuestions();
+  if (data && data.questions && data.questions.length > 0) {
+    const questions = getLocalQuestionsFromJSON(data, category, difficulty, count);
+    if (questions.length > 0) {
+      return questions;
     }
-  } catch (error) {
-    console.log('API недоступен, переключаю на русскую базу');
-    showToast('API недоступен. Загружаем русские вопросы.', 'warning');
   }
   
-  return getLocalQuestions(category, difficulty);
-}
-
-function formatEnglishQuestion(apiQuestion) {
-  const decodeHTML = (html) => {
-    const txt = document.createElement('textarea');
-    txt.innerHTML = html;
-    return txt.value;
-  };
-  
-  const answers = [
-    ...apiQuestion.incorrect_answers.map(decodeHTML),
-    decodeHTML(apiQuestion.correct_answer)
-  ];
-  
-  const shuffled = shuffleArray(answers);
-  
-  return {
-    question: decodeHTML(apiQuestion.question),
-    answers: shuffled,
-    correctIndex: shuffled.indexOf(decodeHTML(apiQuestion.correct_answer)),
-    category: decodeHTML(apiQuestion.category),
-    difficulty: apiQuestion.difficulty
-  };
-}
-
-function getLocalQuestions(category, difficulty) {
-  let pool = [];
-  
-  if (category && category !== 'any' && russianQuestions[category]) {
-    pool = [...russianQuestions[category]];
-  } else {
-    Object.values(russianQuestions).forEach(arr => pool.push(...arr));
-  }
-  
-  if (difficulty && difficulty !== 'any') {
-    pool = pool.filter(q => q.difficulty === difficulty);
-  }
-  
-  if (pool.length < QUIZ_SETTINGS.totalQuestions) {
-    Object.values(russianQuestions).forEach(arr => pool.push(...arr));
-    pool = pool.filter((q, i, self) => self.findIndex(t => t.question === q.question) === i);
-  }
-  
-  const selected = shuffleArray(pool).slice(0, QUIZ_SETTINGS.totalQuestions);
-  
-  return selected.map(q => {
-    const answers = shuffleArray([...q.answers]);
-    const correctAnswer = q.answers[q.correctIndex];
-    return {
-      ...q,
-      answers: answers,
-      correctIndex: answers.indexOf(correctAnswer)
-    };
-  });
-}
-
-function shuffleArray(array) {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+  // Если JSON не загрузился — экстренный fallback
+  console.error('Не удалось загрузить вопросы');
+  showToast('Ошибка загрузки вопросов 😢', 'danger');
+  return [];
 }
 
 // ========== ЗАПУСК КВИЗА ==========
@@ -195,7 +53,14 @@ async function startQuiz() {
   
   showLoadingScreen();
   
-  quizQuestions = await fetchQuestions(category, difficulty);
+  QUIZ_SETTINGS.totalQuestions = 10;
+  quizQuestions = await fetchQuestions(category, difficulty, 10);
+  
+  if (quizQuestions.length === 0) {
+    showToast('Не удалось загрузить вопросы. Попробуйте позже.', 'danger');
+    showScreen('home');
+    return;
+  }
   
   currentQuestionIndex = 0;
   score = 0;
@@ -255,7 +120,7 @@ function renderQuizScreen() {
         
         <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
           <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
-            ${question.category} • ${getDifficultyLabel(question.difficulty)}
+            ${question.category || 'Общие знания'} • ${getDifficultyLabel(question.difficulty)}
           </span>
           <h3 class="fw-bold mb-4">${question.question}</h3>
           
@@ -450,8 +315,9 @@ async function finishQuiz() {
   clearInterval(timerInterval);
   const totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
   
-  // Точный подсчёт правильных ответов
   const actualCorrect = correctAnswersCount;
+  
+  console.log(`Правильных ответов: ${correctAnswersCount} из ${QUIZ_SETTINGS.totalQuestions}`);
   
   const category = document.getElementById('quiz-category');
   const categoryText = category ? category.options[category.selectedIndex].text : 'Любая';
@@ -467,14 +333,6 @@ async function finishQuiz() {
     userId: currentUser ? currentUser.uid : null
   };
   
-  console.log('Результат квиза:', {
-    score,
-    totalTime,
-    correctAnswers: actualCorrect,
-    difficulty: selectedDifficulty,
-    maxStreak
-  });
-  
   // Сохраняем результат
   if (typeof isOnline !== 'undefined' && isOnline) {
     await saveResult(result);
@@ -484,7 +342,6 @@ async function finishQuiz() {
     await saveResult(result);
   }
   
-  // Очищаем прогресс
   localStorage.removeItem('quizhub-quiz-progress');
   
   showScreen('result');
@@ -512,7 +369,6 @@ async function finishQuiz() {
     if ((quizStats?.fastAnswersCount || 0) >= 3) updateDailyQuestProgress('fast_answers', quizStats.fastAnswersCount || 0);
   }
   
-  // Вибрация при хорошем результате
   if (result.score >= 70 && typeof vibrateAchievement === 'function') {
     vibrateAchievement();
   }
@@ -608,11 +464,12 @@ async function startTimedMode() {
   globalTimeLeft = 60;
   
   const category = document.getElementById('quiz-category').value;
-  quizQuestions = await fetchQuestions(category, 'any');
+  quizQuestions = await fetchQuestions(category, 'any', 100);
   
-  while (quizQuestions.length < 50) {
-    const more = await fetchQuestions(category, 'any');
-    quizQuestions = [...quizQuestions, ...more];
+  if (quizQuestions.length === 0) {
+    showToast('Не удалось загрузить вопросы', 'danger');
+    showScreen('home');
+    return;
   }
   
   currentQuestionIndex = 0;
@@ -629,7 +486,7 @@ async function startTimedMode() {
 
 function renderTimedModeScreen() {
   const screen = document.getElementById('screen-quiz');
-  if (!screen) return;
+  if (!screen || quizQuestions.length === 0) return;
   
   const question = quizQuestions[currentQuestionIndex];
   
@@ -650,7 +507,7 @@ function renderTimedModeScreen() {
         
         <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
           <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
-            ${question.category} • Вопрос ${currentQuestionIndex + 1}
+            ${question.category || 'Общие знания'} • Вопрос ${currentQuestionIndex + 1}
           </span>
           <h3 class="fw-bold mb-4">${question.question}</h3>
           
@@ -728,13 +585,6 @@ function handleTimedAnswer(selectedIndex) {
   
   setTimeout(() => {
     currentQuestionIndex++;
-    
-    if (currentQuestionIndex >= quizQuestions.length - 5) {
-      fetchQuestions('any', 'any').then(more => {
-        quizQuestions = [...quizQuestions, ...more];
-      });
-    }
-    
     renderTimedModeScreen();
   }, isCorrect ? 500 : 1000);
 }
@@ -784,4 +634,24 @@ async function finishTimedMode() {
   }
   
   if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function getDifficultyLabel(difficulty) {
+  const labels = { easy: '🟢 Легко', medium: '🟡 Средне', hard: '🔴 Сложно' };
+  return labels[difficulty] || difficulty;
+}
+
+function getGrade(score) {
+  if (score >= 90) return { title: 'Легенда!', message: 'Потрясающий результат,', icon: 'trophy-fill', color: 'grade-gold' };
+  if (score >= 70) return { title: 'Отлично!', message: 'Ты настоящий знаток,', icon: 'star-fill', color: 'grade-silver' };
+  if (score >= 50) return { title: 'Неплохо!', message: 'Хорошая попытка,', icon: 'hand-thumbs-up-fill', color: 'grade-bronze' };
+  return { title: 'Попробуй ещё!', message: 'Не расстраивайся,', icon: 'emoji-smile-fill', color: 'grade-default' };
 }

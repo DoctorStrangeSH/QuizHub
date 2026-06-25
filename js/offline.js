@@ -24,7 +24,6 @@ function updateOnlineStatus() {
     }
   }
   
-  // Показываем уведомление при изменении статуса
   if (!isOnline) {
     showToast('Вы офлайн. Результаты сохранятся и отправятся позже 📡', 'warning');
   } else {
@@ -34,7 +33,6 @@ function updateOnlineStatus() {
 }
 
 function createOnlineIndicator() {
-  // Создаём индикатор, если его нет
   if (document.getElementById('online-indicator')) return;
   
   const indicator = document.createElement('div');
@@ -54,8 +52,7 @@ function createOnlineIndicator() {
 // ========== OFFLINE RESULTS ==========
 
 function saveResultOffline(result) {
-  return new Promise((resolve, reject) => {
-    // Сохраняем в localStorage как запасной вариант
+  return new Promise((resolve) => {
     const offlineResults = JSON.parse(localStorage.getItem('quizhub-offline-results') || '[]');
     offlineResults.push({
       ...result,
@@ -63,7 +60,6 @@ function saveResultOffline(result) {
     });
     localStorage.setItem('quizhub-offline-results', JSON.stringify(offlineResults));
     
-    // Отправляем в Service Worker для IndexedDB
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
         type: 'SAVE_OFFLINE_RESULT',
@@ -97,7 +93,6 @@ async function syncOfflineResults() {
     showToast(`Синхронизировано результатов: ${synced} ✅`, 'success');
   }
   
-  // Очищаем синхронизированные
   const remaining = offlineResults.slice(synced);
   localStorage.setItem('quizhub-offline-results', JSON.stringify(remaining));
 }
@@ -110,7 +105,6 @@ function saveQuizProgress(progress) {
     timestamp: Date.now()
   }));
   
-  // Также сохраняем в Service Worker
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage({
       type: 'SAVE_QUIZ_PROGRESS',
@@ -126,7 +120,6 @@ function getQuizProgress() {
   const progress = JSON.parse(saved);
   const age = (Date.now() - progress.timestamp) / 1000;
   
-  // Если прошло больше 30 минут — сбрасываем
   if (age > 1800) {
     localStorage.removeItem('quizhub-quiz-progress');
     return null;
@@ -142,18 +135,15 @@ let installButtonAdded = false;
 
 function initPWAInstall() {
   window.addEventListener('beforeinstallprompt', (e) => {
-    // Предотвращаем автоматическое появление
     e.preventDefault();
     deferredPrompt = e;
     
-    // Добавляем кнопку установки
     if (!installButtonAdded) {
       addInstallButton();
       installButtonAdded = true;
     }
   });
   
-  // Показываем подсказку на iOS
   const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
   
@@ -163,7 +153,6 @@ function initPWAInstall() {
     }, 3000);
   }
   
-  // Скрываем кнопку если уже установлено
   window.addEventListener('appinstalled', () => {
     const installBtn = document.getElementById('install-button');
     if (installBtn) installBtn.remove();
@@ -239,9 +228,7 @@ function initSwipeNavigation() {
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
     
-    // Только если горизонтальный свайп больше вертикального
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 80) {
-      // Свайп вправо — назад на главную
       if (deltaX > 0) {
         const currentScreen = document.querySelector('.screen.active');
         if (currentScreen && currentScreen.id !== 'screen-home') {
@@ -260,11 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initPWAInstall();
   initSwipeNavigation();
   
-  // Слушаем изменения статуса сети
   window.addEventListener('online', updateOnlineStatus);
   window.addEventListener('offline', updateOnlineStatus);
   
-  // Проверяем сохранённый прогресс
   const savedProgress = getQuizProgress();
   if (savedProgress) {
     const age = Math.floor((Date.now() - savedProgress.timestamp) / 1000);
@@ -273,9 +258,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
-  // Регистрируем периодическую синхронизацию (если поддерживается)
-  if ('periodicSync' in navigator.serviceWorker?.registration) {
-    // Можно запросить разрешение на периодическую синхронизацию
-    console.log('[PWA] Periodic Sync поддерживается');
+  // Исправленная проверка periodicSync
+  if (navigator.serviceWorker && navigator.serviceWorker.registration) {
+    navigator.serviceWorker.ready.then(reg => {
+      if ('periodicSync' in reg) {
+        console.log('[PWA] Periodic Sync поддерживается');
+      }
+      if ('sync' in reg) {
+        console.log('[PWA] Background Sync поддерживается');
+      }
+    });
   }
 });

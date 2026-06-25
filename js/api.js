@@ -1,22 +1,27 @@
 // ============================================
-// QuizHub — Работа с Firestore v2.2
+// QuizHub — Работа с Firestore + загрузка вопросов из JSON
 // ============================================
 
-// Сохранение результата
+// ========== РАБОТА С FIRESTORE ==========
+
+// Сохранение результата в Firestore
 async function saveResult(result) {
   try {
     const userId = result.userId || 'anonymous';
     const difficulty = result.difficulty || 'easy';
     
+    // Ищем существующий результат этого пользователя на этой сложности
     const existingQuery = await db.collection('leaderboard')
       .where('userId', '==', userId)
       .where('difficulty', '==', difficulty)
       .get();
     
     if (!existingQuery.empty) {
+      // Пользователь уже есть в этой категории сложности
       const existingDoc = existingQuery.docs[0];
       const existingData = existingDoc.data();
       
+      // Обновляем ТОЛЬКО если новый результат ЛУЧШЕ
       if (result.score > existingData.score || 
           (result.score === existingData.score && result.totalTime < existingData.totalTime)) {
         
@@ -34,11 +39,12 @@ async function saveResult(result) {
         showToast(`Новый рекорд: ${result.score} очков! 🎉`, 'success');
         return existingDoc.id;
       } else {
-        console.log(`Результат не улучшен (${difficulty})`);
-        showToast(`Рекорд ${existingData.score} очков не побит 😅`, 'info');
+        console.log(`Результат не улучшен (${difficulty}), оставляем старый`);
+        showToast(`Текущий рекорд: ${existingData.score} очков. Не побит 😅`, 'info');
         return existingDoc.id;
       }
     } else {
+      // Новый пользователь в этой сложности
       const docRef = await db.collection('leaderboard').add({
         playerName: result.playerName,
         score: result.score,
@@ -51,7 +57,7 @@ async function saveResult(result) {
         photoURL: currentUser ? currentUser.photoURL : null
       });
       
-      console.log('Новый результат:', docRef.id);
+      console.log('Новый результат сохранён:', docRef.id);
       return docRef.id;
     }
   } catch (error) {
@@ -61,7 +67,7 @@ async function saveResult(result) {
   }
 }
 
-// Получение лидеров (без составного индекса)
+// Получение таблицы лидеров по сложности
 function getLeaderboard(difficulty = 'easy', limit = 20) {
   return db.collection('leaderboard')
     .where('difficulty', '==', difficulty)
@@ -72,6 +78,7 @@ function getLeaderboard(difficulty = 'easy', limit = 20) {
         results.push({ id: doc.id, ...doc.data() });
       });
       
+      // Сортируем на клиенте
       results.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return a.totalTime - b.totalTime;
@@ -80,12 +87,12 @@ function getLeaderboard(difficulty = 'easy', limit = 20) {
       return results.slice(0, limit);
     })
     .catch(error => {
-      console.error('Ошибка загрузки:', error);
+      console.error('Ошибка загрузки лидеров:', error);
       return [];
     });
 }
 
-// Real-time подписка
+// Real-time подписка на таблицу лидеров
 function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
   return db.collection('leaderboard')
     .where('difficulty', '==', difficulty)
@@ -95,6 +102,7 @@ function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
         results.push({ id: doc.id, ...doc.data() });
       });
       
+      // Сортируем на клиенте
       results.sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return a.totalTime - b.totalTime;
@@ -107,32 +115,127 @@ function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
     });
 }
 
-// Удаление старых результатов пользователя (опционально)
-async function cleanUserResults(userId) {
+// ========== ЗАГРУЗКА РУССКИХ ВОПРОСОВ ИЗ JSON ==========
+
+let russianQuestionsData = null;
+
+async function loadRussianQuestions() {
+  if (russianQuestionsData) return russianQuestionsData;
+  
   try {
-    const snapshot = await db.collection('leaderboard')
-      .where('userId', '==', userId)
-      .get();
-    
-    // Оставляем только лучший результат для каждой сложности
-    const difficulties = {};
-    
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const diff = data.difficulty;
-      
-      if (!difficulties[diff] || data.score > difficulties[diff].score) {
-        if (difficulties[diff]) {
-          // Удаляем старый лучший результат
-          difficulties[diff].ref.delete();
-        }
-        difficulties[diff] = { score: data.score, ref: doc.ref };
-      } else {
-        // Удаляем худший результат
-        doc.ref.delete();
-      }
-    });
+    const response = await fetch('data/questions-ru.json');
+    if (!response.ok) throw new Error('Файл не найден');
+    russianQuestionsData = await response.json();
+    console.log('Загружено русских вопросов:', russianQuestionsData.questions.length);
+    return russianQuestionsData;
   } catch (error) {
-    console.error('Ошибка очистки:', error);
+    console.error('Ошибка загрузки вопросов:', error);
+    return null;
   }
+}
+
+function getLocalQuestionsFromJSON(data, category, difficulty, count) {
+  if (!data || !data.questions) return [];
+  
+  let pool = [...data.questions];
+  
+  // Фильтруем по категории
+  if (category && category !== 'any') {
+    pool = pool.filter(q => q.category === category);
+  }
+  
+  // Фильтруем по сложности
+  if (difficulty && difficulty !== 'any') {
+    pool = pool.filter(q => q.difficulty === difficulty);
+  }
+  
+  // Если не хватает вопросов, расширяем пул
+  if (pool.length < count) {
+    pool = [...data.questions];
+    if (difficulty && difficulty !== 'any') {
+      const diffPool = pool.filter(q => q.difficulty === difficulty);
+      if (diffPool.length >= count) {
+        pool = diffPool;
+      }
+    }
+  }
+  
+  // Выбираем нужное количество
+  const selected = shuffleArray(pool).slice(0, count);
+  
+  // Перемешиваем ответы
+  return selected.map(q => {
+    const answers = shuffleArray([...q.answers]);
+    const correctAnswer = q.answers[q.correctIndex];
+    return {
+      ...q,
+      answers: answers,
+      correctIndex: answers.indexOf(correctAnswer)
+    };
+  });
+}
+
+// ========== ЗАГРУЗКА АНГЛИЙСКИХ ВОПРОСОВ ==========
+
+async function fetchEnglishQuestions(category, difficulty) {
+  try {
+    const url = new URL('https://opentdb.com/api.php');
+    url.searchParams.set('amount', 10);
+    url.searchParams.set('type', 'multiple');
+    
+    if (category && category !== 'any') {
+      url.searchParams.set('category', category);
+    }
+    if (difficulty && difficulty !== 'any') {
+      url.searchParams.set('difficulty', difficulty);
+    }
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.response_code === 0 && data.results.length > 0) {
+      return data.results.map(formatEnglishQuestion);
+    }
+  } catch (error) {
+    console.log('API недоступен, переключаю на русскую базу');
+    showToast('API недоступен. Загружаем русские вопросы.', 'warning');
+  }
+  
+  // Fallback — русские вопросы
+  const russianData = await loadRussianQuestions();
+  return getLocalQuestionsFromJSON(russianData, category, difficulty, 10);
+}
+
+function formatEnglishQuestion(apiQuestion) {
+  const decodeHTML = (html) => {
+    const txt = document.createElement('textarea');
+    txt.innerHTML = html;
+    return txt.value;
+  };
+  
+  const answers = [
+    ...apiQuestion.incorrect_answers.map(decodeHTML),
+    decodeHTML(apiQuestion.correct_answer)
+  ];
+  
+  const shuffled = shuffleArray(answers);
+  
+  return {
+    question: decodeHTML(apiQuestion.question),
+    answers: shuffled,
+    correctIndex: shuffled.indexOf(decodeHTML(apiQuestion.correct_answer)),
+    category: decodeHTML(apiQuestion.category),
+    difficulty: apiQuestion.difficulty
+  };
+}
+
+// ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
