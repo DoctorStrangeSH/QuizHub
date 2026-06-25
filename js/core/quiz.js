@@ -233,6 +233,38 @@ async function finishQuiz() {
   if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
   if (typeof awardQuizCoins === 'function') awardQuizCoins(result);
   if (typeof saveUserDataToFirestore === 'function') saveUserDataToFirestore();
+  
+  // Задания
+  if (typeof updateQuestProgressByType === 'function') {
+    updateQuestProgressByType('quizzes_today', 1);
+    updateQuestProgressByType('quizzes_week', 1);
+    updateQuestProgressByType('quizzes_month', 1);
+    if (result.score >= 50) updateQuestProgressByType('score_50');
+    if (result.score >= 100) updateQuestProgressByType('score_100');
+    if (actualCorrect === 10) updateQuestProgressByType('perfect');
+    updateQuestProgressByType('perfect_week', actualCorrect === 10 ? 1 : 0);
+    updateQuestProgressByType('perfect_month', actualCorrect === 10 ? 1 : 0);
+    if (result.difficulty === 'hard') updateQuestProgressByType('hard_quiz');
+    if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateQuestProgressByType('english');
+    if (maxStreak >= 5) updateQuestProgressByType('streak_5');
+    if (result.totalTime < 60) updateQuestProgressByType('fast_quiz');
+    if (typeof quizStats !== 'undefined') {
+      updateQuestProgressByType('xp_week', quizStats.totalXP || 0);
+      updateQuestProgressByType('xp_month', quizStats.totalXP || 0);
+    }
+    if (typeof userCoins !== 'undefined') updateQuestProgressByType('coins_month', userCoins);
+    
+    // Категории
+    const catValue = category?.value || '';
+    if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
+    if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
+    if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgressByType('category_cinema');
+    
+    // Обновляем категории для недельных/месячных заданий
+    updateQuestProgressByType('categories_week', 1);
+    updateQuestProgressByType('difficulties_week', 1);
+  }
+  
   if (result.score >= 70 && typeof vibrateAchievement === 'function') vibrateAchievement();
 }
 

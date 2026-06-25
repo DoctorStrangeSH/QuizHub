@@ -28,22 +28,22 @@ function checkActiveEvent() {
   const mskOffset = 3 * 60 * 60 * 1000;
   const mskTime = new Date(now.getTime() + mskOffset);
   const monthDay = mskTime.toISOString().split('T')[0].slice(5);
-  
+
   for (const event of SPECIAL_EVENTS) {
     if (event.datePattern === monthDay) {
       activeEvent = event;
       return event;
     }
   }
-  
+
   const dayOfWeek = mskTime.getDay();
   const weeklyEvent = WEEKLY_EVENTS[dayOfWeek];
-  
+
   if (weeklyEvent) {
     activeEvent = { ...weeklyEvent, isWeekly: true };
     return activeEvent;
   }
-  
+
   activeEvent = null;
   return null;
 }
@@ -63,16 +63,16 @@ function renderEventBanner() {
   const event = checkActiveEvent();
   const container = document.getElementById('event-banner-container');
   if (!container) return;
-  
+
   if (!event) {
     container.innerHTML = '';
     container.style.display = 'none';
     return;
   }
-  
+
   container.style.display = 'block';
   const bgColor = event.color || 'var(--accent)';
-  
+
   container.innerHTML = `
     <div class="event-banner-card" style="--event-color: ${bgColor};" onclick="handleEventClick('${event.category || 'any'}')">
       <div class="event-banner-icon">${event.icon}</div>
@@ -102,7 +102,7 @@ function handleEventClick(category) {
     showToast('Выбрана сложность: Сложно 🔴', 'success');
     return;
   }
-  
+
   const catSelect = document.getElementById('quiz-category');
   if (catSelect && category !== 'any') {
     catSelect.value = category;
@@ -115,7 +115,7 @@ function handleEventClick(category) {
 function injectEventBannerIntoHome() {
   const homeScreen = document.getElementById('screen-home');
   if (!homeScreen) return;
-  
+
   const observer = new MutationObserver(() => {
     if (homeScreen.classList.contains('active')) {
       if (!document.getElementById('event-banner-container')) {
@@ -132,9 +132,9 @@ function injectEventBannerIntoHome() {
       }
     }
   });
-  
+
   observer.observe(homeScreen, { attributes: true, attributeFilter: ['class'] });
-  
+
   if (homeScreen.classList.contains('active')) {
     setTimeout(() => {
       if (!document.getElementById('event-banner-container')) {
@@ -157,10 +157,10 @@ function injectEventBannerIntoHome() {
 
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(injectEventBannerIntoHome, 500);
-  
+
   const originalShowScreen = typeof showScreen === 'function' ? showScreen : null;
   if (originalShowScreen) {
-    const decoratedShowScreen = function(screenName) {
+    const decoratedShowScreen = function (screenName) {
       originalShowScreen(screenName);
       if (screenName === 'home') {
         setTimeout(renderEventBanner, 300);

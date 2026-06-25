@@ -5,7 +5,8 @@
     "history": "История",
     "geography": "География",
     "sport": "Спорт",
-    "cinema": "Кино и искусство",
+    "cinema": "Кино",
+    "art": "Искусство",
     "music": "Музыка",
     "it": "IT и технологии",
     "literature": "Литература",
@@ -14,104 +15,1181 @@
     "space": "Космос"
   },
   "questions": [
-    {"question": "Сколько цветов в радуге?", "answers": ["5", "6", "7", "8"], "correctIndex": 2, "category": "any", "difficulty": "easy"},
-    {"question": "Какой океан самый большой?", "answers": ["Атлантический", "Индийский", "Тихий", "Северный Ледовитый"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Сколько секунд в часе?", "answers": ["600", "360", "3600", "60"], "correctIndex": 2, "category": "any", "difficulty": "easy"},
-    {"question": "Столица Франции?", "answers": ["Лондон", "Берлин", "Мадрид", "Париж"], "correctIndex": 3, "category": "geography", "difficulty": "easy"},
-    {"question": "Сколько дней в високосном году?", "answers": ["364", "365", "366", "367"], "correctIndex": 2, "category": "any", "difficulty": "easy"},
-    {"question": "Самый большой океан?", "answers": ["Атлантический", "Индийский", "Тихий", "Северный Ледовитый"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Какой газ преобладает в атмосфере?", "answers": ["Кислород", "Азот", "Углекислый газ", "Водород"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Какая планета Солнечной системы самая большая?", "answers": ["Земля", "Марс", "Юпитер", "Сатурн"], "correctIndex": 2, "category": "space", "difficulty": "easy"},
-    {"question": "Сколько континентов на Земле?", "answers": ["5", "6", "7", "8"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Год начала Второй мировой?", "answers": ["1937", "1939", "1941", "1945"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Автор «Моны Лизы»?", "answers": ["Ван Гог", "Пикассо", "Да Винчи", "Рембрандт"], "correctIndex": 2, "category": "cinema", "difficulty": "easy"},
-    {"question": "Какой химический элемент обозначается символом O?", "answers": ["Золото", "Кислород", "Олово", "Осмий"], "correctIndex": 1, "category": "science", "difficulty": "easy"},
-    {"question": "Частица с положительным зарядом?", "answers": ["Электрон", "Нейтрон", "Протон", "Фотон"], "correctIndex": 2, "category": "science", "difficulty": "medium"},
-    {"question": "Сколько костей у взрослого?", "answers": ["186", "206", "226", "256"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Ближайшая к Солнцу планета?", "answers": ["Венера", "Земля", "Меркурий", "Марс"], "correctIndex": 2, "category": "space", "difficulty": "easy"},
-    {"question": "Что измеряется в Ньютонах?", "answers": ["Масса", "Сила", "Давление", "Скорость"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Витамин от солнца?", "answers": ["A", "C", "D", "B12"], "correctIndex": 2, "category": "science", "difficulty": "medium"},
-    {"question": "Сколько хромосом у человека?", "answers": ["23", "44", "46", "48"], "correctIndex": 2, "category": "science", "difficulty": "hard"},
-    {"question": "Год полёта Гагарина?", "answers": ["1957", "1961", "1965", "1969"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Первый президент России?", "answers": ["Горбачёв", "Ельцин", "Путин", "Медведев"], "correctIndex": 1, "category": "history", "difficulty": "easy"},
-    {"question": "Год распада СССР?", "answers": ["1989", "1990", "1991", "1993"], "correctIndex": 2, "category": "history", "difficulty": "medium"},
-    {"question": "Основатель Москвы?", "answers": ["Пётр I", "Юрий Долгорукий", "Иван Грозный", "Александр Невский"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Год отмены крепостного права?", "answers": ["1801", "1825", "1861", "1905"], "correctIndex": 2, "category": "history", "difficulty": "hard"},
-    {"question": "Игроков в футболе на поле?", "answers": ["9", "10", "11", "12"], "correctIndex": 2, "category": "sport", "difficulty": "easy"},
-    {"question": "Периодичность Олимпийских игр?", "answers": ["1 год", "2 года", "4 года", "6 лет"], "correctIndex": 2, "category": "sport", "difficulty": "easy"},
-    {"question": "Спорт с самым большим мячом?", "answers": ["Футбол", "Баскетбол", "Волейбол", "Регби"], "correctIndex": 1, "category": "sport", "difficulty": "easy"},
-    {"question": "Победитель ЧМ-2022 по футболу?", "answers": ["Франция", "Бразилия", "Аргентина", "Германия"], "correctIndex": 2, "category": "sport", "difficulty": "medium"},
-    {"question": "Сколько олимпийских колец?", "answers": ["3", "4", "5", "6"], "correctIndex": 2, "category": "sport", "difficulty": "easy"},
-    {"question": "Режиссёр «Титаника»?", "answers": ["Спилберг", "Кэмерон", "Нолан", "Скотт"], "correctIndex": 1, "category": "cinema", "difficulty": "easy"},
-    {"question": "Главный герой Гарри Поттера?", "answers": ["Рон", "Гарри", "Драко", "Невилл"], "correctIndex": 1, "category": "cinema", "difficulty": "easy"},
-    {"question": "Оскар-2024 за лучший фильм?", "answers": ["Барби", "Оппенгеймер", "Убийцы луны", "Бедные-несчастные"], "correctIndex": 1, "category": "cinema", "difficulty": "hard"},
-    {"question": "Кто сыграл Джокера у Нолана?", "answers": ["Николсон", "Феникс", "Леджер", "Лето"], "correctIndex": 2, "category": "cinema", "difficulty": "medium"},
-    {"question": "Что значит HTML?", "answers": ["Hyper Text Markup Language", "High Tech Modern Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"], "correctIndex": 0, "category": "it", "difficulty": "easy"},
-    {"question": "Сколько бит в байте?", "answers": ["4", "8", "16", "32"], "correctIndex": 1, "category": "it", "difficulty": "easy"},
-    {"question": "Протокол для веб-страниц?", "answers": ["FTP", "SMTP", "HTTP", "TCP"], "correctIndex": 2, "category": "it", "difficulty": "easy"},
-    {"question": "Что такое CSS?", "answers": ["Язык программирования", "Каскадные таблицы стилей", "База данных", "Фреймворк"], "correctIndex": 1, "category": "it", "difficulty": "easy"},
-    {"question": "Создатель Linux?", "answers": ["Гейтс", "Джобс", "Торвальдс", "Цукерберг"], "correctIndex": 2, "category": "it", "difficulty": "medium"},
-    {"question": "Самая длинная река России?", "answers": ["Волга", "Лена", "Обь", "Енисей"], "correctIndex": 1, "category": "geography", "difficulty": "medium"},
-    {"question": "Столица Японии?", "answers": ["Пекин", "Сеул", "Токио", "Бангкок"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Самое солёное море?", "answers": ["Чёрное", "Средиземное", "Красное", "Мёртвое"], "correctIndex": 3, "category": "geography", "difficulty": "medium"},
-    {"question": "Сколько клавиш у пианино?", "answers": ["76", "88", "96", "104"], "correctIndex": 1, "category": "music", "difficulty": "medium"},
-    {"question": "Исполнитель «Shape of You»?", "answers": ["Эд Ширан", "Бибер", "Бруно Марс", "Дрейк"], "correctIndex": 0, "category": "music", "difficulty": "easy"},
-    {"question": "Самая популярная соцсеть для видео?", "answers": ["YouTube", "Instagram", "TikTok", "VK"], "correctIndex": 2, "category": "music", "difficulty": "easy"},
-    {"question": "Инструмент Страдивари?", "answers": ["Фортепиано", "Скрипка", "Виолончель", "Арфа"], "correctIndex": 1, "category": "music", "difficulty": "medium"},
-    {"question": "Автор «Войны и мира»?", "answers": ["Достоевский", "Толстой", "Пушкин", "Чехов"], "correctIndex": 1, "category": "literature", "difficulty": "easy"},
-    {"question": "Возраст гибели Пушкина?", "answers": ["35", "36", "37", "38"], "correctIndex": 2, "category": "literature", "difficulty": "medium"},
-    {"question": "Автор «Преступления и наказания»?", "answers": ["Толстой", "Достоевский", "Гоголь", "Тургенев"], "correctIndex": 1, "category": "literature", "difficulty": "easy"},
-    {"question": "Автор «Мастера и Маргариты»?", "answers": ["Гоголь", "Булгаков", "Набоков", "Платонов"], "correctIndex": 1, "category": "literature", "difficulty": "medium"},
-    {"question": "Самое быстрое животное?", "answers": ["Гепард", "Сапсан", "Антилопа", "Страус"], "correctIndex": 1, "category": "animals", "difficulty": "medium"},
-    {"question": "Сколько сердец у осьминога?", "answers": ["1", "2", "3", "4"], "correctIndex": 2, "category": "animals", "difficulty": "hard"},
-    {"question": "Самое большое животное?", "answers": ["Слон", "Кит", "Акула", "Жираф"], "correctIndex": 1, "category": "animals", "difficulty": "easy"},
-    {"question": "Температура поверхности Солнца?", "answers": ["1000°C", "5500°C", "15000°C", "100000°C"], "correctIndex": 1, "category": "space", "difficulty": "hard"},
-    {"question": "Спутники Марса?", "answers": ["0", "1", "2", "3"], "correctIndex": 2, "category": "space", "difficulty": "medium"},
-    {"question": "Красная планета?", "answers": ["Венера", "Юпитер", "Марс", "Сатурн"], "correctIndex": 2, "category": "space", "difficulty": "easy"},
-    {"question": "Из чего делают саке?", "answers": ["Картофель", "Рис", "Пшеница", "Виноград"], "correctIndex": 1, "category": "food", "difficulty": "medium"},
-    {"question": "Фрукт с максимумом калия?", "answers": ["Яблоко", "Банан", "Апельсин", "Киви"], "correctIndex": 1, "category": "food", "difficulty": "easy"},
-    {"question": "Самая большая страна?", "answers": ["США", "Китай", "Россия", "Канада"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Зубов у взрослого человека?", "answers": ["28", "30", "32", "34"], "correctIndex": 2, "category": "science", "difficulty": "easy"},
-    {"question": "Кто открыл пенициллин?", "answers": ["Пастер", "Флеминг", "Кох", "Менделеев"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Формула воды?", "answers": ["CO2", "H2O", "NaCl", "O2"], "correctIndex": 1, "category": "science", "difficulty": "easy"},
-    {"question": "Высочайшая гора мира?", "answers": ["K2", "Канченджанга", "Эверест", "Лхоцзе"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Год Бородинской битвы?", "answers": ["1805", "1812", "1815", "1820"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Изобретатель телефона?", "answers": ["Эдисон", "Белл", "Тесла", "Маркони"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Игроков в баскетболе на площадке?", "answers": ["4", "5", "6", "7"], "correctIndex": 1, "category": "sport", "difficulty": "easy"},
-    {"question": "Что измеряет спидометр?", "answers": ["Расстояние", "Скорость", "Время", "Давление"], "correctIndex": 1, "category": "any", "difficulty": "easy"},
-    {"question": "Длительность футбольного матча?", "answers": ["60 мин", "80 мин", "90 мин", "100 мин"], "correctIndex": 2, "category": "sport", "difficulty": "easy"},
-    {"question": "Кто написал «Ревизора»?", "answers": ["Пушкин", "Гоголь", "Чехов", "Тургенев"], "correctIndex": 1, "category": "literature", "difficulty": "medium"},
-    {"question": "Химический символ золота?", "answers": ["Ag", "Au", "Fe", "Cu"], "correctIndex": 1, "category": "science", "difficulty": "easy"},
-    {"question": "Столица Китая?", "answers": ["Шанхай", "Гонконг", "Пекин", "Токио"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Кто основал Apple?", "answers": ["Гейтс", "Джобс", "Безос", "Цукерберг"], "correctIndex": 1, "category": "it", "difficulty": "medium"},
-    {"question": "Сколько струн у гитары?", "answers": ["4", "5", "6", "7"], "correctIndex": 2, "category": "music", "difficulty": "easy"},
-    {"question": "Первая женщина-космонавт?", "answers": ["Светлана Савицкая", "Валентина Терешкова", "Елена Кондакова", "Пегги Уитсон"], "correctIndex": 1, "category": "history", "difficulty": "medium"},
-    {"question": "Что такое pH?", "answers": ["Давление", "Кислотность", "Температура", "Скорость"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Самый твёрдый минерал?", "answers": ["Кварц", "Топаз", "Алмаз", "Корунд"], "correctIndex": 2, "category": "science", "difficulty": "easy"},
-    {"question": "Сколько процентов воды на Земле?", "answers": ["50%", "60%", "71%", "85%"], "correctIndex": 2, "category": "geography", "difficulty": "medium"},
-    {"question": "Год основания Санкт-Петербурга?", "answers": ["1700", "1703", "1710", "1721"], "correctIndex": 1, "category": "history", "difficulty": "hard"},
-    {"question": "Как называется боязнь пауков?", "answers": ["Агорафобия", "Арахнофобия", "Клаустрофобия", "Акрофобия"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Столица Австралии?", "answers": ["Сидней", "Мельбурн", "Канберра", "Брисбен"], "correctIndex": 2, "category": "geography", "difficulty": "medium"},
-    {"question": "Кто написал «1984»?", "answers": ["Хаксли", "Оруэлл", "Брэдбери", "Уэллс"], "correctIndex": 1, "category": "literature", "difficulty": "medium"},
-    {"question": "Сколько элементов в таблице Менделеева?", "answers": ["92", "103", "118", "126"], "correctIndex": 2, "category": "science", "difficulty": "hard"},
-    {"question": "Какая птица не летает?", "answers": ["Орёл", "Пингвин", "Сокол", "Воробей"], "correctIndex": 1, "category": "animals", "difficulty": "easy"},
-    {"question": "Кто написал «Евгения Онегина»?", "answers": ["Лермонтов", "Толстой", "Пушкин", "Достоевский"], "correctIndex": 2, "category": "literature", "difficulty": "easy"},
-    {"question": "Валюта Японии?", "answers": ["Юань", "Вона", "Иена", "Доллар"], "correctIndex": 2, "category": "geography", "difficulty": "easy"},
-    {"question": "Кто изобрёл радио?", "answers": ["Тесла", "Маркони", "Попов", "Эдисон"], "correctIndex": 2, "category": "history", "difficulty": "hard"},
-    {"question": "Как называется столица Турции?", "answers": ["Стамбул", "Анкара", "Измир", "Анталья"], "correctIndex": 1, "category": "geography", "difficulty": "medium"},
-    {"question": "Сколько длилась Столетняя война?", "answers": ["100 лет", "116 лет", "99 лет", "120 лет"], "correctIndex": 1, "category": "history", "difficulty": "hard"},
-    {"question": "Что такое ДНК?", "answers": ["Белок", "Кислота", "Сахар", "Жир"], "correctIndex": 1, "category": "science", "difficulty": "easy"},
-    {"question": "Самый большой орган человека?", "answers": ["Печень", "Мозг", "Кожа", "Сердце"], "correctIndex": 2, "category": "science", "difficulty": "easy"},
-    {"question": "Столица Бразилии?", "answers": ["Рио-де-Жанейро", "Сан-Паулу", "Бразилиа", "Салвадор"], "correctIndex": 2, "category": "geography", "difficulty": "medium"},
-    {"question": "Кто написал «Отцы и дети»?", "answers": ["Толстой", "Достоевский", "Тургенев", "Гончаров"], "correctIndex": 2, "category": "literature", "difficulty": "medium"},
-    {"question": "Какой металл жидкий при комнатной температуре?", "answers": ["Железо", "Ртуть", "Золото", "Серебро"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Сколько чемпионатов мира выиграла Бразилия?", "answers": ["3", "4", "5", "6"], "correctIndex": 2, "category": "sport", "difficulty": "medium"},
-    {"question": "Год первого полёта человека в космос?", "answers": ["1959", "1960", "1961", "1962"], "correctIndex": 2, "category": "history", "difficulty": "medium"},
-    {"question": "Самое глубокое озеро в мире?", "answers": ["Каспийское", "Байкал", "Танганьика", "Верхнее"], "correctIndex": 1, "category": "geography", "difficulty": "easy"},
-    {"question": "Что изучает орнитология?", "answers": ["Насекомых", "Птиц", "Рыб", "Растения"], "correctIndex": 1, "category": "science", "difficulty": "medium"},
-    {"question": "Кто написал картину «Звёздная ночь»?", "answers": ["Пикассо", "Ван Гог", "Моне", "Дали"], "correctIndex": 1, "category": "cinema", "difficulty": "medium"},
-    {"question": "Какой язык самый распространённый в мире?", "answers": ["Английский", "Испанский", "Китайский", "Хинди"], "correctIndex": 2, "category": "any", "difficulty": "easy"},
-    {"question": "Сколько сердец у дождевого червя?", "answers": ["1", "3", "5", "8"], "correctIndex": 2, "category": "animals", "difficulty": "hard"},
-    {"question": "Самый большой остров в мире?", "answers": ["Мадагаскар", "Гренландия", "Новая Гвинея", "Борнео"], "correctIndex": 1, "category": "geography", "difficulty": "medium"}
+    {
+      "question": "Сколько цветов в радуге?",
+      "answers": ["5", "6", "7", "8"],
+      "correctIndex": 2,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["радуга", "цвета", "природа", "оптика"]
+    },
+    {
+      "question": "Какой океан самый большой?",
+      "answers": ["Атлантический", "Индийский", "Тихий", "Северный Ледовитый"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["океан", "география", "планета", "вода"]
+    },
+    {
+      "question": "Сколько секунд в часе?",
+      "answers": ["600", "360", "3600", "60"],
+      "correctIndex": 2,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["время", "математика", "час"]
+    },
+    {
+      "question": "Столица Франции?",
+      "answers": ["Лондон", "Берлин", "Мадрид", "Париж"],
+      "correctIndex": 3,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["столица", "европа", "франция", "город"]
+    },
+    {
+      "question": "Сколько дней в високосном году?",
+      "answers": ["364", "365", "366", "367"],
+      "correctIndex": 2,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["календарь", "год", "февраль"]
+    },
+    {
+      "question": "Какой газ преобладает в атмосфере Земли?",
+      "answers": ["Кислород", "Азот", "Углекислый газ", "Водород"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["атмосфера", "химия", "воздух", "газ"]
+    },
+    {
+      "question": "Какая планета Солнечной системы самая большая?",
+      "answers": ["Земля", "Марс", "Юпитер", "Сатурн"],
+      "correctIndex": 2,
+      "category": "space",
+      "difficulty": "easy",
+      "tags": ["планета", "космос", "солнечная система", "астрономия"]
+    },
+    {
+      "question": "Сколько континентов на Земле?",
+      "answers": ["5", "6", "7", "8"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["континент", "земля", "география", "материк"]
+    },
+    {
+      "question": "Год начала Второй мировой войны?",
+      "answers": ["1937", "1939", "1941", "1945"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["война", "история", "xx век", "дата"]
+    },
+    {
+      "question": "Кто написал «Мону Лизу»?",
+      "answers": ["Ван Гог", "Пикассо", "Да Винчи", "Рембрандт"],
+      "correctIndex": 2,
+      "category": "art",
+      "difficulty": "easy",
+      "tags": ["живопись", "возрождение", "искусство", "картина"]
+    },
+    {
+      "question": "Химический символ кислорода?",
+      "answers": ["Au", "O", "Sn", "Os"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["химия", "элементы", "таблица Менделеева"]
+    },
+    {
+      "question": "Частица с положительным зарядом?",
+      "answers": ["Электрон", "Нейтрон", "Протон", "Фотон"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["физика", "атом", "заряд", "частица"]
+    },
+    {
+      "question": "Сколько костей у взрослого человека?",
+      "answers": ["186", "206", "226", "256"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["анатомия", "человек", "скелет", "кости"]
+    },
+    {
+      "question": "Ближайшая к Солнцу планета?",
+      "answers": ["Венера", "Земля", "Меркурий", "Марс"],
+      "correctIndex": 2,
+      "category": "space",
+      "difficulty": "easy",
+      "tags": ["планета", "солнце", "космос", "меркурий"]
+    },
+    {
+      "question": "Что измеряется в Ньютонах?",
+      "answers": ["Масса", "Сила", "Давление", "Скорость"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["физика", "сила", "ньютон", "измерение"]
+    },
+    {
+      "question": "Витамин, вырабатываемый на солнце?",
+      "answers": ["A", "C", "D", "B12"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["витамин", "здоровье", "солнце", "организм"]
+    },
+    {
+      "question": "Сколько хромосом у человека?",
+      "answers": ["23", "44", "46", "48"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "hard",
+      "tags": ["генетика", "хромосома", "днк", "человек"]
+    },
+    {
+      "question": "Год полёта Гагарина в космос?",
+      "answers": ["1957", "1961", "1965", "1969"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["космос", "гагарин", "ссср", "полёт"]
+    },
+    {
+      "question": "Первый президент России?",
+      "answers": ["Горбачёв", "Ельцин", "Путин", "Медведев"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "easy",
+      "tags": ["россия", "президент", "политика", "история"]
+    },
+    {
+      "question": "Год распада СССР?",
+      "answers": ["1989", "1990", "1991", "1993"],
+      "correctIndex": 2,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["ссср", "распад", "история", "xx век"]
+    },
+    {
+      "question": "Кто основал Москву?",
+      "answers": ["Пётр I", "Юрий Долгорукий", "Иван Грозный", "Александр Невский"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["москва", "основание", "россия", "князь"]
+    },
+    {
+      "question": "Год отмены крепостного права в России?",
+      "answers": ["1801", "1825", "1861", "1905"],
+      "correctIndex": 2,
+      "category": "history",
+      "difficulty": "hard",
+      "tags": ["крепостное право", "россия", "реформа", "xix век"]
+    },
+    {
+      "question": "Сколько игроков в футболе на поле (в одной команде)?",
+      "answers": ["9", "10", "11", "12"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["футбол", "спорт", "команда", "игроки"]
+    },
+    {
+      "question": "Как часто проходят Олимпийские игры?",
+      "answers": ["Раз в год", "Раз в 2 года", "Раз в 4 года", "Раз в 6 лет"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["олимпиада", "спорт", "игры"]
+    },
+    {
+      "question": "В каком виде спорта используется мяч оранжевого цвета?",
+      "answers": ["Футбол", "Баскетбол", "Волейбол", "Регби"],
+      "correctIndex": 1,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["мяч", "спорт", "баскетбол", "размер"]
+    },
+    {
+      "question": "Кто выиграл ЧМ-2022 по футболу?",
+      "answers": ["Франция", "Бразилия", "Аргентина", "Германия"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "medium",
+      "tags": ["футбол", "чемпионат мира", "аргентина", "месси"]
+    },
+    {
+      "question": "Сколько олимпийских колец?",
+      "answers": ["3", "4", "5", "6"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["олимпиада", "кольца", "символ"]
+    },
+    {
+      "question": "Кто снял фильм «Титаник»?",
+      "answers": ["Спилберг", "Кэмерон", "Нолан", "Скотт"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "easy",
+      "tags": ["фильм", "режиссёр", "голливуд", "кино"]
+    },
+    {
+      "question": "Имя Гарри Поттера?",
+      "answers": ["Рон", "Гарри", "Драко", "Невилл"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "easy",
+      "tags": ["гарри поттер", "фильм", "герой", "магия"]
+    },
+    {
+      "question": "Оскар-2024 за лучший фильм?",
+      "answers": ["Барби", "Оппенгеймер", "Убийцы цветочной луны", "Бедные-несчастные"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "hard",
+      "tags": ["оскар", "фильм", "премия", "кино"]
+    },
+    {
+      "question": "Кто сыграл Джокера в «Тёмном рыцаре»?",
+      "answers": ["Николсон", "Феникс", "Леджер", "Лето"],
+      "correctIndex": 2,
+      "category": "cinema",
+      "difficulty": "medium",
+      "tags": ["джокер", "фильм", "актёр", "бэтмен"]
+    },
+    {
+      "question": "Сколько фильмов в основной саге «Звёздных войн» (эпизоды I-IX)?",
+      "answers": ["6", "7", "8", "9"],
+      "correctIndex": 3,
+      "category": "cinema",
+      "difficulty": "medium",
+      "tags": ["звёздные войны", "фильм", "сага", "кино"]
+    },
+    {
+      "question": "Что означает HTML?",
+      "answers": ["Hyper Text Markup Language", "High Tech Modern Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"],
+      "correctIndex": 0,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["веб", "программирование", "язык", "интернет"]
+    },
+    {
+      "question": "Сколько бит в байте?",
+      "answers": ["4", "8", "16", "32"],
+      "correctIndex": 1,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["бит", "байт", "компьютер", "информация"]
+    },
+    {
+      "question": "Протокол для передачи веб-страниц?",
+      "answers": ["FTP", "SMTP", "HTTP", "TCP"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["протокол", "интернет", "веб", "http"]
+    },
+    {
+      "question": "Что такое CSS?",
+      "answers": ["Язык программирования", "Каскадные таблицы стилей", "База данных", "Фреймворк"],
+      "correctIndex": 1,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["css", "веб", "стили", "дизайн"]
+    },
+    {
+      "question": "Кто создал Linux?",
+      "answers": ["Гейтс", "Джобс", "Торвальдс", "Цукерберг"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "medium",
+      "tags": ["linux", "ос", "торвальдс", "программист"]
+    },
+    {
+      "question": "Самая длинная река России?",
+      "answers": ["Волга", "Лена", "Обь", "Енисей"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["река", "россия", "география", "лена"]
+    },
+    {
+      "question": "Столица Японии?",
+      "answers": ["Пекин", "Сеул", "Токио", "Бангкок"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["столица", "япония", "токио", "азия"]
+    },
+    {
+      "question": "Самое солёное море?",
+      "answers": ["Чёрное", "Средиземное", "Красное", "Мёртвое"],
+      "correctIndex": 3,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["море", "соль", "география", "мёртвое море"]
+    },
+    {
+      "question": "Сколько клавиш у стандартного пианино?",
+      "answers": ["76", "88", "96", "104"],
+      "correctIndex": 1,
+      "category": "music",
+      "difficulty": "medium",
+      "tags": ["музыка", "инструмент", "пианино", "клавиши"]
+    },
+    {
+      "question": "Кто поёт «Shape of You»?",
+      "answers": ["Эд Ширан", "Бибер", "Бруно Марс", "Дрейк"],
+      "correctIndex": 0,
+      "category": "music",
+      "difficulty": "easy",
+      "tags": ["музыка", "песня", "исполнитель", "поп"]
+    },
+    {
+      "question": "Самая популярная соцсеть для коротких видео?",
+      "answers": ["YouTube", "Instagram", "TikTok", "VK Клипы"],
+      "correctIndex": 2,
+      "category": "music",
+      "difficulty": "easy",
+      "tags": ["соцсеть", "видео", "tiktok", "популярность"]
+    },
+    {
+      "question": "Инструмент Страдивари?",
+      "answers": ["Фортепиано", "Скрипка", "Виолончель", "Арфа"],
+      "correctIndex": 1,
+      "category": "music",
+      "difficulty": "medium",
+      "tags": ["музыка", "инструмент", "классика", "скрипка"]
+    },
+    {
+      "question": "Кто написал «Войну и мир»?",
+      "answers": ["Достоевский", "Толстой", "Пушкин", "Чехов"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "easy",
+      "tags": ["литература", "роман", "русская классика", "писатель"]
+    },
+    {
+      "question": "Сколько лет было Пушкину при гибели?",
+      "answers": ["35", "36", "37", "38"],
+      "correctIndex": 2,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["пушкин", "поэт", "литература", "дуэль"]
+    },
+    {
+      "question": "Кто написал «Преступление и наказание»?",
+      "answers": ["Толстой", "Достоевский", "Гоголь", "Тургенев"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "easy",
+      "tags": ["литература", "роман", "достоевский", "классика"]
+    },
+    {
+      "question": "Автор «Мастера и Маргариты»?",
+      "answers": ["Гоголь", "Булгаков", "Набоков", "Платонов"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["литература", "роман", "булгаков", "мистика"]
+    },
+    {
+      "question": "Самое быстрое животное на Земле?",
+      "answers": ["Гепард", "Сапсан", "Антилопа", "Страус"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "medium",
+      "tags": ["животные", "скорость", "птица", "рекорд"]
+    },
+    {
+      "question": "Сколько сердец у осьминога?",
+      "answers": ["1", "2", "3", "4"],
+      "correctIndex": 2,
+      "category": "animals",
+      "difficulty": "hard",
+      "tags": ["осьминог", "животные", "сердце", "моллюск"]
+    },
+    {
+      "question": "Самое большое животное на Земле?",
+      "answers": ["Слон", "Синий кит", "Китовая акула", "Жираф"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["животные", "кит", "рекорд", "размер"]
+    },
+    {
+      "question": "Какая птица не летает?",
+      "answers": ["Орёл", "Пингвин", "Сокол", "Воробей"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["птица", "пингвин", "животные", "нелетающая"]
+    },
+    {
+      "question": "Сколько ног у паука?",
+      "answers": ["6", "8", "10", "12"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["паук", "животные", "ноги", "членистоногое"]
+    },
+    {
+      "question": "Температура поверхности Солнца примерно?",
+      "answers": ["1000°C", "5500°C", "15000°C", "100000°C"],
+      "correctIndex": 1,
+      "category": "space",
+      "difficulty": "hard",
+      "tags": ["солнце", "температура", "космос", "звезда"]
+    },
+    {
+      "question": "Сколько спутников у Марса?",
+      "answers": ["0", "1", "2", "3"],
+      "correctIndex": 2,
+      "category": "space",
+      "difficulty": "medium",
+      "tags": ["марс", "спутник", "космос", "планета"]
+    },
+    {
+      "question": "Какую планету называют «Красной»?",
+      "answers": ["Венера", "Юпитер", "Марс", "Сатурн"],
+      "correctIndex": 2,
+      "category": "space",
+      "difficulty": "easy",
+      "tags": ["марс", "планета", "красная", "космос"]
+    },
+    {
+      "question": "Из чего делают саке?",
+      "answers": ["Картофель", "Рис", "Пшеница", "Виноград"],
+      "correctIndex": 1,
+      "category": "food",
+      "difficulty": "medium",
+      "tags": ["еда", "напиток", "япония", "алкоголь"]
+    },
+    {
+      "question": "Фрукт с самым высоким содержанием калия?",
+      "answers": ["Яблоко", "Банан", "Апельсин", "Киви"],
+      "correctIndex": 1,
+      "category": "food",
+      "difficulty": "easy",
+      "tags": ["фрукт", "калий", "банан", "питание"]
+    },
+    {
+      "question": "Какая страна самая большая по площади?",
+      "answers": ["США", "Китай", "Россия", "Канада"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["страна", "площадь", "россия", "география"]
+    },
+    {
+      "question": "Сколько зубов у взрослого человека?",
+      "answers": ["28", "30", "32", "34"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["зубы", "человек", "анатомия", "здоровье"]
+    },
+    {
+      "question": "Кто открыл пенициллин?",
+      "answers": ["Пастер", "Флеминг", "Кох", "Менделеев"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["пенициллин", "антибиотик", "флеминг", "открытие"]
+    },
+    {
+      "question": "Химическая формула воды?",
+      "answers": ["CO2", "H2O", "NaCl", "O2"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["вода", "химия", "формула", "h2o"]
+    },
+    {
+      "question": "Самая высокая гора в мире?",
+      "answers": ["К2", "Канченджанга", "Эверест", "Лхоцзе"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["гора", "эверест", "рекорд", "гималаи"]
+    },
+    {
+      "question": "Год Бородинского сражения?",
+      "answers": ["1805", "1812", "1815", "1820"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["бородино", "война", "россия", "наполеон"]
+    },
+    {
+      "question": "Кто изобрёл телефон?",
+      "answers": ["Эдисон", "Белл", "Тесла", "Маркони"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["телефон", "изобретение", "белл", "связь"]
+    },
+    {
+      "question": "Сколько игроков в баскетболе на площадке (от одной команды)?",
+      "answers": ["4", "5", "6", "7"],
+      "correctIndex": 1,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["баскетбол", "спорт", "игроки", "команда"]
+    },
+    {
+      "question": "Что измеряет спидометр?",
+      "answers": ["Расстояние", "Скорость", "Время", "Давление"],
+      "correctIndex": 1,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["спидометр", "скорость", "автомобиль", "прибор"]
+    },
+    {
+      "question": "Сколько длится футбольный матч (основное время)?",
+      "answers": ["60 мин", "80 мин", "90 мин", "100 мин"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["футбол", "матч", "время", "спорт"]
+    },
+    {
+      "question": "Кто написал «Ревизора»?",
+      "answers": ["Пушкин", "Гоголь", "Чехов", "Тургенев"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["литература", "гоголь", "пьеса", "комедия"]
+    },
+    {
+      "question": "Химический символ золота?",
+      "answers": ["Ag", "Au", "Fe", "Cu"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["золото", "химия", "элемент", "металл"]
+    },
+    {
+      "question": "Столица Китая?",
+      "answers": ["Шанхай", "Гонконг", "Пекин", "Токио"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["столица", "китай", "пекин", "азия"]
+    },
+    {
+      "question": "Кто основал компанию Apple?",
+      "answers": ["Гейтс", "Джобс", "Безос", "Цукерберг"],
+      "correctIndex": 1,
+      "category": "it",
+      "difficulty": "medium",
+      "tags": ["apple", "джобс", "компания", "технологии"]
+    },
+    {
+      "question": "Сколько струн у классической гитары?",
+      "answers": ["4", "5", "6", "7"],
+      "correctIndex": 2,
+      "category": "music",
+      "difficulty": "easy",
+      "tags": ["гитара", "струны", "музыка", "инструмент"]
+    },
+    {
+      "question": "Первая женщина-космонавт?",
+      "answers": ["Савицкая", "Терешкова", "Кондакова", "Уитсон"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["космос", "терешкова", "женщина", "ссср"]
+    },
+    {
+      "question": "Что измеряет pH?",
+      "answers": ["Давление", "Кислотность", "Температуру", "Скорость"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["ph", "кислотность", "химия", "измерение"]
+    },
+    {
+      "question": "Самый твёрдый природный минерал?",
+      "answers": ["Кварц", "Топаз", "Алмаз", "Корунд"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["минерал", "алмаз", "твёрдость", "геология"]
+    },
+    {
+      "question": "Сколько процентов поверхности Земли покрыто водой?",
+      "answers": ["50%", "60%", "71%", "85%"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["вода", "земля", "океан", "планета"]
+    },
+    {
+      "question": "Год основания Санкт-Петербурга?",
+      "answers": ["1700", "1703", "1710", "1721"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "hard",
+      "tags": ["петербург", "основание", "пётр", "россия"]
+    },
+    {
+      "question": "Как называется боязнь пауков?",
+      "answers": ["Агорафобия", "Арахнофобия", "Клаустрофобия", "Акрофобия"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["фобия", "паук", "страх", "психология"]
+    },
+    {
+      "question": "Столица Австралии?",
+      "answers": ["Сидней", "Мельбурн", "Канберра", "Брисбен"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["столица", "австралия", "канберра", "океания"]
+    },
+    {
+      "question": "Сколько химических элементов в таблице Менделеева?",
+      "answers": ["92", "103", "118", "126"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "hard",
+      "tags": ["химия", "элементы", "менделеев", "таблица"]
+    },
+    {
+      "question": "Кто написал «Евгения Онегина»?",
+      "answers": ["Лермонтов", "Толстой", "Пушкин", "Достоевский"],
+      "correctIndex": 2,
+      "category": "literature",
+      "difficulty": "easy",
+      "tags": ["пушкин", "поэма", "литература", "онегин"]
+    },
+    {
+      "question": "Национальная валюта Японии?",
+      "answers": ["Юань", "Вона", "Иена", "Доллар"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["валюта", "япония", "иена", "деньги"]
+    },
+    {
+      "question": "Кто изобрёл радио?",
+      "answers": ["Тесла", "Маркони", "Попов", "Эдисон"],
+      "correctIndex": 2,
+      "category": "history",
+      "difficulty": "hard",
+      "tags": ["радио", "изобретение", "попов", "связь"]
+    },
+    {
+      "question": "Столица Турции?",
+      "answers": ["Стамбул", "Анкара", "Измир", "Анталья"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["столица", "турция", "анкара", "европа"]
+    },
+    {
+      "question": "Сколько лет длилась Столетняя война?",
+      "answers": ["100 лет", "116 лет", "99 лет", "120 лет"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "hard",
+      "tags": ["война", "история", "франция", "англия"]
+    },
+    {
+      "question": "Что такое ДНК?",
+      "answers": ["Белок", "Дезоксирибонуклеиновая кислота", "Сахар", "Жир"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["днк", "генетика", "кислота", "биология"]
+    },
+    {
+      "question": "Самый большой орган человека?",
+      "answers": ["Печень", "Мозг", "Кожа", "Сердце"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["орган", "кожа", "человек", "анатомия"]
+    },
+    {
+      "question": "Столица Бразилии?",
+      "answers": ["Рио-де-Жанейро", "Сан-Паулу", "Бразилиа", "Салвадор"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["столица", "бразилия", "южная америка"]
+    },
+    {
+      "question": "Кто написал «Отцы и дети»?",
+      "answers": ["Толстой", "Достоевский", "Тургенев", "Гончаров"],
+      "correctIndex": 2,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["литература", "тургенев", "роман", "классика"]
+    },
+    {
+      "question": "Жидкий металл при комнатной температуре?",
+      "answers": ["Железо", "Ртуть", "Золото", "Серебро"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["ртуть", "металл", "жидкий", "химия"]
+    },
+    {
+      "question": "Сколько раз Бразилия выигрывала ЧМ по футболу?",
+      "answers": ["3", "4", "5", "6"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "medium",
+      "tags": ["футбол", "бразилия", "чемпионат мира", "рекорд"]
+    },
+    {
+      "question": "Самое глубокое озеро в мире?",
+      "answers": ["Каспийское море", "Байкал", "Танганьика", "Верхнее"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["озеро", "байкал", "россия", "глубина"]
+    },
+    {
+      "question": "Что изучает орнитология?",
+      "answers": ["Насекомых", "Птиц", "Рыб", "Растения"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["орнитология", "птицы", "наука", "биология"]
+    },
+    {
+      "question": "Кто написал картину «Звёздная ночь»?",
+      "answers": ["Пикассо", "Ван Гог", "Моне", "Дали"],
+      "correctIndex": 1,
+      "category": "art",
+      "difficulty": "medium",
+      "tags": ["живопись", "ван гог", "постимпрессионизм", "картина"]
+    },
+    {
+      "question": "Самый распространённый язык в мире по числу носителей?",
+      "answers": ["Английский", "Испанский", "Китайский", "Хинди"],
+      "correctIndex": 2,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["язык", "китайский", "мир", "население"]
+    },
+    {
+      "question": "Сколько сердец у дождевого червя?",
+      "answers": ["1", "3", "5", "8"],
+      "correctIndex": 2,
+      "category": "animals",
+      "difficulty": "hard",
+      "tags": ["червь", "сердце", "животные", "анатомия"]
+    },
+    {
+      "question": "Самый большой остров в мире?",
+      "answers": ["Мадагаскар", "Гренландия", "Новая Гвинея", "Борнео"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["остров", "гренландия", "география", "рекорд"]
+    },
+    {
+      "question": "Как называется столица Египта?",
+      "answers": ["Александрия", "Каир", "Луксор", "Гиза"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["столица", "египет", "каир", "африка"]
+    },
+    {
+      "question": "Кто написал поэму «Мёртвые души»?",
+      "answers": ["Пушкин", "Лермонтов", "Гоголь", "Тургенев"],
+      "correctIndex": 2,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["литература", "гоголь", "поэма", "классика"]
+    },
+    {
+      "question": "Самый лёгкий химический элемент?",
+      "answers": ["Гелий", "Водород", "Литий", "Кислород"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["элемент", "водород", "химия", "лёгкий"]
+    },
+    {
+      "question": "Какой фильм получил первый в истории «Оскар» за лучший фильм?",
+      "answers": ["Крылья", "Певец джаза", "Метрополис", "Огни большого города"],
+      "correctIndex": 0,
+      "category": "cinema",
+      "difficulty": "medium",
+      "tags": ["Оскар", "кино", "история кино", "награда"]
+    },
+    {
+      "question": "Как называется самая длинная река в мире?",
+      "answers": ["Амазонка", "Нил", "Миссисипи", "Янцзы"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "easy",
+      "tags": ["река", "Нил", "рекорды"]
+    },
+    {
+      "question": "Какой язык программирования был создан Гвидо ван Россумом?",
+      "answers": ["Java", "C++", "Python", "Ruby"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["Python", "программирование", "язык"]
+    },
+    {
+      "question": "Из какой страны происходит пицца?",
+      "answers": ["Греция", "Испания", "Италия", "Франция"],
+      "correctIndex": 2,
+      "category": "food",
+      "difficulty": "easy",
+      "tags": ["пицца", "Италия", "кухня"]
+    },
+    {
+      "question": "В каком году пала Берлинская стена?",
+      "answers": ["1987", "1989", "1991", "1990"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "easy",
+      "tags": ["Берлинская стена", "Германия", "холодная война"]
+    },
+    {
+      "question": "Какая картина Васнецова изображает трёх богатырей?",
+      "answers": ["«Богатыри»", "«Утро в сосновом лесу»", "«Бурлаки на Волге»", "«Девятый вал»"],
+      "correctIndex": 0,
+      "category": "art",
+      "difficulty": "easy",
+      "tags": ["Васнецов", "богатыри", "Третьяковка"]
+    },
+    {
+      "question": "Какой вид спорта называют «королём спорта»?",
+      "answers": ["Хоккей", "Теннис", "Лёгкая атлетика", "Футбол"],
+      "correctIndex": 2,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["лёгкая атлетика", "спорт", "королевский"]
+    },
+    {
+      "question": "Какая страна подарила Статую Свободы Соединённым Штатам?",
+      "answers": ["Великобритания", "Франция", "Испания", "Нидерланды"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["Статуя Свободы", "Франция", "США", "подарок"]
+    },
+    {
+      "question": "Какой элемент периодической таблицы имеет атомный номер 79?",
+      "answers": ["Серебро", "Платина", "Золото", "Медь"],
+      "correctIndex": 2,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["золото", "таблица Менделеева", "элемент", "атомный номер"]
+    },
+    {
+      "question": "В какой стране находится вулкан Килиманджаро?",
+      "answers": ["Кения", "Танзания", "Уганда", "Эфиопия"],
+      "correctIndex": 1,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["Килиманджаро", "вулкан", "Танзания", "Африка"]
+    },
+    {
+      "question": "Кто является рекордсменом по количеству «Золотых мячей»?",
+      "answers": ["Криштиану Роналду", "Лионель Месси", "Мишель Платини", "Йохан Кройф"],
+      "correctIndex": 1,
+      "category": "sport",
+      "difficulty": "medium",
+      "tags": ["Месси", "Золотой мяч", "рекорд", "футбол"]
+    },
+    {
+      "question": "Кто снял фильм «Начало» (Inception)?",
+      "answers": ["Дэвид Финчер", "Кристофер Нолан", "Дени Вильнёв", "Мартин Скорсезе"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "medium",
+      "tags": ["Начало", "Нолан", "Inception", "фильм"]
+    },
+    {
+      "question": "В каком архитектурном стиле построен собор Нотр-Дам де Пари?",
+      "answers": ["Романский", "Барокко", "Готика", "Ренессанс"],
+      "correctIndex": 2,
+      "category": "art",
+      "difficulty": "medium",
+      "tags": ["Нотр-Дам", "готика", "архитектура", "Париж"]
+    },
+    {
+      "question": "К какому музыкальному жанру относится Луи Армстронг?",
+      "answers": ["Блюз", "Джаз", "Соул", "Рок-н-ролл"],
+      "correctIndex": 1,
+      "category": "music",
+      "difficulty": "medium",
+      "tags": ["Армстронг", "джаз", "жанр", "музыка"]
+    },
+    {
+      "question": "Кто написал роман «1984»?",
+      "answers": ["Олдос Хаксли", "Рэй Брэдбери", "Джордж Оруэлл", "Герберт Уэллс"],
+      "correctIndex": 2,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["Оруэлл", "антиутопия", "роман", "1984"]
+    },
+    {
+      "question": "Из чего готовится традиционный итальянский соус песто?",
+      "answers": ["Томаты и чеснок", "Базилик и кедровые орехи", "Оливки и каперсы", "Перец и баклажаны"],
+      "correctIndex": 1,
+      "category": "food",
+      "difficulty": "medium",
+      "tags": ["песто", "базилик", "Италия", "соус"]
+    },
+    {
+      "question": "Какая кость в теле человека самая маленькая?",
+      "answers": ["Молоточек", "Стремечко", "Наковальня", "Копчик"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["анатомия", "кости", "ухо"]
+    },
+    {
+      "question": "Как называется детёныш кошки?",
+      "answers": ["Щенок", "Котёнок", "Телёнок", "Жеребёнок"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["кошка", "детёныш", "котёнок"]
+    },
+    {
+      "question": "Как называется замороженный десерт из сливок и сахара?",
+      "answers": ["Пудинг", "Мороженое", "Желе", "Суфле"],
+      "correctIndex": 1,
+      "category": "food",
+      "difficulty": "easy",
+      "tags": ["мороженое", "десерт", "сливки"]
+    },
+    {
+      "question": "Кто написал сказку «Золушка» в классическом варианте?",
+      "answers": ["Братья Гримм", "Шарль Перро", "Ганс Андерсен", "Шарль Нодье"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "easy",
+      "tags": ["Золушка", "Перро", "сказка"]
+    },
+    {
+      "question": "Кто построил первый печатный станок в Европе?",
+      "answers": ["Леонардо да Винчи", "Иоганн Гутенберг", "Галилео Галилей", "Николай Коперник"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "easy",
+      "tags": ["Гутенберг", "печать", "книгопечатание"]
+    },
+    {
+      "question": "Какой мультфильм студии Pixar рассказывает историю игрушек?",
+      "answers": ["Корпорация монстров", "История игрушек", "В поисках Немо", "Тачки"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "easy",
+      "tags": ["Pixar", "мультфильм", "игрушки"]
+    },
+    {
+      "question": "Какого цвета чаще всего бывает рубин?",
+      "answers": ["Синий", "Зелёный", "Красный", "Жёлтый"],
+      "correctIndex": 2,
+      "category": "any",
+      "difficulty": "easy",
+      "tags": ["рубин", "камень", "цвет"]
+    },
+    {
+      "question": "Какой значок используется в адресах электронной почты?",
+      "answers": ["#", "&", "@", "$"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["email", "собака", "символ"]
+    },
+    {
+      "question": "Какой художник отрезал себе часть уха?",
+      "answers": ["Клод Моне", "Пабло Пикассо", "Винсент Ван Гог", "Поль Сезанн"],
+      "correctIndex": 2,
+      "category": "art",
+      "difficulty": "easy",
+      "tags": ["Ван Гог", "ухо", "художник"]
+    },
+    {
+      "question": "Какое вещество придаёт крови красный цвет?",
+      "answers": ["Меланин", "Гемоглобин", "Кератин", "Хлорофилл"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "easy",
+      "tags": ["кровь", "гемоглобин", "биология"]
+    },
+    {
+      "question": "Какой напиток англичане традиционно пьют в пять часов вечера?",
+      "answers": ["Кофе", "Какао", "Чай", "Лимонад"],
+      "correctIndex": 2,
+      "category": "food",
+      "difficulty": "easy",
+      "tags": ["чай", "Англия", "традиция"]
+    },
+    {
+      "question": "Какой спутник вращается вокруг Земли?",
+      "answers": ["Фобос", "Титан", "Луна", "Европа"],
+      "correctIndex": 2,
+      "category": "space",
+      "difficulty": "easy",
+      "tags": ["Луна", "спутник", "Земля"]
+    },
+    {
+      "question": "Какое животное является символом WWF (Всемирного фонда дикой природы)?",
+      "answers": ["Тигр", "Панда", "Белый медведь", "Дельфин"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["панда", "WWF", "символ"]
+    },
+    {
+      "question": "Какой клавишей на клавиатуре удаляют символ перед курсором?",
+      "answers": ["Delete", "Enter", "Backspace", "Tab"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "easy",
+      "tags": ["клавиатура", "Backspace", "удаление"]
+    },
+    {
+      "question": "Кто написал «Ромео и Джульетту»?",
+      "answers": ["Уильям Шекспир", "Оскар Уайльд", "Чарльз Диккенс", "Джейн Остин"],
+      "correctIndex": 0,
+      "category": "literature",
+      "difficulty": "easy",
+      "tags": ["Шекспир", "трагедия", "Ромео"]
+    },
+    {
+      "question": "В каком году Колумб открыл Америку?",
+      "answers": ["1490", "1492", "1498", "1500"],
+      "correctIndex": 1,
+      "category": "history",
+      "difficulty": "easy",
+      "tags": ["Колумб", "Америка", "открытие"]
+    },
+    {
+      "question": "В каком олимпийском виде спорта выступают в пачках?",
+      "answers": ["Фигурное катание", "Художественная гимнастика", "Синхронное плавание", "Балет не олимпийский вид"],
+      "correctIndex": 1,
+      "category": "sport",
+      "difficulty": "easy",
+      "tags": ["гимнастика", "олимпиада", "пачка"]
+    },
+    {
+      "question": "Кто сыграл Джека Воробья в фильме «Пираты Карибского моря»?",
+      "answers": ["Орландо Блум", "Джонни Депп", "Брэд Питт", "Киану Ривз"],
+      "correctIndex": 1,
+      "category": "cinema",
+      "difficulty": "easy",
+      "tags": ["Депп", "пираты", "Джек Воробей"]
+    },
+    {
+      "question": "Какой цвет получается при смешении синего и жёлтого?",
+      "answers": ["Оранжевый", "Фиолетовый", "Зелёный", "Коричневый"],
+      "correctIndex": 2,
+      "category": "art",
+      "difficulty": "easy",
+      "tags": ["цвет", "смешение", "зелёный"]
+    },
+    {
+      "question": "Какая группа исполнила песню «Bohemian Rhapsody»?",
+      "answers": ["The Beatles", "Led Zeppelin", "Queen", "Pink Floyd"],
+      "correctIndex": 2,
+      "category": "music",
+      "difficulty": "easy",
+      "tags": ["Queen", "рок", "Bohemian Rhapsody"]
+    },
+    {
+      "question": "Какова скорость света в вакууме (приблизительно)?",
+      "answers": ["150 000 км/с", "300 000 км/с", "450 000 км/с", "600 000 км/с"],
+      "correctIndex": 1,
+      "category": "science",
+      "difficulty": "medium",
+      "tags": ["свет", "скорость", "физика", "вакуум"]
+    },
+    {
+      "question": "В какой стране находится Мачу-Пикчу?",
+      "answers": ["Мексика", "Боливия", "Перу", "Колумбия"],
+      "correctIndex": 2,
+      "category": "geography",
+      "difficulty": "medium",
+      "tags": ["Мачу-Пикчу", "Перу", "инки", "руины"]
+    },
+    {
+      "question": "Кто был первым президентом Соединённых Штатов?",
+      "answers": ["Томас Джефферсон", "Бенджамин Франклин", "Джордж Вашингтон", "Джон Адамс"],
+      "correctIndex": 2,
+      "category": "history",
+      "difficulty": "medium",
+      "tags": ["Вашингтон", "президент", "США", "первый"]
+    },
+    {
+      "question": "Какой фильм стал самым кассовым в истории кино (по мировым сборам)?",
+      "answers": ["Титаник", "Мстители: Финал", "Аватар", "Звёздные войны: Пробуждение силы"],
+      "correctIndex": 2,
+      "category": "cinema",
+      "difficulty": "medium",
+      "tags": ["Аватар", "касса", "рекорд", "Кэмерон"]
+    },
+    {
+      "question": "Как называется архитектурный стиль с обилием позолоты, лепнины и пышного декора?",
+      "answers": ["Готика", "Модерн", "Барокко", "Минимализм"],
+      "correctIndex": 2,
+      "category": "art",
+      "difficulty": "medium",
+      "tags": ["барокко", "стиль", "архитектура", "декор"]
+    },
+    {
+      "question": "Кто считается «королём рок-н-ролла»?",
+      "answers": ["Чак Берри", "Элвис Пресли", "Литл Ричард", "Джерри Ли Льюис"],
+      "correctIndex": 1,
+      "category": "music",
+      "difficulty": "medium",
+      "tags": ["Элвис", "рок-н-ролл", "король", "музыка"]
+    },
+    {
+      "question": "Какой протокол обеспечивает безопасную передачу данных в интернете?",
+      "answers": ["HTTP", "FTP", "HTTPS", "SMTP"],
+      "correctIndex": 2,
+      "category": "it",
+      "difficulty": "medium",
+      "tags": ["HTTPS", "безопасность", "протокол", "интернет"]
+    },
+    {
+      "question": "Кто автор романа «Мастер и Маргарита»?",
+      "answers": ["Б. Пастернак", "М. Булгаков", "А. Солженицын", "И. Бунин"],
+      "correctIndex": 1,
+      "category": "literature",
+      "difficulty": "medium",
+      "tags": ["Булгаков", "Мастер и Маргарита", "роман", "русская литература"]
+    },
+    {
+      "question": "Из какой муки традиционно готовят японскую лапшу соба?",
+      "answers": ["Рисовая", "Пшеничная", "Гречневая", "Кукурузная"],
+      "correctIndex": 2,
+      "category": "food",
+      "difficulty": "medium",
+      "tags": ["соба", "Япония", "гречка", "лапша"]
+    },
+    {
+      "question": "Какое животное может не пить воду несколько недель, используя жир из горба?",
+      "answers": ["Слон", "Верблюд", "Носорог", "Бегемот"],
+      "correctIndex": 1,
+      "category": "animals",
+      "difficulty": "easy",
+      "tags": ["верблюд", "горб", "вода", "пустыня"]
+    }
   ]
 }

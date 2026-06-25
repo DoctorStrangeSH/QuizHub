@@ -75,10 +75,7 @@ function getLeaderboard(difficulty = 'easy', limit = 20) {
       });
       return results.slice(0, limit);
     })
-    .catch(error => {
-      console.error('Ошибка загрузки лидеров:', error);
-      return [];
-    });
+    .catch(error => { console.error('Ошибка загрузки лидеров:', error); return []; });
 }
 
 function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
@@ -92,10 +89,7 @@ function onLeaderboardUpdate(callback, difficulty = 'easy', limit = 20) {
         return a.totalTime - b.totalTime;
       });
       callback(results.slice(0, limit));
-    }, error => {
-      console.error('Ошибка подписки:', error);
-      callback([]);
-    });
+    }, error => { console.error('Ошибка подписки:', error); callback([]); });
 }
 
 // ========== ЗАГРУЗКА ВОПРОСОВ ИЗ JSON ==========
@@ -122,33 +116,40 @@ function getLocalQuestionsFromJSON(data, category, difficulty, count) {
   
   let pool = [...data.questions];
   
-  // 1. СНАЧАЛА фильтруем по сложности
+  // 1. Фильтр по сложности
   if (difficulty && difficulty !== 'any') {
     const diffPool = pool.filter(q => q.difficulty === difficulty);
-    
     if (diffPool.length >= count) {
       pool = diffPool;
     } else if (diffPool.length > 0) {
       const remaining = pool.filter(q => q.difficulty !== difficulty);
       pool = [...diffPool, ...shuffleArray(remaining).slice(0, count - diffPool.length)];
-    } else {
-      console.warn(`Нет вопросов сложности "${difficulty}"`);
     }
   }
   
-  // 2. ПОТОМ фильтруем по категории
+  // 2. Фильтр по категории
   if (category && category !== 'any') {
     const catPool = pool.filter(q => q.category === category);
-    
     if (catPool.length >= count) {
       pool = catPool;
     } else if (catPool.length > 0) {
-      console.warn(`Мало вопросов категории "${category}" (${catPool.length}), добираем из других`);
       const remaining = pool.filter(q => q.category !== category);
       pool = [...catPool, ...shuffleArray(remaining).slice(0, count - catPool.length)];
-    } else {
-      console.warn(`Нет вопросов категории "${category}", используем все`);
     }
+  }
+  
+  // 3. Поиск по ключевым словам (если есть поисковый запрос)
+  const searchInput = document.getElementById('search-keywords');
+  if (searchInput && searchInput.value.trim().length >= 2) {
+    const keyword = searchInput.value.trim().toLowerCase();
+    const searchPool = pool.filter(q => {
+      if (q.question.toLowerCase().includes(keyword)) return true;
+      if (q.answers.some(a => a.toLowerCase().includes(keyword))) return true;
+      if (q.tags && q.tags.some(t => t.toLowerCase().includes(keyword))) return true;
+      if (q.category && data.categories && data.categories[q.category]?.toLowerCase().includes(keyword)) return true;
+      return false;
+    });
+    if (searchPool.length > 0) pool = searchPool;
   }
   
   // Убираем дубликаты
@@ -178,7 +179,6 @@ async function fetchEnglishQuestions(category, difficulty) {
     const url = new URL('https://opentdb.com/api.php');
     url.searchParams.set('amount', 10);
     url.searchParams.set('type', 'multiple');
-    
     if (category && category !== 'any') url.searchParams.set('category', category);
     if (difficulty && difficulty !== 'any') url.searchParams.set('difficulty', difficulty);
     
@@ -198,19 +198,9 @@ async function fetchEnglishQuestions(category, difficulty) {
 }
 
 function formatEnglishQuestion(apiQuestion) {
-  const decodeHTML = (html) => {
-    const txt = document.createElement('textarea');
-    txt.innerHTML = html;
-    return txt.value;
-  };
-  
-  const answers = [
-    ...apiQuestion.incorrect_answers.map(decodeHTML),
-    decodeHTML(apiQuestion.correct_answer)
-  ];
-  
+  const decodeHTML = (html) => { const txt = document.createElement('textarea'); txt.innerHTML = html; return txt.value; };
+  const answers = [...apiQuestion.incorrect_answers.map(decodeHTML), decodeHTML(apiQuestion.correct_answer)];
   const shuffled = shuffleArray(answers);
-  
   return {
     question: decodeHTML(apiQuestion.question),
     answers: shuffled,
