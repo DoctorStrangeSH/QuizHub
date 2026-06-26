@@ -33,13 +33,18 @@
     <link href="css/components/events.css" rel="stylesheet">
     <link href="css/components/coins.css" rel="stylesheet">
 
-    <!-- Применяем тему ДО загрузки страницы -->
-    <script>
-        (function() {
-            var theme = localStorage.getItem('quizhub-theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
+<!-- Применяем тему и кастомную тему ДО загрузки страницы -->
+<script>
+    (function() {
+        var theme = localStorage.getItem('quizhub-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        var customTheme = localStorage.getItem('quizhub-custom-theme');
+        if (customTheme) {
+            document.documentElement.setAttribute('data-custom-theme', customTheme);
+        }
+    })();
+</script>
 
     <!-- Скрываем авторизацию до проверки -->
     <style>

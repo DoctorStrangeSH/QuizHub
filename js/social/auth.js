@@ -139,13 +139,39 @@ async function signOut() {
             await saveUserDataToFirestore();
         }
 
-        // Удаляем кэш
+        // Очищаем ВСЕ локальные данные
+        localStorage.removeItem('quizhub-coins');
+        localStorage.removeItem('quizhub-achievements');
+        localStorage.removeItem('quizhub-stats');
+        localStorage.removeItem('quizhub-purchases');
+        localStorage.removeItem('quizhub-custom-theme');
         localStorage.removeItem('quizhub-user-cache');
+        localStorage.removeItem('quizhub-quiz-progress');
+        localStorage.removeItem('quizhub-score-history');
+        localStorage.removeItem('quizhub-weekly-activity');
+        localStorage.removeItem('quizhub-quest-state');
+
+        // Сбрасываем глобальные переменные
+        if (typeof userCoins !== 'undefined') userCoins = 0;
+        if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
+        if (typeof purchasedItems !== 'undefined') purchasedItems = [];
+        if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
+
+        // Сбрасываем кастомную тему
+        document.documentElement.removeAttribute('data-custom-theme');
+
+        // Обновляем отображение
+        if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
 
         const authInstance = getAuth();
         if (authInstance) {
             await authInstance.signOut();
         }
+
+        // Возвращаем на главную
+        if (typeof showScreen === 'function') showScreen('home');
+        
+        showToast('Данные очищены. Вы вышли из аккаунта.', 'info');
     } catch (error) {
         console.error('Ошибка выхода:', error);
     }
@@ -157,14 +183,14 @@ function updateAuthUI(user) {
     const authArea = document.getElementById('auth-area');
     if (!authArea) return;
 
-    // Делаем видимым
     authArea.style.visibility = 'visible';
 
     if (user) {
         const photoURL = user.photoURL || 
             `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=FF6B9D&color=fff&size=32`;
 
-        authArea.innerHTML = `
+        // Новый HTML
+        const newHTML = `
             <div class="d-flex align-items-center gap-2">
                 <div class="user-avatar-wrapper" title="${user.displayName || 'Пользователь'}">
                     <img src="${photoURL}" 
@@ -180,12 +206,21 @@ function updateAuthUI(user) {
                 </button>
             </div>
         `;
+
+        // НЕ обновляем, если контент уже тот же
+        if (authArea.innerHTML.trim() !== newHTML.trim()) {
+            authArea.innerHTML = newHTML;
+        }
     } else {
-        authArea.innerHTML = `
+        const newHTML = `
             <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
+
+        if (authArea.innerHTML.trim() !== newHTML.trim()) {
+            authArea.innerHTML = newHTML;
+        }
     }
 }
 

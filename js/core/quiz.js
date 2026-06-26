@@ -174,22 +174,21 @@ function renderQuizScreen() {
         if (typeof addVoiceButton === 'function') addVoiceButton();
     }, 100);
 
-    if (typeof saveQuizProgress === 'function') {
-        saveQuizProgress({
-            currentQuestionIndex,
-            score,
-            currentStreak,
-            maxStreak,
-            fastestAnswer,
-            correctAnswersCount,
-            timeLeft,
-            difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy',
-            category: document.getElementById('quiz-category')?.value,
-            questions: quizQuestions,
-            totalQuestions: QUIZ_SETTINGS.totalQuestions,
-            timestamp: Date.now()
-        });
-    }
+if (typeof saveQuizProgress === 'function') {
+    saveQuizProgress({
+        currentQuestionIndex,
+        score,
+        currentStreak,
+        maxStreak,
+        fastestAnswer,
+        correctAnswersCount,
+        timeLeft: timeLeft,  // ← сохраняем текущее значение таймера
+        difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy',
+        category: document.getElementById('quiz-category')?.value,
+        questions: quizQuestions,
+        totalQuestions: QUIZ_SETTINGS.totalQuestions,
+        timestamp: Date.now()
+    });
 }
 
 function createCircularTimer(totalSeconds) {
@@ -210,8 +209,14 @@ function createCircularTimer(totalSeconds) {
 
 // ========== ТАЙМЕР ==========
 
-function startTimer() {
-    timeLeft = QUIZ_SETTINGS.timePerQuestion;
+function startTimer(initialTimeLeft) {
+    // Если передан параметр — используем его, иначе стандартное время
+    if (typeof initialTimeLeft === 'number' && initialTimeLeft > 0) {
+        timeLeft = initialTimeLeft;
+    } else {
+        timeLeft = QUIZ_SETTINGS.timePerQuestion;
+    }
+    
     updateTimerDisplay();
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -492,9 +497,10 @@ function checkSavedQuiz() {
         fastestAnswer = saved.fastestAnswer || 999;
         correctAnswersCount = saved.correctAnswersCount || 0;
 
-        const savedTimeLeft = saved.timeLeft || 15;
+        // Восстанавливаем таймер с учётом прошедшего времени
+        const savedTimeLeft = saved.timeLeft || QUIZ_SETTINGS.timePerQuestion;
         const elapsed = Math.floor(age);
-        timeLeft = Math.max(1, savedTimeLeft - elapsed);
+        const restoredTimeLeft = Math.max(1, savedTimeLeft - elapsed);
 
         if (saved.difficulty && typeof selectedDifficulty !== 'undefined') {
             selectedDifficulty = saved.difficulty;
@@ -505,9 +511,9 @@ function checkSavedQuiz() {
 
         showScreen('quiz');
         renderQuizScreen();
-        startTimer();
+        startTimer(restoredTimeLeft); // ← передаём восстановленное время
 
-        console.log(`⏱ Квиз восстановлен. Вопрос ${currentQuestionIndex + 1}/${QUIZ_SETTINGS.totalQuestions}. Таймер: ${timeLeft}с`);
+        console.log(`⏱ Квиз восстановлен. Вопрос ${currentQuestionIndex + 1}/${QUIZ_SETTINGS.totalQuestions}. Таймер: ${restoredTimeLeft}с (было ${savedTimeLeft}с, прошло ${elapsed}с)`);
         return;
     }
 
@@ -519,8 +525,8 @@ function checkSavedQuiz() {
     fastestAnswer = saved.fastestAnswer || 999;
     correctAnswersCount = saved.correctAnswersCount || 0;
 
-    const savedTimeLeft = saved.timeLeft || 15;
-    timeLeft = Math.max(1, savedTimeLeft - Math.floor(age));
+    const savedTimeLeft = saved.timeLeft || QUIZ_SETTINGS.timePerQuestion;
+    const restoredTimeLeft = Math.max(1, savedTimeLeft - Math.floor(age));
 
     if (saved.difficulty && typeof selectedDifficulty !== 'undefined') {
         selectedDifficulty = saved.difficulty;
@@ -536,8 +542,7 @@ function checkSavedQuiz() {
             QUIZ_SETTINGS.timePerQuestion = 15;
             showScreen('quiz');
             renderQuizScreen();
-            startTimer();
-            showToast('Квиз восстановлен! ⏱', 'info');
+            startTimer(restoredTimeLeft); // ← передаём восстановленное время
         }
     });
 }
