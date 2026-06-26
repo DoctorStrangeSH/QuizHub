@@ -116,43 +116,21 @@ function handleEventClick(category) {
 // ========== ВСТРАИВАЕМ БАННЕР В ГЛАВНЫЙ ЭКРАН ==========
 
 function injectEventBannerIntoHome() {
-    const homeScreen = document.getElementById('screen-home');
-    if (!homeScreen) return;
+    // Контейнер уже в HTML — сразу рендерим баннер
+    renderEventBanner();
 
-    const observer = new MutationObserver(() => {
-        if (homeScreen.classList.contains('active')) {
-            if (!document.getElementById('event-banner-container')) {
-                const quizSetup = homeScreen.querySelector('.quiz-setup');
-                if (quizSetup) {
-                    const bannerContainer = document.createElement('div');
-                    bannerContainer.id = 'event-banner-container';
-                    bannerContainer.style.display = 'none';
-                    quizSetup.parentNode.insertBefore(bannerContainer, quizSetup);
-                    renderEventBanner();
-                }
-            } else {
-                renderEventBanner();
+    // Слушаем возврат на главную
+    const originalShowScreen = typeof showScreen === 'function' ? showScreen : null;
+    if (originalShowScreen) {
+        const decoratedShowScreen = function(screenName) {
+            originalShowScreen(screenName);
+            if (screenName === 'home') {
+                setTimeout(renderEventBanner, 100);
             }
+        };
+        if (showScreen === originalShowScreen) {
+            showScreen = decoratedShowScreen;
         }
-    });
-
-    observer.observe(homeScreen, { attributes: true, attributeFilter: ['class'] });
-
-    if (homeScreen.classList.contains('active')) {
-        setTimeout(() => {
-            if (!document.getElementById('event-banner-container')) {
-                const quizSetup = homeScreen.querySelector('.quiz-setup');
-                if (quizSetup) {
-                    const bannerContainer = document.createElement('div');
-                    bannerContainer.id = 'event-banner-container';
-                    bannerContainer.style.display = 'none';
-                    quizSetup.parentNode.insertBefore(bannerContainer, quizSetup);
-                    renderEventBanner();
-                }
-            } else {
-                renderEventBanner();
-            }
-        }, 200);
     }
 }
 

@@ -2,10 +2,10 @@
    QuizHub — Стили событий
    ============================================ */
 
-#event-banner-container {
+/*#event-banner-container {
     margin-bottom: 16px;
     animation: eventBannerIn 0.5s ease-out;
-}
+}*/
 
 @keyframes eventBannerIn {
     from { opacity: 0; transform: translateY(-10px); }

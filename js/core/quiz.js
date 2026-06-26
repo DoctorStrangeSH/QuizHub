@@ -189,6 +189,7 @@ if (typeof saveQuizProgress === 'function') {
         totalQuestions: QUIZ_SETTINGS.totalQuestions,
         timestamp: Date.now()
     });
+  }
 }
 
 function createCircularTimer(totalSeconds) {
