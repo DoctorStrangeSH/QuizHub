@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>QuizHub — Проверь свои знания!</title>
-    
+
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F0E17">
@@ -12,25 +12,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="QuizHub">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    
+
     <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Кастомные стили -->
     <link href="css/core/style.css" rel="stylesheet">
     <link href="css/core/themes.css" rel="stylesheet">
+    <link href="css/components/themes-custom.css" rel="stylesheet">
     <link href="css/core/performance.css" rel="stylesheet">
     <link href="css/components/chat.css" rel="stylesheet">
     <link href="css/components/social.css" rel="stylesheet">
     <link href="css/components/events.css" rel="stylesheet">
-    
+    <link href="css/components/coins.css" rel="stylesheet">
+
     <!-- Применяем тему ДО загрузки страницы -->
     <script>
         (function() {
@@ -38,36 +40,43 @@
             document.documentElement.setAttribute('data-theme', theme);
         })();
     </script>
+
+    <!-- Скрываем авторизацию до проверки -->
+    <style>
+        #auth-area { visibility: hidden; }
+        #auth-area.loaded { visibility: visible; }
+    </style>
 </head>
 <body>
 
     <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
     <div class="app-container">
-        
+
         <!-- Частицы фона -->
         <div class="particles" id="particles"></div>
-        
+
         <!-- ХЕДЕР -->
         <header class="app-header">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center py-3">
-                    <!-- Логотип БЕЗ parallax-layer -->
+
+                    <!-- Логотип -->
                     <a href="#" class="logo" onclick="showScreen('home'); return false;">
                         <i class="bi bi-lightning-charge-fill me-2"></i>Quiz<span class="text-accent">Hub</span>
                     </a>
-                    
+
                     <!-- Мобильная кнопка меню -->
                     <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Меню">
                         <i class="bi bi-list"></i>
                     </button>
-                    
+
                     <!-- Действия (скрываются на мобилках) -->
                     <div class="header-actions-collapsible" id="header-actions">
-                        
+
                         <!-- Языки -->
                         <button type="button" class="btn btn-locale btn-sm rounded-pill px-2 active" data-locale="ru" title="Русский">🇷🇺</button>
                         <button type="button" class="btn btn-locale btn-sm rounded-pill px-2" data-locale="en" title="English">🇬🇧</button>
-                        
+
                         <!-- Переключатель темы -->
                         <div class="theme-toggle-wrapper me-1">
                             <div class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="Переключить тему">
@@ -81,7 +90,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Навигация -->
                         <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('leaderboard')">
                             <i class="bi bi-trophy me-1"></i><span class="d-none d-md-inline">Лидеры</span>
@@ -92,22 +101,22 @@
                         <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showScreen('stats')">
                             <i class="bi bi-graph-up me-1"></i><span class="d-none d-md-inline">Статистика</span>
                         </button>
-                        
+
                         <!-- Друзья -->
                         <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="showFriendsScreen()">
                             <i class="bi bi-people-fill me-1"></i><span class="d-none d-md-inline">Друзья</span>
                         </button>
-                        
+
                         <!-- Магазин (монеты) -->
                         <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" onclick="showShopScreen()" title="Магазин">
                             🪙<span id="coins-display">0</span>
                         </button>
-                        
+
                         <!-- Звук -->
                         <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-2" id="sound-toggle" onclick="toggleSound()" title="Звук">
                             <i class="bi bi-volume-up-fill"></i>
                         </button>
-                        
+
                         <!-- Авторизация -->
                         <div id="auth-area">
                             <button type="button" class="btn btn-outline-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
@@ -118,37 +127,37 @@
                 </div>
             </div>
         </header>
-        
+
         <!-- ОСНОВНОЙ КОНТЕНТ -->
         <main class="app-main">
             <div class="container">
-                
-                <!-- ЭКРАН 1: ГЛАВНАЯ (БЕЗ класса active) -->
+
+                <!-- ЭКРАН 1: ГЛАВНАЯ -->
                 <div class="screen" id="screen-home">
                     <div class="row justify-content-center">
                         <div class="col-lg-6 text-center">
-                            
+
                             <div class="hero-icon mb-4">🧠</div>
-                            
+
                             <h1 class="display-3 fw-bold font-display mb-3">
                                 Проверь свои <span class="text-accent">знания</span>
                             </h1>
                             <p class="lead mb-5" style="color: #C0C0D0;">
                                 Выбери категорию, пройди квиз и займи место в таблице лидеров!
                             </p>
-                            
+
                             <!-- Форма настроек квиза -->
                             <div class="quiz-setup bg-card rounded-4 p-4 p-md-5 mb-4">
-                                
+
                                 <!-- Имя -->
                                 <div class="mb-4 text-start">
                                     <label class="form-label small fw-semibold text-muted">
                                         <i class="bi bi-person me-1 text-accent"></i>Твоё имя
                                     </label>
-                                    <input type="text" class="form-control form-control-lg rounded-pill px-4" 
+                                    <input type="text" class="form-control form-control-lg rounded-pill px-4"
                                            id="player-name" placeholder="Владислав" maxlength="20" autocomplete="off">
                                 </div>
-                                
+
                                 <!-- Категория -->
                                 <div class="mb-4 text-start">
                                     <label class="form-label small fw-semibold text-muted">
@@ -170,7 +179,7 @@
                                         <option value="space">🚀 Космос</option>
                                     </select>
                                 </div>
-                                
+
                                 <!-- Сложность -->
                                 <div class="mb-4 text-start">
                                     <label class="form-label small fw-semibold text-muted">
@@ -188,14 +197,14 @@
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Кнопка старта -->
                                 <button type="button" class="btn btn-accent btn-lg rounded-pill px-5 w-100 shadow-lg" id="start-quiz">
                                     <i class="bi bi-play-fill me-2"></i>НАЧАТЬ КВИЗ
                                 </button>
-                                
+
                             </div>
-                            
+
                             <!-- Режимы игры -->
                             <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
                                 <button type="button" class="btn btn-outline-accent rounded-pill px-4" onclick="startSurvivalMode()">
@@ -214,89 +223,89 @@
                                     👥 Команда
                                 </button>
                             </div>
-                            
+
                             <!-- Мини-статистика -->
                             <div class="d-flex justify-content-center gap-4 text-muted small flex-wrap">
                                 <span>📝 10 вопросов</span>
                                 <span>⏰ 15 сек / вопрос</span>
                                 <span>⭐ Бонусы за скорость</span>
                             </div>
-                            
+
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- ЭКРАН 2: КВИЗ -->
                 <div class="screen" id="screen-quiz"></div>
-                
+
                 <!-- ЭКРАН 3: РЕЗУЛЬТАТ -->
                 <div class="screen" id="screen-result"></div>
-                
+
                 <!-- ЭКРАН 4: ТАБЛИЦА ЛИДЕРОВ -->
                 <div class="screen" id="screen-leaderboard"></div>
-                
+
                 <!-- ЭКРАН 5: АЧИВКИ -->
                 <div class="screen" id="screen-achievements"></div>
-                
+
                 <!-- ЭКРАН 6: СТАТИСТИКА -->
                 <div class="screen" id="screen-stats"></div>
-                
+
                 <!-- ЭКРАН 7: КОМАНДА -->
                 <div class="screen" id="screen-team"></div>
-                
+
                 <!-- ЭКРАН 8: ТУРНИРЫ -->
                 <div class="screen" id="screen-tournament"></div>
-                
+
                 <!-- ЭКРАН 9: МАГАЗИН -->
                 <div class="screen" id="screen-shop"></div>
-                
+
                 <!-- ЭКРАН 10: ДРУЗЬЯ -->
                 <div class="screen" id="screen-friends"></div>
-                
+
             </div>
         </main>
-        
+
         <!-- ФУТЕР -->
         <footer class="app-footer">
             <div class="container text-center py-3">
                 <small class="text-muted">
-                    © 2026 QuizHub • Вопросы из Open Trivia DB и сообщества • 
+                    © 2026 QuizHub • Вопросы из Open Trivia DB и сообщества •
                     <span class="live-dot"></span> Real-time
                 </small>
             </div>
         </footer>
-        
+
     </div>
-    
+
     <!-- Попап достижений -->
     <div id="achievements-popup" style="display: none; position: fixed; top: 100px; right: 20px; z-index: 9999; max-width: 320px;"></div>
-    
+
     <!-- Тост-контейнер -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
-    
+
     <!-- ==================== СКРИПТЫ ==================== -->
-    
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- ===== ЯДРО (core) ===== -->
     <script src="js/core/firebase-config.js"></script>
     <script src="js/core/i18n.js"></script>
-    
+
     <!-- ===== СЕРВИСЫ (services) ===== -->
     <script src="js/services/sounds.js"></script>
     <script src="js/services/animations.js"></script>
     <script src="js/services/offline.js"></script>
     <script src="js/services/api.js"></script>
-    
+
     <!-- ===== СОЦИАЛЬНОЕ (social) ===== -->
     <script src="js/social/auth.js"></script>
     <script src="js/social/social.js"></script>
@@ -304,7 +313,7 @@
     <script src="js/social/tournaments.js"></script>
     <script src="js/social/chat.js"></script>
     <script src="js/social/events.js"></script>
-    
+
     <!-- ===== ФИЧИ (features) ===== -->
     <script src="js/features/achievements.js"></script>
     <script src="js/features/quests.js"></script>
@@ -315,17 +324,17 @@
     <script src="js/features/stats.js"></script>
     <script src="js/features/voice.js"></script>
     <script src="js/features/swipe.js"></script>
-    
+
     <!-- ===== СЕРВИСЫ (продолжение) ===== -->
     <script src="js/services/firestore-sync.js"></script>
     <script src="js/utils/performance.js"></script>
     <script src="js/utils/bundle-optimizer.js"></script>
     <script src="js/utils/security.js"></script>
-    
+
     <!-- ===== ЯДРО (после всех зависимостей) ===== -->
     <script src="js/core/ui.js"></script>
     <script src="js/core/quiz.js"></script>
-    
+
     <!-- PWA Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {

@@ -1,0 +1,29 @@
+/* ============================================
+   QuizHub — Кастомные темы (Неон, Океан)
+   ============================================ */
+
+/* Неоновая тема */
+[data-custom-theme="theme_neon"] {
+    --accent: #00FF88;
+    --accent-glow: rgba(0, 255, 136, 0.4);
+    --secondary: #00CC66;
+    --bg-primary: #0a0a0a;
+    --bg-card: #111111;
+    --bg-card-hover: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-muted: #a0a0a0;
+}
+
+/* Океан */
+[data-custom-theme="theme_ocean"] {
+    --accent: #0099FF;
+    --accent-glow: rgba(0, 153, 255, 0.4);
+    --secondary: #006699;
+    --bg-primary: #0a1628;
+    --bg-card: #0d1f3c;
+    --bg-card-hover: #122a4f;
+    --text-primary: #e8f0ff;
+    --text-muted: #8a9bb5;
+}
+
+/* Можно добавлять новые темы ниже */

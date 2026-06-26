@@ -1,0 +1,17 @@
+/* ============================================
+   QuizHub — Стили магазина
+   ============================================ */
+
+/* Кнопка покупки */
+.shop-buy-btn {
+    min-width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Бейдж "Активна" */
+.shop-active-badge {
+    white-space: nowrap;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}

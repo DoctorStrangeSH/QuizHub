@@ -381,17 +381,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 200), { passive: true });
   
   // Оптимизируем ресайз
-  window.addEventListener('resize', debounce(() => {
-    renderCache.clear();
+  //window.addEventListener('resize', debounce(() => {
+    //renderCache.clear();
     // Перерисовываем активный экран
-    const activeScreen = document.querySelector('.screen.active');
-    if (activeScreen) {
-      const screenId = activeScreen.id.replace('screen-', '');
-      if (typeof showScreen === 'function') {
-        showScreen(screenId);
-      }
-    }
-  }, 250));
+    //const activeScreen = document.querySelector('.screen.active');
+    //if (activeScreen) {
+      //const screenId = activeScreen.id.replace('screen-', '');
+      //if (typeof showScreen === 'function') {
+        //showScreen(screenId);
+      //}
+    //}
+  //}, 250));
   
   console.log('Оптимизации производительности активированы');
 });
