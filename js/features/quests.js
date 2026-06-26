@@ -1,5 +1,6 @@
 // ============================================
-// QuizHub — Система заданий v3.2
+// QuizHub — Система заданий v3.1
+// Ежедневные + Недельные + Месячные
 // ============================================
 
 const DAILY_QUESTS_POOL = [
@@ -46,24 +47,48 @@ const MONTHLY_QUESTS_POOL = [
   { id: 'mq_10', name: 'Полиглот', desc: 'Пройти по 25 квизов на каждом языке', target: 50, type: 'bilingual_month', reward: 600, icon: '🌍', rarity: 'rare' },
 ];
 
-let dailyQuests = [], weeklyQuests = [], monthlyQuests = [];
-let dailyQuestDate = '', weeklyQuestWeek = '', monthlyQuestMonth = '';
-let dailyProgress = {}, weeklyProgress = {}, monthlyProgress = {};
+// ========== СОСТОЯНИЕ ==========
+
+let dailyQuests = [];
+let weeklyQuests = [];
+let monthlyQuests = [];
+
+let dailyQuestDate = '';
+let weeklyQuestWeek = '';
+let monthlyQuestMonth = '';
+
+let dailyProgress = {};
+let weeklyProgress = {};
+let monthlyProgress = {};
+
+// ========== ГЕНЕРАЦИЯ ==========
 
 function getRandomQuests(pool, count) {
   const common = pool.filter(q => q.rarity === 'common');
   const uncommon = pool.filter(q => q.rarity === 'uncommon');
   const rare = pool.filter(q => q.rarity === 'rare');
   const legendary = pool.filter(q => q.rarity === 'legendary');
+  
   let selected = [];
+  
   if (common.length > 0) selected.push(common[Math.floor(Math.random() * common.length)]);
+  
   const shuffledUncommon = shuffleArray([...uncommon]);
   selected = [...selected, ...shuffledUncommon.slice(0, Math.min(2, count - selected.length))];
-  if (legendary.length > 0 && Math.random() < 0.2 && selected.length < count) selected.push(legendary[Math.floor(Math.random() * legendary.length)]);
+  
+  if (legendary.length > 0 && Math.random() < 0.2 && selected.length < count) {
+    selected.push(legendary[Math.floor(Math.random() * legendary.length)]);
+  }
+  
   const shuffledRare = shuffleArray([...rare]);
-  while (selected.length < count && shuffledRare.length > 0) { const pick = shuffledRare.shift(); if (!selected.find(s => s.id === pick.id)) selected.push(pick); }
+  while (selected.length < count && shuffledRare.length > 0) {
+    const pick = shuffledRare.shift();
+    if (!selected.find(s => s.id === pick.id)) selected.push(pick);
+  }
+  
   const remaining = shuffleArray([...pool].filter(q => !selected.find(s => s.id === q.id)));
   while (selected.length < count && remaining.length > 0) selected.push(remaining.shift());
+  
   return shuffleArray(selected).slice(0, count);
 }
 
@@ -71,47 +96,141 @@ function generateQuests(type) {
   const now = new Date();
   const mskOffset = 3 * 60 * 60 * 1000;
   const mskTime = new Date(now.getTime() + mskOffset);
-  if (type === 'daily') { const today = mskTime.toISOString().split('T')[0]; if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests; dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3); dailyQuestDate = today; dailyProgress = {}; dailyQuests.forEach(q => { dailyProgress[q.id] = 0; }); saveQuestState('daily'); return dailyQuests; }
-  if (type === 'weekly') { const wn = getWeekNumber(mskTime); if (weeklyQuestWeek === wn && weeklyQuests.length > 0) return weeklyQuests; weeklyQuests = getRandomQuests(WEEKLY_QUESTS_POOL, 3); weeklyQuestWeek = wn; weeklyProgress = {}; weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; }); saveQuestState('weekly'); return weeklyQuests; }
-  if (type === 'monthly') { const mk = `${mskTime.getFullYear()}-${mskTime.getMonth()+1}`; if (monthlyQuestMonth === mk && monthlyQuests.length > 0) return monthlyQuests; monthlyQuests = getRandomQuests(MONTHLY_QUESTS_POOL, 3); monthlyQuestMonth = mk; monthlyProgress = {}; monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; }); saveQuestState('monthly'); return monthlyQuests; }
+  
+  if (type === 'daily') {
+    const today = mskTime.toISOString().split('T')[0];
+    if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
+    
+    dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
+    dailyQuestDate = today;
+    dailyProgress = {};
+    dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
+    saveQuestState('daily');
+    return dailyQuests;
+  }
+  
+  if (type === 'weekly') {
+    const weekNumber = getWeekNumber(mskTime);
+    if (weeklyQuestWeek === weekNumber && weeklyQuests.length > 0) return weeklyQuests;
+    
+    weeklyQuests = getRandomQuests(WEEKLY_QUESTS_POOL, 3);
+    weeklyQuestWeek = weekNumber;
+    weeklyProgress = {};
+    weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; });
+    saveQuestState('weekly');
+    return weeklyQuests;
+  }
+  
+  if (type === 'monthly') {
+    const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
+    if (monthlyQuestMonth === monthKey && monthlyQuests.length > 0) return monthlyQuests;
+    
+    monthlyQuests = getRandomQuests(MONTHLY_QUESTS_POOL, 3);
+    monthlyQuestMonth = monthKey;
+    monthlyProgress = {};
+    monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; });
+    saveQuestState('monthly');
+    return monthlyQuests;
+  }
+  
   return [];
 }
 
-function getWeekNumber(date) { const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())); const dayNum = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - dayNum); const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); return Math.ceil((((d - yearStart) / 86400000) + 1) / 7); }
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
 
-function saveQuestState(type) { const data = { dailyQuestDate, weeklyQuestWeek, monthlyQuestMonth, dailyProgress, weeklyProgress, monthlyProgress, dailyQuests, weeklyQuests, monthlyQuests }; localStorage.setItem('quizhub-quest-state', JSON.stringify(data)); }
+// ========== СОХРАНЕНИЕ И ЗАГРУЗКА ==========
+
+function saveQuestState(type) {
+  const data = {
+    dailyQuestDate, weeklyQuestWeek, monthlyQuestMonth,
+    dailyProgress, weeklyProgress, monthlyProgress,
+    dailyQuests, weeklyQuests, monthlyQuests
+  };
+  localStorage.setItem('quizhub-quest-state', JSON.stringify(data));
+}
 
 function loadQuestState() {
   try {
     const saved = JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}');
-    dailyQuestDate = saved.dailyQuestDate || ''; weeklyQuestWeek = saved.weeklyQuestWeek || ''; monthlyQuestMonth = saved.monthlyQuestMonth || '';
-    dailyProgress = saved.dailyProgress || {}; weeklyProgress = saved.weeklyProgress || {}; monthlyProgress = saved.monthlyProgress || {};
-    const now = new Date(); const mskOffset = 3 * 60 * 60 * 1000; const mskTime = new Date(now.getTime() + mskOffset);
+    
+    dailyQuestDate = saved.dailyQuestDate || '';
+    weeklyQuestWeek = saved.weeklyQuestWeek || '';
+    monthlyQuestMonth = saved.monthlyQuestMonth || '';
+    dailyProgress = saved.dailyProgress || {};
+    weeklyProgress = saved.weeklyProgress || {};
+    monthlyProgress = saved.monthlyProgress || {};
+    
+    const now = new Date();
+    const mskOffset = 3 * 60 * 60 * 1000;
+    const mskTime = new Date(now.getTime() + mskOffset);
+    
     const today = mskTime.toISOString().split('T')[0];
-    if (dailyQuestDate !== today) generateQuests('daily'); else if (saved.dailyQuests) dailyQuests = saved.dailyQuests;
-    const wn = getWeekNumber(mskTime);
-    if (weeklyQuestWeek !== wn) generateQuests('weekly'); else if (saved.weeklyQuests) weeklyQuests = saved.weeklyQuests;
-    const mk = `${mskTime.getFullYear()}-${mskTime.getMonth()+1}`;
-    if (monthlyQuestMonth !== mk) generateQuests('monthly'); else if (saved.monthlyQuests) monthlyQuests = saved.monthlyQuests;
-  } catch (e) { console.error('Ошибка загрузки заданий:', e); }
+    if (dailyQuestDate !== today) {
+      generateQuests('daily');
+    } else {
+      if (saved.dailyQuests) dailyQuests = saved.dailyQuests;
+    }
+    
+    const weekNumber = getWeekNumber(mskTime);
+    if (weeklyQuestWeek !== weekNumber) {
+      generateQuests('weekly');
+    } else {
+      if (saved.weeklyQuests) weeklyQuests = saved.weeklyQuests;
+    }
+    
+    const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
+    if (monthlyQuestMonth !== monthKey) {
+      generateQuests('monthly');
+    } else {
+      if (saved.monthlyQuests) monthlyQuests = saved.monthlyQuests;
+    }
+    
+  } catch (e) {
+    console.error('Ошибка загрузки заданий:', e);
+  }
 }
 
+// ========== ПРОГРЕСС ==========
+
 function updateQuestProgressByType(eventType, value = 1) {
-  generateQuests('daily'); generateQuests('weekly'); generateQuests('monthly');
+  generateQuests('daily');
+  generateQuests('weekly');
+  generateQuests('monthly');
+  
   [dailyQuests, weeklyQuests, monthlyQuests].forEach((quests, i) => {
-    const type = ['daily','weekly','monthly'][i];
+    const type = ['daily', 'weekly', 'monthly'][i];
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
-    quests.forEach(quest => { if (quest.type === eventType && !progress[quest.id + '_done']) { progress[quest.id] = (progress[quest.id] || 0) + value; if (progress[quest.id] >= quest.target) completeQuest(quest, type); } });
+    
+    quests.forEach(quest => {
+      if (quest.type === eventType && !progress[quest.id + '_done']) {
+        progress[quest.id] = (progress[quest.id] || 0) + value;
+        if (progress[quest.id] >= quest.target) {
+          completeQuest(quest, type);
+        }
+      }
+    });
   });
-  saveQuestState('daily'); saveQuestState('weekly'); saveQuestState('monthly');
+  
+  saveQuestState('daily');
+  saveQuestState('weekly');
+  saveQuestState('monthly');
 }
 
 function completeQuest(quest, type) {
   const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
   if (progress[quest.id + '_done']) return;
+  
   progress[quest.id + '_done'] = true;
+  
   if (typeof addCoins === 'function') addCoins(quest.reward);
   if (typeof addXP === 'function') addXP(quest.reward * 2);
+  
   showQuestComplete(quest);
   saveQuestState(type);
 }
@@ -119,22 +238,85 @@ function completeQuest(quest, type) {
 function showQuestComplete(quest) {
   const container = document.getElementById('achievements-popup');
   if (!container) return;
-  container.innerHTML = `<div class="achievement-toast bg-card border border-warning rounded-4 p-3 shadow-lg"><div class="d-flex align-items-center gap-3"><span class="fs-1">${quest.icon}</span><div><p class="fw-bold text-warning mb-0">Задание выполнено!</p><p class="fw-bold mb-0">${quest.name}</p><small class="text-muted">+${quest.reward} 🪙 +${quest.reward*2} XP</small></div></div></div>`;
+  
+  container.innerHTML = `
+    <div class="achievement-toast bg-card border border-warning rounded-4 p-3 shadow-lg">
+      <div class="d-flex align-items-center gap-3">
+        <span class="fs-1">${quest.icon}</span>
+        <div>
+          <p class="fw-bold text-warning mb-0">Задание выполнено!</p>
+          <p class="fw-bold mb-0">${quest.name}</p>
+          <small class="text-muted">+${quest.reward} 🪙 +${quest.reward * 2} XP</small>
+        </div>
+      </div>
+    </div>
+  `;
   container.style.display = 'block';
+  
   if (typeof playAchievementSound === 'function') playAchievementSound();
+  
   setTimeout(() => { container.style.display = 'none'; }, 4000);
 }
 
+// ========== ОТОБРАЖЕНИЕ ==========
+
 function renderQuestsHTML(type) {
   generateQuests(type);
+  
   const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
   const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
-  if (!quests || quests.length === 0) return `<p class="text-muted">${t('noActiveQuests')}</p>`;
-  const titles = { daily: '📋 ' + t('dailyQuests'), weekly: '📅 ' + t('weeklyQuests'), monthly: '🗓️ ' + t('monthlyQuests') };
-  const resetInfo = { daily: t('resetDaily'), weekly: t('resetWeekly'), monthly: t('resetMonthly') };
-  return `<div class="quests-section"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold mb-0">${titles[type]}</h6><small class="text-muted">${resetInfo[type]}</small></div><div class="d-grid gap-2">${quests.map(q => { const p = progress[q.id] || 0; const done = progress[q.id + '_done'] || false; const pct = Math.min((p / q.target) * 100, 100); return `<div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}"><span class="fs-4">${q.icon}</span><div class="flex-grow-1 min-width-0"><div class="d-flex justify-content-between align-items-center"><span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${q.name}</span><small class="text-muted flex-shrink-0 ms-2">+${q.reward} 🪙</small></div><div class="progress mt-1" style="height:4px;"><div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width:${pct}%;"></div></div><small class="text-muted">${p}/${q.target} • ${q.desc}</small></div>${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}</div>`; }).join('')}</div></div>`;
+  
+  if (!quests || quests.length === 0) return '<p class="text-muted">Нет активных заданий</p>';
+  
+  const titles = { daily: '📋 Ежедневные задания', weekly: '📅 Недельные задания', monthly: '🗓️ Месячные задания' };
+  const resetInfo = { daily: 'Обновление: 00:00 МСК', weekly: 'Обновление: понедельник 00:00 МСК', monthly: 'Обновление: 1 число 00:00 МСК' };
+  
+  return `
+    <div class="quests-section">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0">${titles[type]}</h6>
+        <small class="text-muted">${resetInfo[type]}</small>
+      </div>
+      <div class="d-grid gap-2">
+        ${quests.map(q => {
+          const p = progress[q.id] || 0;
+          const done = progress[q.id + '_done'] || false;
+          const pct = Math.min((p / q.target) * 100, 100);
+          return `
+            <div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}">
+              <span class="fs-4">${q.icon}</span>
+              <div class="flex-grow-1 min-width-0">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${q.name}</span>
+                  <small class="text-muted flex-shrink-0 ms-2">+${q.reward} 🪙</small>
+                </div>
+                <div class="progress mt-1" style="height: 4px;">
+                  <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width: ${pct}%;"></div>
+                </div>
+                <small class="text-muted">${p}/${q.target} • ${q.desc}</small>
+              </div>
+              ${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
 }
 
-function shuffleArray(array) { const arr = [...array]; for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+// ========== ВСПОМОГАТЕЛЬНЫЕ ==========
 
-document.addEventListener('DOMContentLoaded', () => { loadQuestState(); });
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ========== ИНИЦИАЛИЗАЦИЯ ==========
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadQuestState();
+});

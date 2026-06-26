@@ -1,0 +1,61 @@
+{
+  "category": "music",
+  "questions": [
+    {
+      "question": "Какая группа исполнила песню «Bohemian Rhapsody»?",
+      "answers": ["The Beatles", "Led Zeppelin", "Queen", "Pink Floyd"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["Queen", "рок", "Bohemian Rhapsody"]
+    },
+    {
+      "question": "Кто считается «королём рок-н-ролла»?",
+      "answers": ["Чак Берри", "Элвис Пресли", "Литл Ричард", "Джерри Ли Льюис"],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "tags": ["Элвис", "рок-н-ролл", "король", "музыка"]
+    },
+        {
+      "question": "Сколько клавиш у стандартного пианино?",
+      "answers": ["76", "88", "96", "104"],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "tags": ["музыка", "инструмент", "пианино", "клавиши"]
+    },
+    {
+      "question": "Кто поёт «Shape of You»?",
+      "answers": ["Эд Ширан", "Бибер", "Бруно Марс", "Дрейк"],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "tags": ["музыка", "песня", "исполнитель", "поп"]
+    },
+    {
+      "question": "Самая популярная соцсеть для коротких видео?",
+      "answers": ["YouTube", "Instagram", "TikTok", "VK Клипы"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["соцсеть", "видео", "tiktok", "популярность"]
+    },
+    {
+      "question": "Инструмент Страдивари?",
+      "answers": ["Фортепиано", "Скрипка", "Виолончель", "Арфа"],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "tags": ["музыка", "инструмент", "классика", "скрипка"]
+    },
+    {
+      "question": "Сколько струн у классической гитары?",
+      "answers": ["4", "5", "6", "7"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["гитара", "струны", "музыка", "инструмент"]
+    },
+    {
+      "question": "К какому музыкальному жанру относится Луи Армстронг?",
+      "answers": ["Блюз", "Джаз", "Соул", "Рок-н-ролл"],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "tags": ["Армстронг", "джаз", "жанр", "музыка"]
+    }
+  ]
+}

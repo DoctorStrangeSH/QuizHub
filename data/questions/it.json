@@ -1,0 +1,75 @@
+{
+  "category": "it",
+  "questions": [
+       {
+      "question": "Что означает HTML?",
+      "answers": ["Hyper Text Markup Language", "High Tech Modern Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"],
+      "correctIndex": 0,
+      "difficulty": "easy",
+      "tags": ["веб", "программирование", "язык", "интернет"]
+    },
+    {
+      "question": "Сколько бит в байте?",
+      "answers": ["4", "8", "16", "32"],
+      "correctIndex": 1,
+      "difficulty": "easy",
+      "tags": ["бит", "байт", "компьютер", "информация"]
+    },
+    {
+      "question": "Протокол для передачи веб-страниц?",
+      "answers": ["FTP", "SMTP", "HTTP", "TCP"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["протокол", "интернет", "веб", "http"]
+    },
+    {
+      "question": "Что такое CSS?",
+      "answers": ["Язык программирования", "Каскадные таблицы стилей", "База данных", "Фреймворк"],
+      "correctIndex": 1,
+      "difficulty": "easy",
+      "tags": ["css", "веб", "стили", "дизайн"]
+    },
+    {
+      "question": "Кто создал Linux?",
+      "answers": ["Гейтс", "Джобс", "Торвальдс", "Цукерберг"],
+      "correctIndex": 2,
+      "difficulty": "medium",
+      "tags": ["linux", "ос", "торвальдс", "программист"]
+    },
+    {
+      "question": "Какой клавишей на клавиатуре удаляют символ перед курсором?",
+      "answers": ["Delete", "Enter", "Backspace", "Tab"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["клавиатура", "Backspace", "удаление"]
+    },
+    {
+      "question": "Какой протокол обеспечивает безопасную передачу данных в интернете?",
+      "answers": ["HTTP", "FTP", "HTTPS", "SMTP"],
+      "correctIndex": 2,
+      "difficulty": "medium",
+      "tags": ["HTTPS", "безопасность", "протокол", "интернет"]
+    },
+    {
+      "question": "Кто основал компанию Apple?",
+      "answers": ["Гейтс", "Джобс", "Безос", "Цукерберг"],
+      "correctIndex": 1,
+      "difficulty": "medium",
+      "tags": ["apple", "джобс", "компания", "технологии"]
+    },
+    {
+      "question": "Какой язык программирования был создан Гвидо ван Россумом?",
+      "answers": ["Java", "C++", "Python", "Ruby"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["Python", "программирование", "язык"]
+    },
+    {
+      "question": "Какой значок используется в адресах электронной почты?",
+      "answers": ["#", "&", "@", "$"],
+      "correctIndex": 2,
+      "difficulty": "easy",
+      "tags": ["email", "собака", "символ"]
+    }
+  ]
+}
