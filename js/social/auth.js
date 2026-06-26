@@ -84,10 +84,11 @@ async function signOut() {
 }
 
 function updateAuthUI(user) {
-  const authArea = document.getElementById('auth-area');
-  if (!authArea) return;
-  authArea.classList.add('loaded');
-  
+    const authArea = document.getElementById('auth-area');
+    if (!authArea) return;
+
+    authArea.classList.add('loaded');
+
   if (user) {
     const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=FF6B9D&color=fff&size=32`;
     authArea.innerHTML = `

@@ -1,29 +1,349 @@
 /* ============================================
    QuizHub — Кастомные темы (Неон, Океан)
+   Красиво смотрятся и в тёмной, и в светлой теме
    ============================================ */
 
-/* Неоновая тема */
+/* ==========================================
+   НЕОНОВАЯ ТЕМА
+   ========================================== */
+
 [data-custom-theme="theme_neon"] {
+    /* Основные цвета */
     --accent: #00FF88;
-    --accent-glow: rgba(0, 255, 136, 0.4);
-    --secondary: #00CC66;
-    --bg-primary: #0a0a0a;
-    --bg-card: #111111;
-    --bg-card-hover: #1a1a1a;
-    --text-primary: #ffffff;
-    --text-muted: #a0a0a0;
+    --accent-glow: rgba(0, 255, 136, 0.5);
+    --secondary: #FF00FF;
+    --success: #00FF88;
+    --warning: #FFD740;
+    --danger: #FF5252;
+    --info: #00E5FF;
+
+    /* Фон */
+    --bg-primary: #0a0a0f;
+    --bg-card: #0f0f1a;
+    --bg-card-hover: #151525;
+
+    /* Текст */
+    --text-primary: #e8ffe8;
+    --text-muted: #7a9a7a;
 }
 
-/* Океан */
+[data-custom-theme="theme_neon"] body {
+    background-color: var(--bg-primary);
+}
+
+[data-custom-theme="theme_neon"] .app-header {
+    background: rgba(10, 10, 15, 0.9);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.15);
+    box-shadow: 0 1px 20px rgba(0, 255, 136, 0.05);
+}
+
+[data-custom-theme="theme_neon"] .btn-accent {
+    background: linear-gradient(135deg, #00FF88, #00CC66);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+[data-custom-theme="theme_neon"] .btn-accent:hover {
+    box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5);
+}
+
+[data-custom-theme="theme_neon"] .btn-outline-accent {
+    border-color: #00FF88;
+    color: #00FF88;
+}
+
+[data-custom-theme="theme_neon"] .btn-outline-accent:hover {
+    background: #00FF88;
+    color: #0a0a0f;
+}
+
+[data-custom-theme="theme_neon"] .hero-icon {
+    border-color: #00FF88;
+    box-shadow: 0 0 40px rgba(0, 255, 136, 0.4);
+    animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(0, 255, 136, 0.4); }
+    50% { box-shadow: 0 0 80px rgba(0, 255, 136, 0.7), 0 0 120px rgba(255, 0, 255, 0.3); }
+}
+
+[data-custom-theme="theme_neon"] .timer-circle {
+    border-color: #00FF88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+}
+
+[data-custom-theme="theme_neon"] .progress-bar {
+    background: linear-gradient(90deg, #00FF88, #FF00FF);
+}
+
+[data-custom-theme="theme_neon"] .bg-card {
+    border: 1px solid rgba(0, 255, 136, 0.1);
+}
+
+[data-custom-theme="theme_neon"] .form-control:focus,
+[data-custom-theme="theme_neon"] .form-select:focus {
+    border-color: #00FF88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+[data-custom-theme="theme_neon"] .btn-answer:hover:not(:disabled) {
+    border-color: #00FF88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+}
+
+[data-custom-theme="theme_neon"] .btn-answer.correct {
+    border-color: #00FF88 !important;
+    background: rgba(0, 255, 136, 0.15) !important;
+}
+
+[data-custom-theme="theme_neon"] .particle:nth-child(odd) {
+    background: #00FF88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+}
+
+[data-custom-theme="theme_neon"] .particle:nth-child(even) {
+    background: #FF00FF;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+}
+
+[data-custom-theme="theme_neon"] .table-active-row {
+    background: rgba(0, 255, 136, 0.1) !important;
+    border-left: 3px solid #00FF88;
+}
+
+[data-custom-theme="theme_neon"] .logo-pulse {
+    animation: neonLogoGlow 2s ease-in-out infinite;
+}
+
+@keyframes neonLogoGlow {
+    0%, 100% { text-shadow: 0 0 10px rgba(0, 255, 136, 0.4); }
+    50% { text-shadow: 0 0 25px rgba(0, 255, 136, 0.7), 0 0 50px rgba(255, 0, 255, 0.3); }
+}
+
+[data-custom-theme="theme_neon"] .leader-top-1 {
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+}
+
+[data-custom-theme="theme_neon"] .chat-bubble.own {
+    background: #00FF88;
+    color: #0a0a0f;
+}
+
+[data-custom-theme="theme_neon"] .chat-bubble.own .chat-text,
+[data-custom-theme="theme_neon"] .chat-bubble.own .chat-time {
+    color: #0a0a0f;
+}
+
+[data-custom-theme="theme_neon"] .chat-send-btn {
+    background: #00FF88;
+    color: #0a0a0f;
+}
+
+[data-custom-theme="theme_neon"] .chat-toggle-btn {
+    background: #00FF88;
+    color: #0a0a0f;
+}
+
+[data-custom-theme="theme_neon"] .online-indicator.offline {
+    background: rgba(255, 82, 82, 0.9);
+}
+
+[data-custom-theme="theme_neon"] ::-webkit-scrollbar-thumb {
+    background: #00FF88;
+}
+
+[data-custom-theme="theme_neon"] ::selection {
+    background: #00FF88;
+    color: #0a0a0f;
+}
+
+/* Неоновая тема + светлая */
+[data-theme="light"][data-custom-theme="theme_neon"] {
+    --bg-primary: #f0fff0;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f5fff5;
+    --text-primary: #0a2a0a;
+    --text-muted: #5a7a5a;
+}
+
+[data-theme="light"][data-custom-theme="theme_neon"] body {
+    background-color: #f0fff0;
+}
+
+[data-theme="light"][data-custom-theme="theme_neon"] .app-header {
+    background: rgba(240, 255, 240, 0.9);
+    border-bottom: 1px solid rgba(0, 200, 100, 0.15);
+}
+
+
+/* ==========================================
+   ТЕМА "ОКЕАН"
+   ========================================== */
+
 [data-custom-theme="theme_ocean"] {
-    --accent: #0099FF;
-    --accent-glow: rgba(0, 153, 255, 0.4);
-    --secondary: #006699;
+    /* Основные цвета */
+    --accent: #00BFFF;
+    --accent-glow: rgba(0, 191, 255, 0.5);
+    --secondary: #005580;
+    --success: #00E5FF;
+    --warning: #FFD740;
+    --danger: #FF5252;
+    --info: #40C4FF;
+
+    /* Фон */
     --bg-primary: #0a1628;
     --bg-card: #0d1f3c;
     --bg-card-hover: #122a4f;
-    --text-primary: #e8f0ff;
-    --text-muted: #8a9bb5;
+
+    /* Текст */
+    --text-primary: #e0f0ff;
+    --text-muted: #7a9ab5;
 }
 
-/* Можно добавлять новые темы ниже */
+[data-custom-theme="theme_ocean"] body {
+    background-color: var(--bg-primary);
+}
+
+[data-custom-theme="theme_ocean"] .app-header {
+    background: rgba(10, 22, 40, 0.9);
+    border-bottom: 1px solid rgba(0, 191, 255, 0.1);
+}
+
+[data-custom-theme="theme_ocean"] .btn-accent {
+    background: linear-gradient(135deg, #00BFFF, #0088CC);
+    box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+}
+
+[data-custom-theme="theme_ocean"] .btn-accent:hover {
+    box-shadow: 0 8px 30px rgba(0, 191, 255, 0.5);
+}
+
+[data-custom-theme="theme_ocean"] .btn-outline-accent {
+    border-color: #00BFFF;
+    color: #00BFFF;
+}
+
+[data-custom-theme="theme_ocean"] .btn-outline-accent:hover {
+    background: #00BFFF;
+    color: #0a1628;
+}
+
+[data-custom-theme="theme_ocean"] .hero-icon {
+    border-color: #00BFFF;
+    box-shadow: 0 0 40px rgba(0, 191, 255, 0.4);
+    animation: oceanPulse 3s ease-in-out infinite;
+}
+
+@keyframes oceanPulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(0, 191, 255, 0.3); }
+    50% { box-shadow: 0 0 70px rgba(0, 191, 255, 0.6), 0 0 100px rgba(0, 100, 180, 0.2); }
+}
+
+[data-custom-theme="theme_ocean"] .timer-circle {
+    border-color: #00BFFF;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.4);
+}
+
+[data-custom-theme="theme_ocean"] .progress-bar {
+    background: linear-gradient(90deg, #00BFFF, #005580);
+}
+
+[data-custom-theme="theme_ocean"] .bg-card {
+    border: 1px solid rgba(0, 191, 255, 0.08);
+}
+
+[data-custom-theme="theme_ocean"] .form-control:focus,
+[data-custom-theme="theme_ocean"] .form-select:focus {
+    border-color: #00BFFF;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+}
+
+[data-custom-theme="theme_ocean"] .btn-answer:hover:not(:disabled) {
+    border-color: #00BFFF;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.2);
+}
+
+[data-custom-theme="theme_ocean"] .btn-answer.correct {
+    border-color: #00E5FF !important;
+    background: rgba(0, 229, 255, 0.15) !important;
+}
+
+[data-custom-theme="theme_ocean"] .particle:nth-child(odd) {
+    background: #00BFFF;
+    box-shadow: 0 0 8px rgba(0, 191, 255, 0.5);
+}
+
+[data-custom-theme="theme_ocean"] .particle:nth-child(even) {
+    background: #005580;
+    box-shadow: 0 0 6px rgba(0, 85, 128, 0.4);
+}
+
+[data-custom-theme="theme_ocean"] .particle:nth-child(3n) {
+    background: #40C4FF;
+    box-shadow: 0 0 6px rgba(64, 196, 255, 0.4);
+}
+
+[data-custom-theme="theme_ocean"] .table-active-row {
+    background: rgba(0, 191, 255, 0.1) !important;
+    border-left: 3px solid #00BFFF;
+}
+
+[data-custom-theme="theme_ocean"] .logo-pulse {
+    animation: oceanLogoGlow 3s ease-in-out infinite;
+}
+
+@keyframes oceanLogoGlow {
+    0%, 100% { text-shadow: 0 0 10px rgba(0, 191, 255, 0.3); }
+    50% { text-shadow: 0 0 25px rgba(0, 191, 255, 0.6), 0 0 40px rgba(0, 100, 180, 0.3); }
+}
+
+[data-custom-theme="theme_ocean"] .leader-top-1 {
+    box-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+}
+
+[data-custom-theme="theme_ocean"] .chat-bubble.own {
+    background: #00BFFF;
+    color: #0a1628;
+}
+
+[data-custom-theme="theme_ocean"] .chat-bubble.own .chat-text,
+[data-custom-theme="theme_ocean"] .chat-bubble.own .chat-time {
+    color: #0a1628;
+}
+
+[data-custom-theme="theme_ocean"] .chat-send-btn {
+    background: #00BFFF;
+    color: #fff;
+}
+
+[data-custom-theme="theme_ocean"] .chat-toggle-btn {
+    background: #00BFFF;
+    color: #fff;
+}
+
+[data-custom-theme="theme_ocean"] ::-webkit-scrollbar-thumb {
+    background: #00BFFF;
+}
+
+[data-custom-theme="theme_ocean"] ::selection {
+    background: #00BFFF;
+    color: #fff;
+}
+
+/* Океан + светлая тема */
+[data-theme="light"][data-custom-theme="theme_ocean"] {
+    --bg-primary: #f0f8ff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f5faff;
+    --text-primary: #0a1a2e;
+    --text-muted: #5a7a9a;
+}
+
+[data-theme="light"][data-custom-theme="theme_ocean"] body {
+    background-color: #f0f8ff;
+}
+
+[data-theme="light"][data-custom-theme="theme_ocean"] .app-header {
+    background: rgba(240, 248, 255, 0.9);
+    border-bottom: 1px solid rgba(0, 150, 200, 0.1);
+}
