@@ -1,17 +1,13 @@
 /* ============================================
-   QuizHub — Стили событий
+   QuizHub — Стили событий v2.0
    ============================================ */
 
-/*#event-banner-container {
-    margin-bottom: 16px;
-    animation: eventBannerIn 0.5s ease-out;
-}*/
-
-@keyframes eventBannerIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Обёртка баннера */
+.event-banner-wrapper {
+    margin-bottom: 20px;
 }
 
+/* Карточка баннера */
 .event-banner-card {
     background: linear-gradient(135deg, var(--event-color, var(--accent)), rgba(26, 26, 46, 0.95));
     border: 1.5px solid var(--event-color, var(--accent));
@@ -118,19 +114,19 @@
         gap: 10px;
         border-radius: 16px;
     }
-    
+
     .event-banner-icon {
         font-size: 2rem;
     }
-    
+
     .event-banner-title {
         font-size: 0.95rem;
     }
-    
+
     .event-banner-desc {
         font-size: 0.75rem;
     }
-    
+
     .event-bonus {
         font-size: 0.7rem;
         padding: 2px 8px;
