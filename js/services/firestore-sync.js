@@ -55,6 +55,12 @@ async function saveUserDataToFirestore() {
 async function loadUserDataFromFirestore() {
   if (typeof currentUser === 'undefined' || !currentUser) return;
   
+      const userCache = localStorage.getItem('quizhub-user-cache');
+    if (!userCache) {
+        console.log('⚠️ Пользователь вышел, данные не загружаются');
+        return;
+    }
+    
   try {
     const doc = await db.collection('users').doc(currentUser.uid).get();
     if (!doc.exists) { await saveUserDataToFirestore(); return; }
