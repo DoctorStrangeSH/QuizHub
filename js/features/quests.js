@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Система заданий v3.4
+// QuizHub — Система заданий v3.5
 // ============================================
 
 const DAILY_QUESTS_POOL = [
@@ -91,7 +91,6 @@ function generateQuests(type) {
 
     if (type === 'daily') {
         const today = mskTime.toISOString().split('T')[0];
-        // НЕ сбрасываем если задания уже есть на сегодня
         if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
 
         dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
@@ -99,7 +98,6 @@ function generateQuests(type) {
         dailyProgress = {};
         dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
         saveQuestState('daily');
-        console.log('📋 Новые ежедневные задания:', dailyQuests.map(q => q.name).join(', '));
         return dailyQuests;
     }
 
@@ -112,7 +110,6 @@ function generateQuests(type) {
         weeklyProgress = {};
         weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; });
         saveQuestState('weekly');
-        console.log('📅 Новые недельные задания:', weeklyQuests.map(q => q.name).join(', '));
         return weeklyQuests;
     }
 
@@ -125,7 +122,6 @@ function generateQuests(type) {
         monthlyProgress = {};
         monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; });
         saveQuestState('monthly');
-        console.log('🗓️ Новые месячные задания:', monthlyQuests.map(q => q.name).join(', '));
         return monthlyQuests;
     }
 
@@ -189,12 +185,6 @@ function loadQuestState() {
         } else {
             generateQuests('monthly');
         }
-
-        console.log('📋 Задания загружены:', {
-            daily: dailyQuests.length,
-            weekly: weeklyQuests.length,
-            monthly: monthlyQuests.length
-        });
     } catch (e) {
         console.error('Ошибка загрузки заданий:', e);
     }
@@ -220,7 +210,6 @@ function updateQuestProgressByType(eventType, value = 1) {
                     progress[quest.id] = value;
 
                     // Выполняем ТОЛЬКО если oldValue был МЕНЬШЕ target
-                    // (то есть задание не было выполнено раньше)
                     if (value >= quest.target && oldValue < quest.target) {
                         completeQuest(quest, type);
                     }
@@ -232,8 +221,6 @@ function updateQuestProgressByType(eventType, value = 1) {
                         completeQuest(quest, type);
                     }
                 }
-
-                console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target} ${progress[quest.id + '_done'] ? '✅' : ''}`);
             }
         });
     });
@@ -245,19 +232,20 @@ function updateQuestProgressByType(eventType, value = 1) {
 
 function completeQuest(quest, type) {
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
+
+    // Двойная проверка — чтобы точно не выполнилось дважды
     if (progress[quest.id + '_done']) return;
 
     progress[quest.id + '_done'] = true;
     console.log(`✅ Задание выполнено: ${quest.name}`);
 
-    // Награда: ТОЛЬКО монеты, без XP (или сильно уменьшенный XP)
+    // Награда — ТОЛЬКО монеты
     if (typeof addCoins === 'function') addCoins(quest.reward);
-
-    // XP = 10% от награды монетами (было 200%, стало 10%)
-    if (typeof addXP === 'function') addXP(Math.floor(quest.reward * 0.1));
 
     showQuestComplete(quest);
     saveQuestState(type);
+
+    EventBus.emit(EVENTS.QUEST_COMPLETED, quest);
 }
 
 function showQuestComplete(quest) {
@@ -271,7 +259,7 @@ function showQuestComplete(quest) {
                 <div>
                     <p class="fw-bold text-warning mb-0">Задание выполнено!</p>
                     <p class="fw-bold mb-0">${quest.name}</p>
-                    <small class="text-muted">+${quest.reward} 🪙 +${quest.reward * 2} XP</small>
+                    <small class="text-muted">+${quest.reward} 🪙</small>
                 </div>
             </div>
         </div>
@@ -283,6 +271,7 @@ function showQuestComplete(quest) {
 }
 
 function renderQuestsHTML(type) {
+    // НЕ вызываем generateQuests — используем существующие задания
     const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
@@ -300,10 +289,10 @@ function renderQuestsHTML(type) {
             </div>
             <div class="d-grid gap-2">
                 ${quests.map(q => {
-        const p = progress[q.id] || 0;
-        const done = progress[q.id + '_done'] || false;
-        return I18N_TEMPLATES.questItem(q, p, done);
-    }).join('')}
+                    const p = progress[q.id] || 0;
+                    const done = progress[q.id + '_done'] || false;
+                    return I18N_TEMPLATES.questItem(q, p, done);
+                }).join('')}
             </div>
         </div>
     `;
