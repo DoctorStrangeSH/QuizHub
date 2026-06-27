@@ -32,30 +32,23 @@ let authStateResolved = false;
                     </button>
                 </div>
             `;
-            authArea.style.visibility = 'visible';
-            // ВАЖНО: ставим флаг, что UI уже показан
-            authArea.setAttribute('data-preloaded', 'true');
         } catch (e) {
-            showLoginButton(authArea);
+            authArea.innerHTML = `
+                <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                    <i class="bi bi-google me-2"></i>Войти
+                </button>
+            `;
         }
     } else {
-        showLoginButton(authArea);
+        authArea.innerHTML = `
+            <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                <i class="bi bi-google me-2"></i>Войти
+            </button>
+        `;
     }
-})();
 
-function showLoginButton(authArea) {
-    if (!authArea) {
-        authArea = document.getElementById('auth-area');
-    }
-    if (!authArea) return;
-    
-    authArea.innerHTML = `
-        <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
-            <i class="bi bi-google me-2"></i>Войти
-        </button>
-    `;
     authArea.style.visibility = 'visible';
-}
+})();
 
 // ========== ОТСЛЕЖИВАНИЕ АВТОРИЗАЦИИ ==========
 
@@ -140,94 +133,108 @@ function signInWithGoogle() {
 // ========== ВЫХОД ==========
 
 async function signOut() {
+    // === ШАГ 1: Очищаем ВСЁ ДО выхода из Firebase ===
+    
+    // Полный список всех ключей, которые используются в приложении
+    const allKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('quizhub-')) {
+            allKeys.push(key);
+        }
+    }
+    
+    // Удаляем все ключи quizhub-*
+    allKeys.forEach(key => {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            console.warn('Не удалось удалить:', key);
+        }
+    });
+    
+    // Сбрасываем глобальные переменные
+    if (typeof userCoins !== 'undefined') userCoins = 0;
+    if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
+    if (typeof purchasedItems !== 'undefined') purchasedItems = [];
+    if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
+    if (typeof quizStats !== 'undefined') {
+        Object.keys(quizStats).forEach(key => delete quizStats[key]);
+    }
+    if (typeof friendsList !== 'undefined') friendsList = [];
+    if (typeof userTeam !== 'undefined') userTeam = null;
+    if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
+    
+    // Сбрасываем кастомную тему
+    document.documentElement.removeAttribute('data-custom-theme');
+    
+    // Обновляем отображение монет
+    if (typeof updateCoinsDisplay === 'function') {
+        updateCoinsDisplay();
+    }
+    
+    // Обновляем магазин если открыт
+    const shopScreen = document.getElementById('screen-shop');
+    if (shopScreen?.classList.contains('active') && typeof renderShop === 'function') {
+        renderShop();
+    }
+    
+    // Обновляем достижения если открыты
+    const achScreen = document.getElementById('screen-achievements');
+    if (achScreen?.classList.contains('active') && typeof renderAchievementsScreen === 'function') {
+        renderAchievementsScreen();
+    }
+    
+    // === ШАГ 2: Выходим из Firebase ===
     try {
-        // Сохраняем данные перед выходом
         if (typeof saveUserDataToFirestore === 'function') {
-            await saveUserDataToFirestore();
-        }
-
-        // === ОЧИСТКА ВСЕГО ===
-        const keysToRemove = [
-            'quizhub-coins',
-            'quizhub-achievements',
-            'quizhub-stats',
-            'quizhub-purchases',
-            'quizhub-custom-theme',
-            'quizhub-active-boosters',
-            'quizhub-user-cache',
-            'quizhub-quiz-progress',
-            'quizhub-score-history',
-            'quizhub-weekly-activity',
-            'quizhub-quest-state',
-            'quizhub-friends',
-            'quizhub-team',
-            'quizhub-sent-gifts',
-            'quizhub-referral-code',
-            'quizhub-used-referral',
-            'quizhub-theme-settings',
-            'quizhub-category',
-            'quizhub-difficulty',
-            'quizhub-animation',
-            'quizhub-swipe-tutorial',
-            'quizhub-chat-last-read',
-        ];
-
-        keysToRemove.forEach(key => {
-            try {
-                localStorage.removeItem(key);
-            } catch (e) {
-                console.warn('Не удалось удалить:', key);
+            // Сохраняем ПУСТЫЕ данные
+            const authInstance = getAuth();
+            if (authInstance && authInstance.currentUser) {
+                const userRef = db.collection('users').doc(authInstance.currentUser.uid);
+                await userRef.set({
+                    coins: 0,
+                    purchases: [],
+                    achievements: [],
+                    totalXP: 0,
+                    bestScore: 0,
+                    totalQuizzes: 0,
+                    customTheme: null,
+                    stats: {},
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
             }
-        });
-
-        // Сбрасываем глобальные переменные
-        if (typeof userCoins !== 'undefined') userCoins = 0;
-        if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
-        if (typeof purchasedItems !== 'undefined') purchasedItems = [];
-        if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
-        if (typeof quizStats !== 'undefined') {
-            Object.keys(quizStats).forEach(key => delete quizStats[key]);
         }
-        if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
-        if (typeof selectedLanguage !== 'undefined') selectedLanguage = 'ru';
-
-        // Сбрасываем кастомную тему
-        document.documentElement.removeAttribute('data-custom-theme');
-
-        // Обновляем UI до выхода
-        if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
-
-        // Выходим из Firebase
+        
         const authInstance = getAuth();
         if (authInstance) {
             await authInstance.signOut();
         }
-
-        // Сбрасываем currentUser
-        currentUser = null;
-
-        // Принудительно обновляем кнопку
-        const authArea = document.getElementById('auth-area');
-        if (authArea) {
-            authArea.innerHTML = `
-                <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
-                    <i class="bi bi-google me-2"></i>Войти
-                </button>
-            `;
-            authArea.style.visibility = 'visible';
-            delete authArea.dataset.loaded;
-        }
-
-        // Возвращаем на главную
-        if (typeof showScreen === 'function') showScreen('home');
-
-        console.log('👋 Выход выполнен, ВСЁ очищено');
     } catch (error) {
-        console.error('Ошибка выхода:', error);
+        console.error('Ошибка выхода из Firebase:', error);
     }
+    
+    // === ШАГ 3: Обновляем UI ===
+    currentUser = null;
+    
+    const authArea = document.getElementById('auth-area');
+    if (authArea) {
+        authArea.innerHTML = `
+            <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                <i class="bi bi-google me-2"></i>Войти
+            </button>
+        `;
+        authArea.style.visibility = 'visible';
+        authArea.removeAttribute('data-preloaded');
+    }
+    
+    // Возвращаем на главную
+    if (typeof showScreen === 'function') {
+        showScreen('home');
+    }
+    
+    console.log('👋 Полный выход выполнен');
 }
-
-
 
 // ========== ОБНОВЛЕНИЕ UI ==========
 
@@ -235,18 +242,13 @@ function updateAuthUI(user) {
     const authArea = document.getElementById('auth-area');
     if (!authArea) return;
 
-    if (authArea.getAttribute('data-preloaded') === 'true' && user) {
-        authArea.style.visibility = 'visible';
-        return;
-    }
-
     authArea.style.visibility = 'visible';
 
     if (user) {
         const photoURL = user.photoURL || 
             `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=FF6B9D&color=fff&size=32`;
 
-        authArea.innerHTML = `
+        const newHTML = `
             <div class="d-flex align-items-center gap-2">
                 <img src="${photoURL}" 
                      class="rounded-circle" width="32" height="32" 
@@ -259,10 +261,21 @@ function updateAuthUI(user) {
                 </button>
             </div>
         `;
-        authArea.setAttribute('data-preloaded', 'true');
+
+        // Обновляем только если изменилось
+        if (authArea.innerHTML.trim() !== newHTML.trim()) {
+            authArea.innerHTML = newHTML;
+        }
     } else {
-        showLoginButton(authArea);
-        authArea.removeAttribute('data-preloaded');
+        const newHTML = `
+            <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                <i class="bi bi-google me-2"></i>Войти
+            </button>
+        `;
+        
+        if (authArea.innerHTML.trim() !== newHTML.trim()) {
+            authArea.innerHTML = newHTML;
+        }
     }
 }
 
