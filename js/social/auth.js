@@ -88,6 +88,9 @@ function initAuthListener() {
             }
 
             EventBus.emit(EVENTS.AUTH_LOGIN, user);
+
+            // Принудительно обновляем все активные экраны после входа
+            refreshAllActiveScreens();
         } else {
             localStorage.removeItem('quizhub-user-cache');
             EventBus.emit(EVENTS.AUTH_LOGOUT);
@@ -95,6 +98,56 @@ function initAuthListener() {
 
         updateAuthUI(user);
     });
+}
+
+function refreshAllActiveScreens() {
+    // Достижения
+    if (typeof renderAchievementsScreen === 'function') {
+        const ach = document.getElementById('screen-achievements');
+        if (ach?.classList.contains('active')) renderAchievementsScreen();
+    }
+    // Статистика
+    if (typeof renderStatsScreen === 'function') {
+        const st = document.getElementById('screen-stats');
+        if (st?.classList.contains('active')) {
+            renderStatsScreen();
+            setTimeout(() => {
+                if (typeof renderScoreChart === 'function') renderScoreChart();
+                if (typeof renderWeeklyChart === 'function') renderWeeklyChart();
+            }, 300);
+        }
+    }
+    // Магазин
+    if (typeof renderShop === 'function') {
+        const shop = document.getElementById('screen-shop');
+        if (shop?.classList.contains('active')) renderShop();
+    }
+    // Друзья
+    if (typeof renderFriendsScreen === 'function') {
+        const fr = document.getElementById('screen-friends');
+        if (fr?.classList.contains('active')) renderFriendsScreen(fr);
+    }
+    // Лидеры
+    if (typeof loadLeaderboard === 'function') {
+        const lb = document.getElementById('screen-leaderboard');
+        if (lb?.classList.contains('active')) loadLeaderboard();
+    }
+    // Команда
+    if (typeof renderTeamScreen === 'function') {
+        const team = document.getElementById('screen-team');
+        if (team?.classList.contains('active')) renderTeamScreen();
+    }
+    // Турниры
+    if (typeof renderTournamentScreen === 'function') {
+        const tournament = document.getElementById('screen-tournament');
+        if (tournament?.classList.contains('active')) renderTournamentScreen();
+    }
+    // Монеты
+    if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+    // Ежедневные награды
+    if (typeof renderDailyRewards === 'function') renderDailyRewards();
+
+    console.log('🔄 Все экраны обновлены после входа');
 }
 
 // ========== ВХОД ==========

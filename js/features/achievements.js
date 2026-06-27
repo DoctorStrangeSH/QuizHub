@@ -118,19 +118,26 @@ function updateDayStreak() {
 }
 
 function calculateQuizXP(result) {
-    let xp = 10 + Math.floor(result.score / 10);
+    let xp = 10; // База
+    xp += Math.floor(result.score / 10); // Бонус за очки
     const diffBonus = { easy: 0, medium: 5, hard: 15, survival: 20, timed: 10 };
     xp += diffBonus[result.difficulty] || 0;
     if (result.correctAnswers === 10) xp += 20;
     else if (result.correctAnswers >= 7) xp += 10;
-    return xp;
+    
+    // Ограничение сверху
+    return Math.min(xp, 100);
 }
 
 function addXP(amount) {
     if (typeof currentUser === 'undefined' || !currentUser) return;
+    if (amount <= 0) return; // Не добавляем отрицательный или нулевой XP
+    
     const stats = AppState.get('stats');
     stats.totalXP = (stats.totalXP || 0) + amount;
     AppState.set('stats', stats);
+    
+    console.log(`⚡ +${amount} XP (всего: ${stats.totalXP})`);
 }
 
 function getCurrentLevel() {

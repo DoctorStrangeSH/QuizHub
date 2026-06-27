@@ -186,7 +186,6 @@ function loadQuestState() {
 
 function updateQuestProgressByType(eventType, value = 1) {
     console.log(`📊 Обновление заданий: тип=${eventType}, значение=${value}`);
-    console.log(`  dailyQuests: ${dailyQuests.length}, weeklyQuests: ${weeklyQuests.length}, monthlyQuests: ${monthlyQuests.length}`);
 
     [dailyQuests, weeklyQuests, monthlyQuests].forEach((quests, i) => {
         const type = ['daily', 'weekly', 'monthly'][i];
@@ -196,17 +195,25 @@ function updateQuestProgressByType(eventType, value = 1) {
             if (quest.type === eventType && !progress[quest.id + '_done']) {
                 // Для XP и монет — устанавливаем абсолютное значение
                 if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
+                    // НЕ отмечаем как выполненное, если значение изменилось незначительно
+                    const oldValue = progress[quest.id] || 0;
                     progress[quest.id] = value;
+                    
+                    // Проверяем, что прогресс действительно достиг цели
+                    // и что oldValue был меньше target (иначе бесконечные выполнения)
+                    if (value >= quest.target && oldValue < quest.target) {
+                        completeQuest(quest, type);
+                    }
                 } else {
                     // Для остальных — прибавляем
                     progress[quest.id] = (progress[quest.id] || 0) + value;
+                    
+                    if (progress[quest.id] >= quest.target) {
+                        completeQuest(quest, type);
+                    }
                 }
 
                 console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target}`);
-
-                if (progress[quest.id] >= quest.target) {
-                    completeQuest(quest, type);
-                }
             }
         });
     });

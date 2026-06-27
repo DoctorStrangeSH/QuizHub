@@ -24,9 +24,9 @@ function shuffleArray(array) {
 // Метка сложности
 function getDifficultyLabel(difficulty) {
     const labels = {
-        easy: '🟢 ' + (typeof t === 'function' ? t('easy') : 'Легко'),
-        medium: '🟡 ' + (typeof t === 'function' ? t('medium') : 'Средне'),
-        hard: '🔴 ' + (typeof t === 'function' ? t('hard') : 'Сложно')
+        easy: typeof t === 'function' ? t('easy') : 'Легко',
+        medium: typeof t === 'function' ? t('medium') : 'Средне',
+        hard: typeof t === 'function' ? t('hard') : 'Сложно'
     };
     return labels[difficulty] || difficulty;
 }
