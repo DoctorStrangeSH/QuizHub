@@ -185,12 +185,8 @@ function loadQuestState() {
 }
 
 function updateQuestProgressByType(eventType, value = 1) {
-    // Сначала генерируем задания если нужно
-    generateQuests('daily');
-    generateQuests('weekly');
-    generateQuests('monthly');
-
     console.log(`📊 Обновление заданий: тип=${eventType}, значение=${value}`);
+    console.log(`  dailyQuests: ${dailyQuests.length}, weeklyQuests: ${weeklyQuests.length}, monthlyQuests: ${monthlyQuests.length}`);
 
     [dailyQuests, weeklyQuests, monthlyQuests].forEach((quests, i) => {
         const type = ['daily', 'weekly', 'monthly'][i];

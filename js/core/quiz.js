@@ -227,24 +227,49 @@ async function finishQuiz() {
 
     // Обновляем прогресс заданий
     if (typeof updateQuestProgressByType === 'function') {
+        // Сначала генерируем задания на сегодня (если ещё не сгенерированы)
+        if (typeof generateQuests === 'function') {
+            generateQuests('daily');
+            generateQuests('weekly');
+            generateQuests('monthly');
+        }
+
+        // Количество квизов
         updateQuestProgressByType('quizzes_today', 1);
         updateQuestProgressByType('quizzes_week', 1);
         updateQuestProgressByType('quizzes_month', 1);
+
+        // Очки
         if (result.score >= 50) updateQuestProgressByType('score_50');
         if (result.score >= 100) updateQuestProgressByType('score_100');
-        if (actualCorrect === 10) updateQuestProgressByType('perfect');
+
+        // Идеальный квиз
+        if (actualCorrect === 10) {
+            updateQuestProgressByType('perfect');
+        }
         updateQuestProgressByType('perfect_week', actualCorrect === 10 ? 1 : 0);
         updateQuestProgressByType('perfect_month', actualCorrect === 10 ? 1 : 0);
+
+        // Сложность
         if (result.difficulty === 'hard') updateQuestProgressByType('hard_quiz');
-        if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateQuestProgressByType('english');
+
+        // Язык
+        if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') {
+            updateQuestProgressByType('english');
+        }
+
+        // Серия
         if (maxStreak >= 5) updateQuestProgressByType('streak_5');
+
+        // Скорость
         if (result.totalTime < 60) updateQuestProgressByType('fast_quiz');
 
-        // XP и монеты — передаём абсолютные значения
-        const currentXP = typeof AppState !== 'undefined' ? AppState.get('stats').totalXP || 0 : 0;
+        // XP (абсолютное значение)
+        const currentXP = typeof AppState !== 'undefined' ? (AppState.get('stats').totalXP || 0) : 0;
         updateQuestProgressByType('xp_week', currentXP);
         updateQuestProgressByType('xp_month', currentXP);
 
+        // Монеты (абсолютное значение)
         const currentCoins = typeof AppState !== 'undefined' ? AppState.get('coins') : 0;
         updateQuestProgressByType('coins_month', currentCoins);
 
@@ -253,6 +278,8 @@ async function finishQuiz() {
         if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
         if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
         if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgressByType('category_cinema');
+
+        // Разнообразие
         updateQuestProgressByType('categories_week', 1);
         updateQuestProgressByType('difficulties_week', 1);
     }
@@ -261,11 +288,6 @@ async function finishQuiz() {
     if (result.score >= 70 && typeof vibrateAchievement === 'function') {
         vibrateAchievement();
     }
-
-    console.log('📊 Вызов updateQuestProgressByType...');
-    console.log('  quizzes_today:', 1);
-    console.log('  score_50:', result.score >= 50 ? 1 : 0);
-    console.log('  xp_month:', AppState.get('stats').totalXP);
 }
 
 function renderResultScreen(result) {
