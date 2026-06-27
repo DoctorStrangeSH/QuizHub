@@ -129,4 +129,8 @@ const translations_ru = {
     day: 'День',
     claimReward: 'Забрать награду',
     alreadyClaimed: 'Уже получено',
+
+    randomMode: 'Случайный',
+    randomModeTitle: 'Случайный режим',
+    randomModeDesc: 'Случайная категория и сложность с бонусами!',
 };

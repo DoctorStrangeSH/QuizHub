@@ -174,7 +174,17 @@ function goToNextQuestion() { currentQuestionIndex++; if (currentQuestionIndex <
 async function finishQuiz() {
     clearInterval(timerInterval);
 
-    const totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
+    // Защита от неверного времени
+    if (!quizStartTime || quizStartTime === 0) {
+        quizStartTime = Date.now() - 30000;
+    }
+
+    let totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
+
+    // Защита от аномальных значений
+    if (totalTime < 0) totalTime = 0;
+    if (totalTime > 3600) totalTime = 60;
+
     const actualCorrect = correctAnswersCount;
 
     console.log(`📊 Квиз завершён: ${score} очков, ${actualCorrect}/${QUIZ_SETTINGS.totalQuestions} правильно, ${totalTime}с`);
@@ -289,6 +299,7 @@ async function finishQuiz() {
         vibrateAchievement();
     }
 }
+
 
 function renderResultScreen(result) {
     const screen = document.getElementById('screen-result');

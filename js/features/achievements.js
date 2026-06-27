@@ -246,13 +246,22 @@ function renderAchievementsScreen() {
     const screen = document.getElementById('screen-achievements');
     if (!screen) return;
 
+    // Принудительно загружаем задания перед рендером
+    if (typeof generateQuests === 'function') {
+        generateQuests('daily');
+        generateQuests('weekly');
+        generateQuests('monthly');
+    }
+
     const level = getCurrentLevel();
     const nextLevel = getNextLevel();
     const stats = AppState.get('stats');
     const xp = stats.totalXP || 0;
     const unlocked = AppState.get('unlockedAchievements');
 
-    let progress = 100, xpProgress = '';
+    let progress = 100;
+    let xpProgress = '';
+
     if (nextLevel) {
         const xpInLevel = xp - level.xpRequired;
         const xpNeeded = nextLevel.xpRequired - level.xpRequired;
@@ -263,34 +272,36 @@ function renderAchievementsScreen() {
     }
 
     screen.innerHTML = `
-        <div class="row justify-content-center"><div class="col-lg-6">
-            ${I18N_TEMPLATES.achievementsHeader(unlocked.length, ACHIEVEMENTS.length)}
-            ${I18N_TEMPLATES.playerLevelCard(level, progress, xpProgress)}
-            ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('daily') : ''}
-            ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('weekly') : ''}
-            ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('monthly') : ''}
-            <h5 class="fw-bold mb-3 mt-4">🏆 ${t('allAchievements')} (${unlocked.length}/${ACHIEVEMENTS.length})</h5>
-            <div class="d-grid gap-2">
-                ${ACHIEVEMENTS.map(ach => {
-                    const isUnlocked = unlocked.includes(ach.id);
-                    return `
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${isUnlocked ? 'bg-card' : 'bg-card opacity-50'}">
-                            <span class="fs-2 ${isUnlocked ? '' : 'grayscale'}">${ach.icon}</span>
-                            <div class="flex-grow-1">
-                                <p class="fw-bold mb-0 ${isUnlocked ? 'text-accent' : 'text-muted'}">${getAchievementName(ach)}</p>
-                                <small class="text-muted">${getAchievementDesc(ach)}</small>
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                ${I18N_TEMPLATES.achievementsHeader(unlocked.length, ACHIEVEMENTS.length)}
+                ${I18N_TEMPLATES.playerLevelCard(level, progress, xpProgress)}
+                ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('daily') : ''}
+                ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('weekly') : ''}
+                ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('monthly') : ''}
+                <h5 class="fw-bold mb-3 mt-4">🏆 ${t('allAchievements')} (${unlocked.length}/${ACHIEVEMENTS.length})</h5>
+                <div class="d-grid gap-2">
+                    ${ACHIEVEMENTS.map(ach => {
+                        const isUnlocked = unlocked.includes(ach.id);
+                        return `
+                            <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${isUnlocked ? 'bg-card' : 'bg-card opacity-50'}">
+                                <span class="fs-2 ${isUnlocked ? '' : 'grayscale'}">${ach.icon}</span>
+                                <div class="flex-grow-1">
+                                    <p class="fw-bold mb-0 ${isUnlocked ? 'text-accent' : 'text-muted'}">${getAchievementName(ach)}</p>
+                                    <small class="text-muted">${getAchievementDesc(ach)}</small>
+                                </div>
+                                <span class="fs-4">${isUnlocked ? '✅' : '🔒'}</span>
                             </div>
-                            <span class="fs-4">${isUnlocked ? '✅' : '🔒'}</span>
-                        </div>
-                    `;
-                }).join('')}
+                        `;
+                    }).join('')}
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
+                        <i class="bi bi-play-fill me-2"></i>${t('startQuiz')}
+                    </button>
+                </div>
             </div>
-            <div class="text-center mt-4">
-                <button class="btn btn-accent rounded-pill px-4" onclick="showScreen('home')">
-                    <i class="bi bi-play-fill me-2"></i>${t('startQuiz')}
-                </button>
-            </div>
-        </div></div>
+        </div>
     `;
 }
 

@@ -233,19 +233,25 @@ function updateQuestProgressByType(eventType, value = 1) {
 function completeQuest(quest, type) {
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
-    // Двойная проверка — чтобы точно не выполнилось дважды
     if (progress[quest.id + '_done']) return;
 
     progress[quest.id + '_done'] = true;
     console.log(`✅ Задание выполнено: ${quest.name}`);
 
-    // Награда — ТОЛЬКО монеты
     if (typeof addCoins === 'function') addCoins(quest.reward);
 
     showQuestComplete(quest);
     saveQuestState(type);
 
     EventBus.emit(EVENTS.QUEST_COMPLETED, quest);
+    
+    // Принудительно обновляем отображение если экран достижений активен
+    if (typeof renderAchievementsScreen === 'function') {
+        const achScreen = document.getElementById('screen-achievements');
+        if (achScreen?.classList.contains('active')) {
+            setTimeout(() => renderAchievementsScreen(), 500);
+        }
+    }
 }
 
 function showQuestComplete(quest) {

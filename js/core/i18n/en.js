@@ -129,4 +129,8 @@ const translations_en = {
     day: 'Day',
     claimReward: 'Claim Reward',
     alreadyClaimed: 'Already Claimed',
+
+    randomMode: 'Random',
+    randomModeTitle: 'Random Mode',
+    randomModeDesc: 'Random category and difficulty with bonuses!',
 };
