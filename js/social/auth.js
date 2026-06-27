@@ -76,12 +76,7 @@ function initAuthListener() {
     console.log('✅ [AUTH] auth готов, подписываюсь на onAuthStateChanged');
 
     authInstance.onAuthStateChanged(async user => {
-        console.log('🔄 [AUTH] onAuthStateChanged вызван');
-        console.log('   user:', user ? user.displayName : 'null');
-        console.log('   authFirstCheck:', authFirstCheck);
-        console.log('   currentUser:', currentUser ? currentUser.displayName : 'null');
-        console.log('   lastAuthUIState:', lastAuthUIState);
-        console.log('   userCache:', localStorage.getItem('quizhub-user-cache') ? 'есть' : 'нет');
+        console.log('🔄 [AUTH] onAuthStateChanged вызван, user:', user ? user.displayName : 'null');
 
         // Пропускаем первый вызов, если он null, а в кэше есть пользователь
         if (authFirstCheck && !user && localStorage.getItem('quizhub-user-cache')) {
@@ -91,17 +86,17 @@ function initAuthListener() {
         }
         authFirstCheck = false;
 
-        // Определяем новое состояние
         const newState = user ? 'logged-in' : 'logged-out';
-        console.log('   newState:', newState);
         
-        // Если состояние НЕ изменилось — ничего не делаем
-        if (newState === lastAuthUIState && user === currentUser) {
-            console.log('⏭ [AUTH] ПРОПУСКАЮ: состояние не изменилось');
+        // Если состояние UI не изменилось — не трогаем
+        if (newState === lastAuthUIState) {
+            console.log('⏭ [AUTH] ПРОПУСКАЮ: UI уже в состоянии', newState);
+            // Всё равно обновляем currentUser для других модулей
+            currentUser = user;
             return;
         }
         
-        console.log('✏️ [AUTH] Состояние изменилось, обновляю UI');
+        console.log('✏️ [AUTH] Состояние изменилось:', lastAuthUIState, '→', newState);
         lastAuthUIState = newState;
         currentUser = user;
 

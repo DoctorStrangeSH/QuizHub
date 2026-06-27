@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   injectCriticalCSS();
   optimizeFonts();
   optimizeStylesheets();
-  preloadNextLikelyModules();
+    // preloadNextLikelyModules();
   
   console.log('Оптимизация бандла активирована');
 });
