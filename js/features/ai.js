@@ -71,7 +71,7 @@ function updateAIScoreDisplay() {
 }
 
 // Слушаем завершение квиза
-document.addEventListener('quiz-finished', (e) => {
+EventBus.on(EVENTS.QUIZ_FINISHED, (result) => {
   if (!aiActive) return;
   
   const result = e.detail;

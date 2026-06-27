@@ -1,25 +1,31 @@
 // ============================================
-// QuizHub — Виртуальная валюта v2.5
+// QuizHub — Виртуальная валюта v3.0 (StateManager)
 // ============================================
 
-let userCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
-
 function addCoins(amount) {
-    userCoins += amount;
-    if (userCoins < 0) userCoins = 0;
-    localStorage.setItem('quizhub-coins', userCoins.toString());
-    updateCoinsDisplay();
+    const currentCoins = AppState.get('coins');
+    const newCoins = Math.max(0, currentCoins + amount);
+    AppState.set('coins', newCoins);
     if (amount > 0) showCoinAnimation(amount);
+
+    EventBus.emit(EVENTS.COINS_CHANGED, newCoins);
+
     if (typeof saveUserDataToFirestore === 'function' && typeof currentUser !== 'undefined' && currentUser) {
         saveUserDataToFirestore();
     }
 }
 
-function getCoins() { return userCoins; }
+function getCoins() {
+    return AppState.get('coins');
+}
 
 function updateCoinsDisplay() {
     const el = document.getElementById('coins-display');
-    if (el) { el.textContent = userCoins; el.classList.add('score-counter'); setTimeout(() => el.classList.remove('score-counter'), 300); }
+    if (el) {
+        el.textContent = AppState.get('coins');
+        el.classList.add('score-counter');
+        setTimeout(() => el.classList.remove('score-counter'), 300);
+    }
 }
 
 const SHOP_ITEMS = [
@@ -31,18 +37,28 @@ const SHOP_ITEMS = [
     { id: 'title_master', name: 'Титул «Мастер»', desc: 'Особый титул перед именем', icon: '👑', price: 300, type: 'cosmetic' },
 ];
 
-let purchasedItems = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
-let activeBoosters = JSON.parse(localStorage.getItem('quizhub-active-boosters') || '[]');
-let activeCustomTheme = localStorage.getItem('quizhub-custom-theme') || null;
-
 function buyItem(itemId) {
     const item = SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return;
-    if (userCoins < item.price) { showToast(`Не хватает монет! Нужно ${item.price} 🪙`, 'warning'); return; }
-    if (item.type !== 'booster' && purchasedItems.includes(itemId)) { showToast('Уже куплено! Нажми «Применить» для использования.', 'info'); return; }
+
+    const coins = AppState.get('coins');
+    if (coins < item.price) {
+        showToast(`Не хватает монет! Нужно ${item.price} 🪙`, 'warning');
+        return;
+    }
+
+    const purchased = AppState.get('purchasedItems');
+    if (item.type !== 'booster' && purchased.includes(itemId)) {
+        showToast('Уже куплено! Нажми «Применить» для использования.', 'info');
+        return;
+    }
+
     addCoins(-item.price);
-    if (!purchasedItems.includes(itemId)) purchasedItems.push(itemId);
-    localStorage.setItem('quizhub-purchases', JSON.stringify(purchasedItems));
+
+    if (!purchased.includes(itemId)) {
+        AppState.set('purchasedItems', [...purchased, itemId]);
+    }
+
     showToast(`Куплено: ${t('item_' + item.id) || item.name}! 🎉`, 'success');
     renderShop();
 }
@@ -50,39 +66,63 @@ function buyItem(itemId) {
 function applyItem(itemId) {
     const item = SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return;
-    if (!purchasedItems.includes(itemId) && item.type !== 'booster') { showToast('Сначала купите этот предмет! 🛍️', 'warning'); return; }
-    if (item.type === 'theme') { applyTheme(itemId); showToast(`Тема «${t('item_' + item.id) || item.name}» применена! 🎨`, 'success'); }
-    else if (item.type === 'booster') { activateBooster(item); showToast(`Бустер «${t('item_' + item.id) || item.name}» активирован! ⚡`, 'success'); }
-    else if (item.type === 'cosmetic') { applyCosmetic(itemId); showToast(`Косметика «${t('item_' + item.id) || item.name}» применена! ✨`, 'success'); }
+
+    const purchased = AppState.get('purchasedItems');
+    if (!purchased.includes(itemId) && item.type !== 'booster') {
+        showToast('Сначала купите этот предмет! 🛍️', 'warning');
+        return;
+    }
+
+    if (item.type === 'theme') {
+        applyTheme(itemId);
+        showToast(`Тема «${t('item_' + item.id) || item.name}» применена! 🎨`, 'success');
+    } else if (item.type === 'booster') {
+        activateBooster(item);
+        showToast(`Бустер «${t('item_' + item.id) || item.name}» активирован! ⚡`, 'success');
+    } else if (item.type === 'cosmetic') {
+        applyCosmetic(itemId);
+        showToast(`Косметика «${t('item_' + item.id) || item.name}» применена! ✨`, 'success');
+    }
+
     renderShop();
 }
 
 function applyTheme(themeId) {
-    if (activeCustomTheme) document.documentElement.removeAttribute('data-custom-theme');
-    activeCustomTheme = themeId;
-    localStorage.setItem('quizhub-custom-theme', themeId);
+    const currentTheme = AppState.get('activeCustomTheme');
+    if (currentTheme) document.documentElement.removeAttribute('data-custom-theme');
+    AppState.set('activeCustomTheme', themeId);
     document.documentElement.setAttribute('data-custom-theme', themeId);
 }
 
 function resetTheme() {
     document.documentElement.removeAttribute('data-custom-theme');
-    activeCustomTheme = null;
-    localStorage.removeItem('quizhub-custom-theme');
-    if (typeof saveUserDataToFirestore === 'function') saveUserDataToFirestore();
+    AppState.set('activeCustomTheme', null);
+
+    if (typeof saveUserDataToFirestore === 'function') {
+        saveUserDataToFirestore();
+    }
+
     showToast('Тема сброшена ✅', 'info');
     renderShop();
 }
 
 function activateBooster(item) {
-    activeBoosters.push({ id: item.id, name: item.name, icon: item.icon, expiresAt: Date.now() + (item.duration || 0) * 1000 });
-    localStorage.setItem('quizhub-active-boosters', JSON.stringify(activeBoosters));
+    const boosters = AppState.get('activeBoosters');
+    boosters.push({
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        expiresAt: Date.now() + (item.duration || 0) * 1000
+    });
+    AppState.set('activeBoosters', boosters);
 }
 
 function getActiveMultiplier() {
     const now = Date.now();
-    activeBoosters = activeBoosters.filter(b => b.expiresAt > now);
-    localStorage.setItem('quizhub-active-boosters', JSON.stringify(activeBoosters));
-    return activeBoosters.some(b => b.id === 'booster_x2') ? 2 : 1;
+    let boosters = AppState.get('activeBoosters');
+    boosters = boosters.filter(b => b.expiresAt > now);
+    AppState.set('activeBoosters', boosters);
+    return boosters.some(b => b.id === 'booster_x2') ? 2 : 1;
 }
 
 function applyCosmetic(cosmeticId) {
@@ -94,6 +134,7 @@ function applyCosmetic(cosmeticId) {
 
 function awardQuizCoins(result) {
     if (typeof currentUser === 'undefined' || !currentUser) return 0;
+
     let coins = 5;
     coins += result.correctAnswers * 2;
     const diffBonus = { easy: 0, medium: 5, hard: 10 };
@@ -104,20 +145,31 @@ function awardQuizCoins(result) {
     return coins;
 }
 
-function showShopScreen() { renderShop(); showScreen('shop'); }
+function showShopScreen() {
+    renderShop();
+    showScreen('shop');
+}
 
 function renderShop() {
     const screen = document.getElementById('screen-shop');
     if (!screen) return;
 
+    const coins = AppState.get('coins');
+    const purchased = AppState.get('purchasedItems');
+    const activeTheme = AppState.get('activeCustomTheme');
+
     screen.innerHTML = `
         <div class="row justify-content-center"><div class="col-lg-6">
-            ${I18N_TEMPLATES.shopHeader()}
+            <div class="text-center mb-4">
+                <h2 class="fw-bold font-display mb-2">🛍️ ${t('shopTitle')}</h2>
+                <p class="text-muted">${t('shopBalance')}: <span class="text-accent fw-bold">${coins} 🪙</span></p>
+                ${activeTheme ? `<button class="btn btn-outline-warning btn-sm rounded-pill px-3 mt-2" onclick="resetTheme()">${t('shopReset')}</button>` : ''}
+            </div>
             <div class="d-grid gap-3">
                 ${SHOP_ITEMS.map(item => {
-                    const purchased = purchasedItems.includes(item.id);
-                    const isActive = item.type === 'theme' && activeCustomTheme === item.id;
-                    return I18N_TEMPLATES.shopItemCard(item, purchased, isActive);
+                    const isPurchased = purchased.includes(item.id);
+                    const isActive = item.type === 'theme' && activeTheme === item.id;
+                    return I18N_TEMPLATES.shopItemCard(item, isPurchased, isActive);
                 }).join('')}
             </div>
             <div class="text-center mt-4">
@@ -136,11 +188,13 @@ function showCoinAnimation(amount) {
 }
 
 function initCustomTheme() {
-    const saved = localStorage.getItem('quizhub-custom-theme');
+    const saved = AppState.get('activeCustomTheme');
     if (saved) {
-        activeCustomTheme = saved;
         document.documentElement.setAttribute('data-custom-theme', saved);
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { updateCoinsDisplay(); initCustomTheme(); });
+document.addEventListener('DOMContentLoaded', () => {
+    updateCoinsDisplay();
+    initCustomTheme();
+});

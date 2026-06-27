@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Система достижений v4.1
+// QuizHub — Система достижений v4.2 (StateManager)
 // ============================================
 
 const ACHIEVEMENTS = [
@@ -36,53 +36,55 @@ const LEVELS = [
     { level: 7, nameKey: 'lvl_myth', icon: '🌟', xpRequired: 2500, color: '#FF5252' },
 ];
 
-let unlockedAchievements = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
-let quizStats = JSON.parse(localStorage.getItem('quizhub-stats') || JSON.stringify({
-    quizzesToday: 0, lastQuizDate: '', languagesUsed: [], bestScore: 0,
-    fastestAnswer: 999, fastestQuiz: 9999, maxStreak: 0, improved: false,
-    totalQuizzes: 0, totalXP: 0, hardCompleted: 0, difficultiesCompleted: [],
-    dayStreak: 0, lastActiveDate: '', perfectQuizzes: 0,
-    englishQuizzes: 0, russianQuizzes: 0, survivalPlayed: 0, survivalMaxQuestions: 0,
-    timedGames: 0, duelsPlayed: 0, categoriesCompleted: [],
-    scienceQuizzes: 0, historyQuizzes: 0, sportQuizzes: 0,
-    friendsCount: 0, giftsSent: 0, inTeam: false, closeWin: false,
-}));
-
 function getAchievementName(ach) { return t(ach.nameKey) || ach.nameKey || 'Неизвестное достижение'; }
 function getAchievementDesc(ach) { return t(ach.descKey) || ach.descKey || ''; }
 function getLevelName(level) { return t(level.nameKey) || `Уровень ${level.level}`; }
 
 function updateStats(result) {
+    const stats = AppState.get('stats');
     const today = new Date().toISOString().split('T')[0];
-    if (quizStats.lastQuizDate !== today) { quizStats.quizzesToday = 0; quizStats.lastQuizDate = today; }
+
+    if (stats.lastQuizDate !== today) {
+        stats.quizzesToday = 0;
+        stats.lastQuizDate = today;
+    }
     updateDayStreak();
-    quizStats.quizzesToday++;
-    quizStats.totalQuizzes = (quizStats.totalQuizzes || 0) + 1;
-    if (!quizStats.languagesUsed) quizStats.languagesUsed = [];
-    const lang = (typeof selectedLanguage !== 'undefined') ? selectedLanguage : 'ru';
-    if (!quizStats.languagesUsed.includes(lang)) quizStats.languagesUsed.push(lang);
-    if (lang === 'en') quizStats.englishQuizzes = (quizStats.englishQuizzes || 0) + 1;
-    if (lang === 'ru') quizStats.russianQuizzes = (quizStats.russianQuizzes || 0) + 1;
-    if (!quizStats.difficultiesCompleted) quizStats.difficultiesCompleted = [];
-    const diff = (typeof selectedDifficulty !== 'undefined') ? selectedDifficulty : 'easy';
-    if (!quizStats.difficultiesCompleted.includes(diff)) quizStats.difficultiesCompleted.push(diff);
-    if (diff === 'hard') quizStats.hardCompleted = (quizStats.hardCompleted || 0) + 1;
-    quizStats.improved = (result.score > quizStats.bestScore && quizStats.bestScore > 0);
-    if (result.score > quizStats.bestScore) quizStats.bestScore = result.score;
-    if (result.totalTime < quizStats.fastestQuiz) quizStats.fastestQuiz = result.totalTime;
-    if (result.correctAnswers === 10) quizStats.perfectQuizzes = (quizStats.perfectQuizzes || 0) + 1;
+    stats.quizzesToday++;
+    stats.totalQuizzes = (stats.totalQuizzes || 0) + 1;
+
+    if (!stats.languagesUsed) stats.languagesUsed = [];
+    const lang = (typeof selectedLanguage !== 'undefined') ? selectedLanguage : AppState.get('settings.locale');
+    if (!stats.languagesUsed.includes(lang)) stats.languagesUsed.push(lang);
+
+    if (!stats.difficultiesCompleted) stats.difficultiesCompleted = [];
+    const diff = AppState.get('settings.difficulty');
+    if (!stats.difficultiesCompleted.includes(diff)) stats.difficultiesCompleted.push(diff);
+    if (diff === 'hard') stats.hardCompleted = (stats.hardCompleted || 0) + 1;
+
+    stats.improved = (result.score > stats.bestScore && stats.bestScore > 0);
+    if (result.score > stats.bestScore) stats.bestScore = result.score;
+    if (result.totalTime < stats.fastestQuiz) stats.fastestQuiz = result.totalTime;
+    if (result.correctAnswers === 10) stats.perfectQuizzes = (stats.perfectQuizzes || 0) + 1;
+
     addXP(calculateQuizXP(result));
-    if (typeof awardQuizCoins === 'function' && typeof currentUser !== 'undefined' && currentUser) awardQuizCoins(result);
-    localStorage.setItem('quizhub-stats', JSON.stringify(quizStats));
+    AppState.set('stats', stats);
+
+    if (typeof awardQuizCoins === 'function' && typeof currentUser !== 'undefined' && currentUser) {
+        awardQuizCoins(result);
+    }
 }
 
 function updateDayStreak() {
+    const stats = AppState.get('stats');
     const today = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    if (quizStats.lastActiveDate === today) return;
-    quizStats.dayStreak = (quizStats.lastActiveDate === yesterday) ? (quizStats.dayStreak || 0) + 1 : 1;
-    quizStats.lastActiveDate = today;
-    if (quizStats.dayStreak >= 7) addXP(Math.min(quizStats.dayStreak * 5, 100));
+
+    if (stats.lastActiveDate === today) return;
+    stats.dayStreak = (stats.lastActiveDate === yesterday) ? (stats.dayStreak || 0) + 1 : 1;
+    stats.lastActiveDate = today;
+
+    if (stats.dayStreak >= 7) addXP(Math.min(stats.dayStreak * 5, 100));
+    AppState.set('stats', stats);
 }
 
 function calculateQuizXP(result) {
@@ -94,12 +96,18 @@ function calculateQuizXP(result) {
     return xp;
 }
 
-function addXP(amount) { quizStats.totalXP = (quizStats.totalXP || 0) + amount; localStorage.setItem('quizhub-stats', JSON.stringify(quizStats)); }
+function addXP(amount) {
+    const stats = AppState.get('stats');
+    stats.totalXP = (stats.totalXP || 0) + amount;
+    AppState.set('stats', stats);
+}
 
 function getCurrentLevel() {
-    const xp = quizStats.totalXP || 0;
+    const xp = AppState.get('stats').totalXP || 0;
     let current = LEVELS[0];
-    for (const level of LEVELS) { if (xp >= level.xpRequired) current = level; }
+    for (const level of LEVELS) {
+        if (xp >= level.xpRequired) current = level;
+    }
     return current;
 }
 
@@ -111,40 +119,57 @@ function getNextLevel() {
 
 function checkAchievements(result) {
     if (typeof currentUser === 'undefined' || !currentUser) return;
-    if (typeof friendsList !== 'undefined') quizStats.friendsCount = friendsList.length;
-    if (typeof userTeam !== 'undefined') quizStats.inTeam = !!userTeam;
-    const stats = {
-        fastestAnswer: quizStats.fastestAnswer || 999, fastestQuiz: quizStats.fastestQuiz || 9999,
-        maxStreak: quizStats.maxStreak || 0, correctAnswers: result.correctAnswers,
-        languagesUsed: (quizStats.languagesUsed || []).length, improved: quizStats.improved || false,
-        quizzesToday: quizStats.quizzesToday || 0, totalQuizzes: quizStats.totalQuizzes || 0,
-        bestScore: quizStats.bestScore || 0, hardCompleted: quizStats.hardCompleted || 0,
-        difficultiesCompleted: (quizStats.difficultiesCompleted || []).length,
-        dayStreak: quizStats.dayStreak || 0, perfectQuizzes: quizStats.perfectQuizzes || 0,
-        englishQuizzes: quizStats.englishQuizzes || 0, russianQuizzes: quizStats.russianQuizzes || 0,
-        survivalPlayed: quizStats.survivalPlayed || 0, survivalMaxQuestions: quizStats.survivalMaxQuestions || 0,
-        timedGames: quizStats.timedGames || 0, duelsPlayed: quizStats.duelsPlayed || 0,
-        categoriesCompleted: (quizStats.categoriesCompleted || []).length,
-        scienceQuizzes: quizStats.scienceQuizzes || 0, historyQuizzes: quizStats.historyQuizzes || 0,
-        sportQuizzes: quizStats.sportQuizzes || 0, friendsCount: quizStats.friendsCount || 0,
-        giftsSent: quizStats.giftsSent || 0, inTeam: quizStats.inTeam || false, closeWin: quizStats.closeWin || false,
+
+    const stats = AppState.get('stats');
+    const unlocked = AppState.get('unlockedAchievements');
+
+    if (typeof friendsList !== 'undefined') stats.friendsCount = friendsList.length;
+    if (typeof userTeam !== 'undefined') stats.inTeam = !!userTeam;
+
+    const checkStats = {
+        fastestAnswer: stats.fastestAnswer || 999,
+        maxStreak: stats.maxStreak || 0,
+        correctAnswers: result.correctAnswers,
+        languagesUsed: (stats.languagesUsed || []).length,
+        improved: stats.improved || false,
+        quizzesToday: stats.quizzesToday || 0,
+        totalQuizzes: stats.totalQuizzes || 0,
+        bestScore: stats.bestScore || 0,
+        hardCompleted: stats.hardCompleted || 0,
+        difficultiesCompleted: (stats.difficultiesCompleted || []).length,
+        dayStreak: stats.dayStreak || 0,
+        perfectQuizzes: stats.perfectQuizzes || 0,
+        survivalPlayed: stats.survivalPlayed || 0,
+        duelsPlayed: stats.duelsPlayed || 0,
+        friendsCount: stats.friendsCount || 0,
+        inTeam: stats.inTeam || false,
+        closeWin: stats.closeWin || false,
     };
+
     const newAchievements = [];
     ACHIEVEMENTS.forEach(ach => {
-        if (!unlockedAchievements.includes(ach.id)) {
-            try { if (ach.condition(stats)) { unlockedAchievements.push(ach.id); newAchievements.push(ach); } }
-            catch (e) { console.error(`Ошибка достижения ${ach.id}:`, e); }
+        if (!unlocked.includes(ach.id)) {
+            try {
+                if (ach.condition(checkStats)) {
+                    newAchievements.push(ach);
+                }
+            } catch (e) {
+                console.error(`Ошибка достижения ${ach.id}:`, e);
+            }
         }
     });
+
     if (newAchievements.length > 0) {
-        localStorage.setItem('quizhub-achievements', JSON.stringify(unlockedAchievements));
+        AppState.set('unlockedAchievements', [...unlocked, ...newAchievements.map(a => a.id)]);
         showAchievements(newAchievements);
+        EventBus.emit(EVENTS.ACHIEVEMENT_UNLOCKED, newAchievements);
     }
 }
 
 function showAchievements(achievements) {
     const container = document.getElementById('achievements-popup');
     if (!container) return;
+
     achievements.forEach((ach, i) => {
         setTimeout(() => {
             container.innerHTML = `
@@ -170,9 +195,13 @@ function showAchievements(achievements) {
 function renderAchievementsScreen() {
     const screen = document.getElementById('screen-achievements');
     if (!screen) return;
+
     const level = getCurrentLevel();
     const nextLevel = getNextLevel();
-    const xp = quizStats?.totalXP || 0;
+    const stats = AppState.get('stats');
+    const xp = stats.totalXP || 0;
+    const unlocked = AppState.get('unlockedAchievements');
+
     let progress = 100, xpProgress = '';
     if (nextLevel) {
         const xpInLevel = xp - level.xpRequired;
@@ -185,23 +214,23 @@ function renderAchievementsScreen() {
 
     screen.innerHTML = `
         <div class="row justify-content-center"><div class="col-lg-6">
-            ${I18N_TEMPLATES.achievementsHeader(unlockedAchievements.length, ACHIEVEMENTS.length)}
+            ${I18N_TEMPLATES.achievementsHeader(unlocked.length, ACHIEVEMENTS.length)}
             ${I18N_TEMPLATES.playerLevelCard(level, progress, xpProgress)}
             ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('daily') : ''}
             ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('weekly') : ''}
             ${typeof renderQuestsHTML === 'function' ? renderQuestsHTML('monthly') : ''}
-            <h5 class="fw-bold mb-3 mt-4">🏆 ${t('allAchievements')} (${unlockedAchievements.length}/${ACHIEVEMENTS.length})</h5>
+            <h5 class="fw-bold mb-3 mt-4">🏆 ${t('allAchievements')} (${unlocked.length}/${ACHIEVEMENTS.length})</h5>
             <div class="d-grid gap-2">
                 ${ACHIEVEMENTS.map(ach => {
-                    const unlocked = unlockedAchievements.includes(ach.id);
+                    const isUnlocked = unlocked.includes(ach.id);
                     return `
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${unlocked ? 'bg-card' : 'bg-card opacity-50'}">
-                            <span class="fs-2 ${unlocked ? '' : 'grayscale'}">${ach.icon}</span>
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-4 ${isUnlocked ? 'bg-card' : 'bg-card opacity-50'}">
+                            <span class="fs-2 ${isUnlocked ? '' : 'grayscale'}">${ach.icon}</span>
                             <div class="flex-grow-1">
-                                <p class="fw-bold mb-0 ${unlocked ? 'text-accent' : 'text-muted'}">${getAchievementName(ach)}</p>
+                                <p class="fw-bold mb-0 ${isUnlocked ? 'text-accent' : 'text-muted'}">${getAchievementName(ach)}</p>
                                 <small class="text-muted">${getAchievementDesc(ach)}</small>
                             </div>
-                            <span class="fs-4">${unlocked ? '✅' : '🔒'}</span>
+                            <span class="fs-4">${isUnlocked ? '✅' : '🔒'}</span>
                         </div>
                     `;
                 }).join('')}
@@ -218,5 +247,5 @@ function renderAchievementsScreen() {
 function renderAchievementsList() { renderAchievementsScreen(); }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log(`Достижения загружены: ${unlockedAchievements.length} из ${ACHIEVEMENTS.length}`);
+    console.log(`Достижения загружены: ${AppState.get('unlockedAchievements').length} из ${ACHIEVEMENTS.length}`);
 });

@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Аутентификация Google v2.7
+// QuizHub — Аутентификация Google v3.0 (StateManager + EventBus)
 // ============================================
 
 let currentUser = null;
@@ -65,6 +65,9 @@ function initAuthListener() {
         lastAuthUIState = newState;
         currentUser = user;
 
+        AppState.set('isLoggedIn', !!user);
+        AppState.set('user', user);
+
         if (user) {
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
@@ -83,8 +86,11 @@ function initAuthListener() {
             if (nameInput && !nameInput.dataset.manual) {
                 nameInput.value = user.displayName || '';
             }
+
+            EventBus.emit(EVENTS.AUTH_LOGIN, user);
         } else {
             localStorage.removeItem('quizhub-user-cache');
+            EventBus.emit(EVENTS.AUTH_LOGOUT);
         }
 
         updateAuthUI(user);
@@ -124,21 +130,13 @@ async function signOut() {
             allKeys.push(key);
         }
     }
-
     allKeys.forEach(key => {
         try { localStorage.removeItem(key); } catch (e) {}
     });
 
-    if (typeof userCoins !== 'undefined') userCoins = 0;
-    if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
-    if (typeof purchasedItems !== 'undefined') purchasedItems = [];
-    if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
-    if (typeof quizStats !== 'undefined') Object.keys(quizStats).forEach(k => delete quizStats[k]);
-    if (typeof friendsList !== 'undefined') friendsList = [];
-    if (typeof userTeam !== 'undefined') userTeam = null;
-    if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
-
+    AppState.reset();
     document.documentElement.removeAttribute('data-custom-theme');
+
     if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
 
     const authInstance = getAuth();
@@ -177,9 +175,7 @@ function updateAuthUI(user) {
 // ========== СТИЛИ ==========
 
 const styleEl = document.createElement('style');
-styleEl.textContent = `
-    #auth-area { transition: opacity 0.15s ease; }
-`;
+styleEl.textContent = `#auth-area { transition: opacity 0.15s ease; }`;
 document.head.appendChild(styleEl);
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========

@@ -1,13 +1,13 @@
 // ============================================
-// QuizHub — Социальные механики v2.1
+// QuizHub — Социальные механики v3.0 (StateManager + EventBus)
 // ============================================
 
-let friendsList = JSON.parse(localStorage.getItem('quizhub-friends') || '[]');
 let friendRequests = JSON.parse(localStorage.getItem('quizhub-friend-requests') || '[]');
 
 async function sendFriendRequest(targetUserId) {
     if (!currentUser) { showToast('Войдите в аккаунт', 'warning'); return; }
-    if (friendsList.includes(targetUserId)) { showToast('Уже в друзьях!', 'info'); return; }
+    const friends = AppState.get('friendsList');
+    if (friends.includes(targetUserId)) { showToast('Уже в друзьях!', 'info'); return; }
     try {
         await db.collection('friendRequests').add({
             from: currentUser.uid, fromName: currentUser.displayName, fromPhoto: currentUser.photoURL,
@@ -23,9 +23,13 @@ async function acceptFriendRequest(requestId, friendId) {
         await db.collection('users').doc(currentUser.uid).set({ friends: firebase.firestore.FieldValue.arrayUnion(friendId) }, { merge: true });
         await db.collection('users').doc(friendId).set({ friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }, { merge: true });
         await db.collection('friendRequests').doc(requestId).update({ status: 'accepted' });
-        friendsList.push(friendId);
-        localStorage.setItem('quizhub-friends', JSON.stringify(friendsList));
+
+        const friends = AppState.get('friendsList');
+        AppState.set('friendsList', [...friends, friendId]);
+
         showToast('Теперь вы друзья! 🎉', 'success');
+        EventBus.emit(EVENTS.FRIEND_ADDED, friendId);
+
         if (typeof addCoins === 'function') addCoins(50);
     } catch (e) { showToast('Не удалось принять заявку', 'danger'); }
 }
@@ -44,15 +48,16 @@ function showFriendsScreen() {
 
 function renderFriendsScreen(screen) {
     const referralCode = generateReferralCode();
+    const friends = AppState.get('friendsList');
 
     screen.innerHTML = `
         <div class="row justify-content-center"><div class="col-lg-6">
-            ${I18N_TEMPLATES.friendsHeader(friendsList.length)}
+            ${I18N_TEMPLATES.friendsHeader(friends.length)}
             ${I18N_TEMPLATES.friendsReferral(referralCode)}
             <div class="bg-card rounded-4 p-4 mb-4">
                 <h5 class="fw-bold mb-3">${t('friendsTitle')}</h5>
                 <div class="d-grid gap-2" id="friends-list">
-                    ${friendsList.length === 0 ? I18N_TEMPLATES.friendsEmpty() : '<p class="text-muted">Загрузка...</p>'}
+                    ${friends.length === 0 ? I18N_TEMPLATES.friendsEmpty() : '<p class="text-muted">Загрузка...</p>'}
                 </div>
             </div>
             <button class="btn btn-outline-accent rounded-pill px-4 w-100" onclick="showScreen('home')">
@@ -61,7 +66,7 @@ function renderFriendsScreen(screen) {
         </div></div>
     `;
 
-    if (friendsList.length > 0) loadFriendsList();
+    if (friends.length > 0) loadFriendsList();
 }
 
 function copyReferralCode(code) {
@@ -70,15 +75,16 @@ function copyReferralCode(code) {
 
 async function loadFriendsList() {
     const container = document.getElementById('friends-list');
-    if (!container || friendsList.length === 0) return;
+    const friends = AppState.get('friendsList');
+    if (!container || friends.length === 0) return;
 
-    const friends = [];
-    for (const uid of friendsList.slice(0, 20)) {
+    const friendsData = [];
+    for (const uid of friends.slice(0, 20)) {
         try {
             const doc = await db.collection('users').doc(uid).get();
-            if (doc.exists) friends.push({ uid, ...doc.data() });
+            if (doc.exists) friendsData.push({ uid, ...doc.data() });
         } catch (e) {}
     }
 
-    container.innerHTML = I18N_TEMPLATES.friendsList(friends);
+    container.innerHTML = I18N_TEMPLATES.friendsList(friendsData);
 }

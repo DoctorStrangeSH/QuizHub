@@ -338,29 +338,32 @@
 
     <!-- ===== ЯДРО (core) ===== -->
     <script src="js/core/firebase-config.js"></script>
-
-    <!-- Переводы -->
     <script src="js/core/i18n/ru.js"></script>
     <script src="js/core/i18n/en.js"></script>
-    <script src="js/core/i18n/quests.js"></script>
     <script src="js/core/i18n/achievements.js"></script>
-    <script src="js/core/i18n/events.js"></script>
     <script src="js/core/i18n/leaderboard.js"></script>
     <script src="js/core/i18n/chat.js"></script>
     <script src="js/core/i18n/shop.js"></script>
     <script src="js/core/i18n/friends.js"></script>
     <script src="js/core/i18n/stats.js"></script>
+    <script src="js/core/i18n/quests.js"></script>
+    <script src="js/core/i18n/events.js"></script>
     <script src="js/core/i18n/templates.js"></script>
     <script src="js/core/i18n.js"></script>
 
-    <!-- Ядро i18n -->
-    <script src="js/core/i18n.js"></script>
-
     <!-- ===== СЕРВИСЫ (services) ===== -->
+    <script src="js/services/event-bus.js"></script>
+    <script src="js/services/state-manager.js"></script>
+    <script src="js/services/helpers.js"></script>
+    <script src="js/services/particles.js"></script>
     <script src="js/services/sounds.js"></script>
     <script src="js/services/animations.js"></script>
     <script src="js/services/offline.js"></script>
     <script src="js/services/api.js"></script>
+    <script src="js/services/firestore-sync.js"></script>
+    <script src="js/services/performance.js"></script>
+    <script src="js/services/bundle-optimizer.js"></script>
+    <script src="js/services/security.js"></script>
 
     <!-- ===== СОЦИАЛЬНОЕ (social) ===== -->
     <script src="js/social/auth.js"></script>
@@ -369,6 +372,7 @@
     <script src="js/social/tournaments.js"></script>
     <script src="js/social/chat.js"></script>
     <script src="js/social/events.js"></script>
+    <script src="js/social/sharing.js"></script>
 
     <!-- ===== ФИЧИ (features) ===== -->
     <script src="js/features/achievements.js"></script>
@@ -380,13 +384,6 @@
     <script src="js/features/stats.js"></script>
     <script src="js/features/voice.js"></script>
     <script src="js/features/swipe.js"></script>
-
-    <!-- ===== СЕРВИСЫ (продолжение) ===== -->
-    <script src="js/services/firestore-sync.js"></script>
-    <script src="js/utils/performance.js"></script>
-    <script src="js/utils/bundle-optimizer.js"></script>
-    <script src="js/utils/security.js"></script>
-    <script src="js/services/particles.js"></script>
 
     <!-- ===== ЯДРО (после всех зависимостей) ===== -->
     <script src="js/core/ui.js"></script>
