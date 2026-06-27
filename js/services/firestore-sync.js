@@ -10,21 +10,40 @@ async function saveUserDataToFirestore() {
         displayName: currentUser.displayName || 'Игрок',
         photoURL: currentUser.photoURL || null,
         email: currentUser.email || null,
-        coins: parseInt(localStorage.getItem('quizhub-coins') || '0'),
-        totalXP: (typeof quizStats !== 'undefined' ? quizStats.totalXP : 0) || 0,
-        bestScore: (typeof quizStats !== 'undefined' ? quizStats.bestScore : 0) || 0,
-        totalQuizzes: (typeof quizStats !== 'undefined' ? quizStats.totalQuizzes : 0) || 0,
-        dayStreak: (typeof quizStats !== 'undefined' ? quizStats.dayStreak : 0) || 0,
-        achievements: JSON.parse(localStorage.getItem('quizhub-achievements') || '[]'),
-        purchases: JSON.parse(localStorage.getItem('quizhub-purchases') || '[]'),
-        customTheme: localStorage.getItem('quizhub-custom-theme') || null,
-        stats: typeof quizStats !== 'undefined' ? quizStats : {},
+
+        // Монеты
+        coins: AppState.get('coins'),
+
+        // Статистика (ВАЖНО — сохраняем весь объект)
+        totalXP: AppState.get('stats').totalXP || 0,
+        bestScore: AppState.get('stats').bestScore || 0,
+        totalQuizzes: AppState.get('stats').totalQuizzes || 0,
+        dayStreak: AppState.get('stats').dayStreak || 0,
+
+        // Полная статистика
+        stats: AppState.get('stats'),
+
+        // Достижения
+        achievements: AppState.get('unlockedAchievements'),
+
+        // Покупки
+        purchases: AppState.get('purchasedItems'),
+
+        // Кастомная тема
+        customTheme: AppState.get('activeCustomTheme'),
+
+        // Задания
         questState: JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}'),
+
+        // Настройки
         settings: {
-            theme: localStorage.getItem('quizhub-theme') || 'dark',
-            locale: localStorage.getItem('quizhub-locale') || 'ru',
+            theme: AppState.get('settings.theme'),
+            locale: AppState.get('settings.locale'),
         },
-        friends: JSON.parse(localStorage.getItem('quizhub-friends') || '[]'),
+
+        // Друзья
+        friends: AppState.get('friendsList'),
+
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -32,7 +51,7 @@ async function saveUserDataToFirestore() {
         const doc = await userRef.get();
         if (doc.exists) await userRef.update(data);
         else await userRef.set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        console.log('💾 Данные сохранены в Firestore');
+        console.log('💾 Данные сохранены в Firestore (монеты:', data.coins, ', квизов:', data.totalQuizzes, ')');
     } catch (error) { console.error('Ошибка сохранения:', error); }
 }
 
@@ -49,70 +68,74 @@ async function loadUserDataFromFirestore() {
 
         // Монеты
         if (typeof data.coins === 'number') {
-            const localCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
+            const localCoins = AppState.get('coins');
             const bestCoins = Math.max(data.coins, localCoins);
-            localStorage.setItem('quizhub-coins', bestCoins.toString());
-            if (typeof userCoins !== 'undefined') userCoins = bestCoins;
+            AppState.set('coins', bestCoins);
             if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+        }
+
+        // Статистика — ВАЖНО
+        if (data.stats) {
+            const localStats = AppState.get('stats');
+            const mergedStats = {
+                ...data.stats,
+                ...localStats,
+                bestScore: Math.max(data.stats.bestScore || 0, localStats.bestScore || 0),
+                totalXP: Math.max(data.stats.totalXP || 0, localStats.totalXP || 0),
+                totalQuizzes: Math.max(data.stats.totalQuizzes || 0, localStats.totalQuizzes || 0),
+                dayStreak: Math.max(data.stats.dayStreak || 0, localStats.dayStreak || 0),
+                fastestAnswer: Math.min(data.stats.fastestAnswer || 999, localStats.fastestAnswer || 999),
+                fastestQuiz: Math.min(data.stats.fastestQuiz || 9999, localStats.fastestQuiz || 9999),
+                maxStreak: Math.max(data.stats.maxStreak || 0, localStats.maxStreak || 0),
+            };
+            AppState.set('stats', mergedStats);
+            console.log('📊 Статистика восстановлена:', mergedStats.totalQuizzes, 'квизов');
         }
 
         // Достижения
         if (data.achievements) {
-            const local = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
-            const merged = [...new Set([...local, ...data.achievements])];
-            localStorage.setItem('quizhub-achievements', JSON.stringify(merged));
-            if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = merged;
+            const localAch = AppState.get('unlockedAchievements');
+            const merged = [...new Set([...localAch, ...data.achievements])];
+            AppState.set('unlockedAchievements', merged);
         }
 
         // Покупки
         if (data.purchases) {
-            const localPurchases = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
+            const localPurchases = AppState.get('purchasedItems');
             const mergedPurchases = [...new Set([...localPurchases, ...data.purchases])];
-            localStorage.setItem('quizhub-purchases', JSON.stringify(mergedPurchases));
-            if (typeof purchasedItems !== 'undefined') purchasedItems = mergedPurchases;
+            AppState.set('purchasedItems', mergedPurchases);
         }
 
-        // Тема
-        if (data.customTheme && !localStorage.getItem('quizhub-custom-theme')) {
-            localStorage.setItem('quizhub-custom-theme', data.customTheme);
-            if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = data.customTheme;
+        // Кастомная тема
+        if (data.customTheme && !AppState.get('activeCustomTheme')) {
+            AppState.set('activeCustomTheme', data.customTheme);
             if (typeof initCustomTheme === 'function') initCustomTheme();
         }
 
-        // Статистика
-        if (data.stats) {
-            const localStats = JSON.parse(localStorage.getItem('quizhub-stats') || '{}');
-            const merged = { ...data.stats, ...localStats, bestScore: Math.max(data.stats.bestScore||0, localStats.bestScore||0), totalXP: Math.max(data.stats.totalXP||0, localStats.totalXP||0), totalQuizzes: Math.max(data.stats.totalQuizzes||0, localStats.totalQuizzes||0), dayStreak: Math.max(data.stats.dayStreak||0, localStats.dayStreak||0) };
-            localStorage.setItem('quizhub-stats', JSON.stringify(merged));
-            if (typeof quizStats !== 'undefined') Object.assign(quizStats, merged);
-        }
-
-        // === ЗАДАНИЯ ===
-        if (data.questState && data.questState.dailyQuestDate) {
+        // Задания
+        if (data.questState?.dailyQuestDate) {
             const localQuest = JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}');
             if (!localQuest.dailyQuestDate || data.questState.dailyQuestDate >= localQuest.dailyQuestDate) {
                 localStorage.setItem('quizhub-quest-state', JSON.stringify(data.questState));
                 if (typeof loadQuestState === 'function') loadQuestState();
-                console.log('📋 Задания синхронизированы из облака');
             }
         }
 
         // Настройки
-        if (data.settings?.theme && !localStorage.getItem('quizhub-theme')) {
-            localStorage.setItem('quizhub-theme', data.settings.theme);
+        if (data.settings?.theme && !AppState.get('settings.theme')) {
+            AppState.set('settings.theme', data.settings.theme);
             if (typeof initTheme === 'function') initTheme();
         }
-        if (data.settings?.locale && !localStorage.getItem('quizhub-locale')) {
-            localStorage.setItem('quizhub-locale', data.settings.locale);
+        if (data.settings?.locale && !AppState.get('settings.locale')) {
+            AppState.set('settings.locale', data.settings.locale);
             if (typeof setLocale === 'function') setLocale(data.settings.locale);
         }
 
         // Друзья
         if (data.friends) {
-            const localFriends = JSON.parse(localStorage.getItem('quizhub-friends') || '[]');
+            const localFriends = AppState.get('friendsList');
             const mergedFriends = [...new Set([...localFriends, ...data.friends])];
-            localStorage.setItem('quizhub-friends', JSON.stringify(mergedFriends));
-            if (typeof friendsList !== 'undefined') friendsList = mergedFriends;
+            AppState.set('friendsList', mergedFriends);
         }
 
         console.log('✅ Синхронизация завершена');

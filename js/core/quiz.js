@@ -173,37 +173,59 @@ function goToNextQuestion() { currentQuestionIndex++; if (currentQuestionIndex <
 
 async function finishQuiz() {
     clearInterval(timerInterval);
+
     const totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
     const actualCorrect = correctAnswersCount;
+
+    console.log(`📊 Квиз завершён: ${score} очков, ${actualCorrect}/${QUIZ_SETTINGS.totalQuestions} правильно, ${totalTime}с`);
+
     const category = document.getElementById('quiz-category');
     const categoryText = category?.options[category.selectedIndex]?.text || 'Любая';
 
     const result = {
         playerName: document.getElementById('player-name')?.value?.trim() || 'Гость',
-        score, totalTime, correctAnswers: actualCorrect,
+        score: score,
+        totalTime: totalTime,
+        correctAnswers: actualCorrect,
         difficulty: AppState.get('settings.difficulty'),
         category: categoryText,
         date: new Date().toISOString(),
         userId: typeof currentUser !== 'undefined' ? currentUser?.uid : null
     };
 
-    if (typeof isOnline !== 'undefined' && isOnline) { if (typeof saveResult === 'function') await saveResult(result); }
-    else if (typeof saveResultOffline === 'function') await saveResultOffline(result);
+    // Сохраняем результат в Firestore/офлайн
+    if (typeof isOnline !== 'undefined' && isOnline) {
+        if (typeof saveResult === 'function') await saveResult(result);
+    } else if (typeof saveResultOffline === 'function') {
+        await saveResultOffline(result);
+    }
 
+    // Очищаем прогресс
     localStorage.removeItem('quizhub-quiz-progress');
+
+    // Показываем экран результата
     showScreen('result');
     renderResultScreen(result);
 
+    // Событие для других модулей
     EventBus.emit(EVENTS.QUIZ_FINISHED, result);
 
+    // Обновляем статистику и достижения (только для авторизованных)
     if (typeof currentUser !== 'undefined' && currentUser) {
         if (typeof updateStats === 'function') updateStats(result);
         if (typeof checkAchievements === 'function') checkAchievements(result);
         if (typeof awardQuizCoins === 'function') awardQuizCoins(result);
-        if (typeof saveUserDataToFirestore === 'function') saveUserDataToFirestore();
+
+        // Сохраняем в Firestore
+        if (typeof saveUserDataToFirestore === 'function') {
+            saveUserDataToFirestore();
+        }
     }
 
+    // Сохраняем в историю для графиков
     if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
+
+    // Обновляем прогресс заданий
     if (typeof updateQuestProgressByType === 'function') {
         updateQuestProgressByType('quizzes_today', 1);
         updateQuestProgressByType('quizzes_week', 1);
@@ -211,11 +233,30 @@ async function finishQuiz() {
         if (result.score >= 50) updateQuestProgressByType('score_50');
         if (result.score >= 100) updateQuestProgressByType('score_100');
         if (actualCorrect === 10) updateQuestProgressByType('perfect');
+        updateQuestProgressByType('perfect_week', actualCorrect === 10 ? 1 : 0);
+        updateQuestProgressByType('perfect_month', actualCorrect === 10 ? 1 : 0);
         if (result.difficulty === 'hard') updateQuestProgressByType('hard_quiz');
+        if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateQuestProgressByType('english');
         if (maxStreak >= 5) updateQuestProgressByType('streak_5');
         if (result.totalTime < 60) updateQuestProgressByType('fast_quiz');
+        if (typeof quizStats !== 'undefined') {
+            updateQuestProgressByType('xp_week', quizStats.totalXP || 0);
+            updateQuestProgressByType('xp_month', quizStats.totalXP || 0);
+        }
+        if (typeof userCoins !== 'undefined') updateQuestProgressByType('coins_month', userCoins);
+
+        const catValue = category?.value || '';
+        if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
+        if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
+        if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgressByType('category_cinema');
+        updateQuestProgressByType('categories_week', 1);
+        updateQuestProgressByType('difficulties_week', 1);
     }
-    if (result.score >= 70 && typeof vibrateAchievement === 'function') vibrateAchievement();
+
+    // Вибрация при хорошем результате
+    if (result.score >= 70 && typeof vibrateAchievement === 'function') {
+        vibrateAchievement();
+    }
 }
 
 function renderResultScreen(result) {
