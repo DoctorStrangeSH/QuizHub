@@ -91,7 +91,6 @@ function generateQuests(type) {
 
     if (type === 'daily') {
         const today = mskTime.toISOString().split('T')[0];
-        // НЕ сбрасываем если задания уже есть на сегодня
         if (dailyQuestDate === today && dailyQuests.length > 0) {
             console.log('📋 daily: уже есть, не сбрасываем');
             return dailyQuests;
@@ -101,7 +100,6 @@ function generateQuests(type) {
         dailyQuestDate = today;
         dailyProgress = {};
         dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
-        saveQuestState('daily');
         console.log('📋 daily: сброшены (новый день)');
         return dailyQuests;
     }
@@ -117,7 +115,6 @@ function generateQuests(type) {
         weeklyQuestWeek = weekNumber;
         weeklyProgress = {};
         weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; });
-        saveQuestState('weekly');
         console.log('📅 weekly: сброшены (новая неделя)');
         return weeklyQuests;
     }
@@ -133,7 +130,6 @@ function generateQuests(type) {
         monthlyQuestMonth = monthKey;
         monthlyProgress = {};
         monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; });
-        saveQuestState('monthly');
         console.log('🗓️ monthly: сброшены (новый месяц)');
         return monthlyQuests;
     }
@@ -159,8 +155,10 @@ function saveQuestState(type) {
 }
 
 function loadQuestState() {
-    // Защита от повторного вызова
-    if (loadQuestState._loaded) return;
+    if (loadQuestState._loaded) {
+        console.log('📋 loadQuestState: уже загружено, пропускаем');
+        return;
+    }
     loadQuestState._loaded = true;
 
     try {
@@ -225,6 +223,7 @@ function updateQuestProgressByType(eventType, value = 1) {
             }
 
             if (quest.type === eventType) {
+                // Для XP и монет — устанавливаем абсолютное значение
                 if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
                     const oldValue = progress[quest.id] || 0;
                     progress[quest.id] = value;
@@ -235,6 +234,7 @@ function updateQuestProgressByType(eventType, value = 1) {
                         completeQuest(quest, type);
                     }
                 } else {
+                    // Для остальных — прибавляем
                     progress[quest.id] = (progress[quest.id] || 0) + value;
                     console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target}`);
 
@@ -254,25 +254,22 @@ function updateQuestProgressByType(eventType, value = 1) {
 function completeQuest(quest, type) {
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
-    if (progress[quest.id + '_done']) return;
+    // Тройная проверка — чтобы точно не выполнилось дважды
+    if (progress[quest.id + '_done']) {
+        console.log(`⚠️ ${quest.name}: уже выполнено (повторный вызов заблокирован)`);
+        return;
+    }
 
     progress[quest.id + '_done'] = true;
     console.log(`✅ Задание выполнено: ${quest.name}`);
 
+    // Награда — только монеты
     if (typeof addCoins === 'function') addCoins(quest.reward);
 
     showQuestComplete(quest);
     saveQuestState(type);
 
     EventBus.emit(EVENTS.QUEST_COMPLETED, quest);
-    
-    // Принудительно обновляем отображение если экран достижений активен
-    if (typeof renderAchievementsScreen === 'function') {
-        const achScreen = document.getElementById('screen-achievements');
-        if (achScreen?.classList.contains('active')) {
-            setTimeout(() => renderAchievementsScreen(), 500);
-        }
-    }
 }
 
 function showQuestComplete(quest) {
