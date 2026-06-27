@@ -63,6 +63,8 @@ function getAuth() {
     return null;
 }
 
+let authFirstCheck = true;
+
 function initAuthListener() {
     const authInstance = getAuth();
     if (!authInstance) {
@@ -71,6 +73,13 @@ function initAuthListener() {
     }
 
     authInstance.onAuthStateChanged(async user => {
+        // Пропускаем первый вызов, если он null, а в кэше есть пользователь
+        if (authFirstCheck && !user && localStorage.getItem('quizhub-user-cache')) {
+            authFirstCheck = false;
+            return; // НЕ обновляем UI
+        }
+        authFirstCheck = false;
+
         // Определяем новое состояние
         const newState = user ? 'logged-in' : 'logged-out';
         

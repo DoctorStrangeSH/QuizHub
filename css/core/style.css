@@ -58,32 +58,6 @@ body {
     position: relative;
 }
 
-.particles {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.particle {
-    position: absolute;
-    background: var(--accent);
-    border-radius: 50%;
-    opacity: 0;
-    animation: floatUp 6s ease-in infinite;
-    box-shadow: 0 0 6px var(--accent-glow);
-}
-
-@keyframes floatUp {
-    0% { opacity: 0; transform: translateY(0) scale(0); }
-    10% { opacity: 0.9; }
-    90% { opacity: 0; }
-    100% { opacity: 0; transform: translateY(-100vh) scale(1.5); }
-}
-
 
 /* ----- 3. ХЕДЕР ----- */
 .app-header {
@@ -688,8 +662,6 @@ canvas { max-width: 100%; }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
     animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
 }
-
-.reduce-motion .particle { display: none; }
 
 /* Toast не перекрывает чат */
 .toast-container {

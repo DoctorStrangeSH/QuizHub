@@ -1,0 +1,75 @@
+/* ============================================
+   QuizHub — Красивые частицы фона v2.0
+   ============================================ */
+
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particleFloat 8s ease-in infinite;
+}
+
+/* Разноцветные частицы */
+.particle:nth-child(odd) {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow), 0 0 20px rgba(255, 107, 157, 0.2);
+}
+
+.particle:nth-child(even) {
+    background: var(--secondary);
+    box-shadow: 0 0 6px rgba(123, 47, 190, 0.4), 0 0 15px rgba(123, 47, 190, 0.2);
+}
+
+.particle:nth-child(3n) {
+    background: var(--info);
+    box-shadow: 0 0 6px rgba(64, 196, 255, 0.4), 0 0 15px rgba(64, 196, 255, 0.2);
+}
+
+.particle:nth-child(5n) {
+    background: var(--warning);
+    box-shadow: 0 0 6px rgba(255, 215, 64, 0.4), 0 0 15px rgba(255, 215, 64, 0.2);
+}
+
+/* Маленькие частицы (пыль) */
+.particle:nth-child(7n) {
+    background: #ffffff;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+    width: 2px !important;
+    height: 2px !important;
+}
+
+@keyframes particleFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(100vh) scale(0) rotate(0deg);
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10vh) scale(1.5) rotate(360deg);
+    }
+}
+
+/* Светлая тема — частицы темнее */
+[data-theme="light"] .particle:nth-child(odd) {
+    opacity: 0.6;
+}
+[data-theme="light"] .particle:nth-child(even) {
+    opacity: 0.5;
+}
