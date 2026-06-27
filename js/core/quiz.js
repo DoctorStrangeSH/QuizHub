@@ -85,7 +85,7 @@ function renderQuizScreen() {
     );
 
     document.querySelectorAll('.btn-answer').forEach(btn => {
-        btn.addEventListener('click', function() { handleAnswer(parseInt(this.dataset.index)); });
+        btn.addEventListener('click', function () { handleAnswer(parseInt(this.dataset.index)); });
     });
     document.getElementById('skip-question')?.addEventListener('click', skipQuestion);
 
@@ -261,6 +261,11 @@ async function finishQuiz() {
     if (result.score >= 70 && typeof vibrateAchievement === 'function') {
         vibrateAchievement();
     }
+
+    console.log('📊 Вызов updateQuestProgressByType...');
+    console.log('  quizzes_today:', 1);
+    console.log('  score_50:', result.score >= 50 ? 1 : 0);
+    console.log('  xp_month:', AppState.get('stats').totalXP);
 }
 
 function renderResultScreen(result) {
@@ -319,7 +324,7 @@ function checkSavedQuiz() {
 }
 
 async function startTimedMode() { const n = document.getElementById('player-name')?.value?.trim(); if (!n) { showToast('Введи имя!', 'warning'); return; } timedMode = true; correctAnswersCount = 0; QUIZ_SETTINGS.totalQuestions = 999; QUIZ_SETTINGS.timePerQuestion = 999; globalTimeLeft = 60; quizQuestions = await fetchQuestions('any', 'any', 100); if (quizQuestions.length === 0) { showScreen('home'); return; } currentQuestionIndex = 0; score = 0; maxStreak = 0; showScreen('quiz'); renderTimedModeScreen(); startGlobalTimer(); quizStartTime = Date.now(); }
-function renderTimedModeScreen() { const s = document.getElementById('screen-quiz'); if (!s || quizQuestions.length === 0) return; const q = quizQuestions[currentQuestionIndex]; s.innerHTML = I18N_TEMPLATES.timedScreen(q, currentQuestionIndex, score, globalTimeLeft); document.querySelectorAll('.btn-answer').forEach(b => b.addEventListener('click', function() { handleTimedAnswer(parseInt(this.dataset.index)); })); }
+function renderTimedModeScreen() { const s = document.getElementById('screen-quiz'); if (!s || quizQuestions.length === 0) return; const q = quizQuestions[currentQuestionIndex]; s.innerHTML = I18N_TEMPLATES.timedScreen(q, currentQuestionIndex, score, globalTimeLeft); document.querySelectorAll('.btn-answer').forEach(b => b.addEventListener('click', function () { handleTimedAnswer(parseInt(this.dataset.index)); })); }
 function startGlobalTimer() { updateGlobalTimerDisplay(); clearInterval(timerInterval); timerInterval = setInterval(() => { globalTimeLeft--; updateGlobalTimerDisplay(); if (globalTimeLeft <= 0) { clearInterval(timerInterval); finishTimedMode(); } }, 1000); }
 function updateGlobalTimerDisplay() { const d = document.getElementById('global-timer'), c = document.querySelector('.timer-circle'); if (d) d.textContent = globalTimeLeft; if (c) c.classList.toggle('timer-danger', globalTimeLeft <= 10); }
 function handleTimedAnswer(i) { const q = quizQuestions[currentQuestionIndex]; const ok = i === q.correctIndex; document.querySelectorAll('.btn-answer').forEach((b, j) => { b.disabled = true; if (j === q.correctIndex) { b.classList.add('correct'); if (typeof showCorrectGlow === 'function') showCorrectGlow(b); } if (j === i && !ok) { b.classList.add('wrong'); if (typeof playWrongSound === 'function') playWrongSound(); } }); if (ok) { correctAnswersCount++; if (typeof playCorrectSound === 'function') playCorrectSound(); score += 10; } setTimeout(() => { currentQuestionIndex++; renderTimedModeScreen(); }, ok ? 500 : 1000); }

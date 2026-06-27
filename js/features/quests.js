@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Система заданий v3.3 (рефакторинг)
+// QuizHub — Система заданий v3.4
 // ============================================
 
 const DAILY_QUESTS_POOL = [
@@ -97,6 +97,7 @@ function generateQuests(type) {
         dailyProgress = {};
         dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
         saveQuestState('daily');
+        console.log('📋 Новые ежедневные задания:', dailyQuests.map(q => q.name).join(', '));
         return dailyQuests;
     }
 
@@ -108,6 +109,7 @@ function generateQuests(type) {
         weeklyProgress = {};
         weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; });
         saveQuestState('weekly');
+        console.log('📅 Новые недельные задания:', weeklyQuests.map(q => q.name).join(', '));
         return weeklyQuests;
     }
 
@@ -119,6 +121,7 @@ function generateQuests(type) {
         monthlyProgress = {};
         monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; });
         saveQuestState('monthly');
+        console.log('🗓️ Новые месячные задания:', monthlyQuests.map(q => q.name).join(', '));
         return monthlyQuests;
     }
 
@@ -157,25 +160,37 @@ function loadQuestState() {
         const mskTime = new Date(now.getTime() + mskOffset);
 
         const today = mskTime.toISOString().split('T')[0];
-        if (dailyQuestDate !== today) generateQuests('daily');
-        else if (saved.dailyQuests) dailyQuests = saved.dailyQuests;
+        if (dailyQuestDate !== today) {
+            generateQuests('daily');
+        } else if (saved.dailyQuests) {
+            dailyQuests = saved.dailyQuests;
+        }
 
         const weekNumber = getWeekNumber(mskTime);
-        if (weeklyQuestWeek !== weekNumber) generateQuests('weekly');
-        else if (saved.weeklyQuests) weeklyQuests = saved.weeklyQuests;
+        if (weeklyQuestWeek !== weekNumber) {
+            generateQuests('weekly');
+        } else if (saved.weeklyQuests) {
+            weeklyQuests = saved.weeklyQuests;
+        }
 
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
-        if (monthlyQuestMonth !== monthKey) generateQuests('monthly');
-        else if (saved.monthlyQuests) monthlyQuests = saved.monthlyQuests;
+        if (monthlyQuestMonth !== monthKey) {
+            generateQuests('monthly');
+        } else if (saved.monthlyQuests) {
+            monthlyQuests = saved.monthlyQuests;
+        }
     } catch (e) {
         console.error('Ошибка загрузки заданий:', e);
     }
 }
 
 function updateQuestProgressByType(eventType, value = 1) {
+    // Сначала генерируем задания если нужно
     generateQuests('daily');
     generateQuests('weekly');
     generateQuests('monthly');
+
+    console.log(`📊 Обновление заданий: тип=${eventType}, значение=${value}`);
 
     [dailyQuests, weeklyQuests, monthlyQuests].forEach((quests, i) => {
         const type = ['daily', 'weekly', 'monthly'][i];
@@ -190,7 +205,9 @@ function updateQuestProgressByType(eventType, value = 1) {
                     // Для остальных — прибавляем
                     progress[quest.id] = (progress[quest.id] || 0) + value;
                 }
-                
+
+                console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target}`);
+
                 if (progress[quest.id] >= quest.target) {
                     completeQuest(quest, type);
                 }
@@ -203,12 +220,12 @@ function updateQuestProgressByType(eventType, value = 1) {
     saveQuestState('monthly');
 }
 
-
 function completeQuest(quest, type) {
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
     if (progress[quest.id + '_done']) return;
 
     progress[quest.id + '_done'] = true;
+    console.log(`✅ Задание выполнено: ${quest.name}`);
 
     if (typeof addCoins === 'function') addCoins(quest.reward);
     if (typeof addXP === 'function') addXP(quest.reward * 2);
@@ -264,6 +281,15 @@ function renderQuestsHTML(type) {
             </div>
         </div>
     `;
+}
+
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
