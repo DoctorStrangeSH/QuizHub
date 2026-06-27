@@ -91,10 +91,12 @@ function generateQuests(type) {
 
     if (type === 'daily') {
         const today = mskTime.toISOString().split('T')[0];
+        // НЕ сбрасываем если задания уже есть на сегодня
         if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
 
         dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
         dailyQuestDate = today;
+        // Сбрасываем прогресс ТОЛЬКО если это новый день
         dailyProgress = {};
         dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
         saveQuestState('daily');
@@ -151,6 +153,8 @@ function loadQuestState() {
         dailyQuestDate = saved.dailyQuestDate || '';
         weeklyQuestWeek = saved.weeklyQuestWeek || '';
         monthlyQuestMonth = saved.monthlyQuestMonth || '';
+        
+        // ВАЖНО: загружаем сохранённый прогресс
         dailyProgress = saved.dailyProgress || {};
         weeklyProgress = saved.weeklyProgress || {};
         monthlyProgress = saved.monthlyProgress || {};
@@ -159,8 +163,10 @@ function loadQuestState() {
         const mskOffset = 3 * 60 * 60 * 1000;
         const mskTime = new Date(now.getTime() + mskOffset);
 
+        // Проверяем daily
         const today = mskTime.toISOString().split('T')[0];
         if (dailyQuestDate !== today) {
+            // Новый день — генерируем новые задания
             generateQuests('daily');
         } else if (saved.dailyQuests && saved.dailyQuests.length > 0) {
             dailyQuests = saved.dailyQuests;
@@ -168,6 +174,7 @@ function loadQuestState() {
             generateQuests('daily');
         }
 
+        // Проверяем weekly
         const weekNumber = getWeekNumber(mskTime);
         if (weeklyQuestWeek !== weekNumber) {
             generateQuests('weekly');
@@ -177,6 +184,7 @@ function loadQuestState() {
             generateQuests('weekly');
         }
 
+        // Проверяем monthly
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
         if (monthlyQuestMonth !== monthKey) {
             generateQuests('monthly');
@@ -185,6 +193,15 @@ function loadQuestState() {
         } else {
             generateQuests('monthly');
         }
+
+        console.log('📋 Задания загружены:', {
+            daily: dailyQuests.length,
+            weekly: weeklyQuests.length,
+            monthly: monthlyQuests.length,
+            dailyProgressKeys: Object.keys(dailyProgress).filter(k => k.endsWith('_done')),
+            weeklyProgressKeys: Object.keys(weeklyProgress).filter(k => k.endsWith('_done')),
+            monthlyProgressKeys: Object.keys(monthlyProgress).filter(k => k.endsWith('_done'))
+        });
     } catch (e) {
         console.error('Ошибка загрузки заданий:', e);
     }
@@ -200,22 +217,23 @@ function updateQuestProgressByType(eventType, value = 1) {
         quests.forEach(quest => {
             // ПРОПУСКАЕМ уже выполненные задания
             if (progress[quest.id + '_done']) {
+                console.log(`  ⏭ ${quest.name}: уже выполнено, пропускаем`);
                 return;
             }
 
             if (quest.type === eventType) {
-                // Для XP и монет — устанавливаем абсолютное значение
                 if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
                     const oldValue = progress[quest.id] || 0;
                     progress[quest.id] = value;
 
-                    // Выполняем ТОЛЬКО если oldValue был МЕНЬШЕ target
+                    console.log(`  📝 ${quest.name}: ${oldValue} → ${value} (${value}/${quest.target})`);
+
                     if (value >= quest.target && oldValue < quest.target) {
                         completeQuest(quest, type);
                     }
                 } else {
-                    // Для остальных — прибавляем
                     progress[quest.id] = (progress[quest.id] || 0) + value;
+                    console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target}`);
 
                     if (progress[quest.id] >= quest.target) {
                         completeQuest(quest, type);
@@ -277,7 +295,6 @@ function showQuestComplete(quest) {
 }
 
 function renderQuestsHTML(type) {
-    // НЕ вызываем generateQuests — используем существующие задания
     const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
