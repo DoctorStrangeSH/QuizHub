@@ -1,12 +1,10 @@
 // ============================================
-// QuizHub — Аутентификация Google v2.4
-// Кнопка НИКОГДА не исчезает при обновлении
+// QuizHub — Аутентификация Google v2.5
 // ============================================
 
 let currentUser = null;
-let authStateResolved = false;
 
-// ========== МГНОВЕННЫЙ ПОКАЗ СОХРАНЁННОГО СОСТОЯНИЯ ==========
+// ========== МГНОВЕННЫЙ ПОКАЗ ИЗ КЭША ==========
 
 (function() {
     const authArea = document.getElementById('auth-area');
@@ -73,7 +71,7 @@ function initAuthListener() {
         if (user) {
             console.log('👤 Пользователь:', user.displayName);
 
-            // Сохраняем в кэш
+            // Сохраняем в кэш для мгновенного показа
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
                 photoURL: user.photoURL,
@@ -92,16 +90,11 @@ function initAuthListener() {
             if (nameInput && !nameInput.dataset.manual) {
                 nameInput.value = user.displayName || '';
             }
-
-            // ПРИНУДИТЕЛЬНО обновляем UI после входа
-            updateAuthUI(user);
         } else {
-            // Пользователь вышел
             localStorage.removeItem('quizhub-user-cache');
-            
-            // ПРИНУДИТЕЛЬНО обновляем UI после выхода
-            updateAuthUI(null);
         }
+
+        updateAuthUI(user);
     });
 }
 
@@ -130,12 +123,10 @@ function signInWithGoogle() {
         });
 }
 
-// ========== ВЫХОД ==========
+// ========== ВЫХОД (НЕ СОХРАНЯЕМ ДАННЫЕ, НЕ ТРОГАЕМ FIRESTORE) ==========
 
 async function signOut() {
-    // === ШАГ 1: Очищаем ВСЁ ДО выхода из Firebase ===
-    
-    // Полный список всех ключей, которые используются в приложении
+    // Очищаем ТОЛЬКО локальные данные
     const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -144,7 +135,6 @@ async function signOut() {
         }
     }
     
-    // Удаляем все ключи quizhub-*
     allKeys.forEach(key => {
         try {
             localStorage.removeItem(key);
@@ -152,7 +142,7 @@ async function signOut() {
             console.warn('Не удалось удалить:', key);
         }
     });
-    
+
     // Сбрасываем глобальные переменные
     if (typeof userCoins !== 'undefined') userCoins = 0;
     if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
@@ -164,59 +154,21 @@ async function signOut() {
     if (typeof friendsList !== 'undefined') friendsList = [];
     if (typeof userTeam !== 'undefined') userTeam = null;
     if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
-    
+
     // Сбрасываем кастомную тему
     document.documentElement.removeAttribute('data-custom-theme');
-    
-    // Обновляем отображение монет
-    if (typeof updateCoinsDisplay === 'function') {
-        updateCoinsDisplay();
+
+    // Обновляем отображение
+    if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+
+    // Выходим из Firebase (НЕ сохраняем данные)
+    const authInstance = getAuth();
+    if (authInstance) {
+        await authInstance.signOut();
     }
-    
-    // Обновляем магазин если открыт
-    const shopScreen = document.getElementById('screen-shop');
-    if (shopScreen?.classList.contains('active') && typeof renderShop === 'function') {
-        renderShop();
-    }
-    
-    // Обновляем достижения если открыты
-    const achScreen = document.getElementById('screen-achievements');
-    if (achScreen?.classList.contains('active') && typeof renderAchievementsScreen === 'function') {
-        renderAchievementsScreen();
-    }
-    
-    // === ШАГ 2: Выходим из Firebase ===
-    try {
-        if (typeof saveUserDataToFirestore === 'function') {
-            // Сохраняем ПУСТЫЕ данные
-            const authInstance = getAuth();
-            if (authInstance && authInstance.currentUser) {
-                const userRef = db.collection('users').doc(authInstance.currentUser.uid);
-                await userRef.set({
-                    coins: 0,
-                    purchases: [],
-                    achievements: [],
-                    totalXP: 0,
-                    bestScore: 0,
-                    totalQuizzes: 0,
-                    customTheme: null,
-                    stats: {},
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
-            }
-        }
-        
-        const authInstance = getAuth();
-        if (authInstance) {
-            await authInstance.signOut();
-        }
-    } catch (error) {
-        console.error('Ошибка выхода из Firebase:', error);
-    }
-    
-    // === ШАГ 3: Обновляем UI ===
+
+    // Обновляем UI
     currentUser = null;
-    
     const authArea = document.getElementById('auth-area');
     if (authArea) {
         authArea.innerHTML = `
@@ -225,15 +177,12 @@ async function signOut() {
             </button>
         `;
         authArea.style.visibility = 'visible';
-        authArea.removeAttribute('data-preloaded');
     }
-    
+
     // Возвращаем на главную
-    if (typeof showScreen === 'function') {
-        showScreen('home');
-    }
-    
-    console.log('👋 Полный выход выполнен');
+    if (typeof showScreen === 'function') showScreen('home');
+
+    console.log('👋 Выход выполнен');
 }
 
 // ========== ОБНОВЛЕНИЕ UI ==========
@@ -262,7 +211,6 @@ function updateAuthUI(user) {
             </div>
         `;
 
-        // Обновляем только если изменилось
         if (authArea.innerHTML.trim() !== newHTML.trim()) {
             authArea.innerHTML = newHTML;
         }
@@ -272,46 +220,16 @@ function updateAuthUI(user) {
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
-        
+
         if (authArea.innerHTML.trim() !== newHTML.trim()) {
             authArea.innerHTML = newHTML;
         }
     }
 }
 
-
 // ========== СТИЛИ ==========
 
 const authStyles = `
-    .user-avatar-wrapper {
-        position: relative;
-        flex-shrink: 0;
-    }
-
-    .user-online-dot {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--success);
-        border: 2px solid var(--bg-primary);
-        animation: livePulse 2s infinite;
-    }
-
-    @keyframes livePulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6); }
-        50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
-    }
-
-    .user-name {
-        max-width: 100px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
     #auth-area {
         transition: opacity 0.15s ease;
     }
