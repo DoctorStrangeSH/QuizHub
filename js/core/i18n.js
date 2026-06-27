@@ -27,7 +27,6 @@ registerTranslations(chat_ru, chat_en);
 registerTranslations(shop_ru, shop_en);
 registerTranslations(friends_ru, friends_en);
 registerTranslations(stats_ru, stats_en);
-registerTranslations(quests_ru, quests_en);
 registerTranslations(events_ru, events_en);
 
 function t(key) {

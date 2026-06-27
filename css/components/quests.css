@@ -1,0 +1,29 @@
+/* ============================================
+   QuizHub — Стили квестов v2.0
+   ============================================ */
+
+.quests-v2-section {
+    margin-bottom: 16px;
+}
+
+.quests-v2-item {
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 14px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.quests-v2-item.done {
+    background: rgba(0, 230, 118, 0.05);
+    border-color: rgba(0, 230, 118, 0.15);
+    opacity: 0.8;
+}
+
+.quests-v2-check {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 1.2rem;
+}

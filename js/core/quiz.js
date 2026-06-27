@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Логика квиза v4.1 (рефакторинг)
+// QuizHub — Логика квиза v4.2
 // ============================================
 
 let quizQuestions = [];
@@ -85,7 +85,7 @@ function renderQuizScreen() {
     );
 
     document.querySelectorAll('.btn-answer').forEach(btn => {
-        btn.addEventListener('click', function () { handleAnswer(parseInt(this.dataset.index)); });
+        btn.addEventListener('click', function() { handleAnswer(parseInt(this.dataset.index)); });
     });
     document.getElementById('skip-question')?.addEventListener('click', skipQuestion);
 
@@ -135,7 +135,6 @@ function handleTimeout() {
     const q = quizQuestions[currentQuestionIndex];
     document.querySelectorAll('.btn-answer').forEach((b, i) => { b.disabled = true; if (i === q.correctIndex) b.classList.add('correct'); });
     currentStreak = 0;
-    EventBus.emit(EVENTS.QUIZ_TIMEOUT);
     setTimeout(goToNextQuestion, 2000);
 }
 
@@ -163,7 +162,6 @@ function handleAnswer(selectedIndex) {
         score += Math.floor((10 + tb) * m);
     } else { currentStreak = 0; }
 
-    EventBus.emit(EVENTS.QUIZ_ANSWER, { isCorrect, answerTime, questionIndex: currentQuestionIndex });
     totalTimeSpent += answerTime;
     setTimeout(goToNextQuestion, isCorrect ? 800 : 2000);
 }
@@ -174,19 +172,12 @@ function goToNextQuestion() { currentQuestionIndex++; if (currentQuestionIndex <
 async function finishQuiz() {
     clearInterval(timerInterval);
 
-    // Защита от неверного времени
-    if (!quizStartTime || quizStartTime === 0) {
-        quizStartTime = Date.now() - 30000;
-    }
-
+    if (!quizStartTime || quizStartTime === 0) quizStartTime = Date.now() - 30000;
     let totalTime = Math.floor((Date.now() - quizStartTime) / 1000);
-
-    // Защита от аномальных значений
     if (totalTime < 0) totalTime = 0;
     if (totalTime > 3600) totalTime = 60;
 
     const actualCorrect = correctAnswersCount;
-
     console.log(`📊 Квиз завершён: ${score} очков, ${actualCorrect}/${QUIZ_SETTINGS.totalQuestions} правильно, ${totalTime}с`);
 
     const category = document.getElementById('quiz-category');
@@ -194,106 +185,51 @@ async function finishQuiz() {
 
     const result = {
         playerName: document.getElementById('player-name')?.value?.trim() || 'Гость',
-        score: score,
-        totalTime: totalTime,
-        correctAnswers: actualCorrect,
-        difficulty: AppState.get('settings.difficulty'),
-        category: categoryText,
+        score: score, totalTime: totalTime, correctAnswers: actualCorrect,
+        difficulty: AppState.get('settings.difficulty'), category: categoryText,
         date: new Date().toISOString(),
         userId: typeof currentUser !== 'undefined' ? currentUser?.uid : null
     };
 
-    // Сохраняем результат в Firestore/офлайн
-    if (typeof isOnline !== 'undefined' && isOnline) {
-        if (typeof saveResult === 'function') await saveResult(result);
-    } else if (typeof saveResultOffline === 'function') {
-        await saveResultOffline(result);
-    }
+    if (typeof isOnline !== 'undefined' && isOnline) { if (typeof saveResult === 'function') await saveResult(result); }
+    else if (typeof saveResultOffline === 'function') await saveResultOffline(result);
 
-    // Очищаем прогресс
     localStorage.removeItem('quizhub-quiz-progress');
-
-    // Показываем экран результата
     showScreen('result');
     renderResultScreen(result);
-
-    // Событие для других модулей
     EventBus.emit(EVENTS.QUIZ_FINISHED, result);
 
-    // Обновляем статистику и достижения (только для авторизованных)
     if (typeof currentUser !== 'undefined' && currentUser) {
         if (typeof updateStats === 'function') updateStats(result);
         if (typeof checkAchievements === 'function') checkAchievements(result);
         if (typeof awardQuizCoins === 'function') awardQuizCoins(result);
-
-        // Сохраняем в Firestore
-        if (typeof saveUserDataToFirestore === 'function') {
-            saveUserDataToFirestore();
-        }
+        if (typeof saveUserDataToFirestore === 'function') saveUserDataToFirestore();
     }
 
-    // Сохраняем в историю для графиков
     if (typeof saveScoreToHistory === 'function') saveScoreToHistory(result.score);
 
-    // Обновляем прогресс заданий
-    if (typeof updateQuestProgressByType === 'function') {
-
-        // Количество квизов
-        updateQuestProgressByType('quizzes_today', 1);
-        updateQuestProgressByType('quizzes_week', 1);
-        updateQuestProgressByType('quizzes_month', 1);
-
-        // Очки
-        if (result.score >= 50) updateQuestProgressByType('score_50');
-        if (result.score >= 100) updateQuestProgressByType('score_100');
-
-        // Идеальный квиз
-        if (actualCorrect === 10) {
-            updateQuestProgressByType('perfect');
-        }
-        updateQuestProgressByType('perfect_week', actualCorrect === 10 ? 1 : 0);
-        updateQuestProgressByType('perfect_month', actualCorrect === 10 ? 1 : 0);
-
-        // Сложность
-        if (result.difficulty === 'hard') updateQuestProgressByType('hard_quiz');
-
-        // Язык
-        if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') {
-            updateQuestProgressByType('english');
-        }
-
-        // Серия
-        if (maxStreak >= 5) updateQuestProgressByType('streak_5');
-
-        // Скорость
-        if (result.totalTime < 60) updateQuestProgressByType('fast_quiz');
-
-        // XP (абсолютное значение)
-        const currentXP = typeof AppState !== 'undefined' ? (AppState.get('stats').totalXP || 0) : 0;
-        updateQuestProgressByType('xp_week', currentXP);
-        updateQuestProgressByType('xp_month', currentXP);
-
-        // Монеты (абсолютное значение)
-        const currentCoins = typeof AppState !== 'undefined' ? AppState.get('coins') : 0;
-        updateQuestProgressByType('coins_month', currentCoins);
-
-        // Категории
+    // Новая система квестов
+    if (typeof updateQuestProgress === 'function') {
+        updateQuestProgress('quizzes', 1);
+        if (result.score >= 50) updateQuestProgress('score_50');
+        if (result.score >= 100) updateQuestProgress('score_100');
+        if (actualCorrect === 10) updateQuestProgress('perfect');
+        if (result.difficulty === 'hard') updateQuestProgress('hard_quiz');
+        if (maxStreak >= 5) updateQuestProgress('streak_5');
+        if (result.totalTime < 60) updateQuestProgress('fast_quiz');
+        updateQuestProgress('xp', AppState.get('stats').totalXP || 0);
+        updateQuestProgress('coins', AppState.get('coins'));
+        updateQuestProgress('categories', 1);
+        updateQuestProgress('difficulties', 1);
+        if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateQuestProgress('english');
         const catValue = category?.value || '';
-        if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
-        if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
-        if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgressByType('category_cinema');
-
-        // Разнообразие
-        updateQuestProgressByType('categories_week', 1);
-        updateQuestProgressByType('difficulties_week', 1);
+        if (catValue === 'cinema' || categoryText.includes('Кино')) updateQuestProgress('category_cinema');
+        if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgress('category_sport');
+        if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgress('category_science');
     }
 
-    // Вибрация при хорошем результате
-    if (result.score >= 70 && typeof vibrateAchievement === 'function') {
-        vibrateAchievement();
-    }
+    if (result.score >= 70 && typeof vibrateAchievement === 'function') vibrateAchievement();
 }
-
 
 function renderResultScreen(result) {
     const screen = document.getElementById('screen-result');
@@ -319,8 +255,7 @@ function checkSavedQuiz() {
         maxStreak = saved.maxStreak || 0;
         fastestAnswer = saved.fastestAnswer || 999;
         correctAnswersCount = saved.correctAnswersCount || 0;
-        const savedTimeLeft = saved.timeLeft || 15;
-        timeLeft = Math.max(1, savedTimeLeft - Math.floor(age));
+        timeLeft = Math.max(1, (saved.timeLeft || 15) - Math.floor(age));
         QUIZ_SETTINGS.totalQuestions = saved.totalQuestions || quizQuestions.length;
         QUIZ_SETTINGS.timePerQuestion = 15;
         showScreen('quiz'); renderQuizScreen(); startTimer();
@@ -351,7 +286,7 @@ function checkSavedQuiz() {
 }
 
 async function startTimedMode() { const n = document.getElementById('player-name')?.value?.trim(); if (!n) { showToast('Введи имя!', 'warning'); return; } timedMode = true; correctAnswersCount = 0; QUIZ_SETTINGS.totalQuestions = 999; QUIZ_SETTINGS.timePerQuestion = 999; globalTimeLeft = 60; quizQuestions = await fetchQuestions('any', 'any', 100); if (quizQuestions.length === 0) { showScreen('home'); return; } currentQuestionIndex = 0; score = 0; maxStreak = 0; showScreen('quiz'); renderTimedModeScreen(); startGlobalTimer(); quizStartTime = Date.now(); }
-function renderTimedModeScreen() { const s = document.getElementById('screen-quiz'); if (!s || quizQuestions.length === 0) return; const q = quizQuestions[currentQuestionIndex]; s.innerHTML = I18N_TEMPLATES.timedScreen(q, currentQuestionIndex, score, globalTimeLeft); document.querySelectorAll('.btn-answer').forEach(b => b.addEventListener('click', function () { handleTimedAnswer(parseInt(this.dataset.index)); })); }
+function renderTimedModeScreen() { const s = document.getElementById('screen-quiz'); if (!s || quizQuestions.length === 0) return; const q = quizQuestions[currentQuestionIndex]; s.innerHTML = I18N_TEMPLATES.timedScreen(q, currentQuestionIndex, score, globalTimeLeft); document.querySelectorAll('.btn-answer').forEach(b => b.addEventListener('click', function() { handleTimedAnswer(parseInt(this.dataset.index)); })); }
 function startGlobalTimer() { updateGlobalTimerDisplay(); clearInterval(timerInterval); timerInterval = setInterval(() => { globalTimeLeft--; updateGlobalTimerDisplay(); if (globalTimeLeft <= 0) { clearInterval(timerInterval); finishTimedMode(); } }, 1000); }
 function updateGlobalTimerDisplay() { const d = document.getElementById('global-timer'), c = document.querySelector('.timer-circle'); if (d) d.textContent = globalTimeLeft; if (c) c.classList.toggle('timer-danger', globalTimeLeft <= 10); }
 function handleTimedAnswer(i) { const q = quizQuestions[currentQuestionIndex]; const ok = i === q.correctIndex; document.querySelectorAll('.btn-answer').forEach((b, j) => { b.disabled = true; if (j === q.correctIndex) { b.classList.add('correct'); if (typeof showCorrectGlow === 'function') showCorrectGlow(b); } if (j === i && !ok) { b.classList.add('wrong'); if (typeof playWrongSound === 'function') playWrongSound(); } }); if (ok) { correctAnswersCount++; if (typeof playCorrectSound === 'function') playCorrectSound(); score += 10; } setTimeout(() => { currentQuestionIndex++; renderTimedModeScreen(); }, ok ? 500 : 1000); }

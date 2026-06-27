@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Система достижений v4.3
+// QuizHub — Система достижений v4.4
 // ============================================
 
 const ACHIEVEMENTS = [
@@ -121,37 +121,26 @@ function updateDayStreak() {
     stats.dayStreak = (stats.lastActiveDate === yesterday) ? (stats.dayStreak || 0) + 1 : 1;
     stats.lastActiveDate = today;
 
-    // Бонус за streak: 5 XP за день (было 5-100 XP)
-    if (stats.dayStreak >= 7) {
-        addXP(stats.dayStreak * 5); // Было Math.min(stats.dayStreak * 5, 100)
-    }
-    
+    if (stats.dayStreak >= 7) addXP(stats.dayStreak * 5);
     AppState.set('stats', stats);
 }
 
 function calculateQuizXP(result) {
-    let xp = 5; // База (было 10)
-    xp += Math.floor(result.score / 20); // Бонус за очки (было /10)
-    
-    const diffBonus = { easy: 0, medium: 3, hard: 8, survival: 10, timed: 5 }; // Уменьшено
+    let xp = 5;
+    xp += Math.floor(result.score / 20);
+    const diffBonus = { easy: 0, medium: 3, hard: 8, survival: 10, timed: 5 };
     xp += diffBonus[result.difficulty] || 0;
-    
-    if (result.correctAnswers === 10) xp += 10; // Было 20
-    else if (result.correctAnswers >= 7) xp += 5; // Было 10
-    
-    // Ограничение сверху
-    return Math.min(xp, 50); // Было 100
+    if (result.correctAnswers === 10) xp += 10;
+    else if (result.correctAnswers >= 7) xp += 5;
+    return Math.min(xp, 50);
 }
 
 function addXP(amount) {
     if (typeof currentUser === 'undefined' || !currentUser) return;
-    if (amount <= 0) return; // Не добавляем отрицательный или нулевой XP
-    
+    if (amount <= 0) return;
     const stats = AppState.get('stats');
     stats.totalXP = (stats.totalXP || 0) + amount;
     AppState.set('stats', stats);
-    
-    console.log(`⚡ +${amount} XP (всего: ${stats.totalXP})`);
 }
 
 function getCurrentLevel() {
@@ -178,6 +167,7 @@ function checkAchievements(result) {
 
     const checkStats = {
         fastestAnswer: stats.fastestAnswer || 999,
+        fastestQuiz: stats.fastestQuiz || 9999,
         maxStreak: stats.maxStreak || 0,
         correctAnswers: result.correctAnswers,
         languagesUsed: (stats.languagesUsed || []).length,
@@ -190,10 +180,19 @@ function checkAchievements(result) {
         dayStreak: stats.dayStreak || 0,
         perfectQuizzes: stats.perfectQuizzes || 0,
         survivalPlayed: stats.survivalPlayed || 0,
+        survivalMaxQuestions: stats.survivalMaxQuestions || 0,
+        timedGames: stats.timedGames || 0,
         duelsPlayed: stats.duelsPlayed || 0,
+        categoriesCompleted: (stats.categoriesCompleted || []).length,
+        scienceQuizzes: stats.scienceQuizzes || 0,
+        historyQuizzes: stats.historyQuizzes || 0,
+        sportQuizzes: stats.sportQuizzes || 0,
         friendsCount: stats.friendsCount || 0,
+        giftsSent: stats.giftsSent || 0,
         inTeam: stats.inTeam || false,
         closeWin: stats.closeWin || false,
+        englishQuizzes: stats.englishQuizzes || 0,
+        russianQuizzes: stats.russianQuizzes || 0,
     };
 
     const newAchievements = [];
