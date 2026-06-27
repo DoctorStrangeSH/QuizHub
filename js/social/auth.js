@@ -68,31 +68,45 @@ let authFirstCheck = true;
 function initAuthListener() {
     const authInstance = getAuth();
     if (!authInstance) {
+        console.log('⏳ [AUTH] auth не готов, жду 500мс...');
         setTimeout(initAuthListener, 500);
         return;
     }
 
+    console.log('✅ [AUTH] auth готов, подписываюсь на onAuthStateChanged');
+
     authInstance.onAuthStateChanged(async user => {
+        console.log('🔄 [AUTH] onAuthStateChanged вызван');
+        console.log('   user:', user ? user.displayName : 'null');
+        console.log('   authFirstCheck:', authFirstCheck);
+        console.log('   currentUser:', currentUser ? currentUser.displayName : 'null');
+        console.log('   lastAuthUIState:', lastAuthUIState);
+        console.log('   userCache:', localStorage.getItem('quizhub-user-cache') ? 'есть' : 'нет');
+
         // Пропускаем первый вызов, если он null, а в кэше есть пользователь
         if (authFirstCheck && !user && localStorage.getItem('quizhub-user-cache')) {
+            console.log('⏭ [AUTH] ПРОПУСКАЮ: первый вызов с null при наличии кэша');
             authFirstCheck = false;
-            return; // НЕ обновляем UI
+            return;
         }
         authFirstCheck = false;
 
         // Определяем новое состояние
         const newState = user ? 'logged-in' : 'logged-out';
+        console.log('   newState:', newState);
         
         // Если состояние НЕ изменилось — ничего не делаем
         if (newState === lastAuthUIState && user === currentUser) {
+            console.log('⏭ [AUTH] ПРОПУСКАЮ: состояние не изменилось');
             return;
         }
         
+        console.log('✏️ [AUTH] Состояние изменилось, обновляю UI');
         lastAuthUIState = newState;
         currentUser = user;
 
         if (user) {
-            console.log('👤 Пользователь:', user.displayName);
+            console.log('👤 [AUTH] Пользователь вошёл:', user.displayName);
 
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
@@ -112,6 +126,7 @@ function initAuthListener() {
                 nameInput.value = user.displayName || '';
             }
         } else {
+            console.log('👋 [AUTH] Пользователь вышел');
             localStorage.removeItem('quizhub-user-cache');
         }
 
