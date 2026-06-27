@@ -4,9 +4,11 @@
 
 /* Кнопка покупки */
 .shop-buy-btn {
-    min-width: 80px;
+    min-width: 85px;
     text-align: center;
     white-space: nowrap;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 /* Бейдж "Активна" */

@@ -512,11 +512,26 @@ function checkSavedQuiz() {
 
         showScreen('quiz');
         renderQuizScreen();
-        startTimer(restoredTimeLeft); // ← передаём восстановленное время
+        startTimer(restoredTimeLeft);
 
-        console.log(`⏱ Квиз восстановлен. Вопрос ${currentQuestionIndex + 1}/${QUIZ_SETTINGS.totalQuestions}. Таймер: ${restoredTimeLeft}с (было ${savedTimeLeft}с, прошло ${elapsed}с)`);
-        return;
+    if (typeof saveQuizProgress === 'function') {
+        saveQuizProgress({
+            currentQuestionIndex,
+            score,
+            currentStreak,
+            maxStreak,
+            fastestAnswer,
+            correctAnswersCount,
+            timeLeft: restoredTimeLeft,
+            difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy',
+            category: document.getElementById('quiz-category')?.value,
+            questions: quizQuestions,
+            totalQuestions: QUIZ_SETTINGS.totalQuestions,
+            timestamp: Date.now()
+        });
     }
+    return;
+}
 
     // Старый подход (без сохранённых вопросов)
     currentQuestionIndex = saved.currentQuestionIndex || 0;

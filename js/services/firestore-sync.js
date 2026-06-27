@@ -96,11 +96,11 @@ async function loadUserDataFromFirestore() {
     }
     
     // === ТЕМА ===
-    if (data.customTheme) {
+    if (data.customTheme && !localStorage.getItem('quizhub-custom-theme')) {
       localStorage.setItem('quizhub-custom-theme', data.customTheme);
       if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = data.customTheme;
       if (typeof initCustomTheme === 'function') initCustomTheme();
-    }
+}
     
     // === СТАТИСТИКА ===
     if (data.stats) {

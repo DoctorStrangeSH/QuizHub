@@ -57,12 +57,15 @@ function setupMobileMenu() {
     toggle.querySelector('i').className = menu.classList.contains('show') ? 'bi bi-x-lg' : 'bi bi-list';
   });
 
-  menu.querySelectorAll('button, a, .theme-toggle-btn').forEach(item => {
-    item.addEventListener('click', () => {
-      menu.classList.remove('show');
-      toggle.querySelector('i').className = 'bi bi-list';
+menu.querySelectorAll('button, a, .theme-toggle-btn').forEach(item => {
+    item.addEventListener('click', (e) => {
+        if (item.closest('.theme-toggle-wrapper') || item.closest('#theme-toggle-btn') || item.id === 'theme-toggle-btn') {
+            return;
+        }
+        menu.classList.remove('show');
+        toggle.querySelector('i').className = 'bi bi-list';
     });
-  });
+});
 
   document.addEventListener('click', (e) => {
     if (!menu.contains(e.target) && e.target !== toggle) {

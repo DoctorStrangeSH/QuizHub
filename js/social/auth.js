@@ -32,12 +32,17 @@ let authStateResolved = false;
                     </button>
                 </div>
             `;
+            // Сразу делаем видимым
+            authArea.style.visibility = 'visible';
+            // Блокируем повторное обновление
+            authArea.dataset.loaded = 'true';
         } catch (e) {
             authArea.innerHTML = `
                 <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
                     <i class="bi bi-google me-2"></i>Войти
                 </button>
             `;
+            authArea.style.visibility = 'visible';
         }
     } else {
         authArea.innerHTML = `
@@ -45,9 +50,8 @@ let authStateResolved = false;
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
+        authArea.style.visibility = 'visible';
     }
-
-    authArea.style.visibility = 'visible';
 })();
 
 // ========== ОТСЛЕЖИВАНИЕ АВТОРИЗАЦИИ ==========
@@ -233,7 +237,15 @@ function updateAuthUI(user) {
     const authArea = document.getElementById('auth-area');
     if (!authArea) return;
 
+    // Если уже загружено из кэша и состояние не изменилось — не трогаем
+    if (authArea.dataset.loaded === 'true' && user) {
+        // Пользователь уже вошёл, UI уже показан — не перерисовываем
+        authArea.style.visibility = 'visible';
+        return;
+    }
+
     authArea.style.visibility = 'visible';
+    authArea.dataset.loaded = 'true';
 
     if (user) {
         const photoURL = user.photoURL || 
@@ -257,17 +269,15 @@ function updateAuthUI(user) {
             authArea.innerHTML = newHTML;
         }
     } else {
-        // При выходе — гарантированно показываем кнопку входа
         const newHTML = `
             <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
-        
-        // ВСЕГДА обновляем при выходе
         authArea.innerHTML = newHTML;
     }
 }
+
 
 // ========== СТИЛИ ==========
 
