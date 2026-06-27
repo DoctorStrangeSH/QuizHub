@@ -259,22 +259,38 @@ function updateQuestProgressByType(eventType, value = 1) {
 }
 
 function completeQuest(quest, type) {
-    const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
+    let progress;
+    if (type === 'daily') progress = dailyProgress;
+    else if (type === 'weekly') progress = weeklyProgress;
+    else progress = monthlyProgress;
 
-    // Тройная проверка — чтобы точно не выполнилось дважды
     if (progress[quest.id + '_done']) {
-        console.log(`⚠️ ${quest.name}: уже выполнено (повторный вызов заблокирован)`);
+        console.log(`⚠️ ${quest.name}: уже выполнено`);
         return;
     }
 
+    // Отмечаем как выполненное
     progress[quest.id + '_done'] = true;
+    
+    // Сохраняем текущий прогресс (не сбрасываем!)
+    if (type === 'daily') dailyProgress = progress;
+    else if (type === 'weekly') weeklyProgress = progress;
+    else monthlyProgress = progress;
+
     console.log(`✅ Задание выполнено: ${quest.name}`);
+    console.log('monthlyProgress после выполнения:', JSON.stringify(monthlyProgress));
 
-    // Награда — только монеты
     if (typeof addCoins === 'function') addCoins(quest.reward);
-
     showQuestComplete(quest);
-    saveQuestState(type);
+    
+    // Сохраняем в localStorage
+    const data = {
+        dailyQuestDate, weeklyQuestWeek, monthlyQuestMonth,
+        dailyProgress, weeklyProgress, monthlyProgress,
+        dailyQuests, weeklyQuests, monthlyQuests
+    };
+    localStorage.setItem('quizhub-quest-state', JSON.stringify(data));
+    console.log('💾 Сохранено в localStorage. mq_6_done =', monthlyProgress['mq_6_done']);
 
     EventBus.emit(EVENTS.QUEST_COMPLETED, quest);
 }
