@@ -147,11 +147,18 @@ function getWeekNumber(date) {
 
 function saveQuestState(type) {
     const data = {
-        dailyQuestDate, weeklyQuestWeek, monthlyQuestMonth,
-        dailyProgress, weeklyProgress, monthlyProgress,
-        dailyQuests, weeklyQuests, monthlyQuests
+        dailyQuestDate: dailyQuestDate,
+        weeklyQuestWeek: weeklyQuestWeek,
+        monthlyQuestMonth: monthlyQuestMonth,
+        dailyProgress: dailyProgress,
+        weeklyProgress: weeklyProgress,
+        monthlyProgress: monthlyProgress,
+        dailyQuests: dailyQuests,
+        weeklyQuests: weeklyQuests,
+        monthlyQuests: monthlyQuests
     };
     localStorage.setItem('quizhub-quest-state', JSON.stringify(data));
+    console.log('💾 saveQuestState: monthlyProgress.mq_6 =', monthlyProgress.mq_6, 'done =', monthlyProgress['mq_6_done']);
 }
 
 function loadQuestState() {
