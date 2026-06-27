@@ -183,7 +183,14 @@ function updateQuestProgressByType(eventType, value = 1) {
 
         quests.forEach(quest => {
             if (quest.type === eventType && !progress[quest.id + '_done']) {
-                progress[quest.id] = (progress[quest.id] || 0) + value;
+                // Для XP и монет — устанавливаем абсолютное значение
+                if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
+                    progress[quest.id] = value;
+                } else {
+                    // Для остальных — прибавляем
+                    progress[quest.id] = (progress[quest.id] || 0) + value;
+                }
+                
                 if (progress[quest.id] >= quest.target) {
                     completeQuest(quest, type);
                 }
@@ -195,6 +202,7 @@ function updateQuestProgressByType(eventType, value = 1) {
     saveQuestState('weekly');
     saveQuestState('monthly');
 }
+
 
 function completeQuest(quest, type) {
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;

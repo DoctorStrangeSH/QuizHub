@@ -239,12 +239,16 @@ async function finishQuiz() {
         if (typeof selectedLanguage !== 'undefined' && selectedLanguage === 'en') updateQuestProgressByType('english');
         if (maxStreak >= 5) updateQuestProgressByType('streak_5');
         if (result.totalTime < 60) updateQuestProgressByType('fast_quiz');
-        if (typeof quizStats !== 'undefined') {
-            updateQuestProgressByType('xp_week', quizStats.totalXP || 0);
-            updateQuestProgressByType('xp_month', quizStats.totalXP || 0);
-        }
-        if (typeof userCoins !== 'undefined') updateQuestProgressByType('coins_month', userCoins);
 
+        // XP и монеты — передаём абсолютные значения
+        const currentXP = typeof AppState !== 'undefined' ? AppState.get('stats').totalXP || 0 : 0;
+        updateQuestProgressByType('xp_week', currentXP);
+        updateQuestProgressByType('xp_month', currentXP);
+
+        const currentCoins = typeof AppState !== 'undefined' ? AppState.get('coins') : 0;
+        updateQuestProgressByType('coins_month', currentCoins);
+
+        // Категории
         const catValue = category?.value || '';
         if (catValue === 'science' || categoryText.includes('Наука')) updateQuestProgressByType('category_science');
         if (catValue === 'sport' || categoryText.includes('Спорт')) updateQuestProgressByType('category_sport');
