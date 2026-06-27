@@ -126,22 +126,27 @@ function handleEventClick(category) {
 // ========== ВСТРАИВАЕМ БАННЕР В ГЛАВНЫЙ ЭКРАН ==========
 
 function injectEventBannerIntoHome() {
-    // Контейнер уже в HTML — сразу рендерим баннер
-    renderEventBanner();
+    // Проверяем, что мы на главном экране
+    const homeScreen = document.getElementById('screen-home');
+    if (!homeScreen) return;
 
-    // Слушаем возврат на главную
-    const originalShowScreen = typeof showScreen === 'function' ? showScreen : null;
-    if (originalShowScreen) {
-        const decoratedShowScreen = function(screenName) {
-            originalShowScreen(screenName);
-            if (screenName === 'home') {
-                setTimeout(renderEventBanner, 100);
-            }
-        };
-        if (showScreen === originalShowScreen) {
-            showScreen = decoratedShowScreen;
+    // Следим за переключением экранов
+    EventBus.on(EVENTS.SCREEN_CHANGED, (screenName) => {
+        const banner = document.getElementById('event-banner-container');
+        if (!banner) return;
+
+        if (screenName === 'home') {
+            // Показываем баннер на главной
+            banner.style.display = 'block';
+            renderEventBanner();
+        } else {
+            // Скрываем на других экранах
+            banner.style.display = 'none';
         }
-    }
+    });
+
+    // Начальный рендер
+    renderEventBanner();
 }
 
 // ========== ОБНОВЛЕНИЕ В 00:00 ПО МСК ==========

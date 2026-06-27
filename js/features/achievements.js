@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Система достижений v4.2 (StateManager)
+// QuizHub — Система достижений v4.3
 // ============================================
 
 const ACHIEVEMENTS = [
@@ -9,20 +9,50 @@ const ACHIEVEMENTS = [
     { id: 'quiz_25', nameKey: 'ach_quiz_25', descKey: 'ach_quiz_25_desc', icon: '📖', condition: (s) => s.totalQuizzes >= 25 },
     { id: 'quiz_50', nameKey: 'ach_quiz_50', descKey: 'ach_quiz_50_desc', icon: '🎓', condition: (s) => s.totalQuizzes >= 50 },
     { id: 'quiz_100', nameKey: 'ach_quiz_100', descKey: 'ach_quiz_100_desc', icon: '🏆', condition: (s) => s.totalQuizzes >= 100 },
+    { id: 'score_50', nameKey: 'ach_score_50', descKey: 'ach_score_50_desc', icon: '🎯', condition: (s) => s.bestScore >= 50 },
     { id: 'centurion', nameKey: 'ach_centurion', descKey: 'ach_centurion_desc', icon: '💎', condition: (s) => s.bestScore >= 100 },
+    { id: 'score_150', nameKey: 'ach_score_150', descKey: 'ach_score_150_desc', icon: '👑', condition: (s) => s.bestScore >= 150 },
+    { id: 'score_200', nameKey: 'ach_score_200', descKey: 'ach_score_200_desc', icon: '🌟', condition: (s) => s.bestScore >= 200 },
     { id: 'speed_demon', nameKey: 'ach_speed_demon', descKey: 'ach_speed_demon_desc', icon: '⚡', condition: (s) => s.fastestAnswer < 3 && s.fastestAnswer > 0 },
+    { id: 'speedrun', nameKey: 'ach_speedrun', descKey: 'ach_speedrun_desc', icon: '⏱️', condition: (s) => s.fastestQuiz < 60 && s.fastestQuiz > 0 },
+    { id: 'flash', nameKey: 'ach_flash', descKey: 'ach_flash_desc', icon: '💨', condition: (s) => s.fastestAnswer < 1.5 && s.fastestAnswer > 0 },
+    { id: 'streak_3', nameKey: 'ach_streak_3', descKey: 'ach_streak_3_desc', icon: '🔥', condition: (s) => s.maxStreak >= 3 },
+    { id: 'streak_5', nameKey: 'ach_streak_5', descKey: 'ach_streak_5_desc', icon: '💥', condition: (s) => s.maxStreak >= 5 },
+    { id: 'streak_7', nameKey: 'ach_streak_7', descKey: 'ach_streak_7_desc', icon: '🚀', condition: (s) => s.maxStreak >= 7 },
+    { id: 'streak_10', nameKey: 'ach_streak_10', descKey: 'ach_streak_10_desc', icon: '🌟', condition: (s) => s.maxStreak >= 10 },
     { id: 'perfect_10', nameKey: 'ach_perfect_10', descKey: 'ach_perfect_10_desc', icon: '💯', condition: (s) => s.correctAnswers === 10 },
+    { id: 'perfect_5', nameKey: 'ach_perfect_5', descKey: 'ach_perfect_5_desc', icon: '⭐', condition: (s) => s.perfectQuizzes >= 5 },
+    { id: 'perfect_10_count', nameKey: 'ach_perfect_10_count', descKey: 'ach_perfect_10_count_desc', icon: '🌟', condition: (s) => s.perfectQuizzes >= 10 },
     { id: 'night_owl', nameKey: 'ach_night_owl', descKey: 'ach_night_owl_desc', icon: '🦉', condition: () => { const h = new Date().getHours(); return h >= 0 && h < 6; } },
     { id: 'early_bird', nameKey: 'ach_early_bird', descKey: 'ach_early_bird_desc', icon: '🌅', condition: () => { const h = new Date().getHours(); return h >= 6 && h < 10; } },
+    { id: 'afternoon', nameKey: 'ach_afternoon', descKey: 'ach_afternoon_desc', icon: '☀️', condition: () => { const h = new Date().getHours(); return h >= 12 && h < 16; } },
+    { id: 'evening', nameKey: 'ach_evening', descKey: 'ach_evening_desc', icon: '🌆', condition: () => { const h = new Date().getHours(); return h >= 18 && h < 22; } },
     { id: 'hard_mode', nameKey: 'ach_hard_mode', descKey: 'ach_hard_mode_desc', icon: '💀', condition: (s) => s.hardCompleted >= 1 },
+    { id: 'hard_5', nameKey: 'ach_hard_5', descKey: 'ach_hard_5_desc', icon: '☠️', condition: (s) => s.hardCompleted >= 5 },
+    { id: 'hard_10', nameKey: 'ach_hard_10', descKey: 'ach_hard_10_desc', icon: '🤯', condition: (s) => s.hardCompleted >= 10 },
+    { id: 'all_difficulties', nameKey: 'ach_all_difficulties', descKey: 'ach_all_difficulties_desc', icon: '🌈', condition: (s) => s.difficultiesCompleted >= 3 },
     { id: 'polyglot', nameKey: 'ach_polyglot', descKey: 'ach_polyglot_desc', icon: '🌍', condition: (s) => s.languagesUsed >= 2 },
+    { id: 'english_5', nameKey: 'ach_english_5', descKey: 'ach_english_5_desc', icon: '🇬🇧', condition: (s) => s.englishQuizzes >= 5 },
+    { id: 'russian_10', nameKey: 'ach_russian_10', descKey: 'ach_russian_10_desc', icon: '🇷🇺', condition: (s) => s.russianQuizzes >= 10 },
     { id: 'streak_3_days', nameKey: 'ach_streak_3_days', descKey: 'ach_streak_3_days_desc', icon: '📅', condition: (s) => s.dayStreak >= 3 },
-    { id: 'marathon', nameKey: 'ach_marathon', descKey: 'ach_marathon_desc', icon: '🏃', condition: (s) => s.quizzesToday >= 5 },
+    { id: 'streak_7_days', nameKey: 'ach_streak_7_days', descKey: 'ach_streak_7_days_desc', icon: '🗓️', condition: (s) => s.dayStreak >= 7 },
+    { id: 'streak_14_days', nameKey: 'ach_streak_14_days', descKey: 'ach_streak_14_days_desc', icon: '⚙️', condition: (s) => s.dayStreak >= 14 },
+    { id: 'streak_30_days', nameKey: 'ach_streak_30_days', descKey: 'ach_streak_30_days_desc', icon: '🏅', condition: (s) => s.dayStreak >= 30 },
     { id: 'survivor', nameKey: 'ach_survivor', descKey: 'ach_survivor_desc', icon: '💀', condition: (s) => s.survivalPlayed >= 1 },
+    { id: 'survivor_50', nameKey: 'ach_survivor_50', descKey: 'ach_survivor_50_desc', icon: '🏹', condition: (s) => s.survivalMaxQuestions >= 50 },
+    { id: 'timed_10', nameKey: 'ach_timed_10', descKey: 'ach_timed_10_desc', icon: '⏱️', condition: (s) => s.timedGames >= 10 },
     { id: 'duel_1', nameKey: 'ach_duel_1', descKey: 'ach_duel_1_desc', icon: '⚔️', condition: (s) => s.duelsPlayed >= 1 },
+    { id: 'duel_10', nameKey: 'ach_duel_10', descKey: 'ach_duel_10_desc', icon: '🛡️', condition: (s) => s.duelsPlayed >= 10 },
+    { id: 'all_categories', nameKey: 'ach_all_categories', descKey: 'ach_all_categories_desc', icon: '🎓', condition: (s) => s.categoriesCompleted >= 8 },
+    { id: 'science_5', nameKey: 'ach_science_5', descKey: 'ach_science_5_desc', icon: '🔬', condition: (s) => s.scienceQuizzes >= 5 },
+    { id: 'history_5', nameKey: 'ach_history_5', descKey: 'ach_history_5_desc', icon: '📜', condition: (s) => s.historyQuizzes >= 5 },
+    { id: 'sport_5', nameKey: 'ach_sport_5', descKey: 'ach_sport_5_desc', icon: '⚽', condition: (s) => s.sportQuizzes >= 5 },
     { id: 'first_friend', nameKey: 'ach_first_friend', descKey: 'ach_first_friend_desc', icon: '🤝', condition: (s) => s.friendsCount >= 1 },
+    { id: 'social_5', nameKey: 'ach_social_5', descKey: 'ach_social_5_desc', icon: '👥', condition: (s) => s.friendsCount >= 5 },
+    { id: 'gift_5', nameKey: 'ach_gift_5', descKey: 'ach_gift_5_desc', icon: '🎁', condition: (s) => s.giftsSent >= 5 },
     { id: 'team_player', nameKey: 'ach_team_player', descKey: 'ach_team_player_desc', icon: '👥', condition: (s) => s.inTeam === true },
     { id: 'comeback', nameKey: 'ach_comeback', descKey: 'ach_comeback_desc', icon: '🔄', condition: (s) => s.improved === true },
+    { id: 'marathon', nameKey: 'ach_marathon', descKey: 'ach_marathon_desc', icon: '🏃', condition: (s) => s.quizzesToday >= 5 },
     { id: 'lucky', nameKey: 'ach_lucky', descKey: 'ach_lucky_desc', icon: '🍀', condition: (s) => s.closeWin === true },
 ];
 
@@ -41,6 +71,8 @@ function getAchievementDesc(ach) { return t(ach.descKey) || ach.descKey || ''; }
 function getLevelName(level) { return t(level.nameKey) || `Уровень ${level.level}`; }
 
 function updateStats(result) {
+    if (typeof currentUser === 'undefined' || !currentUser) return;
+
     const stats = AppState.get('stats');
     const today = new Date().toISOString().split('T')[0];
 
@@ -53,7 +85,7 @@ function updateStats(result) {
     stats.totalQuizzes = (stats.totalQuizzes || 0) + 1;
 
     if (!stats.languagesUsed) stats.languagesUsed = [];
-    const lang = (typeof selectedLanguage !== 'undefined') ? selectedLanguage : AppState.get('settings.locale');
+    const lang = AppState.get('settings.locale');
     if (!stats.languagesUsed.includes(lang)) stats.languagesUsed.push(lang);
 
     if (!stats.difficultiesCompleted) stats.difficultiesCompleted = [];
@@ -69,9 +101,7 @@ function updateStats(result) {
     addXP(calculateQuizXP(result));
     AppState.set('stats', stats);
 
-    if (typeof awardQuizCoins === 'function' && typeof currentUser !== 'undefined' && currentUser) {
-        awardQuizCoins(result);
-    }
+    if (typeof awardQuizCoins === 'function') awardQuizCoins(result);
 }
 
 function updateDayStreak() {
@@ -97,6 +127,7 @@ function calculateQuizXP(result) {
 }
 
 function addXP(amount) {
+    if (typeof currentUser === 'undefined' || !currentUser) return;
     const stats = AppState.get('stats');
     stats.totalXP = (stats.totalXP || 0) + amount;
     AppState.set('stats', stats);
@@ -105,9 +136,7 @@ function addXP(amount) {
 function getCurrentLevel() {
     const xp = AppState.get('stats').totalXP || 0;
     let current = LEVELS[0];
-    for (const level of LEVELS) {
-        if (xp >= level.xpRequired) current = level;
-    }
+    for (const level of LEVELS) { if (xp >= level.xpRequired) current = level; }
     return current;
 }
 

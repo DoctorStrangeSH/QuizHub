@@ -3,6 +3,8 @@
 // Все сложные HTML-блоки с t() собираются здесь
 // ============================================
 
+console.log('✅ templates.js начал загрузку');
+
 const I18N_TEMPLATES = {
 
     // ========== АВТОРИЗАЦИЯ ==========
@@ -89,6 +91,7 @@ const I18N_TEMPLATES = {
     // ========== РЕЗУЛЬТАТ КВИЗА ==========
 
     quizResult(result, grade) {
+        const totalQuestions = typeof QUIZ_SETTINGS !== 'undefined' ? QUIZ_SETTINGS.totalQuestions : 10;
         return `
             <div class="row justify-content-center">
                 <div class="col-lg-6 text-center">
@@ -106,7 +109,7 @@ const I18N_TEMPLATES = {
                         </div>
                         <div class="col-4">
                             <div class="bg-card rounded-4 p-3">
-                                <p class="display-6 fw-bold text-success mb-0">${result.correctAnswers}/${typeof QUIZ_SETTINGS !== 'undefined' ? QUIZ_SETTINGS.totalQuestions : 10}</p>
+                                <p class="display-6 fw-bold text-success mb-0">${result.correctAnswers}/${totalQuestions}</p>
                                 <small class="text-muted">${t('correctShort')}</small>
                             </div>
                         </div>
@@ -560,3 +563,5 @@ const I18N_TEMPLATES = {
         `;
     },
 };
+
+console.log('✅ I18N_TEMPLATES создан успешно');

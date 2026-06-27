@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Управление экранами и UI v4.1 (рефакторинг)
+// QuizHub — Управление экранами и UI v4.3
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,6 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
     restoreScreenFromHash();
     restoreCategory();
     restoreDifficulty();
+
+    // Показать/скрыть баннер при смене экрана
+    EventBus.on(EVENTS.SCREEN_CHANGED, (screenName) => {
+        const banner = document.getElementById('event-banner-container');
+        if (banner) {
+            banner.style.display = screenName === 'home' ? 'block' : 'none';
+        }
+    });
+
+    // Показать баннер при загрузке (если главная)
+    const banner = document.getElementById('event-banner-container');
+    if (banner && AppState.get('currentScreen') === 'home') {
+        banner.style.display = 'block';
+    }
 
     const logo = document.querySelector('.logo');
     if (logo) logo.classList.add('logo-pulse');
@@ -127,8 +141,12 @@ function showScreen(screenName) {
 
     EventBus.emit(EVENTS.SCREEN_CHANGED, screenName);
 
-    if (screenName === 'achievements' && typeof renderAchievementsScreen === 'function') renderAchievementsScreen();
-    if (screenName === 'leaderboard') loadLeaderboard();
+    if (screenName === 'achievements' && typeof renderAchievementsScreen === 'function') {
+        renderAchievementsScreen();
+    }
+    if (screenName === 'leaderboard' && typeof loadLeaderboard === 'function') {
+        loadLeaderboard();
+    }
     if (screenName === 'stats' && typeof renderStatsScreen === 'function') {
         renderStatsScreen();
         setTimeout(() => {
@@ -136,13 +154,19 @@ function showScreen(screenName) {
             if (typeof renderWeeklyChart === 'function') renderWeeklyChart();
         }, 300);
     }
-    if (screenName === 'shop' && typeof renderShop === 'function') renderShop();
+    if (screenName === 'shop' && typeof renderShop === 'function') {
+        renderShop();
+    }
     if (screenName === 'friends' && typeof renderFriendsScreen === 'function') {
         const s = document.getElementById('screen-friends');
         if (s) renderFriendsScreen(s);
     }
-    if (screenName === 'team' && typeof showTeamScreen === 'function') showTeamScreen();
-    if (screenName === 'tournament' && typeof showTournamentScreen === 'function') showTournamentScreen();
+    if (screenName === 'team' && typeof renderTeamScreen === 'function') {
+        renderTeamScreen();
+    }
+    if (screenName === 'tournament' && typeof renderTournamentScreen === 'function') {
+        renderTournamentScreen();
+    }
 }
 
 function restoreScreenFromHash() {
@@ -209,10 +233,12 @@ async function loadLeaderboard(difficulty) {
     if (!screen) return;
     screen.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-accent"></div></div>`;
     if (leaderboardUnsubscribe) { leaderboardUnsubscribe(); leaderboardUnsubscribe = null; }
-    leaderboardUnsubscribe = onLeaderboardUpdate((leaders) => {
-        const s = document.getElementById('screen-leaderboard');
-        if (s?.classList.contains('active')) renderLeaderboardScreen(leaders, currentLeaderboardDifficulty);
-    }, currentLeaderboardDifficulty, 20);
+    if (typeof onLeaderboardUpdate === 'function') {
+        leaderboardUnsubscribe = onLeaderboardUpdate((leaders) => {
+            const s = document.getElementById('screen-leaderboard');
+            if (s?.classList.contains('active')) renderLeaderboardScreen(leaders, currentLeaderboardDifficulty);
+        }, currentLeaderboardDifficulty, 20);
+    }
 }
 
 function switchLeaderboardDifficulty(d) { loadLeaderboard(d); }

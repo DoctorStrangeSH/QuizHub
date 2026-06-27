@@ -152,12 +152,12 @@ function updateAllTranslations() {
         footer.innerHTML = t('footer_text');
     }
 
-    // 15. Баннер событий (мгновенный перевод)
+    // 15. Баннер событий
     if (typeof renderEventBanner === 'function') {
         renderEventBanner();
     }
 
-    // 16. Перерендер активных экранов
+    // 16. Активные экраны
     if (typeof renderAchievementsScreen === 'function') {
         const ach = document.getElementById('screen-achievements');
         if (ach?.classList.contains('active')) renderAchievementsScreen();
@@ -179,6 +179,30 @@ function updateAllTranslations() {
         if (lb?.classList.contains('active')) loadLeaderboard();
     }
 
+    // 17. Команда
+    if (typeof renderTeamScreen === 'function') {
+        const team = document.getElementById('screen-team');
+        if (team?.classList.contains('active')) renderTeamScreen();
+    }
+
+    // 18. Турниры
+    if (typeof renderTournamentScreen === 'function') {
+        const tournament = document.getElementById('screen-tournament');
+        if (tournament?.classList.contains('active')) renderTournamentScreen();
+    }
+
+    // 19. AI (только если не идёт игра)
+    if (typeof showAISelectScreen === 'function') {
+        const quizScreen = document.getElementById('screen-quiz');
+        // Проверяем, что квиз не активен (нет вопросов)
+        if (quizScreen?.classList.contains('active') &&
+            typeof quizQuestions !== 'undefined' &&
+            (!quizQuestions || quizQuestions.length === 0) &&
+            !document.querySelector('#screen-quiz .btn-answer')) {
+            showAISelectScreen();
+        }
+    }
+    
     console.log('🌍 Интерфейс обновлён:', currentLocale);
 }
 
