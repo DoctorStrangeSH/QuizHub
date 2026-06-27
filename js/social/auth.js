@@ -1,10 +1,11 @@
 // ============================================
-// QuizHub — Аутентификация Google v2.6
+// QuizHub — Аутентификация Google v2.7
 // Кнопка НИКОГДА не мигает
 // ============================================
 
 let currentUser = null;
-let lastAuthUIState = null; // 'logged-in' или 'logged-out'
+let lastAuthUIState = null;
+let authFirstCheck = true;
 
 // ========== МГНОВЕННЫЙ ПОКАЗ ИЗ КЭША ==========
 
@@ -63,46 +64,33 @@ function getAuth() {
     return null;
 }
 
-let authFirstCheck = true;
-
 function initAuthListener() {
     const authInstance = getAuth();
     if (!authInstance) {
-        console.log('⏳ [AUTH] auth не готов, жду 500мс...');
         setTimeout(initAuthListener, 500);
         return;
     }
 
-    console.log('✅ [AUTH] auth готов, подписываюсь на onAuthStateChanged');
-
     authInstance.onAuthStateChanged(async user => {
-        console.log('🔄 [AUTH] onAuthStateChanged вызван, user:', user ? user.displayName : 'null');
 
-        // Пропускаем первый вызов, если он null, а в кэше есть пользователь
+        // Первый вызов: если пользователя нет, но в кэше есть — пропускаем
         if (authFirstCheck && !user && localStorage.getItem('quizhub-user-cache')) {
-            console.log('⏭ [AUTH] ПРОПУСКАЮ: первый вызов с null при наличии кэша');
             authFirstCheck = false;
             return;
         }
         authFirstCheck = false;
 
         const newState = user ? 'logged-in' : 'logged-out';
-        
-        // Если состояние UI не изменилось — не трогаем
-        if (newState === lastAuthUIState) {
-            console.log('⏭ [AUTH] ПРОПУСКАЮ: UI уже в состоянии', newState);
-            // Всё равно обновляем currentUser для других модулей
-            currentUser = user;
+
+        // Если состояние не изменилось и это тот же пользователь — пропускаем
+        if (newState === lastAuthUIState && user === currentUser) {
             return;
         }
-        
-        console.log('✏️ [AUTH] Состояние изменилось:', lastAuthUIState, '→', newState);
+
         lastAuthUIState = newState;
         currentUser = user;
 
         if (user) {
-            console.log('👤 [AUTH] Пользователь вошёл:', user.displayName);
-
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
                 photoURL: user.photoURL,
@@ -121,7 +109,6 @@ function initAuthListener() {
                 nameInput.value = user.displayName || '';
             }
         } else {
-            console.log('👋 [AUTH] Пользователь вышел');
             localStorage.removeItem('quizhub-user-cache');
         }
 
@@ -157,7 +144,7 @@ function signInWithGoogle() {
 // ========== ВЫХОД ==========
 
 async function signOut() {
-    // Очищаем локальные данные
+    // Очищаем все локальные данные
     const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -165,31 +152,41 @@ async function signOut() {
             allKeys.push(key);
         }
     }
-    
+
     allKeys.forEach(key => {
-        try { localStorage.removeItem(key); } catch (e) {}
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {}
     });
 
-    // Сбрасываем переменные
+    // Сбрасываем глобальные переменные
     if (typeof userCoins !== 'undefined') userCoins = 0;
     if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
     if (typeof purchasedItems !== 'undefined') purchasedItems = [];
     if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
-    if (typeof quizStats !== 'undefined') Object.keys(quizStats).forEach(k => delete quizStats[k]);
+    if (typeof quizStats !== 'undefined') {
+        Object.keys(quizStats).forEach(key => delete quizStats[key]);
+    }
     if (typeof friendsList !== 'undefined') friendsList = [];
     if (typeof userTeam !== 'undefined') userTeam = null;
+    if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
 
+    // Сбрасываем кастомную тему
     document.documentElement.removeAttribute('data-custom-theme');
+
+    // Обновляем отображение
     if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
 
-    // Выходим
+    // Выходим из Firebase (НЕ сохраняем данные)
     const authInstance = getAuth();
-    if (authInstance) await authInstance.signOut();
+    if (authInstance) {
+        await authInstance.signOut();
+    }
 
     // Обновляем UI
     lastAuthUIState = 'logged-out';
     currentUser = null;
-    
+
     const authArea = document.getElementById('auth-area');
     if (authArea) {
         authArea.innerHTML = `
@@ -230,6 +227,7 @@ function updateAuthUI(user) {
             </div>
         `;
 
+        // Обновляем только если содержимое изменилось
         if (authArea.innerHTML.trim() !== newHTML.trim()) {
             authArea.innerHTML = newHTML;
         }
@@ -240,6 +238,7 @@ function updateAuthUI(user) {
             </button>
         `;
 
+        // Обновляем только если содержимое изменилось
         if (authArea.innerHTML.trim() !== newHTML.trim()) {
             authArea.innerHTML = newHTML;
         }
@@ -249,7 +248,36 @@ function updateAuthUI(user) {
 // ========== СТИЛИ ==========
 
 const styleEl = document.createElement('style');
-styleEl.textContent = `#auth-area { transition: opacity 0.15s ease; }`;
+styleEl.textContent = `
+    .user-avatar-wrapper {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .user-online-dot {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        border: 2px solid var(--bg-primary);
+        animation: livePulse 2s infinite;
+    }
+    @keyframes livePulse {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6); }
+        50% { opacity: 0.5; box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
+    }
+    .user-name {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    #auth-area {
+        transition: opacity 0.15s ease;
+    }
+`;
 document.head.appendChild(styleEl);
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
