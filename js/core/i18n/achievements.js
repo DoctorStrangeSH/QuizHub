@@ -129,12 +129,20 @@ const achievements_ru = {
 
     // Уровни
     lvl_novice: 'Новичок',
+    lvl_beginner: 'Начинающий',
     lvl_amateur: 'Любитель',
+    lvl_student: 'Студент',
     lvl_expert: 'Знаток',
+    lvl_professional: 'Профессионал',
     lvl_master: 'Мастер',
     lvl_grandmaster: 'Грандмастер',
+    lvl_elite: 'Элита',
+    lvl_champion: 'Чемпион',
     lvl_legend: 'Легенда',
     lvl_myth: 'Миф',
+    lvl_titan: 'Титан',
+    lvl_immortal: 'Бессмертный',
+    lvl_divine: 'Божество',
 };
 
 const achievements_en = {
@@ -264,10 +272,18 @@ const achievements_en = {
 
     // Levels
     lvl_novice: 'Novice',
+    lvl_beginner: 'Beginner',
     lvl_amateur: 'Amateur',
+    lvl_student: 'Student',
     lvl_expert: 'Expert',
+    lvl_professional: 'Professional',
     lvl_master: 'Master',
     lvl_grandmaster: 'Grandmaster',
+    lvl_elite: 'Elite',
+    lvl_champion: 'Champion',
     lvl_legend: 'Legend',
     lvl_myth: 'Myth',
+    lvl_titan: 'Titan',
+    lvl_immortal: 'Immortal',
+    lvl_divine: 'Divine',
 };

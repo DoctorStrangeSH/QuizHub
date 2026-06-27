@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     restoreCategory();
     restoreDifficulty();
 
+    // Восстанавливаем позицию скролла
+    restoreScrollPosition();
+
     // Показать/скрыть баннер при смене экрана
     EventBus.on(EVENTS.SCREEN_CHANGED, (screenName) => {
         const banner = document.getElementById('event-banner-container');
@@ -23,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Показать баннер при загрузке (если главная)
+    // Показать баннер при загрузке
     const banner = document.getElementById('event-banner-container');
     if (banner && AppState.get('currentScreen') === 'home') {
         banner.style.display = 'block';
@@ -32,6 +35,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const logo = document.querySelector('.logo');
     if (logo) logo.classList.add('logo-pulse');
 });
+
+// ========== СОХРАНЕНИЕ ПОЗИЦИИ СКРОЛЛА ==========
+
+function saveScrollPosition() {
+    sessionStorage.setItem('quizhub-scroll-y', window.scrollY.toString());
+}
+
+function restoreScrollPosition() {
+    const savedY = sessionStorage.getItem('quizhub-scroll-y');
+    if (savedY) {
+        setTimeout(() => {
+            window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
+        }, 150);
+    }
+}
+
+// Сохраняем перед уходом
+window.addEventListener('beforeunload', () => {
+    saveScrollPosition();
+});
+
+// Сохраняем при скролле
+let scrollSaveTimeout;
+window.addEventListener('scroll', () => {
+    clearTimeout(scrollSaveTimeout);
+    scrollSaveTimeout = setTimeout(() => {
+        sessionStorage.setItem('quizhub-scroll-y', window.scrollY.toString());
+    }, 200);
+}, { passive: true });
 
 // ========== ТЕМА ==========
 function initTheme() {

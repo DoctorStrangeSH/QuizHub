@@ -93,7 +93,7 @@ function generateQuests(type) {
         const today = mskTime.toISOString().split('T')[0];
         // НЕ сбрасываем если задания уже есть на сегодня
         if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
-        
+
         dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
         dailyQuestDate = today;
         dailyProgress = {};
@@ -106,7 +106,7 @@ function generateQuests(type) {
     if (type === 'weekly') {
         const weekNumber = getWeekNumber(mskTime);
         if (weeklyQuestWeek === weekNumber && weeklyQuests.length > 0) return weeklyQuests;
-        
+
         weeklyQuests = getRandomQuests(WEEKLY_QUESTS_POOL, 3);
         weeklyQuestWeek = weekNumber;
         weeklyProgress = {};
@@ -119,7 +119,7 @@ function generateQuests(type) {
     if (type === 'monthly') {
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
         if (monthlyQuestMonth === monthKey && monthlyQuests.length > 0) return monthlyQuests;
-        
+
         monthlyQuests = getRandomQuests(MONTHLY_QUESTS_POOL, 3);
         monthlyQuestMonth = monthKey;
         monthlyProgress = {};
@@ -166,23 +166,35 @@ function loadQuestState() {
         const today = mskTime.toISOString().split('T')[0];
         if (dailyQuestDate !== today) {
             generateQuests('daily');
-        } else if (saved.dailyQuests) {
+        } else if (saved.dailyQuests && saved.dailyQuests.length > 0) {
             dailyQuests = saved.dailyQuests;
+        } else {
+            generateQuests('daily');
         }
 
         const weekNumber = getWeekNumber(mskTime);
         if (weeklyQuestWeek !== weekNumber) {
             generateQuests('weekly');
-        } else if (saved.weeklyQuests) {
+        } else if (saved.weeklyQuests && saved.weeklyQuests.length > 0) {
             weeklyQuests = saved.weeklyQuests;
+        } else {
+            generateQuests('weekly');
         }
 
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
         if (monthlyQuestMonth !== monthKey) {
             generateQuests('monthly');
-        } else if (saved.monthlyQuests) {
+        } else if (saved.monthlyQuests && saved.monthlyQuests.length > 0) {
             monthlyQuests = saved.monthlyQuests;
+        } else {
+            generateQuests('monthly');
         }
+
+        console.log('📋 Задания загружены:', {
+            daily: dailyQuests.length,
+            weekly: weeklyQuests.length,
+            monthly: monthlyQuests.length
+        });
     } catch (e) {
         console.error('Ошибка загрузки заданий:', e);
     }
@@ -206,7 +218,7 @@ function updateQuestProgressByType(eventType, value = 1) {
                 if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
                     const oldValue = progress[quest.id] || 0;
                     progress[quest.id] = value;
-                    
+
                     // Выполняем ТОЛЬКО если oldValue был МЕНЬШЕ target
                     // (то есть задание не было выполнено раньше)
                     if (value >= quest.target && oldValue < quest.target) {
@@ -215,7 +227,7 @@ function updateQuestProgressByType(eventType, value = 1) {
                 } else {
                     // Для остальных — прибавляем
                     progress[quest.id] = (progress[quest.id] || 0) + value;
-                    
+
                     if (progress[quest.id] >= quest.target) {
                         completeQuest(quest, type);
                     }
@@ -238,8 +250,11 @@ function completeQuest(quest, type) {
     progress[quest.id + '_done'] = true;
     console.log(`✅ Задание выполнено: ${quest.name}`);
 
+    // Награда: ТОЛЬКО монеты, без XP (или сильно уменьшенный XP)
     if (typeof addCoins === 'function') addCoins(quest.reward);
-    if (typeof addXP === 'function') addXP(quest.reward); // Было reward * 2, стало reward
+
+    // XP = 10% от награды монетами (было 200%, стало 10%)
+    if (typeof addXP === 'function') addXP(Math.floor(quest.reward * 0.1));
 
     showQuestComplete(quest);
     saveQuestState(type);
@@ -268,12 +283,12 @@ function showQuestComplete(quest) {
 }
 
 function renderQuestsHTML(type) {
-    generateQuests(type);
-
     const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
     const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
-    if (!quests || quests.length === 0) return `<p class="text-muted">${typeof t === 'function' ? t('noActiveQuests') : 'Нет активных заданий'}</p>`;
+    if (!quests || quests.length === 0) {
+        return `<p class="text-muted">${typeof t === 'function' ? t('noActiveQuests') : 'Нет активных заданий'}</p>`;
+    }
 
     const section = I18N_TEMPLATES.questsSection(type);
 
@@ -285,10 +300,10 @@ function renderQuestsHTML(type) {
             </div>
             <div class="d-grid gap-2">
                 ${quests.map(q => {
-                    const p = progress[q.id] || 0;
-                    const done = progress[q.id + '_done'] || false;
-                    return I18N_TEMPLATES.questItem(q, p, done);
-                }).join('')}
+        const p = progress[q.id] || 0;
+        const done = progress[q.id + '_done'] || false;
+        return I18N_TEMPLATES.questItem(q, p, done);
+    }).join('')}
             </div>
         </div>
     `;

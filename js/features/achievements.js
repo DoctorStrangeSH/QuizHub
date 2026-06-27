@@ -57,13 +57,21 @@ const ACHIEVEMENTS = [
 ];
 
 const LEVELS = [
-    { level: 1, nameKey: 'lvl_novice', icon: '🌱', xpRequired: 0, color: '#00E676' },
-    { level: 2, nameKey: 'lvl_amateur', icon: '🌿', xpRequired: 100, color: '#40C4FF' },
-    { level: 3, nameKey: 'lvl_expert', icon: '📖', xpRequired: 300, color: '#FFD740' },
-    { level: 4, nameKey: 'lvl_master', icon: '🎯', xpRequired: 600, color: '#FF6B9D' },
-    { level: 5, nameKey: 'lvl_grandmaster', icon: '⚔️', xpRequired: 1000, color: '#7B2FBE' },
-    { level: 6, nameKey: 'lvl_legend', icon: '👑', xpRequired: 1500, color: '#FFD700' },
-    { level: 7, nameKey: 'lvl_myth', icon: '🌟', xpRequired: 2500, color: '#FF5252' },
+    { level: 1,  nameKey: 'lvl_novice',       icon: '🌱', xpRequired: 0,     color: '#00E676' },
+    { level: 2,  nameKey: 'lvl_beginner',     icon: '🌿', xpRequired: 30,    color: '#40C4FF' },
+    { level: 3,  nameKey: 'lvl_amateur',      icon: '📗', xpRequired: 80,    color: '#FFD740' },
+    { level: 4,  nameKey: 'lvl_student',      icon: '📘', xpRequired: 150,   color: '#FFAB40' },
+    { level: 5,  nameKey: 'lvl_expert',       icon: '📖', xpRequired: 250,   color: '#FF6B9D' },
+    { level: 6,  nameKey: 'lvl_professional', icon: '🎯', xpRequired: 400,   color: '#7B2FBE' },
+    { level: 7,  nameKey: 'lvl_master',       icon: '⚔️', xpRequired: 600,   color: '#E040FB' },
+    { level: 8,  nameKey: 'lvl_grandmaster',  icon: '🛡️', xpRequired: 900,   color: '#FF5252' },
+    { level: 9,  nameKey: 'lvl_elite',        icon: '💎', xpRequired: 1300,  color: '#00BCD4' },
+    { level: 10, nameKey: 'lvl_champion',     icon: '🏆', xpRequired: 1800,  color: '#FFD700' },
+    { level: 11, nameKey: 'lvl_legend',       icon: '👑', xpRequired: 2500,  color: '#FF9800' },
+    { level: 12, nameKey: 'lvl_myth',         icon: '🌟', xpRequired: 3500,  color: '#FF4081' },
+    { level: 13, nameKey: 'lvl_titan',        icon: '🔱', xpRequired: 5000,  color: '#7C4DFF' },
+    { level: 14, nameKey: 'lvl_immortal',     icon: '💫', xpRequired: 7500,  color: '#FF6E40' },
+    { level: 15, nameKey: 'lvl_divine',       icon: '✨', xpRequired: 10000, color: '#FFD740' },
 ];
 
 function getAchievementName(ach) { return t(ach.nameKey) || ach.nameKey || 'Неизвестное достижение'; }
@@ -113,20 +121,26 @@ function updateDayStreak() {
     stats.dayStreak = (stats.lastActiveDate === yesterday) ? (stats.dayStreak || 0) + 1 : 1;
     stats.lastActiveDate = today;
 
-    if (stats.dayStreak >= 7) addXP(Math.min(stats.dayStreak * 5, 100));
+    // Бонус за streak: 5 XP за день (было 5-100 XP)
+    if (stats.dayStreak >= 7) {
+        addXP(stats.dayStreak * 5); // Было Math.min(stats.dayStreak * 5, 100)
+    }
+    
     AppState.set('stats', stats);
 }
 
 function calculateQuizXP(result) {
-    let xp = 10; // База
-    xp += Math.floor(result.score / 10); // Бонус за очки
-    const diffBonus = { easy: 0, medium: 5, hard: 15, survival: 20, timed: 10 };
+    let xp = 5; // База (было 10)
+    xp += Math.floor(result.score / 20); // Бонус за очки (было /10)
+    
+    const diffBonus = { easy: 0, medium: 3, hard: 8, survival: 10, timed: 5 }; // Уменьшено
     xp += diffBonus[result.difficulty] || 0;
-    if (result.correctAnswers === 10) xp += 20;
-    else if (result.correctAnswers >= 7) xp += 10;
+    
+    if (result.correctAnswers === 10) xp += 10; // Было 20
+    else if (result.correctAnswers >= 7) xp += 5; // Было 10
     
     // Ограничение сверху
-    return Math.min(xp, 100);
+    return Math.min(xp, 50); // Было 100
 }
 
 function addXP(amount) {
