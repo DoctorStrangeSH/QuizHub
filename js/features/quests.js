@@ -237,6 +237,7 @@ function updateQuestProgressByType(eventType, value = 1) {
 
                     console.log(`  📝 ${quest.name}: ${oldValue} → ${value} (${value}/${quest.target})`);
 
+                    // Выполняем ТОЛЬКО если oldValue был МЕНЬШЕ target
                     if (value >= quest.target && oldValue < quest.target) {
                         completeQuest(quest, type);
                     }
@@ -253,9 +254,19 @@ function updateQuestProgressByType(eventType, value = 1) {
         });
     });
 
-    saveQuestState('daily');
-    saveQuestState('weekly');
-    saveQuestState('monthly');
+    // Сохраняем после всех обновлений
+    const data = {
+        dailyQuestDate: dailyQuestDate,
+        weeklyQuestWeek: weeklyQuestWeek,
+        monthlyQuestMonth: monthlyQuestMonth,
+        dailyProgress: dailyProgress,
+        weeklyProgress: weeklyProgress,
+        monthlyProgress: monthlyProgress,
+        dailyQuests: dailyQuests,
+        weeklyQuests: weeklyQuests,
+        monthlyQuests: monthlyQuests
+    };
+    localStorage.setItem('quizhub-quest-state', JSON.stringify(data));
 }
 
 function completeQuest(quest, type) {
@@ -269,28 +280,27 @@ function completeQuest(quest, type) {
         return;
     }
 
-    // Отмечаем как выполненное
     progress[quest.id + '_done'] = true;
-    
-    // Сохраняем текущий прогресс (не сбрасываем!)
-    if (type === 'daily') dailyProgress = progress;
-    else if (type === 'weekly') weeklyProgress = progress;
-    else monthlyProgress = progress;
-
     console.log(`✅ Задание выполнено: ${quest.name}`);
-    console.log('monthlyProgress после выполнения:', JSON.stringify(monthlyProgress));
+    console.log('progress после выполнения:', JSON.stringify(progress));
 
     if (typeof addCoins === 'function') addCoins(quest.reward);
     showQuestComplete(quest);
-    
-    // Сохраняем в localStorage
+
+    // СОХРАНЯЕМ НАПРЯМУЮ в localStorage (минуя saveQuestState)
     const data = {
-        dailyQuestDate, weeklyQuestWeek, monthlyQuestMonth,
-        dailyProgress, weeklyProgress, monthlyProgress,
-        dailyQuests, weeklyQuests, monthlyQuests
+        dailyQuestDate: dailyQuestDate,
+        weeklyQuestWeek: weeklyQuestWeek,
+        monthlyQuestMonth: monthlyQuestMonth,
+        dailyProgress: dailyProgress,
+        weeklyProgress: weeklyProgress,
+        monthlyProgress: monthlyProgress,
+        dailyQuests: dailyQuests,
+        weeklyQuests: weeklyQuests,
+        monthlyQuests: monthlyQuests
     };
     localStorage.setItem('quizhub-quest-state', JSON.stringify(data));
-    console.log('💾 Сохранено в localStorage. mq_6_done =', monthlyProgress['mq_6_done']);
+    console.log('💾 Прямое сохранение. mq_6_done =', monthlyProgress['mq_6_done']);
 
     EventBus.emit(EVENTS.QUEST_COMPLETED, quest);
 }
