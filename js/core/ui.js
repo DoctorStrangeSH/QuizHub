@@ -19,10 +19,21 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMobileMenu();
   initTheme();
   restoreScreenFromHash();
+  restoreCategory();
   
   const logo = document.querySelector('.logo');
   if (logo) logo.classList.add('logo-pulse');
 });
+
+function restoreCategory() {
+    const savedCategory = localStorage.getItem('quizhub-category');
+    if (savedCategory) {
+        const catSelect = document.getElementById('quiz-category');
+        if (catSelect) {
+            catSelect.value = savedCategory;
+        }
+    }
+}
 
 // ========== ТЕМА ==========
 function initTheme() {
@@ -165,6 +176,10 @@ function setupStartButton() {
     if (!nameInput.value.trim()) { nameInput.focus(); showToast('Введи своё имя!', 'warning'); return; }
     if (document.activeElement) document.activeElement.blur();
     QUIZ_SETTINGS.totalQuestions = 10; QUIZ_SETTINGS.timePerQuestion = 15;
+    const catSelect = document.getElementById('quiz-category');
+    if (catSelect) {
+    localStorage.setItem('quizhub-category', catSelect.value);
+    }
     startQuiz();
   });
 }

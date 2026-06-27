@@ -73,17 +73,18 @@ function initAuthListener() {
 
     authInstance.onAuthStateChanged(async user => {
         currentUser = user;
-        authStateResolved = true;
 
         if (user) {
             console.log('👤 Пользователь:', user.displayName);
 
+            // Сохраняем в кэш
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
                 photoURL: user.photoURL,
                 uid: user.uid
             }));
 
+            // Загружаем данные из Firestore
             if (typeof loadUserDataFromFirestore === 'function') {
                 await loadUserDataFromFirestore();
             }
@@ -95,12 +96,16 @@ function initAuthListener() {
             if (nameInput && !nameInput.dataset.manual) {
                 nameInput.value = user.displayName || '';
             }
-        } else {
-            localStorage.removeItem('quizhub-user-cache');
-        }
 
-        // Обновляем UI только после того как точно узнали состояние
-        updateAuthUI(user);
+            // ПРИНУДИТЕЛЬНО обновляем UI после входа
+            updateAuthUI(user);
+        } else {
+            // Пользователь вышел
+            localStorage.removeItem('quizhub-user-cache');
+            
+            // ПРИНУДИТЕЛЬНО обновляем UI после выхода
+            updateAuthUI(null);
+        }
     });
 }
 
@@ -133,12 +138,12 @@ function signInWithGoogle() {
 
 async function signOut() {
     try {
-        // Сохраняем данные перед выходом (на всякий случай)
+        // Сохраняем данные перед выходом
         if (typeof saveUserDataToFirestore === 'function') {
             await saveUserDataToFirestore();
         }
 
-        // === ОЧИЩАЕМ АБСОЛЮТНО ВСЁ ===
+        // === ОЧИЩАЕМ ВСЁ ПЕРЕД ВЫХОДОМ ИЗ FIREBASE ===
         
         // Монеты
         localStorage.removeItem('quizhub-coins');
@@ -150,9 +155,6 @@ async function signOut() {
         
         // Статистика
         localStorage.removeItem('quizhub-stats');
-        if (typeof quizStats !== 'undefined') {
-            Object.keys(quizStats).forEach(key => delete quizStats[key]);
-        }
         
         // Покупки
         localStorage.removeItem('quizhub-purchases');
@@ -166,70 +168,58 @@ async function signOut() {
         // Бустеры
         localStorage.removeItem('quizhub-active-boosters');
         
+        // Кэш пользователя (удаляем до выхода)
+        localStorage.removeItem('quizhub-user-cache');
+        
         // Прогресс квиза
         localStorage.removeItem('quizhub-quiz-progress');
         
-        // История очков
+        // История
         localStorage.removeItem('quizhub-score-history');
         localStorage.removeItem('quizhub-weekly-activity');
         
         // Задания
         localStorage.removeItem('quizhub-quest-state');
         
-        // Кэш пользователя
-        localStorage.removeItem('quizhub-user-cache');
-        
         // Друзья
         localStorage.removeItem('quizhub-friends');
         
         // Команда
         localStorage.removeItem('quizhub-team');
-        
-        // Рефералы
-        localStorage.removeItem('quizhub-sent-gifts');
-        localStorage.removeItem('quizhub-referral-code');
-        localStorage.removeItem('quizhub-used-referral');
-        
-        // Настройки темы
-        localStorage.removeItem('quizhub-theme-settings');
-        
-        // === ОБНОВЛЯЕМ ОТОБРАЖЕНИЕ ===
-        
-        // Монеты
-        if (typeof updateCoinsDisplay === 'function') {
-            updateCoinsDisplay();
-        }
-        
-        // Магазин (если открыт)
-        const shopScreen = document.getElementById('screen-shop');
-        if (shopScreen?.classList.contains('active') && typeof renderShop === 'function') {
-            renderShop();
-        }
-        
-        // Достижения (если открыты)
-        const achScreen = document.getElementById('screen-achievements');
-        if (achScreen?.classList.contains('active') && typeof renderAchievementsScreen === 'function') {
-            renderAchievementsScreen();
-        }
 
+        // === ОБНОВЛЯЕМ UI ДО ВЫХОДА ===
+        if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
+        
         // Выходим из Firebase
         const authInstance = getAuth();
         if (authInstance) {
             await authInstance.signOut();
         }
 
-        // Возвращаем на главную
-        if (typeof showScreen === 'function') {
-            showScreen('home');
+        // Сбрасываем currentUser
+        currentUser = null;
+
+        // Обновляем UI
+        const authArea = document.getElementById('auth-area');
+        if (authArea) {
+            authArea.innerHTML = `
+                <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
+                    <i class="bi bi-google me-2"></i>Войти
+                </button>
+            `;
+            authArea.style.visibility = 'visible';
+            authArea.dataset.loaded = 'true';
         }
 
-        showToast('Вы вышли из аккаунта. Данные очищены.', 'info');
+        // Возвращаем на главную
+        if (typeof showScreen === 'function') showScreen('home');
         
+        console.log('👋 Выход выполнен, данные очищены');
     } catch (error) {
         console.error('Ошибка выхода:', error);
-        showToast('Ошибка при выходе', 'danger');
     }
 }
+
 
 // ========== ОБНОВЛЕНИЕ UI ==========
 
@@ -237,15 +227,7 @@ function updateAuthUI(user) {
     const authArea = document.getElementById('auth-area');
     if (!authArea) return;
 
-    // Если уже загружено из кэша и состояние не изменилось — не трогаем
-    if (authArea.dataset.loaded === 'true' && user) {
-        // Пользователь уже вошёл, UI уже показан — не перерисовываем
-        authArea.style.visibility = 'visible';
-        return;
-    }
-
     authArea.style.visibility = 'visible';
-    authArea.dataset.loaded = 'true';
 
     if (user) {
         const photoURL = user.photoURL || 
@@ -265,16 +247,18 @@ function updateAuthUI(user) {
             </div>
         `;
 
-        if (authArea.innerHTML.trim() !== newHTML.trim()) {
-            authArea.innerHTML = newHTML;
-        }
+        // ВСЕГДА обновляем при входе
+        authArea.innerHTML = newHTML;
+        authArea.dataset.loaded = 'true';
     } else {
         const newHTML = `
             <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
+        // ВСЕГДА обновляем при выходе
         authArea.innerHTML = newHTML;
+        authArea.dataset.loaded = 'true';
     }
 }
 
