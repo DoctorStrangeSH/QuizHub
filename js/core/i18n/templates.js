@@ -10,7 +10,7 @@ const I18N_TEMPLATES = {
     // ========== АВТОРИЗАЦИЯ ==========
 
     authLoggedIn(user) {
-        const photoURL = user.photoURL || 
+        const photoURL = user.photoURL ||
             `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'U')}&background=FF6B9D&color=fff&size=32`;
         return `
             <div class="d-flex align-items-center gap-2">
@@ -395,10 +395,10 @@ const I18N_TEMPLATES = {
     friendsList(friends) {
         return friends.map(f => `
             <div class="d-flex align-items-center gap-3 p-2 rounded-3 bg-card-hover">
-                ${f.photoURL 
-                    ? `<img src="${f.photoURL}" width="32" height="32" class="rounded-circle">`
-                    : `<div class="bg-accent rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;"><small>${(f.displayName || '?')[0]}</small></div>`
-                }
+                ${f.photoURL
+                ? `<img src="${f.photoURL}" width="32" height="32" class="rounded-circle">`
+                : `<div class="bg-accent rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;"><small>${(f.displayName || '?')[0]}</small></div>`
+            }
                 <span class="flex-grow-1 fw-semibold">${f.displayName || t('player')}</span>
                 <button class="btn btn-sm btn-outline-accent rounded-pill px-2" onclick="sendDailyGift('${f.uid}')" title="${t('sendGift')}">🎁</button>
                 <button class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="removeFriend('${f.uid}')" title="${t('remove')}">✕</button>
@@ -427,21 +427,21 @@ const I18N_TEMPLATES = {
         const questName = t('quest_' + quest.id) || quest.name;
         const questDesc = t('quest_' + quest.id + '_desc') || quest.desc;
         return `
-            <div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}">
-                <span class="fs-4">${quest.icon}</span>
-                <div class="flex-grow-1 min-width-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${questName}</span>
-                        <small class="text-muted flex-shrink-0 ms-2">+${quest.reward} 🪙</small>
-                    </div>
-                    <div class="progress mt-1" style="height:4px;">
-                        <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width:${pct}%;"></div>
-                    </div>
-                    <small class="text-muted">${progress}/${quest.target} • ${questDesc}</small>
+        <div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}">
+            <span class="fs-4">${quest.icon}</span>
+            <div class="flex-grow-1 min-width-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${questName}</span>
+                    <small class="text-muted flex-shrink-0 ms-2">+${quest.reward} 🪙</small>
                 </div>
-                ${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}
+                <div class="progress mt-1" style="height:4px;">
+                    <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width:${pct}%;"></div>
+                </div>
+                <small class="text-muted">${progress}/${quest.target} • ${questDesc}</small>
             </div>
-        `;
+            ${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}
+        </div>
+    `;
     },
 
     // ========== ЧАТ ==========

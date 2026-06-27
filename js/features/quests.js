@@ -91,7 +91,9 @@ function generateQuests(type) {
 
     if (type === 'daily') {
         const today = mskTime.toISOString().split('T')[0];
+        // НЕ сбрасываем если задания уже есть на сегодня
         if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
+        
         dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
         dailyQuestDate = today;
         dailyProgress = {};
@@ -104,6 +106,7 @@ function generateQuests(type) {
     if (type === 'weekly') {
         const weekNumber = getWeekNumber(mskTime);
         if (weeklyQuestWeek === weekNumber && weeklyQuests.length > 0) return weeklyQuests;
+        
         weeklyQuests = getRandomQuests(WEEKLY_QUESTS_POOL, 3);
         weeklyQuestWeek = weekNumber;
         weeklyProgress = {};
@@ -116,6 +119,7 @@ function generateQuests(type) {
     if (type === 'monthly') {
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
         if (monthlyQuestMonth === monthKey && monthlyQuests.length > 0) return monthlyQuests;
+        
         monthlyQuests = getRandomQuests(MONTHLY_QUESTS_POOL, 3);
         monthlyQuestMonth = monthKey;
         monthlyProgress = {};
@@ -192,15 +196,19 @@ function updateQuestProgressByType(eventType, value = 1) {
         const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
 
         quests.forEach(quest => {
-            if (quest.type === eventType && !progress[quest.id + '_done']) {
+            // ПРОПУСКАЕМ уже выполненные задания
+            if (progress[quest.id + '_done']) {
+                return;
+            }
+
+            if (quest.type === eventType) {
                 // Для XP и монет — устанавливаем абсолютное значение
                 if (eventType === 'xp_week' || eventType === 'xp_month' || eventType === 'coins_month') {
-                    // НЕ отмечаем как выполненное, если значение изменилось незначительно
                     const oldValue = progress[quest.id] || 0;
                     progress[quest.id] = value;
                     
-                    // Проверяем, что прогресс действительно достиг цели
-                    // и что oldValue был меньше target (иначе бесконечные выполнения)
+                    // Выполняем ТОЛЬКО если oldValue был МЕНЬШЕ target
+                    // (то есть задание не было выполнено раньше)
                     if (value >= quest.target && oldValue < quest.target) {
                         completeQuest(quest, type);
                     }
@@ -213,7 +221,7 @@ function updateQuestProgressByType(eventType, value = 1) {
                     }
                 }
 
-                console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target}`);
+                console.log(`  📝 ${quest.name}: ${progress[quest.id]}/${quest.target} ${progress[quest.id + '_done'] ? '✅' : ''}`);
             }
         });
     });
@@ -231,7 +239,7 @@ function completeQuest(quest, type) {
     console.log(`✅ Задание выполнено: ${quest.name}`);
 
     if (typeof addCoins === 'function') addCoins(quest.reward);
-    if (typeof addXP === 'function') addXP(quest.reward * 2);
+    if (typeof addXP === 'function') addXP(quest.reward); // Было reward * 2, стало reward
 
     showQuestComplete(quest);
     saveQuestState(type);
