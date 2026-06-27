@@ -148,13 +148,15 @@ function saveQuestState(type) {
 }
 
 function loadQuestState() {
+    // Защита от повторного вызова
+    if (loadQuestState._loaded) return;
+    loadQuestState._loaded = true;
+
     try {
         const saved = JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}');
         dailyQuestDate = saved.dailyQuestDate || '';
         weeklyQuestWeek = saved.weeklyQuestWeek || '';
         monthlyQuestMonth = saved.monthlyQuestMonth || '';
-        
-        // ВАЖНО: загружаем сохранённый прогресс
         dailyProgress = saved.dailyProgress || {};
         weeklyProgress = saved.weeklyProgress || {};
         monthlyProgress = saved.monthlyProgress || {};
@@ -163,10 +165,8 @@ function loadQuestState() {
         const mskOffset = 3 * 60 * 60 * 1000;
         const mskTime = new Date(now.getTime() + mskOffset);
 
-        // Проверяем daily
         const today = mskTime.toISOString().split('T')[0];
         if (dailyQuestDate !== today) {
-            // Новый день — генерируем новые задания
             generateQuests('daily');
         } else if (saved.dailyQuests && saved.dailyQuests.length > 0) {
             dailyQuests = saved.dailyQuests;
@@ -174,7 +174,6 @@ function loadQuestState() {
             generateQuests('daily');
         }
 
-        // Проверяем weekly
         const weekNumber = getWeekNumber(mskTime);
         if (weeklyQuestWeek !== weekNumber) {
             generateQuests('weekly');
@@ -184,7 +183,6 @@ function loadQuestState() {
             generateQuests('weekly');
         }
 
-        // Проверяем monthly
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
         if (monthlyQuestMonth !== monthKey) {
             generateQuests('monthly');
@@ -194,18 +192,12 @@ function loadQuestState() {
             generateQuests('monthly');
         }
 
-        console.log('📋 Задания загружены:', {
-            daily: dailyQuests.length,
-            weekly: weeklyQuests.length,
-            monthly: monthlyQuests.length,
-            dailyProgressKeys: Object.keys(dailyProgress).filter(k => k.endsWith('_done')),
-            weeklyProgressKeys: Object.keys(weeklyProgress).filter(k => k.endsWith('_done')),
-            monthlyProgressKeys: Object.keys(monthlyProgress).filter(k => k.endsWith('_done'))
-        });
+        console.log('📋 Задания загружены (один раз)');
     } catch (e) {
         console.error('Ошибка загрузки заданий:', e);
     }
 }
+
 
 function updateQuestProgressByType(eventType, value = 1) {
     console.log(`📊 Обновление заданий: тип=${eventType}, значение=${value}`);

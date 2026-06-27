@@ -237,12 +237,6 @@ async function finishQuiz() {
 
     // Обновляем прогресс заданий
     if (typeof updateQuestProgressByType === 'function') {
-        // Сначала генерируем задания на сегодня (если ещё не сгенерированы)
-        if (typeof generateQuests === 'function') {
-            generateQuests('daily');
-            generateQuests('weekly');
-            generateQuests('monthly');
-        }
 
         // Количество квизов
         updateQuestProgressByType('quizzes_today', 1);

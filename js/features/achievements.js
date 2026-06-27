@@ -246,13 +246,6 @@ function renderAchievementsScreen() {
     const screen = document.getElementById('screen-achievements');
     if (!screen) return;
 
-    // Принудительно загружаем задания перед рендером
-    if (typeof generateQuests === 'function') {
-        generateQuests('daily');
-        generateQuests('weekly');
-        generateQuests('monthly');
-    }
-
     const level = getCurrentLevel();
     const nextLevel = getNextLevel();
     const stats = AppState.get('stats');
