@@ -52,6 +52,62 @@ const translations_ru = {
     animals: 'Животные',
     space: 'Космос',
 
+    // Режимы (под кнопкой НАЧАТЬ КВИЗ)
+    survival: 'Выживание',
+    aiMode: 'vs AI',
+    timed: 'На время',
+    tournaments: 'Турниры',
+    team: 'Команда',
+
+    // Турниры
+    tournamentTitle: 'Турниры',
+    dailyTournament: 'Ежедневный',
+    weeklyTournament: 'Еженедельный',
+    blitzTournament: 'Блиц-турнир',
+    participate: 'Участвовать',
+    free: 'Бесплатно',
+    entryFee: 'Взнос',
+    tournamentReward: 'монет',
+    joinTournament: 'Присоединиться',
+    tournamentEnds: 'Завершается',
+    tournamentPlayers: 'игроков',
+
+    // Команда
+    teamTitle: 'Команда',
+    createTeam: 'Создать команду',
+    joinTeam: 'Присоединиться',
+    teamName: 'Название команды',
+    teamMembers: 'Участники',
+    teamScore: 'Очки команды',
+    teamCaptain: 'Капитан',
+    leaveTeam: 'Покинуть команду',
+    invitePlayers: 'Пригласить игроков',
+    noTeam: 'Вы не в команде',
+
+    // Выживание
+    survivalMode: 'Выживание',
+    survivalQuestion: 'Вопрос',
+    survivalDifficulty: 'Сложность',
+    survivalCombo: 'Комбо',
+    survivalGameOver: 'Игра окончена!',
+    survivalQuestionsAnswered: 'Вопросов',
+    survivalBestCombo: 'Лучшее комбо',
+    survivalPlayAgain: 'Ещё раз',
+    skip: 'Пропустить',
+
+    // AI
+    aiTitle: 'Выбери противника',
+    aiNovice: 'Новичок',
+    aiAmateur: 'Любитель',
+    aiExpert: 'Эксперт',
+    aiGrandmaster: 'Гроссмейстер',
+    aiAccuracy: 'Точность',
+
+    // На время
+    timedMode: 'Режим на время',
+    timedGameOver: 'Время вышло!',
+    timedScore: 'очков за 60 секунд',
+
     // Общее
     points: 'Очки',
     seconds: 'сек',

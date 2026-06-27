@@ -130,8 +130,8 @@ function renderQuizScreen() {
         <div class="row justify-content-center">
             <div class="col-lg-7">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <small class="text-muted">Вопрос ${currentQuestionIndex + 1} из ${QUIZ_SETTINGS.totalQuestions}</small>
-                    <small class="text-muted">🏆 ${score} очков</small>
+                    <small class="text-muted">${t('survivalQuestion')} ${currentQuestionIndex + 1} ${t('of')} ${QUIZ_SETTINGS.totalQuestions}</small>
+                    <small class="text-muted">🏆 ${score} ${t('points')}</small>
                 </div>
                 <div class="progress mb-4" style="height: 6px;">
                     <div class="progress-bar bg-accent progress-animated" style="width: ${progress}%;"></div>
@@ -155,7 +155,7 @@ function renderQuizScreen() {
                 </div>
                 <div class="text-center d-flex justify-content-center gap-2">
                     <button class="btn btn-outline-accent rounded-pill px-4" id="skip-question">
-                        <i class="bi bi-skip-forward me-2"></i>Пропустить
+                        <i class="bi bi-skip-forward me-2"></i>${t('skip')}
                     </button>
                 </div>
             </div>
@@ -174,22 +174,22 @@ function renderQuizScreen() {
         if (typeof addVoiceButton === 'function') addVoiceButton();
     }, 100);
 
-if (typeof saveQuizProgress === 'function') {
-    saveQuizProgress({
-        currentQuestionIndex,
-        score,
-        currentStreak,
-        maxStreak,
-        fastestAnswer,
-        correctAnswersCount,
-        timeLeft: timeLeft,  // ← сохраняем текущее значение таймера
-        difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy',
-        category: document.getElementById('quiz-category')?.value,
-        questions: quizQuestions,
-        totalQuestions: QUIZ_SETTINGS.totalQuestions,
-        timestamp: Date.now()
-    });
-  }
+    if (typeof saveQuizProgress === 'function') {
+        saveQuizProgress({
+            currentQuestionIndex,
+            score,
+            currentStreak,
+            maxStreak,
+            fastestAnswer,
+            correctAnswersCount,
+            timeLeft,
+            difficulty: typeof selectedDifficulty !== 'undefined' ? selectedDifficulty : 'easy',
+            category: document.getElementById('quiz-category')?.value,
+            questions: quizQuestions,
+            totalQuestions: QUIZ_SETTINGS.totalQuestions,
+            timestamp: Date.now()
+        });
+    }
 }
 
 function createCircularTimer(totalSeconds) {
@@ -612,8 +612,8 @@ function renderTimedModeScreen() {
         <div class="row justify-content-center">
             <div class="col-lg-7">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <small class="text-muted">⏱ Режим на время</small>
-                    <small class="text-muted">🏆 ${score} очков</small>
+                    <small class="text-muted">⏱ ${t('timedMode')}</small>
+                    <small class="text-muted">🏆 ${score} ${t('points')}</small>
                 </div>
                 <div class="d-flex justify-content-center mb-4">
                     <div class="timer-circle ${globalTimeLeft <= 10 ? 'timer-danger' : ''}">
@@ -622,7 +622,7 @@ function renderTimedModeScreen() {
                 </div>
                 <div class="bg-card rounded-4 p-4 p-md-5 mb-4">
                     <span class="badge bg-accent bg-opacity-25 text-accent rounded-pill px-3 py-2 mb-3">
-                        ${getCategoryName(question.category)} • Вопрос ${currentQuestionIndex + 1}
+                        ${getCategoryName(question.category)} • ${t('survivalQuestion')} ${currentQuestionIndex + 1}
                     </span>
                     <h3 class="fw-bold mb-4">${question.question}</h3>
                     <div class="d-grid gap-3" id="answers-container">
@@ -706,7 +706,7 @@ async function finishTimedMode() {
         totalTime: 60,
         correctAnswers: correctAnswersCount,
         difficulty: 'timed',
-        category: 'На время',
+        category: t('timedMode'),
         date: new Date().toISOString(),
         userId: typeof currentUser !== 'undefined' ? currentUser?.uid : null
     };
@@ -724,16 +724,16 @@ async function finishTimedMode() {
         screen.innerHTML = `
             <div class="row justify-content-center">
                 <div class="col-lg-6 text-center py-5">
-                    <h2 class="fw-bold font-display mb-3">⏱ Время вышло!</h2>
+                    <h2 class="fw-bold font-display mb-3">⏱ ${t('timedGameOver')}</h2>
                     <div class="bg-card rounded-4 p-4 mb-4">
                         <p class="display-3 fw-bold text-accent mb-0">${result.score}</p>
-                        <p class="text-muted">очков за 60 секунд</p>
+                        <p class="text-muted">${t('timedScore')}</p>
                     </div>
                     <button class="btn btn-accent rounded-pill px-4" onclick="startTimedMode()">
-                        <i class="bi bi-arrow-repeat me-2"></i>Ещё раз
+                        <i class="bi bi-arrow-repeat me-2"></i>${t('survivalPlayAgain')}
                     </button>
                     <button class="btn btn-outline-accent rounded-pill px-4 mt-2" onclick="showScreen('home')">
-                        <i class="bi bi-house me-2"></i>На главную
+                        <i class="bi bi-house me-2"></i>${t('home')}
                     </button>
                 </div>
             </div>

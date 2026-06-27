@@ -114,27 +114,35 @@ document.addEventListener('quiz-started', () => {
 });
 
 function showAISelectScreen() {
-  const screen = document.getElementById('screen-quiz');
-  if (!screen) return;
-  
-  screen.innerHTML = `
-    <div class="row justify-content-center">
-      <div class="col-lg-6 text-center py-5">
-        <h2 class="fw-bold font-display mb-4">🤖 Выбери противника</h2>
-        <div class="row g-3 mb-4">
-          ${Object.entries(AI_PROFILES).map(([key, profile]) => `
-            <div class="col-6">
-              <div class="bg-card rounded-4 p-4" onclick="setAIDifficulty('${key}'); startAIDuel();" style="cursor:pointer;">
-                <span class="fs-1">${profile.icon}</span>
-                <h5 class="fw-bold mt-2">${profile.name}</h5>
-                <small class="text-muted">Точность: ${Math.round(profile.accuracy * 100)}%</small>
-              </div>
+    const screen = document.getElementById('screen-quiz');
+    if (!screen) return;
+
+    const profiles = {
+        easy:   { name: t('aiNovice'), icon: '🤖', accuracy: 0.4 },
+        medium: { name: t('aiExpert'), icon: '🧠', accuracy: 0.65 },
+        hard:   { name: t('aiExpert'), icon: '👾', accuracy: 0.85 },
+        impossible: { name: t('aiGrandmaster'), icon: '💀', accuracy: 0.95 },
+    };
+
+    screen.innerHTML = `
+        <div class="row justify-content-center">
+            <div class="col-lg-6 text-center py-5">
+                <h2 class="fw-bold font-display mb-4">🤖 ${t('aiTitle')}</h2>
+                <div class="row g-3 mb-4">
+                    ${Object.entries(profiles).map(([key, profile]) => `
+                        <div class="col-6">
+                            <div class="bg-card rounded-4 p-4" onclick="setAIDifficulty('${key}'); startAIDuel();" style="cursor:pointer;">
+                                <span class="fs-1">${profile.icon}</span>
+                                <h5 class="fw-bold mt-2">${profile.name}</h5>
+                                <small class="text-muted">${t('aiAccuracy')}: ${Math.round(profile.accuracy * 100)}%</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="btn btn-outline-accent rounded-pill px-4" onclick="showScreen('home')">🏠 ${t('home')}</button>
             </div>
-          `).join('')}
         </div>
-        <button class="btn btn-outline-accent rounded-pill px-4" onclick="showScreen('home')">🏠 На главную</button>
-      </div>
-    </div>
-  `;
-  showScreen('quiz');
+    `;
+
+    showScreen('quiz');
 }

@@ -52,6 +52,62 @@ const translations_en = {
     animals: 'Animals',
     space: 'Space',
 
+    // Game modes
+    survival: 'Survival',
+    aiMode: 'vs AI',
+    timed: 'Timed',
+    tournaments: 'Tournaments',
+    team: 'Team',
+
+    // Tournaments
+    tournamentTitle: 'Tournaments',
+    dailyTournament: 'Daily',
+    weeklyTournament: 'Weekly',
+    blitzTournament: 'Blitz',
+    participate: 'Join',
+    free: 'Free',
+    entryFee: 'Entry fee',
+    tournamentReward: 'coins',
+    joinTournament: 'Join',
+    tournamentEnds: 'Ends',
+    tournamentPlayers: 'players',
+
+    // Team
+    teamTitle: 'Team',
+    createTeam: 'Create team',
+    joinTeam: 'Join',
+    teamName: 'Team name',
+    teamMembers: 'Members',
+    teamScore: 'Team score',
+    teamCaptain: 'Captain',
+    leaveTeam: 'Leave team',
+    invitePlayers: 'Invite players',
+    noTeam: 'You are not in a team',
+
+    // Survival
+    survivalMode: 'Survival',
+    survivalQuestion: 'Question',
+    survivalDifficulty: 'Difficulty',
+    survivalCombo: 'Combo',
+    survivalGameOver: 'Game Over!',
+    survivalQuestionsAnswered: 'Questions',
+    survivalBestCombo: 'Best combo',
+    survivalPlayAgain: 'Play again',
+    skip: 'Skip',
+
+    // AI
+    aiTitle: 'Choose your opponent',
+    aiNovice: 'Novice',
+    aiAmateur: 'Amateur',
+    aiExpert: 'Expert',
+    aiGrandmaster: 'Grandmaster',
+    aiAccuracy: 'Accuracy',
+
+    // Timed
+    timedMode: 'Timed Mode',
+    timedGameOver: 'Time is up!',
+    timedScore: 'points in 60 seconds',
+
     // General
     points: 'Points',
     seconds: 'sec',

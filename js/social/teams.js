@@ -166,14 +166,41 @@ function onTeamLeaderboardUpdate(callback, limit = 20) {
 // ========== UI КОМАНДЫ ==========
 
 function showTeamScreen() {
-  const screen = document.getElementById('screen-team');
-  if (!screen) return;
-  
-  if (userTeam) {
-    renderTeamDashboard(screen);
-  } else {
-    renderTeamJoinCreate(screen);
-  }
+    const screen = document.getElementById('screen-team');
+    if (!screen) return;
+
+    const hasTeam = (typeof userTeam !== 'undefined' && userTeam && userTeam.id);
+
+    if (hasTeam) {
+        renderTeamDashboard(screen);
+    } else {
+        screen.innerHTML = `
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center py-5">
+                    <i class="bi bi-people fs-1 text-accent d-block mb-3"></i>
+                    <h3 class="fw-bold mb-2">${t('teamTitle')}</h3>
+                    <p class="text-muted mb-4">${t('noTeam')}</p>
+
+                    <div class="bg-card rounded-4 p-4 mb-3">
+                        <h5 class="fw-bold mb-3">${t('createTeam')}</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control rounded-pill px-4" 
+                                   id="team-name-input" placeholder="${t('teamName')}" maxlength="30">
+                            <button class="btn btn-accent rounded-pill px-4 ms-2" onclick="createTeamFromInput()">
+                                ${t('createTeam')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline-accent rounded-pill px-4" onclick="showScreen('home')">
+                        <i class="bi bi-house me-2"></i>${t('home')}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showScreen('team');
 }
 
 function renderTeamJoinCreate(screen) {

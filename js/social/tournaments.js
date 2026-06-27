@@ -194,39 +194,56 @@ function showTournamentResults(data) {
 // ========== UI ТУРНИРОВ ==========
 
 function showTournamentScreen() {
-  const screen = document.getElementById('screen-tournament');
-  if (!screen) return;
-  
-  screen.innerHTML = `
-    <div class="row justify-content-center">
-      <div class="col-lg-6 text-center py-5">
-        <h2 class="fw-bold font-display mb-4">🏆 Турниры</h2>
-        
-        <div class="row g-3 mb-4">
-          ${Object.entries(TOURNAMENT_TYPES).map(([key, config]) => `
-            <div class="col-md-4">
-              <div class="bg-card rounded-4 p-4">
-                <span class="fs-1">${config.icon}</span>
-                <h5 class="fw-bold mt-2">${config.name}</h5>
-                <p class="text-accent fw-bold">🏆 ${config.reward} монет</p>
-                ${config.entryFee > 0 
-                  ? `<p class="text-muted small">Взнос: ${config.entryFee} 🪙</p>`
-                  : '<p class="text-success small">Бесплатно</p>'}
-                <button class="btn btn-accent rounded-pill px-4 mt-2 w-100" 
-                        onclick="joinTournament('${key}')">
-                  Участвовать
+    const screen = document.getElementById('screen-tournament');
+    if (!screen) return;
+
+    screen.innerHTML = `
+        <div class="row justify-content-center">
+            <div class="col-lg-6 text-center py-5">
+                <h2 class="fw-bold font-display mb-4">🏆 ${t('tournamentTitle')}</h2>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="bg-card rounded-4 p-4">
+                            <span class="fs-1">📅</span>
+                            <h5 class="fw-bold mt-2">${t('dailyTournament')}</h5>
+                            <p class="text-accent fw-bold">🏆 100 ${t('tournamentReward')}</p>
+                            <p class="text-success small">${t('free')}</p>
+                            <button class="btn btn-accent rounded-pill px-4 mt-2 w-100" onclick="joinTournament('daily')">
+                                ${t('participate')}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-card rounded-4 p-4">
+                            <span class="fs-1">🏆</span>
+                            <h5 class="fw-bold mt-2">${t('weeklyTournament')}</h5>
+                            <p class="text-accent fw-bold">🏆 500 ${t('tournamentReward')}</p>
+                            <p class="text-muted small">${t('entryFee')}: 50 🪙</p>
+                            <button class="btn btn-accent rounded-pill px-4 mt-2 w-100" onclick="joinTournament('weekly')">
+                                ${t('participate')}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="bg-card rounded-4 p-4">
+                            <span class="fs-1">⚡</span>
+                            <h5 class="fw-bold mt-2">${t('blitzTournament')}</h5>
+                            <p class="text-accent fw-bold">🏆 200 ${t('tournamentReward')}</p>
+                            <p class="text-muted small">${t('entryFee')}: 25 🪙</p>
+                            <button class="btn btn-accent rounded-pill px-4 mt-2 w-100" onclick="joinTournament('speed')">
+                                ${t('participate')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline-accent rounded-pill px-4" onclick="showScreen('home')">
+                    <i class="bi bi-house me-2"></i>${t('home')}
                 </button>
-              </div>
             </div>
-          `).join('')}
         </div>
-        
-        <button class="btn btn-outline-accent rounded-pill px-4" onclick="showScreen('home')">
-          <i class="bi bi-house me-2"></i>На главную
-        </button>
-      </div>
-    </div>
-  `;
-  
-  showScreen('tournament');
+    `;
+
+    showScreen('tournament');
 }
