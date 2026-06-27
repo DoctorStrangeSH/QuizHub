@@ -7,22 +7,20 @@ let selectedLanguage = localStorage.getItem('quizhub-language') || 'ru';
 let isFirstLoad = true;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Показываем body
-  document.body.classList.add('loaded');
-  
-  // Скрываем ВСЕ экраны
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  
-  createParticles();
-  setupDifficultyButtons();
-  setupStartButton();
-  setupMobileMenu();
-  initTheme();
-  restoreScreenFromHash();
-  restoreCategory();
-  
-  const logo = document.querySelector('.logo');
-  if (logo) logo.classList.add('logo-pulse');
+    document.body.classList.add('loaded');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    
+    createParticles();
+    setupDifficultyButtons();
+    setupStartButton();
+    setupMobileMenu();
+    initTheme();
+    restoreScreenFromHash();
+    restoreCategory();
+    restoreDifficulty();
+    
+    const logo = document.querySelector('.logo');
+    if (logo) logo.classList.add('logo-pulse');
 });
 
 function restoreCategory() {
@@ -84,6 +82,39 @@ menu.querySelectorAll('button, a, .theme-toggle-btn').forEach(item => {
       toggle.querySelector('i').className = 'bi bi-list';
     }
   });
+}
+
+// ========== СОХРАНЕНИЕ КАТЕГОРИИ ==========
+
+function setupCategorySaver() {
+    const catSelect = document.getElementById('quiz-category');
+    if (!catSelect) return;
+    
+    catSelect.addEventListener('change', function() {
+        localStorage.setItem('quizhub-category', this.value);
+    });
+}
+
+function restoreCategory() {
+    const savedCategory = localStorage.getItem('quizhub-category');
+    if (savedCategory) {
+        const catSelect = document.getElementById('quiz-category');
+        if (catSelect) {
+            catSelect.value = savedCategory;
+        }
+    }
+}
+
+// ========== СОХРАНЕНИЕ СЛОЖНОСТИ ==========
+
+function restoreDifficulty() {
+    const savedDifficulty = localStorage.getItem('quizhub-difficulty');
+    if (savedDifficulty) {
+        selectedDifficulty = savedDifficulty;
+        document.querySelectorAll('.btn-difficulty').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.difficulty === savedDifficulty);
+        });
+    }
 }
 
 // ========== ЧАСТИЦЫ ==========
@@ -160,12 +191,18 @@ window.addEventListener('hashchange', () => {
 
 // ========== КНОПКИ ==========
 function setupDifficultyButtons() {
-  document.querySelectorAll('.btn-difficulty').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.btn-difficulty').forEach(b => b.classList.remove('active'));
-      this.classList.add('active'); selectedDifficulty = this.dataset.difficulty;
+    document.querySelectorAll('.btn-difficulty').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.btn-difficulty').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedDifficulty = this.dataset.difficulty;
+            // Сохраняем сложность
+            localStorage.setItem('quizhub-difficulty', selectedDifficulty);
+        });
     });
-  });
+    
+    // Сохраняем категорию при изменении
+    setupCategorySaver();
 }
 
 function setupStartButton() {
@@ -176,10 +213,6 @@ function setupStartButton() {
     if (!nameInput.value.trim()) { nameInput.focus(); showToast('Введи своё имя!', 'warning'); return; }
     if (document.activeElement) document.activeElement.blur();
     QUIZ_SETTINGS.totalQuestions = 10; QUIZ_SETTINGS.timePerQuestion = 15;
-    const catSelect = document.getElementById('quiz-category');
-    if (catSelect) {
-    localStorage.setItem('quizhub-category', catSelect.value);
-    }
     startQuiz();
   });
 }
