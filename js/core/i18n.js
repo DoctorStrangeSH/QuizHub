@@ -4,10 +4,8 @@
 
 let currentLocale = localStorage.getItem('quizhub-locale') || 'ru';
 
-// Все переводы собираются в один объект
 const translations = {};
 
-// Функция для регистрации переводов из модулей
 function registerTranslations(module_ru, module_en) {
     for (const [key, value] of Object.entries(module_ru)) {
         if (!translations.ru) translations.ru = {};
@@ -36,13 +34,16 @@ function t(key) {
 function setLocale(locale) {
     currentLocale = locale;
     localStorage.setItem('quizhub-locale', locale);
+
     if (typeof selectedLanguage !== 'undefined') {
         selectedLanguage = locale;
         localStorage.setItem('quizhub-language', locale);
     }
+
     document.querySelectorAll('.btn-locale').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.locale === locale);
     });
+
     updateAllTranslations();
     console.log('🌍 Язык:', locale);
 }
@@ -183,20 +184,14 @@ function updateAllTranslations() {
         const lb = document.getElementById('screen-leaderboard');
         if (lb?.classList.contains('active')) loadLeaderboard();
     }
-
-    // 17. Команда
     if (typeof renderTeamScreen === 'function') {
         const team = document.getElementById('screen-team');
         if (team?.classList.contains('active')) renderTeamScreen();
     }
-
-    // 18. Турниры
     if (typeof renderTournamentScreen === 'function') {
         const tournament = document.getElementById('screen-tournament');
         if (tournament?.classList.contains('active')) renderTournamentScreen();
     }
-
-    // 19. AI (только если не идёт игра)
     if (typeof showAISelectScreen === 'function') {
         const quizScreen = document.getElementById('screen-quiz');
         if (quizScreen?.classList.contains('active') && 
@@ -218,6 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setLocale(saved);
     document.querySelectorAll('.btn-locale').forEach(btn => {
-        btn.addEventListener('click', function () { setLocale(this.dataset.locale); });
+        btn.addEventListener('click', function() { setLocale(this.dataset.locale); });
     });
 });
