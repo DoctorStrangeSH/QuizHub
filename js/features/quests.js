@@ -92,38 +92,49 @@ function generateQuests(type) {
     if (type === 'daily') {
         const today = mskTime.toISOString().split('T')[0];
         // НЕ сбрасываем если задания уже есть на сегодня
-        if (dailyQuestDate === today && dailyQuests.length > 0) return dailyQuests;
+        if (dailyQuestDate === today && dailyQuests.length > 0) {
+            console.log('📋 daily: уже есть, не сбрасываем');
+            return dailyQuests;
+        }
 
         dailyQuests = getRandomQuests(DAILY_QUESTS_POOL, 3);
         dailyQuestDate = today;
-        // Сбрасываем прогресс ТОЛЬКО если это новый день
         dailyProgress = {};
         dailyQuests.forEach(q => { dailyProgress[q.id] = 0; });
         saveQuestState('daily');
+        console.log('📋 daily: сброшены (новый день)');
         return dailyQuests;
     }
 
     if (type === 'weekly') {
         const weekNumber = getWeekNumber(mskTime);
-        if (weeklyQuestWeek === weekNumber && weeklyQuests.length > 0) return weeklyQuests;
+        if (weeklyQuestWeek === weekNumber && weeklyQuests.length > 0) {
+            console.log('📅 weekly: уже есть, не сбрасываем');
+            return weeklyQuests;
+        }
 
         weeklyQuests = getRandomQuests(WEEKLY_QUESTS_POOL, 3);
         weeklyQuestWeek = weekNumber;
         weeklyProgress = {};
         weeklyQuests.forEach(q => { weeklyProgress[q.id] = 0; });
         saveQuestState('weekly');
+        console.log('📅 weekly: сброшены (новая неделя)');
         return weeklyQuests;
     }
 
     if (type === 'monthly') {
         const monthKey = `${mskTime.getFullYear()}-${mskTime.getMonth() + 1}`;
-        if (monthlyQuestMonth === monthKey && monthlyQuests.length > 0) return monthlyQuests;
+        if (monthlyQuestMonth === monthKey && monthlyQuests.length > 0) {
+            console.log('🗓️ monthly: уже есть, не сбрасываем');
+            return monthlyQuests;
+        }
 
         monthlyQuests = getRandomQuests(MONTHLY_QUESTS_POOL, 3);
         monthlyQuestMonth = monthKey;
         monthlyProgress = {};
         monthlyQuests.forEach(q => { monthlyProgress[q.id] = 0; });
         saveQuestState('monthly');
+        console.log('🗓️ monthly: сброшены (новый месяц)');
         return monthlyQuests;
     }
 
