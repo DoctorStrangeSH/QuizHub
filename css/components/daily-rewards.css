@@ -1,0 +1,101 @@
+/* ============================================
+   QuizHub — Стили ежедневных наград
+   ============================================ */
+
+.daily-rewards-wrapper {
+    margin-bottom: 24px;
+}
+
+.daily-rewards {
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.daily-rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.daily-reward-item {
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.daily-reward-item.claimed {
+    opacity: 0.5;
+    background: rgba(0, 230, 118, 0.08);
+}
+
+.daily-reward-item.today {
+    background: var(--accent);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--accent-glow);
+    animation: todayPulse 2s ease-in-out infinite;
+}
+
+@keyframes todayPulse {
+    0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+    50% { box-shadow: 0 0 35px rgba(255, 107, 157, 0.6); }
+}
+
+.daily-reward-item.future {
+    opacity: 0.3;
+}
+
+.daily-reward-icon {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+.daily-reward-day {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.daily-reward-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+.daily-reward-item.today .daily-reward-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.daily-reward-check {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+}
+
+/* Адаптив */
+@media (max-width: 576px) {
+    .daily-rewards-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+    }
+
+    .daily-reward-item {
+        padding: 8px 2px;
+    }
+
+    .daily-reward-icon {
+        font-size: 1.2rem;
+    }
+
+    .daily-reward-label {
+        font-size: 0.6rem;
+    }
+}

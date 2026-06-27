@@ -124,4 +124,9 @@ const translations_en = {
     edit: 'Edit',
     you: 'you',
     footer_text: '© 2026 QuizHub • Questions from Open Trivia DB and community • <span class="live-dot"></span> Real-time',
+    dailyRewards: 'Daily Rewards',
+    days: 'days',
+    day: 'Day',
+    claimReward: 'Claim Reward',
+    alreadyClaimed: 'Already Claimed',
 };
