@@ -1,5 +1,5 @@
 // ============================================
-// QuizHub — Синхронизация через Firestore v2.3
+// QuizHub — Синхронизация через Firestore v2.4
 // ============================================
 
 async function saveUserDataToFirestore() {
@@ -10,128 +10,94 @@ async function saveUserDataToFirestore() {
         displayName: currentUser.displayName || 'Игрок',
         photoURL: currentUser.photoURL || null,
         email: currentUser.email || null,
-
-        // Монеты — сохраняем актуальное значение
         coins: parseInt(localStorage.getItem('quizhub-coins') || '0'),
-
-        // Статистика
         totalXP: (typeof quizStats !== 'undefined' ? quizStats.totalXP : 0) || 0,
         bestScore: (typeof quizStats !== 'undefined' ? quizStats.bestScore : 0) || 0,
         totalQuizzes: (typeof quizStats !== 'undefined' ? quizStats.totalQuizzes : 0) || 0,
         dayStreak: (typeof quizStats !== 'undefined' ? quizStats.dayStreak : 0) || 0,
-
-        // Достижения
         achievements: JSON.parse(localStorage.getItem('quizhub-achievements') || '[]'),
-
-        // Покупки
         purchases: JSON.parse(localStorage.getItem('quizhub-purchases') || '[]'),
-
-        // Активная тема
         customTheme: localStorage.getItem('quizhub-custom-theme') || null,
-
-        // Полная статистика
         stats: typeof quizStats !== 'undefined' ? quizStats : {},
-
-        // Настройки
+        questState: JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}'),
         settings: {
             theme: localStorage.getItem('quizhub-theme') || 'dark',
             locale: localStorage.getItem('quizhub-locale') || 'ru',
         },
-
-        // Друзья
         friends: JSON.parse(localStorage.getItem('quizhub-friends') || '[]'),
-
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
     try {
         const doc = await userRef.get();
-        if (doc.exists) {
-            await userRef.update(data);
-        } else {
-            await userRef.set({
-                ...data,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-        console.log('💾 Данные сохранены в Firestore (монеты:', data.coins, ')');
-    } catch (error) {
-        console.error('Ошибка сохранения:', error);
-    }
+        if (doc.exists) await userRef.update(data);
+        else await userRef.set({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        console.log('💾 Данные сохранены в Firestore');
+    } catch (error) { console.error('Ошибка сохранения:', error); }
 }
 
 async function loadUserDataFromFirestore() {
     if (typeof currentUser === 'undefined' || !currentUser) return;
-
-    // Проверяем, не вышел ли пользователь
-    const userCache = localStorage.getItem('quizhub-user-cache');
-    if (!userCache) {
-        console.log('⚠️ Пользователь вышел, данные не загружаются');
-        return;
-    }
+    if (!localStorage.getItem('quizhub-user-cache')) return;
 
     try {
         const doc = await db.collection('users').doc(currentUser.uid).get();
-        if (!doc.exists) {
-            await saveUserDataToFirestore();
-            return;
-        }
+        if (!doc.exists) { await saveUserDataToFirestore(); return; }
 
         const data = doc.data();
         console.log('📥 Данные загружены из Firestore');
 
-        // === МОНЕТЫ ===
+        // Монеты
         if (typeof data.coins === 'number') {
             const localCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
             const bestCoins = Math.max(data.coins, localCoins);
             localStorage.setItem('quizhub-coins', bestCoins.toString());
             if (typeof userCoins !== 'undefined') userCoins = bestCoins;
             if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
-            console.log('🪙 Монеты:', { local: localCoins, cloud: data.coins, result: bestCoins });
         }
 
-        // === ДОСТИЖЕНИЯ ===
+        // Достижения
         if (data.achievements) {
             const local = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
             const merged = [...new Set([...local, ...data.achievements])];
             localStorage.setItem('quizhub-achievements', JSON.stringify(merged));
             if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = merged;
-            console.log('🏆 Достижения:', merged.length);
         }
 
-        // === ПОКУПКИ ===
+        // Покупки
         if (data.purchases) {
             const localPurchases = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
             const mergedPurchases = [...new Set([...localPurchases, ...data.purchases])];
             localStorage.setItem('quizhub-purchases', JSON.stringify(mergedPurchases));
             if (typeof purchasedItems !== 'undefined') purchasedItems = mergedPurchases;
-            console.log('🛍️ Покупки:', mergedPurchases);
         }
 
-        // === АКТИВНАЯ ТЕМА ===
+        // Тема
         if (data.customTheme && !localStorage.getItem('quizhub-custom-theme')) {
             localStorage.setItem('quizhub-custom-theme', data.customTheme);
             if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = data.customTheme;
             if (typeof initCustomTheme === 'function') initCustomTheme();
-            console.log('🎨 Тема:', data.customTheme);
         }
 
-        // === СТАТИСТИКА ===
+        // Статистика
         if (data.stats) {
             const localStats = JSON.parse(localStorage.getItem('quizhub-stats') || '{}');
-            const merged = {
-                ...data.stats,
-                ...localStats,
-                bestScore: Math.max(data.stats.bestScore || 0, localStats.bestScore || 0),
-                totalXP: Math.max(data.stats.totalXP || 0, localStats.totalXP || 0),
-                totalQuizzes: Math.max(data.stats.totalQuizzes || 0, localStats.totalQuizzes || 0),
-                dayStreak: Math.max(data.stats.dayStreak || 0, localStats.dayStreak || 0),
-            };
+            const merged = { ...data.stats, ...localStats, bestScore: Math.max(data.stats.bestScore||0, localStats.bestScore||0), totalXP: Math.max(data.stats.totalXP||0, localStats.totalXP||0), totalQuizzes: Math.max(data.stats.totalQuizzes||0, localStats.totalQuizzes||0), dayStreak: Math.max(data.stats.dayStreak||0, localStats.dayStreak||0) };
             localStorage.setItem('quizhub-stats', JSON.stringify(merged));
             if (typeof quizStats !== 'undefined') Object.assign(quizStats, merged);
         }
 
-        // === НАСТРОЙКИ ===
+        // === ЗАДАНИЯ ===
+        if (data.questState && data.questState.dailyQuestDate) {
+            const localQuest = JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}');
+            if (!localQuest.dailyQuestDate || data.questState.dailyQuestDate >= localQuest.dailyQuestDate) {
+                localStorage.setItem('quizhub-quest-state', JSON.stringify(data.questState));
+                if (typeof loadQuestState === 'function') loadQuestState();
+                console.log('📋 Задания синхронизированы из облака');
+            }
+        }
+
+        // Настройки
         if (data.settings?.theme && !localStorage.getItem('quizhub-theme')) {
             localStorage.setItem('quizhub-theme', data.settings.theme);
             if (typeof initTheme === 'function') initTheme();
@@ -141,7 +107,7 @@ async function loadUserDataFromFirestore() {
             if (typeof setLocale === 'function') setLocale(data.settings.locale);
         }
 
-        // === ДРУЗЬЯ ===
+        // Друзья
         if (data.friends) {
             const localFriends = JSON.parse(localStorage.getItem('quizhub-friends') || '[]');
             const mergedFriends = [...new Set([...localFriends, ...data.friends])];
@@ -150,13 +116,9 @@ async function loadUserDataFromFirestore() {
         }
 
         console.log('✅ Синхронизация завершена');
-
-        // После загрузки — сохраняем локальное состояние в облако
         setTimeout(() => saveUserDataToFirestore(), 2000);
 
-    } catch (error) {
-        console.error('Ошибка загрузки:', error);
-    }
+    } catch (error) { console.error('Ошибка загрузки:', error); }
 }
 
 function listenToUserDataChanges() {
@@ -166,7 +128,6 @@ function listenToUserDataChanges() {
         if (!doc.exists) return;
         const data = doc.data();
 
-        // Монеты — только если в облаке больше
         if (typeof data.coins === 'number') {
             const localCoins = parseInt(localStorage.getItem('quizhub-coins') || '0');
             if (data.coins > localCoins) {
@@ -176,7 +137,6 @@ function listenToUserDataChanges() {
             }
         }
 
-        // Покупки
         if (data.purchases) {
             const localPurchases = JSON.parse(localStorage.getItem('quizhub-purchases') || '[]');
             const merged = [...new Set([...localPurchases, ...data.purchases])];
@@ -186,7 +146,6 @@ function listenToUserDataChanges() {
             }
         }
 
-        // Достижения
         if (data.achievements) {
             const local = JSON.parse(localStorage.getItem('quizhub-achievements') || '[]');
             const merged = [...new Set([...local, ...data.achievements])];
@@ -195,32 +154,30 @@ function listenToUserDataChanges() {
                 if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = merged;
             }
         }
+
+        // Задания в реальном времени
+        if (data.questState) {
+            const localQuest = JSON.parse(localStorage.getItem('quizhub-quest-state') || '{}');
+            if (JSON.stringify(data.questState) !== JSON.stringify(localQuest)) {
+                localStorage.setItem('quizhub-quest-state', JSON.stringify(data.questState));
+                if (typeof loadQuestState === 'function') loadQuestState();
+            }
+        }
     });
 }
 
-// ========== АВТОСОХРАНЕНИЕ ==========
-
-// Сохраняем периодически (каждые 60 секунд)
 setInterval(() => {
-    if (typeof currentUser !== 'undefined' && currentUser) {
-        saveUserDataToFirestore();
-    }
+    if (typeof currentUser !== 'undefined' && currentUser) saveUserDataToFirestore();
 }, 60000);
 
-// ========== ИНИЦИАЛИЗАЦИЯ ==========
-
-// Ждём загрузку currentUser
 setTimeout(() => {
     if (typeof currentUser !== 'undefined' && currentUser) {
         loadUserDataFromFirestore().then(() => listenToUserDataChanges());
     }
 }, 1000);
 
-// Слушаем изменения авторизации
 if (typeof auth !== 'undefined') {
     auth.onAuthStateChanged(user => {
-        if (user) {
-            loadUserDataFromFirestore().then(() => listenToUserDataChanges());
-        }
+        if (user) loadUserDataFromFirestore().then(() => listenToUserDataChanges());
     });
 }

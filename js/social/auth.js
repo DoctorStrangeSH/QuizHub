@@ -1,8 +1,10 @@
 // ============================================
-// QuizHub — Аутентификация Google v2.5
+// QuizHub — Аутентификация Google v2.6
+// Кнопка НИКОГДА не мигает
 // ============================================
 
 let currentUser = null;
+let lastAuthUIState = null; // 'logged-in' или 'logged-out'
 
 // ========== МГНОВЕННЫЙ ПОКАЗ ИЗ КЭША ==========
 
@@ -30,12 +32,14 @@ let currentUser = null;
                     </button>
                 </div>
             `;
+            lastAuthUIState = 'logged-in';
         } catch (e) {
             authArea.innerHTML = `
                 <button class="btn btn-accent btn-sm rounded-pill px-3" onclick="signInWithGoogle()">
                     <i class="bi bi-google me-2"></i>Войти
                 </button>
             `;
+            lastAuthUIState = 'logged-out';
         }
     } else {
         authArea.innerHTML = `
@@ -43,6 +47,7 @@ let currentUser = null;
                 <i class="bi bi-google me-2"></i>Войти
             </button>
         `;
+        lastAuthUIState = 'logged-out';
     }
 
     authArea.style.visibility = 'visible';
@@ -66,19 +71,26 @@ function initAuthListener() {
     }
 
     authInstance.onAuthStateChanged(async user => {
+        // Определяем новое состояние
+        const newState = user ? 'logged-in' : 'logged-out';
+        
+        // Если состояние НЕ изменилось — ничего не делаем
+        if (newState === lastAuthUIState && user === currentUser) {
+            return;
+        }
+        
+        lastAuthUIState = newState;
         currentUser = user;
 
         if (user) {
             console.log('👤 Пользователь:', user.displayName);
 
-            // Сохраняем в кэш для мгновенного показа
             localStorage.setItem('quizhub-user-cache', JSON.stringify({
                 displayName: user.displayName,
                 photoURL: user.photoURL,
                 uid: user.uid
             }));
 
-            // Загружаем данные из Firestore
             if (typeof loadUserDataFromFirestore === 'function') {
                 await loadUserDataFromFirestore();
             }
@@ -123,10 +135,10 @@ function signInWithGoogle() {
         });
 }
 
-// ========== ВЫХОД (НЕ СОХРАНЯЕМ ДАННЫЕ, НЕ ТРОГАЕМ FIRESTORE) ==========
+// ========== ВЫХОД ==========
 
 async function signOut() {
-    // Очищаем ТОЛЬКО локальные данные
+    // Очищаем локальные данные
     const allKeys = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -136,39 +148,29 @@ async function signOut() {
     }
     
     allKeys.forEach(key => {
-        try {
-            localStorage.removeItem(key);
-        } catch (e) {
-            console.warn('Не удалось удалить:', key);
-        }
+        try { localStorage.removeItem(key); } catch (e) {}
     });
 
-    // Сбрасываем глобальные переменные
+    // Сбрасываем переменные
     if (typeof userCoins !== 'undefined') userCoins = 0;
     if (typeof unlockedAchievements !== 'undefined') unlockedAchievements = [];
     if (typeof purchasedItems !== 'undefined') purchasedItems = [];
     if (typeof activeCustomTheme !== 'undefined') activeCustomTheme = null;
-    if (typeof quizStats !== 'undefined') {
-        Object.keys(quizStats).forEach(key => delete quizStats[key]);
-    }
+    if (typeof quizStats !== 'undefined') Object.keys(quizStats).forEach(k => delete quizStats[k]);
     if (typeof friendsList !== 'undefined') friendsList = [];
     if (typeof userTeam !== 'undefined') userTeam = null;
-    if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = 'easy';
 
-    // Сбрасываем кастомную тему
     document.documentElement.removeAttribute('data-custom-theme');
-
-    // Обновляем отображение
     if (typeof updateCoinsDisplay === 'function') updateCoinsDisplay();
 
-    // Выходим из Firebase (НЕ сохраняем данные)
+    // Выходим
     const authInstance = getAuth();
-    if (authInstance) {
-        await authInstance.signOut();
-    }
+    if (authInstance) await authInstance.signOut();
 
     // Обновляем UI
+    lastAuthUIState = 'logged-out';
     currentUser = null;
+    
     const authArea = document.getElementById('auth-area');
     if (authArea) {
         authArea.innerHTML = `
@@ -179,9 +181,7 @@ async function signOut() {
         authArea.style.visibility = 'visible';
     }
 
-    // Возвращаем на главную
     if (typeof showScreen === 'function') showScreen('home');
-
     console.log('👋 Выход выполнен');
 }
 
@@ -229,14 +229,8 @@ function updateAuthUI(user) {
 
 // ========== СТИЛИ ==========
 
-const authStyles = `
-    #auth-area {
-        transition: opacity 0.15s ease;
-    }
-`;
-
 const styleEl = document.createElement('style');
-styleEl.textContent = authStyles;
+styleEl.textContent = `#auth-area { transition: opacity 0.15s ease; }`;
 document.head.appendChild(styleEl);
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
