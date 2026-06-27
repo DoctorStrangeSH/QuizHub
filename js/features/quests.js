@@ -261,47 +261,49 @@ function showQuestComplete(quest) {
 // ========== ОТОБРАЖЕНИЕ ==========
 
 function renderQuestsHTML(type) {
-  generateQuests(type);
-  
-  const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
-  const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
-  
-  if (!quests || quests.length === 0) return '<p class="text-muted">Нет активных заданий</p>';
-  
-  const titles = { daily: '📋 Ежедневные задания', weekly: '📅 Недельные задания', monthly: '🗓️ Месячные задания' };
-  const resetInfo = { daily: 'Обновление: 00:00 МСК', weekly: 'Обновление: понедельник 00:00 МСК', monthly: 'Обновление: 1 число 00:00 МСК' };
-  
-  return `
-    <div class="quests-section">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="fw-bold mb-0">${titles[type]}</h6>
-        <small class="text-muted">${resetInfo[type]}</small>
-      </div>
-      <div class="d-grid gap-2">
-        ${quests.map(q => {
-          const p = progress[q.id] || 0;
-          const done = progress[q.id + '_done'] || false;
-          const pct = Math.min((p / q.target) * 100, 100);
-          return `
-            <div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}">
-              <span class="fs-4">${q.icon}</span>
-              <div class="flex-grow-1 min-width-0">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${q.name}</span>
-                  <small class="text-muted flex-shrink-0 ms-2">+${q.reward} 🪙</small>
-                </div>
-                <div class="progress mt-1" style="height: 4px;">
-                  <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width: ${pct}%;"></div>
-                </div>
-                <small class="text-muted">${p}/${q.target} • ${q.desc}</small>
-              </div>
-              ${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}
+    generateQuests(type);
+
+    const quests = type === 'daily' ? dailyQuests : type === 'weekly' ? weeklyQuests : monthlyQuests;
+    const progress = type === 'daily' ? dailyProgress : type === 'weekly' ? weeklyProgress : monthlyProgress;
+
+    if (!quests || quests.length === 0) return `<p class="text-muted">${t('noActiveQuests')}</p>`;
+
+    const section = I18N_TEMPLATES.questsSection(type);
+
+    return `
+        <div class="quests-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">${section.title}</h6>
+                <small class="text-muted">${section.reset}</small>
             </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
+            <div class="d-grid gap-2">
+                ${quests.map(q => {
+                    const p = progress[q.id] || 0;
+                    const done = progress[q.id + '_done'] || false;
+                    // Используем t() для названия и описания
+                    const questName = t('quest_' + q.id) || q.name;
+                    const questDesc = t('quest_' + q.id + '_desc') || q.desc;
+                    const pct = Math.min((p / q.target) * 100, 100);
+                    return `
+                        <div class="quest-item d-flex align-items-center gap-3 p-2 rounded-3 ${done ? 'quest-done' : ''}">
+                            <span class="fs-4">${q.icon}</span>
+                            <div class="flex-grow-1 min-width-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold text-truncate ${done ? 'text-success' : ''}">${questName}</span>
+                                    <small class="text-muted flex-shrink-0 ms-2">+${q.reward} 🪙</small>
+                                </div>
+                                <div class="progress mt-1" style="height:4px;">
+                                    <div class="progress-bar ${done ? 'bg-success' : 'bg-accent'}" style="width:${pct}%;"></div>
+                                </div>
+                                <small class="text-muted">${p}/${q.target} • ${questDesc}</small>
+                            </div>
+                            ${done ? '<span class="fs-5 flex-shrink-0">✅</span>' : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
 }
 
 // ========== ВСПОМОГАТЕЛЬНЫЕ ==========

@@ -66,4 +66,6 @@ const translations_en = {
     save: 'Save',
     delete: 'Delete',
     edit: 'Edit',
+    you: 'you',
+    footer_text: '© 2026 QuizHub • Questions from Open Trivia DB and community • <span class="live-dot"></span> Real-time',
 };

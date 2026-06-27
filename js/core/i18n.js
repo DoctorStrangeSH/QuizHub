@@ -27,6 +27,8 @@ registerTranslations(chat_ru, chat_en);
 registerTranslations(shop_ru, shop_en);
 registerTranslations(friends_ru, friends_en);
 registerTranslations(stats_ru, stats_en);
+registerTranslations(quests_ru, quests_en);
+registerTranslations(events_ru, events_en);
 
 function t(key) {
     return translations[currentLocale]?.[key] || translations['ru']?.[key] || key;
@@ -47,7 +49,7 @@ function setLocale(locale) {
 }
 
 function updateAllTranslations() {
-    // data-i18n элементы
+    // 1. data-i18n элементы
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         const text = t(key);
@@ -59,30 +61,48 @@ function updateAllTranslations() {
         } else el.textContent = text;
     });
 
-    // Главный экран
+    // 2. Заголовок
     const h1 = document.querySelector('#screen-home h1');
     if (h1) h1.innerHTML = `${t('heroTitle')} <span class="text-accent">${t('heroSubtitle')}</span>`;
+
+    // 3. Описание
     const lead = document.querySelector('#screen-home .lead');
     if (lead) lead.textContent = t('heroDesc');
+
+    // 4. Кнопка старта
     const startBtn = document.getElementById('start-quiz');
     if (startBtn) startBtn.innerHTML = `<i class="bi bi-play-fill me-2"></i>${t('startQuiz')}`;
+
+    // 5. Поле имени
     const nameInput = document.getElementById('player-name');
     if (nameInput) nameInput.placeholder = t('namePlaceholder');
 
-    // Лейблы
+    // 6. Лейблы
     const labels = document.querySelectorAll('#screen-home .form-label');
     if (labels[0]) labels[0].innerHTML = `<i class="bi bi-person me-1 text-accent"></i>${t('yourName')}`;
     if (labels[1]) labels[1].innerHTML = `<i class="bi bi-grid me-1 text-accent"></i>${t('category')}`;
     if (labels[2]) labels[2].innerHTML = `<i class="bi bi-speedometer2 me-1 text-accent"></i>${t('difficulty')}`;
 
-    // Кнопки сложности
+    // 7. Кнопки сложности
     const diffLabels = { easy: t('easy'), medium: t('medium'), hard: t('hard') };
     document.querySelectorAll('.btn-difficulty').forEach(btn => {
         const d = btn.dataset.difficulty;
         if (d && diffLabels[d]) btn.textContent = diffLabels[d];
     });
 
-    // Категории
+    // 8. Статистика
+    const stats = document.querySelectorAll('#screen-home .d-flex.gap-4 span');
+    if (stats[0]) stats[0].innerHTML = `📝 ${t('questionsCount')}`;
+    if (stats[1]) stats[1].innerHTML = `⏰ ${t('timePerQuestion')}`;
+    if (stats[2]) stats[2].innerHTML = `⭐ ${t('bonusSpeed')}`;
+
+    // 9. Режимы
+    const modes = document.querySelectorAll('#screen-home .d-flex.flex-wrap.gap-2 .btn-outline-accent');
+    if (modes[0]) modes[0].innerHTML = `💀 ${t('survival')}`;
+    if (modes[1]) modes[1].innerHTML = `🤖 ${t('aiMode')}`;
+    if (modes[2]) modes[2].innerHTML = `⏱ ${t('timed')}`;
+
+    // 10. Категории в select
     const catSelect = document.getElementById('quiz-category');
     if (catSelect) {
         const catTrans = {
@@ -98,7 +118,7 @@ function updateAllTranslations() {
         });
     }
 
-    // Хедер
+    // 11. Хедер
     document.querySelectorAll('.header-actions-collapsible .btn span').forEach(span => {
         const txt = span.textContent.trim();
         if (txt === 'Лидеры' || txt === 'Leaders') span.textContent = t('leaders');
@@ -107,7 +127,7 @@ function updateAllTranslations() {
         if (txt === 'Друзья' || txt === 'Friends') span.textContent = t('friends');
     });
 
-    // Кнопка входа
+    // 12. Кнопка входа
     const authBtn = document.querySelector('#auth-area .btn');
     if (authBtn && typeof currentUser !== 'undefined' && !currentUser) {
         const span = authBtn.querySelector('span');
@@ -115,25 +135,7 @@ function updateAllTranslations() {
         else authBtn.innerHTML = `<i class="bi bi-google me-2"></i>${t('login')}`;
     }
 
-    // Перерендер активных экранов
-    if (typeof renderAchievementsScreen === 'function') {
-        const s = document.getElementById('screen-achievements');
-        if (s?.classList.contains('active')) renderAchievementsScreen();
-    }
-    if (typeof renderStatsScreen === 'function') {
-        const s = document.getElementById('screen-stats');
-        if (s?.classList.contains('active')) renderStatsScreen();
-    }
-    if (typeof renderFriendsScreen === 'function') {
-        const s = document.getElementById('screen-friends');
-        if (s?.classList.contains('active')) renderFriendsScreen(s);
-    }
-    if (typeof renderShop === 'function') {
-        const s = document.getElementById('screen-shop');
-        if (s?.classList.contains('active')) renderShop();
-    }
-
-    // Чат
+    // 13. Чат
     const chatHeader = document.querySelector('.chat-header-title');
     if (chatHeader) chatHeader.textContent = t('chatTitle');
     document.querySelectorAll('.chat-tab').forEach(tab => {
@@ -143,6 +145,39 @@ function updateAllTranslations() {
     });
     const chatInput = document.querySelector('.chat-input');
     if (chatInput) chatInput.placeholder = t('chatInput');
+
+    // 14. Футер
+    const footer = document.querySelector('.app-footer small');
+    if (footer) {
+        footer.innerHTML = t('footer_text');
+    }
+
+    // 15. Баннер событий (мгновенный перевод)
+    if (typeof renderEventBanner === 'function') {
+        renderEventBanner();
+    }
+
+    // 16. Перерендер активных экранов
+    if (typeof renderAchievementsScreen === 'function') {
+        const ach = document.getElementById('screen-achievements');
+        if (ach?.classList.contains('active')) renderAchievementsScreen();
+    }
+    if (typeof renderStatsScreen === 'function') {
+        const st = document.getElementById('screen-stats');
+        if (st?.classList.contains('active')) renderStatsScreen();
+    }
+    if (typeof renderShop === 'function') {
+        const shop = document.getElementById('screen-shop');
+        if (shop?.classList.contains('active')) renderShop();
+    }
+    if (typeof renderFriendsScreen === 'function') {
+        const fr = document.getElementById('screen-friends');
+        if (fr?.classList.contains('active')) renderFriendsScreen(fr);
+    }
+    if (typeof loadLeaderboard === 'function') {
+        const lb = document.getElementById('screen-leaderboard');
+        if (lb?.classList.contains('active')) loadLeaderboard();
+    }
 
     console.log('🌍 Интерфейс обновлён:', currentLocale);
 }
@@ -155,6 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     setLocale(saved);
     document.querySelectorAll('.btn-locale').forEach(btn => {
-        btn.addEventListener('click', function() { setLocale(this.dataset.locale); });
+        btn.addEventListener('click', function () { setLocale(this.dataset.locale); });
     });
 });

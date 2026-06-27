@@ -76,21 +76,31 @@ function renderEventBanner() {
     container.style.display = 'block';
     const bgColor = event.color || 'var(--accent)';
 
+    // Ключ: убираем пробелы и дефисы, заменяем на подчёркивания, в нижний регистр
+    const eventKey = event.name
+        .replace(/\s+/g, '_')
+        .replace(/-/g, '_')
+        .toLowerCase();
+    
+    const eventName = t('event_' + eventKey) || event.name;
+    const eventDesc = t('event_desc_' + eventKey) || event.desc;
+
     container.innerHTML = `
         <div class="event-banner-card" style="--event-color: ${bgColor};" onclick="handleEventClick('${event.category || 'any'}')">
             <div class="event-banner-icon">${event.icon}</div>
             <div class="event-banner-info">
-                <div class="event-banner-title">${event.name}</div>
-                <div class="event-banner-desc">${event.desc}</div>
+                <div class="event-banner-title">${eventName}</div>
+                <div class="event-banner-desc">${eventDesc}</div>
                 <div class="event-banner-bonuses">
                     ${event.xpMultiplier > 1 ? `<span class="event-bonus">⚡ x${event.xpMultiplier} XP</span>` : ''}
-                    ${event.coinMultiplier > 1 ? `<span class="event-bonus">🪙 x${event.coinMultiplier} монет</span>` : ''}
+                    ${event.coinMultiplier > 1 ? `<span class="event-bonus">🪙 x${event.coinMultiplier} ${t('coins')}</span>` : ''}
                 </div>
             </div>
             <div class="event-banner-arrow">→</div>
         </div>
     `;
 }
+
 
 function handleEventClick(category) {
     if (category === 'speed') {
