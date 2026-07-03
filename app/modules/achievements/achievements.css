@@ -1,0 +1,210 @@
+.achievements-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.achievements-header {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+.achievement-card {
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+/* Анимация появления с задержкой для каждой карточки */
+.achievement-card:nth-child(1) { animation-delay: 0.05s; }
+.achievement-card:nth-child(2) { animation-delay: 0.1s; }
+.achievement-card:nth-child(3) { animation-delay: 0.15s; }
+.achievement-card:nth-child(4) { animation-delay: 0.2s; }
+.achievement-card:nth-child(5) { animation-delay: 0.25s; }
+.achievement-card:nth-child(6) { animation-delay: 0.3s; }
+.achievement-card:nth-child(7) { animation-delay: 0.35s; }
+.achievement-card:nth-child(8) { animation-delay: 0.4s; }
+.achievement-card:nth-child(9) { animation-delay: 0.45s; }
+.achievement-card:nth-child(10) { animation-delay: 0.5s; }
+.achievement-card:nth-child(11) { animation-delay: 0.55s; }
+.achievement-card:nth-child(12) { animation-delay: 0.6s; }
+
+.achievement-card.unlocked {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px var(--gold-glow);
+}
+
+.achievement-card.locked {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+}
+
+.achievement-card:hover {
+    transform: translateY(-3px);
+}
+
+.achievement-card.unlocked:hover {
+    box-shadow: 0 0 30px var(--gold-glow);
+}
+
+.achievement-icon-wrapper {
+    position: relative;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.achievement-icon {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.achievement-card:hover .achievement-icon {
+    transform: scale(1.15);
+}
+
+.achievement-check {
+    position: absolute;
+    bottom: -4px;
+    right: 50%;
+    transform: translateX(150%);
+    background: var(--success);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: popIn 0.3s ease 0.5s forwards;
+    opacity: 0;
+}
+
+.achievement-lock {
+    position: absolute;
+    bottom: -4px;
+    right: 50%;
+    transform: translateX(150%);
+    font-size: 0.9rem;
+}
+
+.achievement-info {
+    position: relative;
+    z-index: 1;
+}
+
+.achievement-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.achievement-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.achievement-glow {
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle, var(--gold-glow), transparent);
+    opacity: 0.3;
+    animation: rotateGlow 4s linear infinite;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translateX(150%) scale(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(150%) scale(1);
+    }
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Попап достижений */
+.achievement-popup {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 24px;
+    z-index: 1000;
+    border: 1px solid var(--gold);
+    box-shadow: 0 8px 30px var(--gold-glow);
+    transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 300px;
+}
+
+.achievement-popup.show {
+    bottom: 24px;
+}
+
+.popup-icon {
+    font-size: 2rem;
+    animation: popIn 0.4s ease;
+}
+
+.loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .achievements-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    
+    .achievement-card {
+        padding: 14px 10px;
+    }
+    
+    .achievement-icon-wrapper {
+        font-size: 2rem;
+    }
+}

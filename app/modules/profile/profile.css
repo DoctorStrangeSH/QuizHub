@@ -1,0 +1,719 @@
+/* ========== ОБЁРТКА ========== */
+.profile-create-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* ========== ДЕКОРАТИВНЫЙ ФОН ========== */
+.profile-bg-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: float 12s ease-in-out infinite;
+}
+
+.bg-circle-1 {
+    width: 400px;
+    height: 400px;
+    background: var(--accent);
+    top: -100px;
+    right: -100px;
+    animation-delay: 0s;
+}
+
+.bg-circle-2 {
+    width: 300px;
+    height: 300px;
+    background: var(--accent-secondary);
+    bottom: -80px;
+    left: -80px;
+    animation-delay: -4s;
+}
+
+.bg-circle-3 {
+    width: 200px;
+    height: 200px;
+    background: var(--gold);
+    top: 50%;
+    left: 50%;
+    animation-delay: -8s;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(20px, -30px) scale(1.05);
+    }
+
+    66% {
+        transform: translate(-15px, 20px) scale(0.95);
+    }
+}
+
+/* ========== КАРТОЧКА ========== */
+.profile-create-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 40px 32px;
+    position: relative;
+    animation: cardAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border: 1px solid var(--border-glow);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px var(--border-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.profile-create-card.fade-out {
+    animation: cardDisappear 0.4s ease forwards;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes cardDisappear {
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+}
+
+/* ========== ИКОНКА ========== */
+.profile-icon-wrapper {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 24px;
+}
+
+.profile-icon-glow {
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: var(--accent);
+    filter: blur(30px);
+    opacity: 0.3;
+    animation: pulseIcon 2s ease-in-out infinite;
+}
+
+.profile-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 3rem;
+    background: var(--bg-card);
+    border-radius: 50%;
+    border: 2px solid var(--border-glow);
+    box-shadow: 0 0 30px rgba(124, 92, 252, 0.2);
+}
+
+@keyframes pulseIcon {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.5;
+    }
+}
+
+/* ========== ЗАГОЛОВОК ========== */
+.profile-header {
+    margin-bottom: 32px;
+}
+
+.profile-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+.profile-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* ========== ФОРМА ========== */
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ========== ГРУППА ИНПУТА ========== */
+.nickname-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nickname-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 0;
+}
+
+.label-icon {
+    font-size: 1rem;
+}
+
+.nickname-input-group {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all var(--transition);
+}
+
+.nickname-input-group:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(124, 92, 252, 0.1);
+}
+
+.input-at {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0 0 0 16px;
+    user-select: none;
+}
+
+.nickname-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 16px 12px;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 500;
+    outline: none;
+    min-width: 0;
+    letter-spacing: 0.3px;
+}
+
+.nickname-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* ========== КНОПКА "ПРОВЕРИТЬ" ========== */
+.check-btn {
+    background: linear-gradient(135deg, rgba(124, 92, 252, 0.2), rgba(124, 92, 252, 0.1));
+    border: 1px solid var(--border-glow);
+    color: var(--accent);
+    padding: 12px 18px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    margin: 6px;
+    border-radius: var(--radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.check-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.check-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(124, 92, 252, 0.3);
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+.check-btn:hover::before {
+    opacity: 1;
+}
+
+.check-btn:active {
+    transform: scale(0.96);
+}
+
+.check-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.check-btn.loading {
+    pointer-events: none;
+}
+
+.check-btn-text,
+.check-btn-loading {
+    position: relative;
+    z-index: 1;
+}
+
+.check-btn-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.loading-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: dotBounce 1.2s infinite;
+}
+
+.loading-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+        opacity: 0.3;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ========== СТАТУС ========== */
+.nickname-status {
+    font-size: 0.85rem;
+    min-height: 22px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.nickname-status.success {
+    color: var(--success);
+}
+
+.nickname-status.error {
+    color: var(--danger);
+}
+
+.nickname-status.checking {
+    color: var(--accent-secondary);
+}
+
+/* ========== ПОДСКАЗКИ ========== */
+.nickname-hints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* ========== КНОПКА "СОЗДАТЬ" ========== */
+.save-btn {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    color: var(--text-secondary);
+    padding: 16px 28px;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition);
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.save-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.save-btn.ready {
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 8px 25px var(--accent-glow);
+    animation: glowPulse 2s infinite;
+}
+
+.save-btn.ready:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px var(--accent-glow);
+}
+
+.save-btn.ready:active {
+    transform: scale(0.97);
+}
+
+.save-btn.saving {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 8px 25px var(--accent-glow);
+    }
+
+    50% {
+        box-shadow: 0 12px 40px rgba(124, 92, 252, 0.6);
+    }
+}
+
+/* ========== ФУТЕР ========== */
+.profile-footer-text {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    opacity: 0.6;
+    margin: 20px 0 0;
+}
+
+/* ========== МОБИЛЬНАЯ АДАПТАЦИЯ ========== */
+@media (max-width: 480px) {
+    .profile-create-wrapper {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: 15vh;
+    }
+
+    .profile-create-card {
+        padding: 28px 20px;
+        border-radius: var(--radius-lg);
+    }
+
+    .profile-icon-wrapper {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 18px;
+    }
+
+    .profile-icon {
+        font-size: 2.2rem;
+    }
+
+    .profile-title {
+        font-size: 1.5rem;
+    }
+
+    .profile-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .nickname-input-group {
+        flex-direction: column;
+        border-radius: var(--radius-sm);
+    }
+
+    .input-at {
+        display: none;
+    }
+
+    .nickname-input {
+        padding: 14px 16px;
+        width: 100%;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .check-btn {
+        width: 100%;
+        margin: 0;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        padding: 14px;
+        border-top: none;
+        font-size: 0.9rem;
+    }
+
+    .nickname-hints {
+        justify-content: center;
+    }
+
+    .profile-header {
+        margin-bottom: 24px;
+    }
+
+    .save-btn {
+        padding: 14px 20px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .profile-create-wrapper {
+        padding: 20px;
+        align-items: flex-start;
+        padding-top: 12vh;
+    }
+
+    .profile-create-card {
+        padding: 32px 24px;
+    }
+}
+
+/* ========== СТРАНИЦА ПРОФИЛЯ ========== */
+.profile-page-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.profile-header-card {
+    padding: 28px;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-frame {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.profile-avatar-emoji {
+    font-size: 3rem;
+}
+
+.profile-name-section {
+    flex: 1;
+    min-width: 200px;
+}
+
+.profile-nickname {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.profile-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.profile-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.profile-badge.level {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid var(--border-glow);
+}
+
+.profile-badge.coins {
+    background: var(--gold-glow);
+    color: #fbbf24;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.profile-badge.you {
+    background: rgba(46, 213, 115, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.exp-bar-section {
+    margin-top: 8px;
+}
+
+.exp-bar {
+    height: 8px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.exp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-box {
+    padding: 20px 12px;
+    text-align: center;
+    transition: all var(--transition);
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-glow);
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.stat-number {
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: block;
+    color: var(--text-primary);
+}
+
+.stat-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.profile-achievements {
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.profile-ach-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.profile-ach-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border-radius: 25px;
+    border: 1px solid var(--border);
+}
+
+.ach-icon {
+    font-size: 1.1rem;
+}
+
+.ach-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.profile-footer-info {
+    padding: 16px 20px;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .profile-avatar-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-nickname {
+        font-size: 1.4rem;
+    }
+
+    .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .stat-box {
+        padding: 14px 8px;
+    }
+
+    .stat-number {
+        font-size: 1.2rem;
+    }
+
+    .profile-badges {
+        justify-content: center;
+    }
+}

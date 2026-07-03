@@ -1,0 +1,273 @@
+.quiz-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+/* Прогресс */
+.quiz-progress {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.progress-bar-wrapper {
+    height: 6px;
+    background: var(--bg-card);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Вопрос */
+.quiz-question-card {
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-glow);
+}
+
+.question-category {
+    font-size: 0.8rem;
+    color: var(--accent-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.question-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Ответы */
+.quiz-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.answer-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.answer-card:hover {
+    border-color: var(--accent);
+    background: rgba(124, 92, 252, 0.06);
+    transform: translateX(4px);
+}
+
+.answer-card.answered {
+    pointer-events: none;
+}
+
+.answer-card.selected {
+    border-color: var(--accent);
+    background: rgba(124, 92, 252, 0.15);
+}
+
+.answer-card.correct {
+    border-color: var(--success) !important;
+    background: rgba(46, 213, 115, 0.1) !important;
+}
+
+.answer-card.wrong {
+    border-color: var(--danger) !important;
+    background: rgba(255, 71, 87, 0.1) !important;
+}
+
+.answer-letter {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.answer-text {
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* Результат */
+.quiz-result {
+    padding: 40px 24px;
+    animation: cardAppear 0.5s ease;
+}
+
+.result-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    animation: pulse-glow 2s ease infinite;
+}
+
+.result-stats {
+    margin-top: 24px;
+}
+
+.result-stat {
+    padding: 16px 8px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.result-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    display: block;
+}
+
+.result-label {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+@keyframes cardAppear {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Режимы */
+.mode-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.survival-badge {
+    background: rgba(255, 71, 87, 0.15);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.time-badge {
+    background: rgba(46, 213, 115, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.duel-badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+}
+
+/* Таймер */
+.timer-display {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent-secondary);
+    min-width: 60px;
+    text-align: right;
+}
+
+.timer-display.urgent {
+    color: var(--danger);
+    animation: pulse 0.5s infinite;
+}
+
+.timer-bar-wrapper {
+    height: 4px;
+    background: var(--bg-card);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.timer-bar-fill {
+    height: 100%;
+    background: var(--accent-secondary);
+    border-radius: 2px;
+}
+
+.timer-bar-fill.urgent {
+    background: var(--danger);
+}
+
+/* Жизни */
+.lives-display {
+    font-size: 1.3rem;
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Дуэль */
+.duel-score-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.duel-player, .duel-ai {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.duel-score {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.duel-player .duel-score { color: var(--accent); }
+.duel-ai .duel-score { color: var(--gold); }
+
+.duel-vs {
+    font-weight: 800;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.duel-round-result {
+    padding: 16px;
+    border: 1px solid var(--border-glow);
+}
+
+.duel-result-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.duel-final-score h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.coin-color {
+    color: #fbbf24;
+}
