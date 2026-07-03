@@ -1,0 +1,147 @@
+.leaderboard-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+    position: relative;
+    z-index: 2;
+}
+
+.leaderboard-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+
+.leaderboard-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-md);
+}
+
+.lb-tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all var(--transition);
+}
+
+.lb-tab.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.lb-tab:hover:not(.active) {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.leaderboard-list {
+    overflow: hidden;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    transition: all var(--transition);
+    border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-item.current-user {
+    background: rgba(124, 92, 252, 0.08);
+}
+
+.leaderboard-item.top-three {
+    background: rgba(255, 215, 0, 0.03);
+}
+
+.lb-rank {
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.lb-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+}
+
+.top-three .lb-avatar {
+    border-color: var(--gold);
+}
+
+.lb-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lb-name {
+    font-weight: 600;
+    display: block;
+}
+
+.lb-level {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.lb-stats {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.lb-xp {
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    font-size: 0.9rem;
+}
+
+.lb-wins {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .lb-stats {
+        font-size: 0.8rem;
+    }
+}
