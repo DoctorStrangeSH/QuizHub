@@ -76,6 +76,7 @@ export function finalizeSession(session, { uid, at }) {
     let score = 0;
     let correctAnswers = 0;
     if (session.answers.length > session.questions.length) throw new Error('INVALID_ANSWER_LOG');
+    let previousAnswerAt = session.startedAt;
     for (let i = 0; i < session.answers.length; i++) {
         const answer = session.answers[i];
         const question = session.questions[i];
@@ -83,9 +84,11 @@ export function finalizeSession(session, { uid, at }) {
             !Number.isSafeInteger(answer.answerIndex) ||
             answer.answerIndex < 0 || answer.answerIndex >= question.optionCount ||
             !Number.isSafeInteger(answer.answeredAt) ||
-            answer.answeredAt < session.startedAt || answer.answeredAt > session.deadlineAt) {
+            answer.answeredAt < previousAnswerAt || answer.answeredAt > session.deadlineAt ||
+            answer.answeredAt > at) {
             throw new Error('INVALID_ANSWER_LOG');
         }
+        previousAnswerAt = answer.answeredAt;
         if (answer.answerIndex === question.correctIndex) {
             score += question.points;
             correctAnswers++;
