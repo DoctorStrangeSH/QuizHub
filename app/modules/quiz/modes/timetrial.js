@@ -1,5 +1,6 @@
 import { BaseMode } from './base.js';
 import { increment } from '../../../firebase-config.js';
+import { remainingSeconds } from '../timer.js';
 
 export class TimeTrialMode extends BaseMode {
     constructor() {
@@ -9,6 +10,7 @@ export class TimeTrialMode extends BaseMode {
         this.timePerQuestion = 15; // секунд
         this.timeLeft = 15;
         this.timerInterval = null;
+        this.deadlineAt = null;
     }
     
     async init(allQuestions, settings) {
@@ -16,6 +18,7 @@ export class TimeTrialMode extends BaseMode {
         this.questions = this.questions.slice(0, this.totalQuestions);
         this.totalQuestions = this.questions.length;
         this.timeLeft = this.timePerQuestion;
+        this.deadlineAt = null;
     }
 
     afterQuestionRendered() {
@@ -25,15 +28,31 @@ export class TimeTrialMode extends BaseMode {
 
     startTimer() {
         this.clearTimer();
-        this.timerInterval = setInterval(() => {
-            this.timeLeft--;
+        this.deadlineAt = Date.now() + this.timePerQuestion * 1000;
+        const tick = () => {
+            if (this.isDisposed || this.isFinished || this.hasAnswered) {
+                this.clearTimer();
+                return;
+            }
+            this.timeLeft = remainingSeconds(this.deadlineAt);
             this.updateTimerDisplay();
-            
             if (this.timeLeft <= 0) {
                 this.clearTimer();
                 this.handleTimeout();
             }
-        }, 1000);
+        };
+        tick();
+        if (this.timeLeft > 0) this.timerInterval = setInterval(tick, 200);
+    }
+
+    handleAnswer(el) {
+        // Reject late clicks even when a background-tab timer callback was delayed.
+        if (this.deadlineAt !== null && remainingSeconds(this.deadlineAt) === 0) {
+            this.clearTimer();
+            this.handleTimeout();
+            return;
+        }
+        super.handleAnswer(el);
     }
     
     clearTimer() {
@@ -49,6 +68,11 @@ export class TimeTrialMode extends BaseMode {
             const urgent = this.timeLeft <= 5;
             timerEl.textContent = `⏱️ ${this.timeLeft}с`;
             timerEl.className = `timer-display ${urgent ? 'urgent' : ''}`;
+        }
+        const bar = document.querySelector('.timer-bar-fill');
+        if (bar) {
+            bar.style.width = `${Math.max(0, Math.min(100, this.timeLeft / this.timePerQuestion * 100))}%`;
+            bar.classList.toggle('urgent', this.timeLeft <= 5);
         }
     }
     
