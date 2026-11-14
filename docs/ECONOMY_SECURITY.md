@@ -16,6 +16,7 @@ Status: migration plan, **not deployed security protection**.
 - `server/quiz-session-core.mjs` is a pure, server-only state machine. It computes points from a canonical answer key, validates ownership, question ordering, answer indices and deadlines, and rejects finalizing an in-memory session twice.
 - `tests/server-quiz-session.test.mjs` exercises valid and adversarial paths in CI.
 - `server/quiz-reward-claim.mjs` now defines an idempotent **transaction contract**: a claim reuses its stored receipt on retry, and the quiz result is recomputed using server-owned answers. Unit tests simulate atomic and concurrent claims. The real Firestore adapter must provide serializable transactions, authenticated user identity and private session writes.
+- `server/question-delivery.mjs` prepares a backend-only question catalog with stable IDs and returns public payloads without `correctIndex`, `points`, or explanations. This is a serialization contract only: the current frontend still downloads its existing public question bank, so the correct answers are **not yet secret**.
 - This module has **no durable storage, Firebase endpoint, transactional claim marker, authenticated request context or private question delivery** yet. A new process would reset its state. Do not expose it directly to clients or treat it as production anti-cheat.
 
 ## Safe migration sequence
