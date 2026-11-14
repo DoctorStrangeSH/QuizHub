@@ -52,12 +52,6 @@ export class TimeTrialMode extends BaseMode {
         }
     }
     
-    renderQuestion(index) {
-        const html = super.renderQuestion(index);
-        if (!this.timerInterval) this.startTimer();
-        return html;
-    }
-
     getProgressText() {
         return `Вопрос ${this.currentIndex + 1}/${this.totalQuestions}`;
     }
@@ -104,8 +98,9 @@ export class TimeTrialMode extends BaseMode {
     
     handleTimeout() {
         const container = document.getElementById('answers-container');
-        if (!container) return;
-        
+        if (!container || this.isFinished || this.hasAnswered) return;
+        this.hasAnswered = true;
+
         const allCards = container.querySelectorAll('.answer-card');
         allCards.forEach(c => {
             c.classList.add('answered');
