@@ -49,6 +49,7 @@ export class BaseMode {
         this.score = 0;
         this.earnedCoins = 0;
         this.earnedXP = 0;
+        this.saveStatus = 'pending';
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
