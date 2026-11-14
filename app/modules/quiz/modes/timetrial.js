@@ -115,6 +115,7 @@ export class TimeTrialMode extends BaseMode {
             }
         });
         
+        this.showAnswerExplanation();
         document.getElementById('next-btn-container').style.display = 'block';
     }
     
