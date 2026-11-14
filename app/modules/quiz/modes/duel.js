@@ -17,6 +17,7 @@ export class DuelMode extends BaseMode {
     async init(allQuestions, settings) {
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
+        this.totalQuestions = this.questions.length;
         this.playerScore = 0;
         this.aiScore = 0;
         this.playerCorrect = 0;
@@ -59,7 +60,7 @@ export class DuelMode extends BaseMode {
     }
     
     handlePlayerAnswer(el) {
-        if (el.classList.contains('answered')) return;
+        if (this.isFinished || this.isTransitioning || el.classList.contains('answered')) return;
         
         const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
@@ -98,9 +99,12 @@ export class DuelMode extends BaseMode {
             this.aiCorrect++;
         }
         
-        // Показываем результат раунда
-        setTimeout(() => {
-            this.showRoundResult(playerCorrect, aiCorrect);
+        // Avoid orphaned callbacks after leaving the quiz.
+        this.roundResultTimeout = setTimeout(() => {
+            this.roundResultTimeout = null;
+            if (!this.isFinished && document.getElementById('answers-container')) {
+                this.showRoundResult(playerCorrect, aiCorrect);
+            }
         }, 500);
     }
     
@@ -133,8 +137,18 @@ export class DuelMode extends BaseMode {
         document.getElementById('answers-container').after(resultDiv);
     }
     
+    dispose() {
+        super.dispose();
+        if (this.roundResultTimeout) clearTimeout(this.roundResultTimeout);
+    }
+
+    async nextQuestion() {
+        this.currentRound = this.currentIndex + 1;
+        await super.nextQuestion();
+    }
+
     shouldEnd() {
-        return this.currentRound >= this.totalQuestions - 1;
+        return this.currentIndex >= this.questions.length;
     }
     
     async finishQuiz() {
