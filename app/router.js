@@ -1,4 +1,4 @@
-import { getState } from './store/state.js';
+import { getState, setState } from './store/state.js';
 import { renderAuth, attachAuthListeners } from './modules/auth/auth.js';
 
 const appRoot = document.getElementById('app-root');
@@ -95,17 +95,21 @@ async function checkDailyReward() {
 }
 
 window.navigateTo = async (route) => {
-    const { setState } = await import('./store/state.js');
+    if (!Object.hasOwn(routes, route)) return;
+    const previousRoute = getState().currentRoute;
+    if (previousRoute === 'quiz' && route !== 'quiz') {
+        const quizModule = await import('./modules/quiz/quiz.js');
+        quizModule.resetQuiz();
+    }
     setState('currentRoute', route);
     sessionStorage.setItem('lastRoute', route);
-    const routerModule = await import('./router.js');
-    routerModule.default();
+    await router();
 };
 
 export default async function router() {
     const route = getState().currentRoute;
     sessionStorage.setItem('lastRoute', route);
-    if (routes[route]) {
+    if (Object.hasOwn(routes, route)) {
         await routes[route]();
     }
 }
