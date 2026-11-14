@@ -1,5 +1,6 @@
 import { getState } from '../../../store/state.js';
 import { calculateQuizRewards } from '../rewards.js';
+import { escapeHTML } from '../escape-html.js';
 import { auth, db, doc, getDoc, updateDoc, increment } from '../../../firebase-config.js';
 
 const CATEGORY_NAMES = {
@@ -100,7 +101,7 @@ export class BaseMode {
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-secondary">${this.getProgressText()}</span>
                         <div class="d-flex align-items-center gap-3">
-                            <span class="text-secondary small">${catIcon} ${catName}</span>
+                            <span class="text-secondary small">${catIcon} ${escapeHTML(catName)}</span>
                             <span class="text-gradient fw-bold">${this.score} очков</span>
                         </div>
                     </div>
@@ -109,14 +110,14 @@ export class BaseMode {
                 
                 <div class="quiz-question-card glass-card animate-in animate-in-delay-1">
                     ${this.renderModeSpecificHeader()}
-                    <h3 class="question-text">${qText}</h3>
+                    <h3 class="question-text">${escapeHTML(qText)}</h3>
                 </div>
                 
                 <div class="quiz-answers animate-in animate-in-delay-2" id="answers-container">
                     ${shuffled.map((opt, i) => `
                         <div class="answer-card glass-card" data-index="${i}" data-correct="${opt.isCorrect}" onclick="window.${this.getAnswerHandler()}">
                             <span class="answer-letter">${String.fromCharCode(65 + i)}</span>
-                            <span class="answer-text">${opt.text}</span>
+                            <span class="answer-text">${escapeHTML(opt.text)}</span>
                             <span class="answer-icon"></span>
                         </div>
                     `).join('')}
