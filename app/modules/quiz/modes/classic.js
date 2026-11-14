@@ -45,6 +45,9 @@ export class ClassicMode extends BaseMode {
     }
     
     showResults() {
+        if (this.isDisposed) return;
+        const resultContainer = document.querySelector('.quiz-container');
+        if (!resultContainer) return;
         const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
         const coinsEarned = Math.floor(this.score / 2);
         
@@ -53,7 +56,7 @@ export class ClassicMode extends BaseMode {
         else if (this.correctAnswers >= Math.ceil(this.totalQuestions * 0.5)) { emoji = '👍'; text = 'Неплохо!'; }
         else { emoji = '💪'; text = 'Попробуй ещё раз!'; }
         
-        document.querySelector('.quiz-container').innerHTML = `
+        resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${emoji}</div>
                 <h2 class="text-gradient fw-bold mb-1">Квиз завершён!</h2>
