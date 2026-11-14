@@ -31,6 +31,7 @@ export class BaseMode {
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
+        this.isDisposed = false;
         this.isTransitioning = false;
         this.resultsPromise = null;
         this.pendingTransition = null;
@@ -45,6 +46,7 @@ export class BaseMode {
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
+        this.isDisposed = false;
         this.isTransitioning = false;
         this.resultsPromise = null;
     }
@@ -225,6 +227,7 @@ export class BaseMode {
     afterQuestionRendered() { }
 
     dispose() {
+        this.isDisposed = true;
         this.isFinished = true;
         if (this.pendingTransition !== null) {
             clearTimeout(this.pendingTransition);
