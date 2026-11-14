@@ -175,7 +175,7 @@ export class DuelMode extends BaseMode {
         if (this.isDisposed) return;
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
-        const coinsEarned = Math.floor((this.playerScore) / 2);
+        const coinsEarned = this.earnedCoins;
         
         let emoji, title;
         if (isDraw) { emoji = '🤝'; title = 'Ничья!'; }
