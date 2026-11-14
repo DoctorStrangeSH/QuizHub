@@ -215,3 +215,48 @@ test('simultaneous identical answer submissions advance only once', async () => 
     assert.equal(retry.replayed, true);
     assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
 });
+
+test('fully answered session remains ready to complete after its deadline', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store, sessionDurationMs: 5000 });
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 1, now: 1000
+    });
+    await quiz.answer({
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 0, now: 2000
+    });
+    const resumed = await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 7000
+    });
+    assert.equal(resumed.status, 'ready_to_complete');
+    assert.equal(resumed.question, null);
+    const receipt = await quiz.complete({
+        uid: 'user-1', sessionId: started.sessionId, now: 7000
+    });
+    assert.equal(receipt.answeredQuestions, 1);
+});
+
+test('start and answer reject invalid or forged timestamps even on retries', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store, sessionDurationMs: 5000 });
+    await assert.rejects(quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 1, now: Number.MAX_SAFE_INTEGER
+    }), /INVALID_TIME/);
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 1, now: 1000
+    });
+    const request = {
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 0
+    };
+    await assert.rejects(quiz.answer({ ...request, now: NaN }), /INVALID_TIME/);
+    await assert.rejects(quiz.answer({ ...request, now: 999 }), /INVALID_TIME/);
+    await quiz.answer({ ...request, now: 2000 });
+    await assert.rejects(quiz.answer({ ...request, now: 999 }), /INVALID_TIME/);
+    await assert.rejects(quiz.answer({ ...request }), /INVALID_TIME/);
+    assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
+});
