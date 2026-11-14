@@ -96,7 +96,7 @@ async function init() {
                 } else {
                     const savedRoute = sessionStorage.getItem('lastRoute');
                     const hasProfile = await checkUserProfile(user);
-                    const safeSavedRoute = savedRoute && !['auth', 'createProfile'].includes(savedRoute);
+                    const safeSavedRoute = hasProfile && savedRoute && !['auth', 'createProfile', 'quiz'].includes(savedRoute);
 
                     setState(
                         'currentRoute',
