@@ -17,8 +17,8 @@ const historyQuestions = {
             points: 10
         },
         {
-            questionRU: 'Как назывались корабли Колумба, на которых он открыл Америку?',
-            questionEN: 'What were the names of Columbus\'s ships that discovered America?',
+            questionRU: 'Как назывались корабли первой экспедиции Колумба через Атлантику в 1492 году?',
+            questionEN: 'What were the ships of Columbus\'s first Atlantic voyage in 1492 called?',
             optionsRU: ['Санта-Мария, Пинта, Нинья', 'Титаник, Олимп, Британик', 'Виктория, Тринидад, Санта', 'Мэйфлауэр, Баунти, Эндевор'],
             optionsEN: ['Santa Maria, Pinta, Nina', 'Titanic, Olympic, Britannic', 'Victoria, Trinidad, Santa', 'Mayflower, Bounty, Endeavour'],
             correctIndex: 0,
@@ -173,8 +173,8 @@ const historyQuestions = {
     ],
     hard: [
         {
-            questionRU: 'Какой договор завершил Первую мировую войну?',
-            questionEN: 'Which treaty ended World War I?',
+            questionRU: 'Какой мирный договор с Германией был подписан после Первой мировой войны в 1919 году?',
+            questionEN: 'Which 1919 peace treaty was signed with Germany after World War I?',
             optionsRU: ['Парижский', 'Версальский', 'Брестский', 'Потсдамский'],
             optionsEN: ['Paris', 'Versailles', 'Brest', 'Potsdam'],
             correctIndex: 1,
