@@ -60,7 +60,8 @@ export class DuelMode extends BaseMode {
     }
     
     handlePlayerAnswer(el) {
-        if (this.isFinished || this.isTransitioning || el.classList.contains('answered')) return;
+        if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
+        this.hasAnswered = true;
         
         const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
