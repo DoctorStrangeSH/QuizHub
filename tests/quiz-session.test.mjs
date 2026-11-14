@@ -82,3 +82,56 @@ test('leaving a quiz cancels a queued question transition', async () => {
         mode.dispose();
     }
 });
+
+test('failed reward write is reported without claiming saved coins', async () => {
+    const FailingMode = new Function(
+        'getState', 'auth', 'db', 'doc', 'getDoc', 'updateDoc', 'increment', 'calculateQuizRewards',
+        `${stripped}\nreturn BaseMode;`
+    )(
+        () => ({ language: 'ru' }), { currentUser: { uid: 'test-player' } }, {},
+        () => ({}), async () => ({ data: () => ({}) }),
+        async () => { throw new Error('offline'); },
+        value => value, () => ({ xp: 30, coins: 10 })
+    );
+    const mode = new FailingMode();
+    await mode.init(makeQuestions(1), {});
+    const oldError = console.error;
+    console.error = () => {};
+    try {
+        assert.equal(await mode.saveResults(), false);
+        assert.equal(mode.saveStatus, 'failed');
+        assert.equal(mode.earnedXP, 0);
+        assert.equal(mode.earnedCoins, 0);
+        assert.match(mode.getSaveStatusHTML(), /Не удалось подтвердить награду/);
+    } finally {
+        console.error = oldError;
+    }
+});
+
+test('successful reward write stays saved if profile follow-up fails', async () => {
+    let rewardWrites = 0;
+    const SuccessMode = new Function(
+        'getState', 'auth', 'db', 'doc', 'getDoc', 'updateDoc', 'increment', 'calculateQuizRewards',
+        `${stripped}\nreturn BaseMode;`
+    )(
+        () => ({ language: 'en' }), { currentUser: { uid: 'test-player' } }, {},
+        () => ({}), async () => { throw new Error('profile read offline'); },
+        async () => { rewardWrites++; }, value => value,
+        () => ({ xp: 30, coins: 10 })
+    );
+    const mode = new SuccessMode();
+    await mode.init(makeQuestions(1), {});
+    const oldWarn = console.warn;
+    console.warn = () => {};
+    try {
+        assert.equal(await mode.saveResults(), true);
+        assert.equal(await mode.saveResults(), true);
+        assert.equal(rewardWrites, 1);
+        assert.equal(mode.saveStatus, 'saved');
+        assert.equal(mode.earnedXP, 30);
+        assert.equal(mode.earnedCoins, 10);
+        assert.match(mode.getSaveStatusHTML(), /Rewards saved/);
+    } finally {
+        console.warn = oldWarn;
+    }
+});
