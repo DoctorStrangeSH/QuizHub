@@ -85,5 +85,6 @@ export function resetQuiz() {
 
 // ========== ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ==========
 export function attachQuizListeners() {
-    // Всё работает через глобальные функции
+    // Start first-question effects only after the markup is mounted.
+    currentMode?.afterQuestionRendered?.();
 }
