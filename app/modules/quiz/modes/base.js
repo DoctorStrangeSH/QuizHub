@@ -31,6 +31,7 @@ export class BaseMode {
         this.score = 0;
         this.earnedCoins = 0;
         this.earnedXP = 0;
+        this.saveStatus = 'pending';
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
@@ -249,6 +250,18 @@ export class BaseMode {
         this.isFinished = true;
     }
 
+    getSaveStatusHTML() {
+        const isEN = getState().language === 'en';
+        const statuses = {
+            saved: isEN ? '✅ Rewards saved to your profile.' : '✅ Награды сохранены в профиле.',
+            failed: isEN ? '⚠️ Could not confirm the reward. Check your connection and profile before playing again.' : '⚠️ Не удалось подтвердить награду. Проверь соединение и профиль перед новой игрой.',
+            guest: isEN ? 'ℹ️ Sign in to save rewards.' : 'ℹ️ Войди в аккаунт, чтобы сохранять награды.',
+            saving: isEN ? '⏳ Saving rewards…' : '⏳ Сохраняем награды…'
+        };
+        const message = statuses[this.saveStatus] || '';
+        return message ? `<p class="text-secondary small mt-3" role="status">${message}</p>` : '';
+    }
+
     async saveResults(extraData = {}) {
         if (this.resultsPromise) return this.resultsPromise;
         this.resultsPromise = this.persistResults(extraData);
@@ -257,8 +270,12 @@ export class BaseMode {
 
     async persistResults(extraData = {}) {
         const user = auth.currentUser;
-        if (!user) return;
+        if (!user) {
+            this.saveStatus = 'guest';
+            return false;
+        }
 
+        this.saveStatus = 'saving';
         let xpMultiplier = 1;
         let coinMultiplier = 1;
         try {
@@ -266,17 +283,21 @@ export class BaseMode {
             const multipliers = eventsModule.getMultipliers();
             xpMultiplier = multipliers.xpMultiplier;
             coinMultiplier = multipliers.coinMultiplier;
-        } catch (e) { }
+        } catch (error) {
+            console.warn('Не удалось загрузить бонусы событий:', error);
+        }
 
         const { xp: totalXP, coins: totalCoins } = calculateQuizRewards(this.score, {
             xpMultiplier, coinMultiplier
         });
+        const userRef = doc(db, 'users', user.uid);
 
+        // Keep a single, non-retried write per session. A client-side retry of
+        // increment() can duplicate rewards if the first request did commit.
         try {
-            const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
                 experience: increment(totalXP),
-                weeklyExperience: increment(totalXP),  // 🔥 ДОБАВЛЕНО
+                weeklyExperience: increment(totalXP),
                 coins: increment(totalCoins),
                 quizzesCompleted: increment(1),
                 'stats.totalGames': increment(1),
@@ -284,24 +305,36 @@ export class BaseMode {
                 'stats.correctAnswers': increment(this.correctAnswers),
                 ...extraData
             });
-            // Display only confirmed rewards, including active event bonuses.
-            this.earnedXP = totalXP;
-            this.earnedCoins = totalCoins;
+        } catch (error) {
+            this.saveStatus = 'failed';
+            console.error('Не удалось подтвердить сохранение награды:', error);
+            return false;
+        }
 
+        // A successful reward write remains successful even when secondary
+        // profile-level calculations or achievements fail.
+        this.earnedXP = totalXP;
+        this.earnedCoins = totalCoins;
+        this.saveStatus = 'saved';
+
+        try {
             const userDoc = await getDoc(userRef);
-            const data = userDoc.data();
+            const data = userDoc.data() || {};
             const newLevel = Math.floor((data.experience || 0) / 100) + 1;
             if (newLevel > (data.level || 1)) {
                 await updateDoc(userRef, { level: newLevel });
             }
-
-            try {
-                const achModule = await import('../../achievements/achievements.js');
-                await achModule.checkAchievements();
-            } catch (e) { }
-
         } catch (error) {
-            console.error('Ошибка сохранения:', error);
+            console.warn('Награда сохранена, но уровень не обновлён:', error);
         }
+
+        try {
+            const achModule = await import('../../achievements/achievements.js');
+            await achModule.checkAchievements();
+        } catch (error) {
+            console.warn('Награда сохранена, но достижения не проверены:', error);
+        }
+
+        return true;
     }
 }
