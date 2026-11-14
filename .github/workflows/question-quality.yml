@@ -35,3 +35,6 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-question-delivery.test.mjs
       - name: Test complete server quiz lifecycle
         run: node --experimental-default-type=module --test tests/server-quiz-service.test.mjs
+
+      - name: Test real question bank against server catalog
+        run: node --experimental-default-type=module --test tests/server-real-question-bank.test.mjs
