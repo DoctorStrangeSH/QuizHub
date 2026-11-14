@@ -146,6 +146,7 @@ export class DuelMode extends BaseMode {
     }
 
     async nextQuestion() {
+        if (this.isFinished || this.isTransitioning || !this.hasAnswered) return;
         this.currentRound = this.currentIndex + 1;
         await super.nextQuestion();
     }
