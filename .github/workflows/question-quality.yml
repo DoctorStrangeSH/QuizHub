@@ -38,3 +38,6 @@ jobs:
 
       - name: Test real question bank against server catalog
         run: node --experimental-default-type=module --test tests/server-real-question-bank.test.mjs
+
+      - name: Test authenticated quiz request boundary
+        run: node --experimental-default-type=module --test tests/server-authenticated-quiz-handler.test.mjs
