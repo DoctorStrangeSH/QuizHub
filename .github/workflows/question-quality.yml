@@ -41,3 +41,6 @@ jobs:
 
       - name: Test authenticated quiz request boundary
         run: node --experimental-default-type=module --test tests/server-authenticated-quiz-handler.test.mjs
+
+      - name: Test authenticated full quiz flow across users
+        run: node --experimental-default-type=module --test tests/server-authenticated-quiz-flow.test.mjs
