@@ -31,3 +31,5 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-quiz-session.test.mjs
       - name: Test atomic reward claim contract
         run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
+      - name: Test private question delivery contract
+        run: node --experimental-default-type=module --test tests/server-question-delivery.test.mjs
