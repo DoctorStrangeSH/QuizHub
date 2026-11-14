@@ -73,6 +73,28 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
             return store.runTransaction(async tx => {
                 const stored = await tx.getSession(sessionId);
                 if (!stored) throw new Error('SESSION_NOT_FOUND');
+                if (stored.uid !== uid) throw new Error('NOT_SESSION_OWNER');
+                // A request may be retried after a network timeout when the
+                // original answer was already committed. Replay only an exact
+                // match; never allow changing a previously recorded answer.
+                const previousIndex = stored.answers.findIndex(answer => answer.questionId === questionId);
+                if (previousIndex !== -1) {
+                    if (stored.finalized) throw new Error('SESSION_CLOSED');
+                    const previous = stored.answers[previousIndex];
+                    if (previous.answerIndex !== answerIndex) throw new Error('ANSWER_ALREADY_LOCKED');
+                    const canonical = stored.questions[previousIndex];
+                    if (!canonical || canonical.id !== questionId) throw new Error('INVALID_ANSWER_LOG');
+                    const next = stored.questions[stored.answers.length];
+                    const nextQuestion = next && now <= stored.deadlineAt ? catalog.get(next.id) : null;
+                    if (next && now <= stored.deadlineAt && !nextQuestion) throw new Error('QUESTION_NOT_FOUND');
+                    return {
+                        correct: previous.answerIndex === canonical.correctIndex,
+                        points: previous.answerIndex === canonical.correctIndex ? canonical.points : 0,
+                        finished: stored.answers.length === stored.questions.length,
+                        nextQuestion: nextQuestion ? publicQuestion(nextQuestion, language) : null,
+                        replayed: true
+                    };
+                }
                 // Apply modifications only to a copy; failed requests must not
                 // mutate an object cached by the persistence adapter.
                 const session = structuredClone(stored);
@@ -87,7 +109,8 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
                     correct: outcome.correct,
                     points: outcome.points,
                     finished: outcome.finished,
-                    nextQuestion: nextQuestion ? publicQuestion(nextQuestion, language) : null
+                    nextQuestion: nextQuestion ? publicQuestion(nextQuestion, language) : null,
+                    replayed: false
                 };
             });
         },
