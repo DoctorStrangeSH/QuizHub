@@ -26,19 +26,31 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
         const { xp, coins } = calculateQuizRewards(result.score);
         const user = await transaction.getUser(uid);
         if (!user) throw new Error('USER_NOT_FOUND');
-        const stats = user.stats || {};
-        const current = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
+        const stats = user.stats ?? {};
+        if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
+            throw new Error('INVALID_USER_STATS');
+        }
+        const current = value => {
+            if (value === undefined) return 0;
+            if (!Number.isSafeInteger(value) || value < 0) throw new Error('INVALID_USER_BALANCE');
+            return value;
+        };
+        const add = (value, delta) => {
+            const updated = current(value) + delta;
+            if (!Number.isSafeInteger(updated)) throw new Error('BALANCE_OVERFLOW');
+            return updated;
+        };
         const nextUser = {
             ...user,
-            experience: current(user.experience) + xp,
-            weeklyExperience: current(user.weeklyExperience) + xp,
-            coins: current(user.coins) + coins,
-            quizzesCompleted: current(user.quizzesCompleted) + 1,
+            experience: add(user.experience, xp),
+            weeklyExperience: add(user.weeklyExperience, xp),
+            coins: add(user.coins, coins),
+            quizzesCompleted: add(user.quizzesCompleted, 1),
             stats: {
                 ...stats,
-                totalGames: current(stats.totalGames) + 1,
-                totalQuestions: current(stats.totalQuestions) + result.answeredQuestions,
-                correctAnswers: current(stats.correctAnswers) + result.correctAnswers
+                totalGames: add(stats.totalGames, 1),
+                totalQuestions: add(stats.totalQuestions, result.answeredQuestions),
+                correctAnswers: add(stats.correctAnswers, result.correctAnswers)
             }
         };
 
