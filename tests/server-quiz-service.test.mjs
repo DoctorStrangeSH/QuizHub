@@ -198,3 +198,20 @@ test('expired sessions do not disclose unanswered questions', async () => {
     assert.equal(result.question, null);
     assert.equal(result.totalQuestions, 2);
 });
+
+test('simultaneous identical answer submissions advance only once', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store });
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 2, now: 1000
+    });
+    const request = {
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 0, now: 2000
+    };
+    const [first, retry] = await Promise.all([quiz.answer(request), quiz.answer(request)]);
+    assert.equal(first.replayed, false);
+    assert.equal(retry.replayed, true);
+    assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
+});
