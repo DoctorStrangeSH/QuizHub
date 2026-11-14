@@ -1,17 +1,19 @@
-const CACHE_NAME = 'quizhub-v3';
+const CACHE_NAME = 'quizhub-v4';
+const SCOPE = new URL(self.registration.scope);
+const scoped = (path) => new URL(path, SCOPE).href;
 const CORE_ASSETS = [
-    '/',
-    '/index.html',
-    '/offline.html',
-    '/manifest.json',
-    '/app/styles/themes.css',
-    '/app/styles/main.css'
-];
+    '', 'index.html', 'offline.html', 'manifest.json',
+    'app/styles/themes.css', 'app/styles/main.css',
+    'app/locales/ru.json', 'app/locales/en.json'
+].map(scoped);
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(CORE_ASSETS))
+            .then(async (cache) => {
+                // One missing optional asset must not prevent worker installation.
+                await Promise.allSettled(CORE_ASSETS.map((url) => cache.add(url)));
+            })
             .then(() => self.skipWaiting())
     );
 });
@@ -31,8 +33,9 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    if (request.method !== 'GET' || url.origin !== self.location.origin) return;
-    if (url.pathname.includes('/__/auth/') || url.pathname.includes('/firestore/')) return;
+    // Never intercept Firebase, third-party resources, or pages outside this PWA.
+    if (request.method !== 'GET' || url.origin !== SCOPE.origin ||
+        !url.pathname.startsWith(SCOPE.pathname)) return;
 
     if (request.mode === 'navigate') {
         event.respondWith(
@@ -40,25 +43,29 @@ self.addEventListener('fetch', (event) => {
                 .then((response) => {
                     if (response.ok) {
                         const copy = response.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+                        event.waitUntil(caches.open(CACHE_NAME)
+                            .then((cache) => cache.put(scoped('index.html'), copy)));
                     }
                     return response;
                 })
-                .catch(async () => (await caches.match(request)) || (await caches.match('/index.html')) || (await caches.match('/offline.html')))
+                .catch(async () => (await caches.match(request)) ||
+                    (await caches.match(scoped('index.html'))) ||
+                    (await caches.match(scoped('offline.html'))) ||
+                    Response.error())
         );
         return;
     }
 
     event.respondWith(
-        caches.match(request).then((cached) => {
-            const network = fetch(request).then((response) => {
-                if (response.ok && response.type === 'basic') {
-                    const copy = response.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-                }
-                return response;
-            });
-            return cached || network;
+        caches.match(request).then(async (cached) => {
+            if (cached) return cached;
+            const response = await fetch(request);
+            if (response.ok && response.type === 'basic') {
+                const copy = response.clone();
+                event.waitUntil(caches.open(CACHE_NAME)
+                    .then((cache) => cache.put(request, copy)));
+            }
+            return response;
         })
     );
 });
