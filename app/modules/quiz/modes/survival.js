@@ -86,7 +86,7 @@ export class SurvivalMode extends BaseMode {
         if (this.isDisposed) return;
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
-        const coinsEarned = Math.floor(this.score / 2);
+        const coinsEarned = this.earnedCoins;
         const streak = this.bestStreak;
         
         resultContainer.innerHTML = `
