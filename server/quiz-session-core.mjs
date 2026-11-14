@@ -71,8 +71,26 @@ export function finalizeSession(session, { uid, at }) {
         throw new Error('SESSION_INCOMPLETE');
     }
 
-    const score = session.answers.reduce((sum, answer) => sum + answer.points, 0);
-    const correctAnswers = session.answers.filter(answer => answer.correct).length;
+    // Recompute the result from the canonical server question key, never
+    // from stored answer.correct/points or any client-supplied score.
+    let score = 0;
+    let correctAnswers = 0;
+    if (session.answers.length > session.questions.length) throw new Error('INVALID_ANSWER_LOG');
+    for (let i = 0; i < session.answers.length; i++) {
+        const answer = session.answers[i];
+        const question = session.questions[i];
+        if (!answer || answer.questionId !== question.id ||
+            !Number.isSafeInteger(answer.answerIndex) ||
+            answer.answerIndex < 0 || answer.answerIndex >= question.optionCount ||
+            !Number.isSafeInteger(answer.answeredAt) ||
+            answer.answeredAt < session.startedAt || answer.answeredAt > session.deadlineAt) {
+            throw new Error('INVALID_ANSWER_LOG');
+        }
+        if (answer.answerIndex === question.correctIndex) {
+            score += question.points;
+            correctAnswers++;
+        }
+    }
     session.finalized = true;
     return {
         mode: session.mode,
