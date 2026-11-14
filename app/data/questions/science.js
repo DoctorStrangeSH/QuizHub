@@ -6,6 +6,8 @@ const easyQuestions = [
         optionsRU: ['Венера', 'Земля', 'Меркурий', 'Марс'],
         optionsEN: ['Venus', 'Earth', 'Mercury', 'Mars'],
         correctIndex: 2,
+        explanationRU: 'Меркурий — ближайшая к Солнцу планета. Один оборот вокруг Солнца занимает у него около 88 земных суток.',
+        explanationEN: 'Mercury is the closest planet to the Sun. It takes about 88 Earth days to complete one orbit.',
         points: 10
     },
     {
@@ -14,6 +16,8 @@ const easyQuestions = [
         optionsRU: ['6', '8', '10', '12'],
         optionsEN: ['6', '8', '10', '12'],
         correctIndex: 1,
+        explanationRU: 'У пауков восемь ходильных ног: они относятся к паукообразным, а не к насекомым, у которых шесть ног.',
+        explanationEN: 'Spiders have eight walking legs. They are arachnids, not insects, which have six legs.',
         points: 10
     },
     {
@@ -22,6 +26,8 @@ const easyQuestions = [
         optionsRU: ['Кислород', 'Азот', 'Углекислый газ', 'Водород'],
         optionsEN: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'],
         correctIndex: 2,
+        explanationRU: 'В выдыхаемом воздухе углекислого газа больше, чем во вдыхаемом; при этом основную долю выдыхаемого воздуха по-прежнему составляет азот.',
+        explanationEN: 'Exhaled air contains more carbon dioxide than inhaled air, although nitrogen still makes up most of it.',
         points: 10
     },
     {
@@ -30,6 +36,8 @@ const easyQuestions = [
         optionsRU: ['5', '6', '7', '8'],
         optionsEN: ['5', '6', '7', '8'],
         correctIndex: 2,
+        explanationRU: 'В распространённой англоязычной географической модели выделяют семь континентов; в некоторых странах используют модели с шестью.',
+        explanationEN: 'The commonly taught seven-continent model is used in many countries; other education systems use a six-continent model.',
         points: 10
     },
     {
@@ -38,6 +46,8 @@ const easyQuestions = [
         optionsRU: ['Сатурн', 'Юпитер', 'Нептун', 'Земля'],
         optionsEN: ['Saturn', 'Jupiter', 'Neptune', 'Earth'],
         correctIndex: 1,
+        explanationRU: 'Юпитер — самая большая планета Солнечной системы, газовый гигант с массой более чем в два раза больше массы всех остальных планет вместе.',
+        explanationEN: 'Jupiter is the largest planet in the Solar System and has more than twice the mass of all the other planets combined.',
         points: 10
     },
     {
