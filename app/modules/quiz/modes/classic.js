@@ -11,6 +11,7 @@ export class ClassicMode extends BaseMode {
     async init(allQuestions, settings) {
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
+        this.totalQuestions = this.questions.length;
     }
     
     getProgressText() {
@@ -36,20 +37,20 @@ export class ClassicMode extends BaseMode {
     
     async finishQuiz() {
         await this.saveResults({
-            wins: increment(this.correctAnswers >= 7 ? 1 : 0),
-            'stats.totalWins': increment(this.correctAnswers >= 7 ? 1 : 0)
+            wins: increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0),
+            'stats.totalWins': increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0)
         });
         
         this.showResults();
     }
     
     showResults() {
-        const isWin = this.correctAnswers >= 7;
+        const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
         const coinsEarned = Math.floor(this.score / 2);
         
         let emoji, text;
         if (isWin) { emoji = '🏆'; text = 'Отличный результат!'; }
-        else if (this.correctAnswers >= 5) { emoji = '👍'; text = 'Неплохо!'; }
+        else if (this.correctAnswers >= Math.ceil(this.totalQuestions * 0.5)) { emoji = '👍'; text = 'Неплохо!'; }
         else { emoji = '💪'; text = 'Попробуй ещё раз!'; }
         
         document.querySelector('.quiz-container').innerHTML = `
@@ -61,7 +62,7 @@ export class ClassicMode extends BaseMode {
                     <div class="row g-3">
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value text-gradient">${this.correctAnswers}/10</span>
+                                <span class="result-value text-gradient">${this.correctAnswers}/${this.totalQuestions}</span>
                                 <span class="result-label">Правильно</span>
                             </div>
                         </div>
