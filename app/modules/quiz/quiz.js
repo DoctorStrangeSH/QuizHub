@@ -78,10 +78,8 @@ window.duelAnswer = (el) => {
 
 // ========== СБРОС РЕЖИМА ==========
 export function resetQuiz() {
-    // Очищаем таймер если есть
-    if (currentMode && currentMode.clearTimer) {
-        currentMode.clearTimer();
-    }
+    // Завершаем режим и отменяем все его таймеры и отложенные действия.
+    currentMode?.dispose?.();
     currentMode = null;
 }
 
