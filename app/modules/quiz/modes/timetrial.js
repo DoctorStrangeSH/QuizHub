@@ -14,10 +14,15 @@ export class TimeTrialMode extends BaseMode {
     async init(allQuestions, settings) {
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
+        this.totalQuestions = this.questions.length;
+        this.timeLeft = this.timePerQuestion;
+    }
+
+    afterQuestionRendered() {
         this.timeLeft = this.timePerQuestion;
         this.startTimer();
     }
-    
+
     startTimer() {
         this.clearTimer();
         this.timerInterval = setInterval(() => {
@@ -47,6 +52,12 @@ export class TimeTrialMode extends BaseMode {
         }
     }
     
+    renderQuestion(index) {
+        const html = super.renderQuestion(index);
+        if (!this.timerInterval) this.startTimer();
+        return html;
+    }
+
     getProgressText() {
         return `Вопрос ${this.currentIndex + 1}/${this.totalQuestions}`;
     }
@@ -115,27 +126,27 @@ export class TimeTrialMode extends BaseMode {
         this.clearTimer();
         
         await this.saveResults({
-            wins: increment(this.correctAnswers >= 7 ? 1 : 0),
-            'stats.totalWins': increment(this.correctAnswers >= 7 ? 1 : 0)
+            wins: increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0),
+            'stats.totalWins': increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0)
         });
         
         this.showResults();
     }
     
     showResults() {
-        const isWin = this.correctAnswers >= 7;
+        const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
         const coinsEarned = Math.floor(this.score / 2);
         
         document.querySelector('.quiz-container').innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${isWin ? '⚡' : '⏱️'}</div>
-                <h2 class="text-gradient fw-bold mb-1">Время вышло!</h2>
-                <p class="text-secondary mb-3">Правильно: ${this.correctAnswers}/10</p>
+                <h2 class="text-gradient fw-bold mb-1">Квиз завершён!</h2>
+                <p class="text-secondary mb-3">Правильно: ${this.correctAnswers}/${this.totalQuestions}</p>
                 <div class="result-stats">
                     <div class="row g-3">
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value text-gradient">${this.correctAnswers}/10</span>
+                                <span class="result-value text-gradient">${this.correctAnswers}/${this.totalQuestions}</span>
                                 <span class="result-label">Правильно</span>
                             </div>
                         </div>
