@@ -1,67 +1,64 @@
-const CACHE_NAME = 'quiz-empire-v2';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'quizhub-v3';
+const CORE_ASSETS = [
     '/',
     '/index.html',
     '/offline.html',
+    '/manifest.json',
     '/app/styles/themes.css',
-    '/app/styles/main.css',
-    '/app/modules/auth/auth.css',
-    '/app/modules/profile/profile.css',
-    '/app/modules/dashboard/dashboard.css',
-    '/app/modules/friends/friends.css',
-    '/app/modules/quiz/quiz.css',
-    '/app/modules/leaderboard/leaderboard.css',
-    '/app/modules/achievements/achievements.css',
-    '/app/modules/shop/shop.css',
-    '/app/modules/chat/chat.css',
-    '/app/modules/events/events.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
-    'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css'
+    '/app/styles/main.css'
 ];
 
-// Установка
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS_TO_CACHE))
+            .then((cache) => cache.addAll(CORE_ASSETS))
             .then(() => self.skipWaiting())
     );
 });
 
-// Активация
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then(keys => 
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        ).then(() => self.clients.claim())
+        caches.keys()
+            .then((keys) => Promise.all(
+                keys.filter((key) => key.startsWith('quizhub-') && key !== CACHE_NAME)
+                    .map((key) => caches.delete(key))
+            ))
+            .then(() => self.clients.claim())
     );
 });
 
-// Стратегия: Network First, fallback to cache
 self.addEventListener('fetch', (event) => {
-    // Пропускаем Firebase запросы
-    if (event.request.url.includes('firestore') || 
-        event.request.url.includes('googleapis') ||
-        event.request.url.includes('gstatic')) {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+    if (url.pathname.includes('/__/auth/') || url.pathname.includes('/firestore/')) return;
+
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    if (response.ok) {
+                        const copy = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+                    }
+                    return response;
+                })
+                .catch(async () => (await caches.match(request)) || (await caches.match('/index.html')) || (await caches.match('/offline.html')))
+        );
         return;
     }
-    
+
     event.respondWith(
-        fetch(event.request)
-            .then(response => {
-                // Кешируем успешные ответы
-                if (response.status === 200) {
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => {
-                        cache.put(event.request, responseClone);
-                    });
+        caches.match(request).then((cached) => {
+            const network = fetch(request).then((response) => {
+                if (response.ok && response.type === 'basic') {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
                 }
                 return response;
-            })
-            .catch(() => {
-                // Оффлайн — отдаём кеш или оффлайн-страницу
-                return caches.match(event.request)
-                    .then(cached => cached || caches.match('/offline.html'));
-            })
+            });
+            return cached || network;
+        })
     );
 });
