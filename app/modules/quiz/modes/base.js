@@ -28,6 +28,8 @@ export class BaseMode {
         this.questions = [];
         this.currentIndex = 0;
         this.score = 0;
+        this.earnedCoins = 0;
+        this.earnedXP = 0;
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
@@ -43,6 +45,8 @@ export class BaseMode {
         this.settings = settings;
         this.currentIndex = 0;
         this.score = 0;
+        this.earnedCoins = 0;
+        this.earnedXP = 0;
         this.correctAnswers = 0;
         this.hasAnswered = false;
         this.isFinished = false;
@@ -278,6 +282,9 @@ export class BaseMode {
                 'stats.correctAnswers': increment(this.correctAnswers),
                 ...extraData
             });
+            // Display only confirmed rewards, including active event bonuses.
+            this.earnedXP = totalXP;
+            this.earnedCoins = totalCoins;
 
             const userDoc = await getDoc(userRef);
             const data = userDoc.data();
