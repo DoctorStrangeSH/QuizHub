@@ -172,6 +172,9 @@ export class DuelMode extends BaseMode {
     }
     
     showResults(playerWon, isDraw) {
+        if (this.isDisposed) return;
+        const resultContainer = document.querySelector('.quiz-container');
+        if (!resultContainer) return;
         const coinsEarned = Math.floor((this.playerScore) / 2);
         
         let emoji, title;
@@ -179,7 +182,7 @@ export class DuelMode extends BaseMode {
         else if (playerWon) { emoji = '🏆'; title = 'Победа!'; }
         else { emoji = '🤖'; title = 'ИИ победил!'; }
         
-        document.querySelector('.quiz-container').innerHTML = `
+        resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${emoji}</div>
                 <h2 class="text-gradient fw-bold mb-1">${title}</h2>
