@@ -27,3 +27,5 @@ jobs:
         run: node --experimental-default-type=module --test tests/quiz-events.test.mjs
       - name: Audit quiz economy write boundary
         run: node --experimental-default-type=module --test tests/quiz-economy-boundary.test.mjs
+      - name: Test server-side quiz session rules
+        run: node --experimental-default-type=module --test tests/server-quiz-session.test.mjs
