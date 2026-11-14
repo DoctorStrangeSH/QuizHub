@@ -80,6 +80,8 @@ export class DuelMode extends BaseMode {
             }
         });
         
+        this.showAnswerExplanation();
+
         // Игрок ответил
         const playerCorrect = el.dataset.correct === 'true';
         const points = this.questions[this.currentRound].points;
