@@ -83,6 +83,7 @@ export class ClassicMode extends BaseMode {
                         </div>
                     </div>
                 </div>
+                ${this.getSaveStatusHTML()}
                 <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
                     <button class="btn-premium" onclick="window.navigateTo('home')">← В меню</button>
                     <button class="btn-gold" onclick="window.navigateTo('quiz')">Играть снова 🔄</button>
