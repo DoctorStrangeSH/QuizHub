@@ -49,7 +49,7 @@ export class ClassicMode extends BaseMode {
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
         const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
-        const coinsEarned = Math.floor(this.score / 2);
+        const coinsEarned = this.earnedCoins;
         
         let emoji, text;
         if (isWin) { emoji = '🏆'; text = 'Отличный результат!'; }
