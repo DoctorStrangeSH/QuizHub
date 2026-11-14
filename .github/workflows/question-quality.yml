@@ -21,3 +21,5 @@ jobs:
         run: node --experimental-default-type=module scripts/validate-questions.mjs
       - name: Test quiz rewards
         run: node --experimental-default-type=module --test tests/quiz-rewards.test.mjs
+      - name: Test quiz session lifecycle
+        run: node --experimental-default-type=module --test tests/quiz-session.test.mjs
