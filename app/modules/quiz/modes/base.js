@@ -30,6 +30,9 @@ export class BaseMode {
         this.score = 0;
         this.correctAnswers = 0;
         this.isFinished = false;
+        this.isTransitioning = false;
+        this.resultsPromise = null;
+        this.pendingTransition = null;
         this.type = 'base';
     }
 
@@ -40,6 +43,8 @@ export class BaseMode {
         this.score = 0;
         this.correctAnswers = 0;
         this.isFinished = false;
+        this.isTransitioning = false;
+        this.resultsPromise = null;
     }
 
     shuffleArray(arr) {
@@ -120,7 +125,7 @@ export class BaseMode {
     getNextButtonText() { return 'Далее →'; }
 
     handleAnswer(el) {
-        if (el.classList.contains('answered')) return;
+        if (this.isFinished || this.isTransitioning || el.classList.contains('answered')) return;
 
         const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
@@ -156,24 +161,41 @@ export class BaseMode {
     onAnswer(isCorrect, points) { }
 
     async nextQuestion() {
-        if (this.isFinished) return;
+        if (this.isFinished || this.isTransitioning) return;
+        this.isTransitioning = true;
         this.currentIndex++;
 
         if (this.shouldEnd()) {
+            this.isFinished = true;
             await this.finishQuiz();
             return;
         }
 
         const quizContainer = document.querySelector('.quiz-container');
+        if (!quizContainer) return;
         quizContainer.style.opacity = '0';
         quizContainer.style.transform = 'translateY(20px)';
         quizContainer.style.transition = 'all 0.3s ease';
 
-        setTimeout(() => {
-            quizContainer.innerHTML = this.renderQuestion(this.currentIndex);
-            quizContainer.style.opacity = '1';
-            quizContainer.style.transform = 'translateY(0)';
+        this.pendingTransition = setTimeout(() => {
+            this.pendingTransition = null;
+            if (!quizContainer.isConnected || this.isFinished) return;
+            // renderQuestion returns a whole .quiz-container; replace, do not nest it.
+            quizContainer.outerHTML = this.renderQuestion(this.currentIndex);
+            this.isTransitioning = false;
+            this.afterQuestionRendered();
         }, 300);
+    }
+
+    afterQuestionRendered() { }
+
+    dispose() {
+        this.isFinished = true;
+        if (this.pendingTransition !== null) {
+            clearTimeout(this.pendingTransition);
+            this.pendingTransition = null;
+        }
+        this.clearTimer?.();
     }
 
     shouldEnd() {
@@ -185,6 +207,12 @@ export class BaseMode {
     }
 
     async saveResults(extraData = {}) {
+        if (this.resultsPromise) return this.resultsPromise;
+        this.resultsPromise = this.persistResults(extraData);
+        return this.resultsPromise;
+    }
+
+    async persistResults(extraData = {}) {
         const user = auth.currentUser;
         if (!user) return;
 
@@ -208,7 +236,7 @@ export class BaseMode {
                 coins: increment(totalCoins),
                 quizzesCompleted: increment(1),
                 'stats.totalGames': increment(1),
-                'stats.totalQuestions': increment(this.correctAnswers + (this.currentIndex + 1 - this.correctAnswers)),
+                'stats.totalQuestions': increment(Math.min(this.currentIndex, this.questions.length)),
                 'stats.correctAnswers': increment(this.correctAnswers),
                 ...extraData
             });
