@@ -11,6 +11,12 @@ Status: migration plan, **not deployed security protection**.
 - No `firestore.rules`, `firebase.json`, or Functions package is committed to this branch. Deployed rules and Firebase billing/function availability have **not** been inspected.
 - `saveResults` is single-flight per in-memory quiz session. This is a UX safeguard, **not** cross-device idempotency or fraud prevention.
 
+## Implemented preparation (not deployed)
+
+- `server/quiz-session-core.mjs` is a pure, server-only state machine. It computes points from a canonical answer key, validates ownership, question ordering, answer indices and deadlines, and rejects finalizing an in-memory session twice.
+- `tests/server-quiz-session.test.mjs` exercises valid and adversarial paths in CI.
+- This module has **no durable storage, Firebase endpoint, transactional claim marker, authenticated request context or private question delivery** yet. A new process would reset its state. Do not expose it directly to clients or treat it as production anti-cheat.
+
 ## Safe migration sequence
 
 1. **Inventory all writes and queries.** Record user profile schema, stats, shop purchases, daily rewards, achievements, rankings, and chats. Identify public and private fields: Firestore rules cannot hide some fields within a readable document.
