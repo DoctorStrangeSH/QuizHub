@@ -29,6 +29,7 @@ export class BaseMode {
         this.currentIndex = 0;
         this.score = 0;
         this.correctAnswers = 0;
+        this.hasAnswered = false;
         this.isFinished = false;
         this.isTransitioning = false;
         this.resultsPromise = null;
@@ -42,6 +43,7 @@ export class BaseMode {
         this.currentIndex = 0;
         this.score = 0;
         this.correctAnswers = 0;
+        this.hasAnswered = false;
         this.isFinished = false;
         this.isTransitioning = false;
         this.resultsPromise = null;
@@ -127,7 +129,8 @@ export class BaseMode {
     getNextButtonText() { return 'Далее →'; }
 
     handleAnswer(el) {
-        if (this.isFinished || this.isTransitioning || el.classList.contains('answered')) return;
+        if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
+        this.hasAnswered = true;
 
         const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
@@ -192,7 +195,7 @@ export class BaseMode {
     }
 
     async nextQuestion() {
-        if (this.isFinished || this.isTransitioning) return;
+        if (this.isFinished || this.isTransitioning || !this.hasAnswered) return;
         this.isTransitioning = true;
         this.currentIndex++;
 
@@ -213,6 +216,7 @@ export class BaseMode {
             if (!quizContainer.isConnected || this.isFinished) return;
             // renderQuestion returns a whole .quiz-container; replace, do not nest it.
             quizContainer.outerHTML = this.renderQuestion(this.currentIndex);
+            this.hasAnswered = false;
             this.isTransitioning = false;
             this.afterQuestionRendered();
         }, 300);
