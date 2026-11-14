@@ -16,7 +16,9 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
 
     return {
         async start({ uid, mode, category, difficulty, count, language = 'ru', now }) {
-            if (!Number.isSafeInteger(now)) throw new Error('INVALID_TIME');
+            if (!Number.isSafeInteger(now) || now < 0 || !Number.isSafeInteger(now + sessionDurationMs)) {
+                throw new Error('INVALID_TIME');
+            }
             const selected = selectQuestions(catalog, { category, difficulty, count });
             const id = randomUUID();
             const session = createSession({
@@ -58,7 +60,7 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
                 const question = next ? catalog.get(next.id) : null;
                 if (next && !question) throw new Error('QUESTION_NOT_FOUND');
                 return {
-                    status: expired ? 'expired' : finished ? 'ready_to_complete' : 'in_progress',
+                    status: finished ? 'ready_to_complete' : expired ? 'expired' : 'in_progress',
                     sessionId,
                     deadlineAt: session.deadlineAt,
                     answeredQuestions,
@@ -70,10 +72,12 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
 
         async answer({ uid, sessionId, questionId, answerIndex, language = 'ru', now }) {
             if (typeof sessionId !== 'string' || !sessionId) throw new Error('INVALID_SESSION_ID');
+            if (!Number.isSafeInteger(now) || now < 0) throw new Error('INVALID_TIME');
             return store.runTransaction(async tx => {
                 const stored = await tx.getSession(sessionId);
                 if (!stored) throw new Error('SESSION_NOT_FOUND');
                 if (stored.uid !== uid) throw new Error('NOT_SESSION_OWNER');
+                if (now < stored.startedAt) throw new Error('INVALID_TIME');
                 // A request may be retried after a network timeout when the
                 // original answer was already committed. Replay only an exact
                 // match; never allow changing a previously recorded answer.
