@@ -118,10 +118,16 @@ test('duplicate and out-of-order answers do not change stored session', async ()
         uid: 'user-1', sessionId: started.sessionId,
         questionId: started.question.id, answerIndex: 0, now: 2000
     });
-    await assert.rejects(quiz.answer({
+    const replay = await quiz.answer({
         uid: 'user-1', sessionId: started.sessionId,
         questionId: started.question.id, answerIndex: 0, now: 2200
-    }), /OUT_OF_ORDER/);
+    });
+    assert.equal(replay.replayed, true);
+    assert.equal(replay.nextQuestion.id, first.nextQuestion.id);
+    await assert.rejects(quiz.answer({
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 1, now: 2300
+    }), /ANSWER_ALREADY_LOCKED/);
     assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
     assert.notEqual(first.nextQuestion.id, started.question.id);
 });
