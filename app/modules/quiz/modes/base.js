@@ -111,6 +111,8 @@ export class BaseMode {
                     `).join('')}
                 </div>
                 
+                <div id="answer-explanation" class="glass-card mt-3 animate-in" role="status" aria-live="polite" style="display:none;"></div>
+
                 <div class="text-center mt-4" id="next-btn-container" style="display:none;">
                     <button class="btn-premium btn-next" onclick="window.nextQuestion()">${this.getNextButtonText()}</button>
                 </div>
@@ -153,12 +155,41 @@ export class BaseMode {
         }
 
         this.onAnswer(isCorrect, points);
+        this.showAnswerExplanation();
 
         document.getElementById('next-btn-container').style.display = 'block';
         document.getElementById('next-btn-container').classList.add('animate-in');
     }
 
     onAnswer(isCorrect, points) { }
+
+    showAnswerExplanation() {
+        const panel = document.getElementById('answer-explanation');
+        const question = this.getCurrentQuestion();
+        if (!panel || !question) return;
+
+        const isRU = getState().language !== 'en';
+        const correctOption = (isRU ? question.optionsRU : question.optionsEN)?.[question.correctIndex];
+        const explanation = isRU ? question.explanationRU : question.explanationEN;
+        const title = isRU ? '💡 Разбор ответа' : '💡 Answer explained';
+        const answerLabel = isRU ? 'Правильный ответ:' : 'Correct answer:';
+
+        // Text content avoids interpreting question data as HTML.
+        panel.replaceChildren();
+        const heading = document.createElement('strong');
+        heading.textContent = title;
+        const answer = document.createElement('p');
+        answer.className = 'mb-1 mt-2';
+        answer.textContent = `${answerLabel} ${correctOption ?? ''}`;
+        panel.append(heading, answer);
+        if (explanation) {
+            const detail = document.createElement('p');
+            detail.className = 'text-secondary mb-0';
+            detail.textContent = explanation;
+            panel.append(detail);
+        }
+        panel.style.display = 'block';
+    }
 
     async nextQuestion() {
         if (this.isFinished || this.isTransitioning) return;
