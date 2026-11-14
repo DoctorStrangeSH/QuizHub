@@ -83,10 +83,13 @@ export class SurvivalMode extends BaseMode {
     }
     
     showResults() {
+        if (this.isDisposed) return;
+        const resultContainer = document.querySelector('.quiz-container');
+        if (!resultContainer) return;
         const coinsEarned = Math.floor(this.score / 2);
         const streak = this.bestStreak;
         
-        document.querySelector('.quiz-container').innerHTML = `
+        resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${streak >= 20 ? '🔥' : streak >= 10 ? '💀' : '💪'}</div>
                 <h2 class="text-gradient fw-bold mb-1">Выживание завершено!</h2>
