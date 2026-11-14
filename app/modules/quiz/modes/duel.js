@@ -155,6 +155,10 @@ export class DuelMode extends BaseMode {
         const playerWon = this.playerScore > this.aiScore;
         const isDraw = this.playerScore === this.aiScore;
         
+        // Награды и статистика в BaseMode используют общие поля score/correctAnswers.
+        this.score = this.playerScore;
+        this.correctAnswers = this.playerCorrect;
+
         await this.saveResults({
             wins: increment(playerWon ? 1 : 0),
             'stats.totalWins': increment(playerWon ? 1 : 0)
