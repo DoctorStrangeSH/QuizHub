@@ -27,7 +27,8 @@ export async function renderQuiz() {
         return '';
     }
     
-    // Создаём режим
+    // Останавливаем таймер предыдущей игры перед повторным запуском.
+    resetQuiz();
     currentMode = createMode(settings.mode);
     
     // Загружаем вопросы
