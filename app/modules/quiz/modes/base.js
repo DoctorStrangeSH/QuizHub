@@ -1,4 +1,5 @@
 import { getState } from '../../../store/state.js';
+import { calculateQuizRewards } from '../rewards.js';
 import { auth, db, doc, getDoc, updateDoc, increment } from '../../../firebase-config.js';
 
 const CATEGORY_NAMES = {
@@ -267,8 +268,9 @@ export class BaseMode {
             coinMultiplier = multipliers.coinMultiplier;
         } catch (e) { }
 
-        const totalXP = Math.floor(this.score * xpMultiplier);
-        const totalCoins = Math.floor((this.score / 2) * coinMultiplier);
+        const { xp: totalXP, coins: totalCoins } = calculateQuizRewards(this.score, {
+            xpMultiplier, coinMultiplier
+        });
 
         try {
             const userRef = doc(db, 'users', user.uid);
