@@ -95,3 +95,27 @@ test('failed transaction does not mark reward claimed or update balance', async 
     assert.equal(sessions.get('session-1').finalized, false);
     assert.equal(sessions.get('session-1').receipt, undefined);
 });
+
+test('invalid or negative stored balances never get silently overwritten', async () => {
+    const { store, users, sessions } = setup();
+    users.get('player').coins = -20;
+    await assert.rejects(claim(store), /INVALID_USER_BALANCE/);
+    assert.equal(users.get('player').coins, -20);
+    assert.equal(sessions.get('session-1').finalized, false);
+});
+
+test('unsafe integer overflow fails atomically', async () => {
+    const { store, users, sessions } = setup();
+    users.get('player').coins = Number.MAX_SAFE_INTEGER;
+    await assert.rejects(claim(store), /BALANCE_OVERFLOW/);
+    assert.equal(users.get('player').coins, Number.MAX_SAFE_INTEGER);
+    assert.equal(sessions.get('session-1').finalized, false);
+});
+
+test('corrupted chronological answer log cannot claim a reward', async () => {
+    const { store, users, sessions } = setup();
+    sessions.get('session-1').answers[1].answeredAt = 1500;
+    await assert.rejects(claim(store), /INVALID_ANSWER_LOG/);
+    assert.equal(users.get('player').coins, 7);
+    assert.equal(sessions.get('session-1').finalized, false);
+});
