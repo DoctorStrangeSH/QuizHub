@@ -125,3 +125,70 @@ test('duplicate and out-of-order answers do not change stored session', async ()
     assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
     assert.notEqual(first.nextQuestion.id, started.question.id);
 });
+
+test('resume returns the next unanswered question without exposing its answer', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store, sessionDurationMs: 5000 });
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 2, now: 1000
+    });
+    const initial = await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 1500, language: 'en'
+    });
+    assert.equal(initial.status, 'in_progress');
+    assert.equal(initial.question.id, started.question.id);
+    assert.equal(initial.answeredQuestions, 0);
+    assert.equal('correctIndex' in initial.question, false);
+
+    const first = await quiz.answer({
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 0, now: 2000
+    });
+    const resumed = await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 2500
+    });
+    assert.equal(resumed.answeredQuestions, 1);
+    assert.equal(resumed.question.id, first.nextQuestion.id);
+    assert.equal('points' in resumed.question, false);
+});
+
+test('resume enforces ownership and reveals only final receipt after completion', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store, sessionDurationMs: 5000 });
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 1, now: 1000
+    });
+    await assert.rejects(quiz.resume({
+        uid: 'intruder', sessionId: started.sessionId, now: 2000
+    }), /NOT_SESSION_OWNER/);
+    await quiz.answer({
+        uid: 'user-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 0, now: 2000
+    });
+    assert.equal((await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 2200
+    })).status, 'ready_to_complete');
+    await quiz.complete({ uid: 'user-1', sessionId: started.sessionId, now: 2300 });
+    const final = await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 2400
+    });
+    assert.equal(final.status, 'completed');
+    assert.equal(final.receipt.alreadyClaimed, true);
+});
+
+test('expired sessions do not disclose unanswered questions', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store, sessionDurationMs: 5000 });
+    const started = await quiz.start({
+        uid: 'user-1', mode: 'classic', category: 'science',
+        difficulty: 'easy', count: 2, now: 1000
+    });
+    const result = await quiz.resume({
+        uid: 'user-1', sessionId: started.sessionId, now: 6001
+    });
+    assert.equal(result.status, 'expired');
+    assert.equal(result.question, null);
+    assert.equal(result.totalQuestions, 2);
+});
