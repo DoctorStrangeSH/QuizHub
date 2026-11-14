@@ -37,6 +37,37 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
             };
         },
 
+        async resume({ uid, sessionId, language = 'ru', now }) {
+            if (typeof sessionId !== 'string' || !sessionId) throw new Error('INVALID_SESSION_ID');
+            if (!Number.isSafeInteger(now)) throw new Error('INVALID_TIME');
+            return store.runTransaction(async tx => {
+                const session = await tx.getSession(sessionId);
+                if (!session) throw new Error('SESSION_NOT_FOUND');
+                if (session.uid !== uid) throw new Error('NOT_SESSION_OWNER');
+                if (session.finalized) {
+                    // Return the existing receipt only to the session owner.
+                    return {
+                        status: 'completed',
+                        receipt: session.receipt ? { ...session.receipt, alreadyClaimed: true } : null
+                    };
+                }
+                const answeredQuestions = session.answers.length;
+                const finished = answeredQuestions === session.questions.length;
+                const expired = now >= session.deadlineAt;
+                const next = !finished && !expired ? session.questions[answeredQuestions] : null;
+                const question = next ? catalog.get(next.id) : null;
+                if (next && !question) throw new Error('QUESTION_NOT_FOUND');
+                return {
+                    status: expired ? 'expired' : finished ? 'ready_to_complete' : 'in_progress',
+                    sessionId,
+                    deadlineAt: session.deadlineAt,
+                    answeredQuestions,
+                    totalQuestions: session.questions.length,
+                    question: question ? publicQuestion(question, language) : null
+                };
+            });
+        },
+
         async answer({ uid, sessionId, questionId, answerIndex, language = 'ru', now }) {
             if (typeof sessionId !== 'string' || !sessionId) throw new Error('INVALID_SESSION_ID');
             return store.runTransaction(async tx => {
