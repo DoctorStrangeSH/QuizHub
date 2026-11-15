@@ -90,6 +90,7 @@ async function init() {
         let authRevision = 0;
         onAuthStateChanged(auth, async (user) => {
             const revision = ++authRevision;
+            document.getElementById('daily-popup-container')?.remove();
             try {
                 setState('currentUser', user);
 
