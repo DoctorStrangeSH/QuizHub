@@ -18,7 +18,7 @@ async function waitForIdentity(page) {
     throw new Error('Firebase login did not complete. UI message: ' + message);
 }
 
-test('real browser: register, persist session, log out and sign in again', { timeout: 90000 }, async () => {
+test('real browser: register, persist session, log out, sign in again and sync profile across browsers', { timeout: 120000 }, async () => {
     assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Auth emulator required');
     assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Firestore emulator required');
     assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project);
@@ -46,6 +46,44 @@ test('real browser: register, persist session, log out and sign in again', { tim
         const firstIdentity = await waitForIdentity(page);
         assert.equal(firstIdentity.projectId, project);
         assert.ok(firstIdentity.uid);
+
+        // Create the actual profile through the UI; the second browser must
+        // discover it from Firestore, not from this context's local storage.
+        await page.locator('#profile-form').waitFor({ timeout: 20000 });
+        const nickname = 'Qh' + Date.now().toString(36);
+        await page.locator('#nickname-input').fill(nickname);
+        await page.locator('#check-nickname-btn').click();
+        await page.locator('#save-profile-btn:not([disabled])').waitFor({ timeout: 15000 });
+        await page.locator('#save-profile-btn').click();
+        await page.waitForFunction(async (expected) => {
+            const { auth, db, doc, getDoc } = await import('./app/firebase-config.js');
+            if (!auth.currentUser) return false;
+            const snapshot = await getDoc(doc(db, 'users', auth.currentUser.uid));
+            return snapshot.data()?.nickname === expected;
+        }, nickname, { timeout: 20000 });
+
+        const otherContext = await browser.newContext({ serviceWorkers: 'block' });
+        const otherPage = await otherContext.newPage();
+        const otherErrors = [];
+        otherPage.on('pageerror', error => otherErrors.push(error.message));
+        await otherPage.goto(url);
+        await otherPage.locator('#auth-form').waitFor({ timeout: 25000 });
+        await otherPage.locator('#auth-email').fill(email);
+        await otherPage.locator('#auth-password').fill(password);
+        await otherPage.locator('#auth-form button[type="submit"]').click();
+        const otherIdentity = await waitForIdentity(otherPage);
+        assert.equal(otherIdentity.uid, firstIdentity.uid, 'Separate browser must retain the same UID');
+        await otherPage.locator('#profile-form').waitFor({ state: 'detached', timeout: 20000 });
+        const otherProfile = await otherPage.evaluate(async () => {
+            const { auth, db, doc, getDoc } = await import('./app/firebase-config.js');
+            const snapshot = await getDoc(doc(db, 'users', auth.currentUser.uid));
+            return snapshot.exists() ? snapshot.data() : null;
+        });
+        assert.equal(otherProfile?.nickname, nickname, 'Profile must sync through Firestore');
+        assert.equal(otherProfile?.coins, 100, 'Initial progress must be available on second browser');
+        assert.equal(otherProfile?.level, 1);
+        assert.deepEqual(otherErrors, [], `Second browser errors: ${otherErrors.join(' | ')}`);
+        await otherContext.close();
 
         await page.reload();
         const persistedUid = (await waitForIdentity(page)).uid;
