@@ -25,7 +25,7 @@ test('real browser: register, persist session, log out and sign in again', { tim
         const email = `browser-${Date.now()}@example.test`;
         const password = 'Browser-test-5830';
         await page.evaluate(() => window.switchAuthMode());
-        await page.locator('#auth-form').waitFor();
+        await page.locator('#auth-password[autocomplete="new-password"]').waitFor();
         await page.locator('#auth-email').fill(email);
         await page.locator('#auth-password').fill(password);
         await page.locator('#auth-form button[type="submit"]').click();
