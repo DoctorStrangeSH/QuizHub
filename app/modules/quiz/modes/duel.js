@@ -168,11 +168,13 @@ export class DuelMode extends BaseMode {
         this.score = this.playerScore;
         this.correctAnswers = this.playerCorrect;
 
-        await this.saveResults({
+        const saving = this.saveResults({
             wins: increment(playerWon ? 1 : 0),
             'stats.totalWins': increment(playerWon ? 1 : 0)
         });
-        
+
+        this.showResults(playerWon, isDraw);
+        await saving;
         this.showResults(playerWon, isDraw);
     }
     
@@ -180,7 +182,7 @@ export class DuelMode extends BaseMode {
         if (this.isDisposed) return;
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
-        const coinsEarned = this.earnedCoins;
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : `+${this.earnedCoins}`;
         
         let emoji, title;
         if (isDraw) { emoji = '🤝'; title = 'Ничья!'; }
@@ -206,7 +208,7 @@ export class DuelMode extends BaseMode {
                         </div>
                     </div>
                 </div>
-                <p class="mt-3">+${coinsEarned} 🪙</p>
+                <p class="mt-3">${coinsEarned} 🪙</p>
                 ${this.getSaveStatusHTML()}
                 <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
                     <button class="btn-premium" onclick="window.navigateTo('home')">← В меню</button>
