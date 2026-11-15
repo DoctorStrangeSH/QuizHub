@@ -18,7 +18,7 @@ test('outcome text is localized and points are only celebrated for correct answe
   assert.match(base, /Learn the right answer/);
   assert.match(base, /if \(isCorrect && Number\.isFinite\(points\) && points > 0\)/);
   assert.match(base, /feedback\.replaceChildren\(\)/);
-  assert.match(base, /message\.textContent = isCorrect/);
+  assert.match(base, /message\.textContent = reason === 'timeout'/);
 });
 
 test('feedback has distinct states and respects reduced-motion preferences', () => {
