@@ -145,11 +145,13 @@ export class TimeTrialMode extends BaseMode {
     async finishQuiz() {
         this.clearTimer();
         
-        await this.saveResults({
+        const saving = this.saveResults({
             wins: increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0),
             'stats.totalWins': increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0)
         });
-        
+
+        this.showResults();
+        await saving;
         this.showResults();
     }
     
@@ -158,7 +160,7 @@ export class TimeTrialMode extends BaseMode {
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
         const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
-        const coinsEarned = this.earnedCoins;
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : `+${this.earnedCoins}`;
         
         resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
@@ -181,7 +183,7 @@ export class TimeTrialMode extends BaseMode {
                         </div>
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value coin-color">+${coinsEarned}</span>
+                                <span class="result-value coin-color">${coinsEarned}</span>
                                 <span class="result-label">Монет</span>
                             </div>
                         </div>
