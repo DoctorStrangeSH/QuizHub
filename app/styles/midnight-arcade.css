@@ -1116,3 +1116,45 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .chat-friend-item,.message-actions { transition: none; }
 }
+
+
+/* Tournament hall — live boosts, reward trails and podium prizes */
+.events-page-wrapper { width: min(100%,1160px); margin-inline: auto; padding-bottom: 35px; }
+.events-hero { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 22px; padding: clamp(25px,4vw,42px); border: 1px solid rgba(255,210,122,.34); border-radius: 27px; background: radial-gradient(ellipse at 100% 0%,rgba(255,210,122,.18),transparent 52%),radial-gradient(circle at 0% 100%,rgba(168,155,255,.13),transparent 55%),var(--bg-glass); }
+.events-eyebrow { font-weight: 900; font-size: .7rem; letter-spacing: .18em; color: var(--gold); }
+.events-hero .page-title { margin: 0; font-size: clamp(1.7rem,3.6vw,2.6rem); font-weight: 900; }
+.events-hero .bi { color: var(--gold); margin-right: 8px; }
+.events-hero p { max-width: 650px; margin: 0; color: var(--text-secondary); font-size: 1rem; }
+.events-section { margin-bottom: 26px; }
+.events-section .section-title { margin-bottom: 13px; font-size: clamp(1.18rem,2.4vw,1.5rem); font-weight: 900; }
+.events-section .section-title .bi { color: var(--accent); margin-right: 8px; }
+.events-section .event-card { position: relative; display: flex; align-items: center; gap: 20px; min-height: 118px; padding: clamp(17px,2.5vw,26px); margin-bottom: 12px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 19px; background: linear-gradient(115deg,rgba(168,155,255,.08),transparent 67%),var(--bg-glass); overflow: hidden; }
+.event-card .event-icon { display: grid; place-items: center; flex: 0 0 68px; width: 68px; height: 68px; border-radius: 18px; background: rgba(168,155,255,.12); border: 1px solid var(--border); font-size: 2rem; }
+.event-card .event-info { min-width: 0; flex: 1; }
+.event-card .event-name { margin: 0 0 7px; font-size: 1.13rem; font-weight: 900; overflow-wrap: anywhere; }
+.event-card .event-desc { margin: 0 0 9px; color: var(--text-secondary); line-height: 1.5; }
+.event-card .event-time { display: inline-flex; padding: 5px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 9px; font-weight: 800; color: var(--text-primary); font-size: .8rem; }
+.event-card .event-status { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; align-self: flex-start; padding: 8px 11px; border-radius: 999px; color: var(--success); font-size: .78rem; font-weight: 850; border: 1px solid rgba(121,230,173,.28); background: rgba(121,230,173,.08); }
+.event-status .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px rgba(121,230,173,.45); }
+.events-section .tournament-rewards { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.events-section .reward-badge { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 12px; color: var(--gold); border: 1px solid rgba(255,210,122,.27); border-radius: 11px; background: rgba(255,210,122,.08); font-size: .81rem; font-weight: 800; }
+.events-section .daily-rewards-row { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 10px; }
+.events-section .daily-reward-day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; min-width: 0; min-height: 158px; padding: 16px 8px; border: 1px solid var(--border); border-radius: 17px; background: var(--bg-glass); }
+.events-section .daily-reward-day.first-day { border-color: rgba(168,155,255,.5); background: linear-gradient(150deg,rgba(168,155,255,.15),var(--bg-glass)); }
+.daily-reward-icon { font-size: 2rem; }
+.daily-reward-day-num { font-weight: 850; font-size: .85rem; color: var(--text-secondary); }
+.daily-reward-coins { font-size: .93rem; color: var(--gold); font-weight: 900; }
+.event-section-hint { margin: -2px 0 13px; color: var(--text-secondary); font-size: .83rem; }
+.event-empty-icon { display: block; font-size: 2.5rem; }
+@media (max-width: 980px) { .events-section .daily-rewards-row { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@media (max-width: 580px) {
+  .events-section .event-card { flex-wrap: wrap; gap: 12px; padding: 16px; }
+  .event-card .event-icon { flex-basis: 50px; width: 50px; height: 50px; border-radius: 13px; font-size: 1.5rem; }
+  .event-card .event-info { flex-basis: calc(100% - 65px); }
+  .event-card .event-status { margin-left: 62px; }
+  .events-section .daily-rewards-row { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .events-section .daily-reward-day { min-height: 126px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-status .pulse-dot { animation: none; }
+}
