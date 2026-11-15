@@ -50,3 +50,6 @@ jobs:
 
       - name: Test accurate quiz countdown
         run: node --experimental-default-type=module --test tests/quiz-timer.test.mjs
+
+      - name: Test navigating during quiz startup
+        run: node --experimental-default-type=module --test tests/quiz-render-navigation.test.mjs
