@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check authentication module syntax and UI contract
+        run: |
+          node --check app/modules/auth/auth.js
+          node --test tests/auth-interface.test.mjs
       - name: Validate quiz questions
         run: node --experimental-default-type=module scripts/validate-questions.mjs
       - name: Test quiz rewards
