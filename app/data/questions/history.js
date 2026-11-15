@@ -183,11 +183,13 @@ const historyQuestions = {
             points: 30
         },
         {
-            questionRU: 'В каком году была подписана Великая хартия вольностей?',
-            questionEN: 'What year was the Magna Carta signed?',
-            optionsRU: ['1066', '1215', '1348', '1492'],
-            optionsEN: ['1066', '1215', '1348', '1492'],
+            questionRU: 'Как назывался мирный договор, завершивший Тридцатилетнюю войну в 1648 году?',
+            questionEN: 'What was the 1648 settlement that ended the Thirty Years\' War called?',
+            optionsRU: ['Утрехтский мир', 'Вестфальский мир', 'Аугсбургский мир', 'Версальский договор'],
+            optionsEN: ['Treaty of Utrecht', 'Peace of Westphalia', 'Peace of Augsburg', 'Treaty of Versailles'],
             correctIndex: 1,
+            explanationRU: 'Вестфальский мир 1648 года завершил Тридцатилетнюю войну в Священной Римской империи.',
+            explanationEN: 'The Peace of Westphalia in 1648 ended the Thirty Years\' War in the Holy Roman Empire.',
             points: 30
         },
         {
