@@ -18,6 +18,10 @@
 
 В GitHub Actions `Firebase emulator integration` добавлен тест `tests/firebase-auth-emulator.test.mjs` (прогон #32, 2026-11-15): регистрация тестового email-пользователя, повторный вход с неизменным UID, проверка ID token, неверного пароля, повторной регистрации и выпуска кода восстановления пароля **только внутри Auth Emulator**. Отправка реальных писем, Google Popup и взаимодействие с опубликованной страницей этим тестом не проверяются.
 
+## Браузерная интеграция
+
+В GitHub Actions добавлен `tests/firebase-browser-auth.test.mjs` с Playwright/Chromium. Прогон **Firebase emulator integration #54** (2026-11-15) успешно выполнил в браузере регистрацию по email, сохранение сеанса после перезагрузки, выход и повторный вход с тем же UID. Вызовы направлены на **локальный проект `demo-quizhub`**: код включает его только при `localhost` / `127.0.0.1` и явном параметре `?firebaseEmulator=1`. Google OAuth Popup, настоящие письма и опубликованный сайт пока требуют ручного теста.
+
 ## Перед выпуском
 
 1. В [Firebase Authentication](https://console.firebase.google.com/project/quizhub-e65f5/authentication/providers) проверить, включены ли **Email/Password** и **Google**. При необходимости включить в консоли; не менять настройки остальных приложений.
