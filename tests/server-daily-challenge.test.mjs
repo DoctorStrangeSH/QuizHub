@@ -138,6 +138,6 @@ test('rejects malformed time, date and identity', async () => {
     await assert.rejects(service.start({ uid: '../other', now }), /AUTH_REQUIRED/);
     await assert.rejects(service.start({ uid: 'one', now: NaN }), /INVALID_SERVER_TIME/);
     await assert.rejects(service.resume({
-        uid: 'one', date: '2026-11-14', now
+        uid: 'one', date: '2026-11-13', now
     }), /INVALID_DAILY_DATE/);
 });
