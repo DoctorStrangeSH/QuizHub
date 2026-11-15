@@ -54,10 +54,6 @@ test('daily mode uses the same question and answer ordering for the same date', 
         ['easy', 'easy', 'easy', 'medium', 'medium', 'medium', 'hard', 'hard', 'hard', 'hard']
     );
     assert.deepEqual(
-        first.questions.map(question => question.difficulty),
-        ['easy', 'easy', 'easy', 'medium', 'medium', 'medium', 'hard', 'hard', 'hard', 'hard']
-    );
-    assert.deepEqual(
         first.questions.map(question => question.dailyQuestionId),
         second.questions.map(question => question.dailyQuestionId)
     );
