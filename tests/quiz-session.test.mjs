@@ -188,3 +188,45 @@ test('duel restart cancels its pending round result callback', async () => {
     assert.equal(duel.currentRound, 0);
     duel.dispose();
 });
+
+test('stale answer card cannot score a different active question', async () => {
+    const mode = new BaseMode();
+    await mode.init(makeQuestions(2), {});
+    const oldDocument = globalThis.document;
+    globalThis.document = {
+        getElementById: () => ({ contains: () => false })
+    };
+    try {
+        mode.handleAnswer({ classList: { contains: () => false }, dataset: { correct: 'true' } });
+        assert.equal(mode.hasAnswered, false);
+        assert.equal(mode.correctAnswers, 0);
+        assert.equal(mode.score, 0);
+    } finally {
+        globalThis.document = oldDocument;
+        mode.dispose();
+    }
+});
+
+test('stale duel answer cannot change scores or schedule a round result', async () => {
+    const duelSource = await readFile(resolve('app/modules/quiz/modes/duel.js'), 'utf8');
+    const DuelMode = new Function('BaseMode', 'getState', 'increment',
+        duelSource.replace(/^import .*;\\s*$/gm, '').replace('export class DuelMode', 'class DuelMode')
+        + '\\nreturn DuelMode;'
+    )(BaseMode, () => ({ gameSettings: { difficulty: 'easy' } }), value => value);
+    const duel = new DuelMode();
+    await duel.init(makeQuestions(2), {});
+    const oldDocument = globalThis.document;
+    globalThis.document = {
+        getElementById: () => ({ contains: () => false })
+    };
+    try {
+        duel.handlePlayerAnswer({ classList: { contains: () => false }, dataset: { correct: 'true' } });
+        assert.equal(duel.hasAnswered, false);
+        assert.equal(duel.playerScore, 0);
+        assert.equal(duel.aiScore, 0);
+        assert.equal(duel.roundResultTimeout, undefined);
+    } finally {
+        globalThis.document = oldDocument;
+        duel.dispose();
+    }
+});
