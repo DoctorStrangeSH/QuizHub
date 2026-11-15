@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { createDailyChallenge, createSeededRandom } from '../app/modules/quiz/daily-challenge.js';
 
 const source = (await readFile(resolve('app/modules/quiz/modes/daily-challenge.js'), 'utf8'))
-    .replace(/^import .*;\\s*$/gm, '')
+    .replace(/^import .*;.*$/gm, '')
     .replace('export class DailyChallengeMode', 'class DailyChallengeMode');
 
 class FakeClassicMode {
@@ -38,7 +38,7 @@ class FakeClassicMode {
 let language = 'ru';
 const DailyChallengeMode = new Function(
     'ClassicMode', 'getState', 'createSeededRandom', 'getUtcDateKey',
-    source + '\\nreturn DailyChallengeMode;'
+    source + String.fromCharCode(10) + 'return DailyChallengeMode;'
 )(FakeClassicMode, () => ({ language }), createSeededRandom, () => '2026-11-15');
 
 test('daily mode uses the same question and answer ordering for the same date', async () => {
@@ -49,6 +49,10 @@ test('daily mode uses the same question and answer ordering for the same date', 
     await first.init(questions, { challengeDate: '2026-11-15' });
     await second.init(questions, { challengeDate: '2026-11-15' });
 
+    assert.deepEqual(
+        first.questions.map(question => question.difficulty),
+        ['easy', 'easy', 'easy', 'medium', 'medium', 'medium', 'hard', 'hard', 'hard', 'hard']
+    );
     assert.deepEqual(
         first.questions.map(question => question.dailyQuestionId),
         second.questions.map(question => question.dailyQuestionId)
