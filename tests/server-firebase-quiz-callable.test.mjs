@@ -59,6 +59,7 @@ test('maps known failures without exposing internal details', async () => {
         ['INVALID_ANSWER', 'invalid-argument'],
         ['INVALID_SELECTION', 'invalid-argument'],
         ['NOT_ENOUGH_QUESTIONS', 'failed-precondition'],
+        ['UNSUPPORTED_QUIZ_MODE', 'failed-precondition'],
         ['SESSION_NOT_FOUND', 'not-found'],
         ['NOT_SESSION_OWNER', 'permission-denied'],
         ['SESSION_EXPIRED', 'failed-precondition'],
