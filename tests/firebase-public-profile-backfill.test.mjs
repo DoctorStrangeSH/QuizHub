@@ -32,7 +32,7 @@ async function readDocument(path) {
 
 test('Firestore Emulator: public profile migration omits PII and is idempotent', async () => {
     assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project);
-    assert.match(process.env.FIRESTORE_EMULATOR_HOST || '', /^(127\\.0\\.0\\.1|localhost):8080$/);
+    assert.ok(['127.0.0.1:8080', 'localhost:8080'].includes(process.env.FIRESTORE_EMULATOR_HOST), 'Local Firestore emulator required');
 
     const suffix = Date.now().toString(36);
     const uidA = `migrationA${suffix}`;
