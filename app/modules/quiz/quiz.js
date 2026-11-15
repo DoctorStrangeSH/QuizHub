@@ -7,6 +7,7 @@ import { DuelMode } from './modes/duel.js';
 
 // Текущий активный режим
 let currentMode = null;
+let attachedMode = null;
 
 // ========== ФАБРИКА РЕЖИМОВ ==========
 function createMode(modeType) {
@@ -29,8 +30,7 @@ export async function renderQuiz() {
     
     // Останавливаем таймер предыдущей игры перед повторным запуском.
     resetQuiz();
-    const mode = createMode(settings.mode);
-    currentMode = mode;
+
     
     // Загружаем вопросы
     const questions = getQuestions(settings.category, settings.difficulty);
@@ -51,6 +51,10 @@ export async function renderQuiz() {
             </div>
         `;
     }
+    
+    // Создаём режим только после проверки наличия вопросов.
+    const mode = createMode(settings.mode);
+    currentMode = mode;
     
     // Инициализируем режим
     await mode.init(questions, settings);
@@ -84,10 +88,13 @@ export function resetQuiz() {
     // Завершаем режим и отменяем все его таймеры и отложенные действия.
     currentMode?.dispose?.();
     currentMode = null;
+    attachedMode = null;
 }
 
 // ========== ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ==========
 export function attachQuizListeners() {
     // Start first-question effects only after the markup is mounted.
-    currentMode?.afterQuestionRendered?.();
+    if (!currentMode || attachedMode === currentMode) return;
+    attachedMode = currentMode;
+    currentMode.afterQuestionRendered?.();
 }
