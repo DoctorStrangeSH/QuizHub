@@ -57,8 +57,10 @@ test('end-to-end transport and authenticated boundary use only server identity a
 test('maps known failures without exposing internal details', async () => {
     for (const [message, expected] of [
         ['INVALID_ANSWER', 'invalid-argument'],
+        ['INVALID_SELECTION', 'invalid-argument'],
+        ['NOT_ENOUGH_QUESTIONS', 'failed-precondition'],
         ['SESSION_NOT_FOUND', 'not-found'],
-        ['NOT_SESSION_OWNER', 'failed-precondition'],
+        ['NOT_SESSION_OWNER', 'permission-denied'],
         ['SESSION_EXPIRED', 'failed-precondition'],
         ['USER_NOT_FOUND', 'not-found'],
         ['database credentials /projects/secret', 'internal']
