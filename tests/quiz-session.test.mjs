@@ -314,3 +314,39 @@ test('classic pending save does not repaint results after leaving the game', asy
     await pending;
     assert.equal(renders, 1);
 });
+
+for (const [name, className] of [
+    ['timetrial', 'TimeTrialMode'],
+    ['duel', 'DuelMode'],
+    ['survival', 'SurvivalMode']
+]) {
+    test(`${name} displays results before saving and refreshes after confirmation`, async () => {
+        const source = await readFile(resolve(`app/modules/quiz/modes/${name}.js`), 'utf8');
+        const Mode = new Function('BaseMode', 'getState', 'auth', 'db', 'doc', 'runTransaction',
+            'increment', source.replace(/^import .*;\s*$/gm, '').replace(`export class ${className}`, `class ${className}`)
+            + `\nreturn ${className};`
+        )(BaseMode, () => ({ gameSettings: { difficulty: 'easy' } }), { currentUser: null },
+            {}, () => {}, async () => {}, value => value);
+        const mode = new Mode();
+        await mode.init(makeQuestions(1), {});
+        const renders = [];
+        let completeSave;
+        mode.saveResults = () => {
+            mode.saveStatus = 'saving';
+            return new Promise(resolve => { completeSave = () => {
+                mode.saveStatus = 'saved';
+                mode.earnedCoins = 15;
+                resolve(true);
+            }; });
+        };
+        mode.showResults = () => {
+            if (!mode.isDisposed) renders.push([mode.saveStatus, mode.earnedCoins]);
+        };
+        const pending = mode.finishQuiz();
+        assert.deepEqual(renders, [['saving', 0]]);
+        completeSave();
+        await pending;
+        assert.deepEqual(renders, [['saving', 0], ['saved', 15]]);
+        mode.dispose();
+    });
+}
