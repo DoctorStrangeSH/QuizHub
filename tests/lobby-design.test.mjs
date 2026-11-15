@@ -27,3 +27,16 @@ test('mobile navigation reports expanded state and nickname is escaped', () => {
   assert.match(dashboard, /setAttribute\('aria-expanded', 'false'\)/);
   assert.match(dashboard, /&#39;/);
 });
+
+
+test('category picker is a modal grid of keyboard-operable buttons', () => {
+  assert.match(dashboard, /role="dialog" aria-modal="true"/);
+  assert.match(dashboard, /aria-labelledby="category-modal-title"/);
+  assert.match(dashboard, /<button type="button" class="sidebar-cat-item/);
+  assert.match(dashboard, /setAttribute\('aria-hidden', 'false'\)/);
+  assert.match(dashboard, /event.key === 'Escape'/);
+  assert.match(dashboard, /event.key !== 'Tab'/);
+  assert.match(dashboard, /categoryReturnFocus\?\.focus/);
+  assert.match(styles, /\.category-modal-body \{ display: grid/);
+  assert.match(styles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+});
