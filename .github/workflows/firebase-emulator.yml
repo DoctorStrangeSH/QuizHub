@@ -40,4 +40,4 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 &
           npx --yes firebase-tools@latest emulators:exec \
             --project demo-quizhub --only auth,firestore,functions \
-            "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs tests/firebase-browser-auth.test.mjs tests/firebase-public-profile-backfill.test.mjs"
+            "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs tests/firebase-browser-auth.test.mjs tests/firebase-quiz-browser.test.mjs tests/firebase-public-profile-backfill.test.mjs"
