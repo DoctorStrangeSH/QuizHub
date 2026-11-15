@@ -260,3 +260,16 @@ test('start and answer reject invalid or forged timestamps even on retries', asy
     await assert.rejects(quiz.answer({ ...request }), /INVALID_TIME/);
     assert.equal(store.sessions.get(started.sessionId).answers.length, 1);
 });
+
+test('unverified game modes cannot create reward-bearing server sessions', async () => {
+    const store = makeStore();
+    const quiz = createQuizService({ catalog, store });
+    for (const mode of ['survival', 'timetrial', 'duel', 'admin', '', null]) {
+        await assert.rejects(quiz.start({
+            uid: 'user-1', mode, category: 'science',
+            difficulty: 'easy', count: 1, now: 1000
+        }), /UNSUPPORTED_QUIZ_MODE/);
+    }
+    assert.equal(store.sessions.size, 0);
+    assert.equal(store.users.get('user-1').coins, 0);
+});
