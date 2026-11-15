@@ -11,12 +11,14 @@ const source = (await readFile(resolve('app/modules/quiz/modes/daily-challenge.j
 class FakeClassicMode {
     constructor() {
         this.questions = [];
+        this.currentIndex = 0;
         this.settings = {};
         this.isFinished = false;
     }
 
     async init(questions, settings) {
         this.questions = this.shuffleArray([...questions]);
+        this.currentIndex = 0;
         this.settings = settings;
         this.isFinished = false;
     }
