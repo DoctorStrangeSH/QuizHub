@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 // Pure backend leaderboard projection. Input must come from finalized,
 // server-owned daily attempt receipts, NEVER directly from browser payloads.
 // The future persistent adapter will fetch only receipt records for one UTC day.
@@ -44,7 +46,7 @@ export function buildDailyLeaderboard({ date, receipts, viewerUid = null, limit 
     const publicRow = (receipt, position) => ({
         rank: position,
         // No email, phone, display name or private profile metadata.
-        playerId: receipt.uid,
+        playerId: createHash('sha256').update(date + ':' + receipt.uid).digest('hex').slice(0, 16),
         score: receipt.score,
         correctAnswers: receipt.correctAnswers,
         totalQuestions: receipt.totalQuestions
