@@ -21,12 +21,12 @@ async function writeDocument(path, data) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(encode(data))
     });
-    assert.equal(response.status, 200, `Write failed for ${path}: ${await response.text()}`);
+    if (!response.ok) throw new Error(`Firestore Emulator request failed for ${path}: ${response.status} ${await response.text()}`);
 }
 
 async function readDocument(path) {
     const response = await fetch(`${root}/${path}`);
-    assert.equal(response.status, 200, `Read failed for ${path}: ${await response.text()}`);
+    if (!response.ok) throw new Error(`Firestore Emulator request failed for ${path}: ${response.status} ${await response.text()}`);
     return decode(await response.json());
 }
 
