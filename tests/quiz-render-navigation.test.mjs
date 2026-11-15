@@ -11,12 +11,23 @@ function loadQuizModule(Mode, settings = { mode: 'classic', category: 'science',
     class TrackedMode extends Mode {
         constructor() { super(); constructions++; }
     }
+    const dailyChallenges = [];
     const quiz = new Function('getState', 'getQuestions', 'ClassicMode', 'SurvivalMode',
-        'TimeTrialMode', 'DuelMode', 'window',
-        source + '\nreturn { renderQuiz, resetQuiz, attachQuizListeners };'
+        'TimeTrialMode', 'DuelMode', 'DailyChallengeMode', 'createDailyChallenge',
+        'getUtcDateKey', 'window',
+        source + '\\nreturn { renderQuiz, resetQuiz, attachQuizListeners };'
     )(() => ({ gameSettings: settings }), () => questions,
-        TrackedMode, TrackedMode, TrackedMode, TrackedMode, win);
-    return { ...quiz, getConstructionCount: () => constructions };
+        TrackedMode, TrackedMode, TrackedMode, TrackedMode, TrackedMode,
+        date => {
+            dailyChallenges.push(date);
+            return { date, questions };
+        },
+        () => '2026-11-15', win);
+    return {
+        ...quiz,
+        getConstructionCount: () => constructions,
+        dailyChallenges
+    };
 }
 
 test('navigating away during async initialization never renders the disposed game', async () => {
@@ -144,4 +155,31 @@ test('slow dashboard render cannot overwrite quiz after route change', async () 
     await pendingHome;
     assert.equal(root.innerHTML, '<div>Quiz</div>');
     assert.equal(dashboardAttachments, 0);
+});
+
+
+test('daily challenge mode uses the UTC date challenge catalog', async () => {
+    class FakeMode {
+        isDisposed = false;
+        async init(questions, settings) {
+            this.questions = questions;
+            this.settings = settings;
+        }
+        renderQuestion(index) { return `daily question ${index}`; }
+        dispose() { this.isDisposed = true; }
+    }
+
+    const questions = Array.from({ length: 10 }, (_, index) => ({ questionRU: `Q${index}` }));
+    const settings = {
+        mode: 'daily',
+        category: 'all',
+        difficulty: 'mixed',
+        challengeDate: '2026-11-15'
+    };
+    const quiz = loadQuizModule(FakeMode, settings, questions);
+
+    assert.equal(await quiz.renderQuiz(), 'daily question 0');
+    assert.deepEqual(quiz.dailyChallenges, ['2026-11-15']);
+    assert.equal(quiz.getConstructionCount(), 1);
+    quiz.resetQuiz();
 });
