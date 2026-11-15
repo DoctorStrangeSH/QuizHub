@@ -12,6 +12,7 @@ let currentUserProfile = null;
 let replyMessageId = null;
 let selectedMessageId = null;
 let onlineUnsubscribes = [];
+let chatLifecycle = 0;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // ========== ОТРИСОВКА ==========
@@ -82,6 +83,7 @@ export function renderChat() {
 
 // ========== ЗАГРУЗКА ДРУЗЕЙ ==========
 export async function loadChatFriends() {
+    const lifecycle = chatLifecycle;
     const user = auth.currentUser;
     if (!user) return;
     try {
@@ -90,7 +92,7 @@ export async function loadChatFriends() {
         currentUserProfile = { id: user.uid, ...userDoc.data() };
         const friends = userDoc.data().friends || [];
         const list = document.getElementById('chat-friends-list');
-        if (!list) return;
+        if (!list || lifecycle !== chatLifecycle) return;
         if (friends.length === 0) { list.innerHTML = '<div class="text-center py-3 text-secondary">Нет друзей для чата</div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
@@ -99,6 +101,7 @@ export async function loadChatFriends() {
         }
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];
+        if (lifecycle !== chatLifecycle || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
         list.innerHTML = friendsData.map((friend, index) => `
             <button type="button" class="chat-friend-item" data-chat-index="${index}" data-friend-id="${escapeHtml(friend.id)}">
                 <span class="avatar-circle small"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
@@ -268,7 +271,20 @@ window.addReaction = async (messageId, reaction) => {
 };
 
 // ========== ОБРАБОТЧИКИ ==========
+export function cleanupChatListeners() {
+    chatLifecycle++;
+    if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
+    onlineUnsubscribes = [];
+    currentChatId = null;
+    chatFriend = null;
+    currentUserProfile = null;
+    replyMessageId = null;
+    selectedMessageId = null;
+}
+
 export function attachChatListeners() {
+    cleanupChatListeners();
     loadChatFriends();
     setOnlineStatus();
     const form = document.getElementById('chat-form');
