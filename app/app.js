@@ -87,25 +87,42 @@ async function init() {
         await loadTranslations();
         applyTheme();
 
+        let authRevision = 0;
         onAuthStateChanged(auth, async (user) => {
+            const revision = ++authRevision;
             try {
                 setState('currentUser', user);
 
                 if (!user) {
+                    sessionStorage.removeItem('lastRoute');
+                    sessionStorage.removeItem('lastRouteOwnerUid');
+                    setState('profile', null);
+                    setState('friends', []);
                     setState('currentRoute', 'auth');
                 } else {
-                    const savedRoute = sessionStorage.getItem('lastRoute');
+                    const ownerUid = sessionStorage.getItem('lastRouteOwnerUid');
+                    const savedRoute = ownerUid === user.uid ? sessionStorage.getItem('lastRoute') : null;
                     const hasProfile = await checkUserProfile(user);
+                    // A previous account's delayed profile fetch must not override the
+                    // newly authenticated user's screen or cached profile.
+                    if (revision !== authRevision || auth.currentUser?.uid !== user.uid) return;
+                    if (ownerUid !== user.uid) {
+                        setState('profile', null);
+                        setState('friends', []);
+                        sessionStorage.removeItem('lastRoute');
+                    }
+                    sessionStorage.setItem('lastRouteOwnerUid', user.uid);
                     const safeSavedRoute = hasProfile && savedRoute && !['auth', 'createProfile', 'quiz'].includes(savedRoute);
-
                     setState(
                         'currentRoute',
                         safeSavedRoute ? savedRoute : (hasProfile ? 'home' : 'createProfile')
                     );
                 }
 
+                if (revision !== authRevision) return;
                 await renderCurrentRoute();
             } catch (error) {
+                if (revision !== authRevision || auth.currentUser?.uid !== (user?.uid ?? undefined)) return;
                 console.error('Ошибка запуска интерфейса:', error);
                 setState('currentRoute', user ? 'home' : 'auth');
                 try {
