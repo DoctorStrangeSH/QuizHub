@@ -4,6 +4,8 @@ import { ClassicMode } from './modes/classic.js';
 import { SurvivalMode } from './modes/survival.js';
 import { TimeTrialMode } from './modes/timetrial.js';
 import { DuelMode } from './modes/duel.js';
+import { DailyChallengeMode } from './modes/daily-challenge.js';
+import { createDailyChallenge, getUtcDateKey } from './daily-challenge.js';
 
 // Текущий активный режим
 let currentMode = null;
@@ -16,6 +18,7 @@ function createMode(modeType) {
         case 'survival': return new SurvivalMode();
         case 'time':     return new TimeTrialMode();
         case 'duel':     return new DuelMode();
+        case 'daily':    return new DailyChallengeMode();
         default:         return new ClassicMode();
     }
 }
@@ -32,9 +35,17 @@ export async function renderQuiz() {
     resetQuiz();
 
     
-    // Загружаем вопросы
-    const questions = getQuestions(settings.category, settings.difficulty);
-    
+    // Daily Challenge uses a UTC date key so every player receives the same set.
+    const challenge = settings.mode === 'daily'
+        ? createDailyChallenge(settings.challengeDate || getUtcDateKey())
+        : null;
+    const questions = challenge
+        ? challenge.questions
+        : getQuestions(settings.category, settings.difficulty);
+    const modeSettings = challenge
+        ? { ...settings, challengeDate: challenge.date }
+        : settings;
+
     if (questions.length === 0) {
         return `
             <div class="quiz-container">
@@ -57,7 +68,7 @@ export async function renderQuiz() {
     currentMode = mode;
     
     // Инициализируем режим
-    await mode.init(questions, settings);
+    await mode.init(questions, modeSettings);
     // Ignore work belonging to an older navigation.
     if (currentMode !== mode || mode.isDisposed) return '';
     
