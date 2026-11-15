@@ -1158,3 +1158,21 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .event-status .pulse-dot { animation: none; }
 }
+
+
+/* Final responsive audit: explicitly neutralize legacy module geometry */
+.chat-layout { height: auto; max-height: none; }
+.chat-list-panel { width: auto; min-width: 0; flex-shrink: 1; }
+.chat-window { min-width: 0; }
+.events-section .event-card { flex-direction: row; text-align: left; }
+.events-section .daily-rewards-row { justify-content: stretch; }
+.events-section .daily-reward-day { min-width: 0; }
+@media (max-width: 768px) {
+  .chat-layout { height: auto; max-height: none; }
+  .chat-list-panel { width: 100%; }
+  .chat-window { width: 100%; }
+}
+@media (max-width: 480px) {
+  .events-section .event-card { flex-direction: row; text-align: left; }
+  .events-section .daily-rewards-row { justify-content: stretch; }
+}
