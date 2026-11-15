@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const chat = readFileSync(new URL('../app/modules/chat/chat.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../app/styles/midnight-arcade.css', import.meta.url), 'utf8');
+const router = readFileSync(new URL('../app/router.js', import.meta.url), 'utf8');
 
 test('chat has QuizHub identity and accessible message controls', () => {
   assert.match(chat, /QuizHub<\/h3>/);
@@ -39,4 +40,19 @@ test('messenger uses responsive, reduced-motion-aware visual system', () => {
   }
   assert.match(css, /@media \(max-width: 768px\)/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+});
+
+test('leaving chat releases Firestore message and online listeners', () => {
+  assert.match(chat, /export function cleanupChatListeners\(\)/);
+  assert.match(chat, /if \(messagesUnsubscribe\) \{ messagesUnsubscribe\(\)/);
+  assert.match(chat, /onlineUnsubscribes\.forEach\(unsubscribe => unsubscribe\(\)\)/);
+  assert.match(router, /lastRenderedRoute === 'chat' && route !== 'chat'/);
+  assert.match(router, /chatModule\.cleanupChatListeners\(\)/);
+});
+
+test('stale friend data cannot reattach listeners after chat route closes', () => {
+  assert.match(chat, /const lifecycle = chatLifecycle/);
+  assert.match(chat, /lifecycle !== chatLifecycle/);
+  assert.match(chat, /!list\.isConnected/);
+  assert.match(chat, /auth\.currentUser\?\.uid !== user\.uid/);
 });
