@@ -10,27 +10,35 @@ const routes = {
         attachAuthListeners();
     },
 
-    home: async () => {
+    home: async (revision) => {
         const m = await import('./modules/dashboard/dashboard.js');
-        appRoot.innerHTML = await m.renderDashboard();
+        if (revision !== renderRevision || getState().currentRoute !== 'home') return;
+        const html = await m.renderDashboard();
+        if (revision !== renderRevision || getState().currentRoute !== 'home') return;
+        appRoot.innerHTML = html;
         m.attachDashboardListeners();
-        checkDailyReward();
+        checkDailyReward(revision);
     },
 
-    createProfile: async () => {
+    createProfile: async (revision) => {
         const m = await import('./modules/profile/profile.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'createProfile') return;
         appRoot.innerHTML = m.renderProfileCreate();
         m.attachProfileListeners();
     },
 
-    profile: async () => {
+    profile: async (revision) => {
         const m = await import('./modules/profile/profile.js');
-        appRoot.innerHTML = await m.renderMyProfile();
+        if (revision !== renderRevision || getState().currentRoute !== 'profile') return;
+        const html = await m.renderMyProfile();
+        if (revision !== renderRevision || getState().currentRoute !== 'profile') return;
+        appRoot.innerHTML = html;
         m.attachMyProfileListeners();
     },
 
-    friends: async () => {
+    friends: async (revision) => {
         const m = await import('./modules/friends/friends.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'friends') return;
         appRoot.innerHTML = m.renderFriends();
         m.attachFriendsListeners();
     },
@@ -45,38 +53,43 @@ const routes = {
         m.attachQuizListeners();
     },
 
-    leaderboard: async () => {
+    leaderboard: async (revision) => {
         const m = await import('./modules/leaderboard/leaderboard.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'leaderboard') return;
         appRoot.innerHTML = m.renderLeaderboard();
         m.attachLeaderboardListeners();
     },
 
-    achievements: async () => {
+    achievements: async (revision) => {
         const m = await import('./modules/achievements/achievements.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'achievements') return;
         appRoot.innerHTML = m.renderAchievements();
         m.attachAchievementsListeners();
     },
 
-    shop: async () => {
+    shop: async (revision) => {
         const m = await import('./modules/shop/shop.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'shop') return;
         appRoot.innerHTML = m.renderShop();
         m.attachShopListeners();
     },
 
-    chat: async () => {
+    chat: async (revision) => {
         const m = await import('./modules/chat/chat.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'chat') return;
         appRoot.innerHTML = m.renderChat();
         m.attachChatListeners();
     },
 
-    events: async () => {
+    events: async (revision) => {
         const m = await import('./modules/events/events.js');
+        if (revision !== renderRevision || getState().currentRoute !== 'events') return;
         appRoot.innerHTML = m.renderEvents();
         m.attachEventsListeners();
     }
 };
 
-async function checkDailyReward() {
+async function checkDailyReward(revision) {
     try {
         const m = await import('./modules/daily/daily.js');
         const rewardData = await m.checkDailyReward();
@@ -102,11 +115,14 @@ async function checkDailyReward() {
 window.navigateTo = async (route) => {
     if (!Object.hasOwn(routes, route)) return;
     const previousRoute = getState().currentRoute;
+    setState('currentRoute', route);
+    // Invalidate any in-flight render before awaiting the quiz cleanup import.
+    const navigationRevision = ++renderRevision;
     if (previousRoute === 'quiz' && route !== 'quiz') {
         const quizModule = await import('./modules/quiz/quiz.js');
         quizModule.resetQuiz();
     }
-    setState('currentRoute', route);
+    if (navigationRevision !== renderRevision) return;
     sessionStorage.setItem('lastRoute', route);
     await router();
 };
