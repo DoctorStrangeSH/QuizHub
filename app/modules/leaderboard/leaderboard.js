@@ -1,5 +1,17 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, collection, query, orderBy, limit, getDocs } from '../../firebase-config.js';
+import { buildPublicProfile } from '../profile/public-profile-data.js';
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+}
+
+// Migration gate: enabled only after publicProfiles has been fully backfilled
+// and its read rules have been verified. The legacy collection remains in use.
+const PUBLIC_PROFILE_READS_ENABLED = false;
+
 
 export function renderLeaderboard() {
     const t = getState().translations.leaderboard || {};
@@ -42,23 +54,26 @@ export async function loadLeaderboard(type = 'global') {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
     try {
-        const usersRef = collection(db, 'users');
-        let q;
-        if (type === 'weekly') {
-            q = query(usersRef, orderBy('weeklyExperience', 'desc'), limit(50));
-        } else {
-            q = query(usersRef, orderBy('experience', 'desc'), limit(50));
-        }
-        const snapshot = await getDocs(q);
+        const source = PUBLIC_PROFILE_READS_ENABLED ? 'publicProfiles' : 'users';
+        const usersRef = collection(db, source);
+        const scoreField = type === 'weekly' ? 'weeklyExperience' : 'experience';
+        const snapshot = await getDocs(query(usersRef, orderBy(scoreField, 'desc'), limit(50)));
         const leaders = [];
-        snapshot.forEach(doc => leaders.push({ id: doc.id, ...doc.data() }));
+        snapshot.forEach(userDoc => {
+            try {
+                const profile = buildPublicProfile(userDoc.id, userDoc.data());
+                leaders.push({ id: profile.uid, ...profile });
+            } catch (error) {
+                console.warn('Пропускаем повреждённый публичный профиль:', userDoc.id);
+            }
+        });
         const currentUserId = auth.currentUser?.uid;
         list.innerHTML = leaders.map((leader, index) => {
             const rank = index + 1;
             const isCurrentUser = leader.id === currentUserId;
             const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
             const displayXP = type === 'weekly' ? (leader.weeklyExperience || 0) : (leader.experience || 0);
-            return `<div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''} ${rank <= 3 ? 'top-three' : ''}" onclick="window.viewProfile('${leader.id}')" style="cursor:pointer;"><div class="lb-rank">${medal}</div><div class="lb-avatar">👤</div><div class="lb-info"><span class="lb-name">${leader.nickname || 'Игрок'}</span><span class="lb-level">⭐ Ур. ${leader.level || 1}</span></div><div class="lb-stats"><span class="lb-xp">${displayXP} XP</span><span class="lb-wins">🏆 ${leader.wins || 0}</span></div></div>`;
+            return `<div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''} ${rank <= 3 ? 'top-three' : ''}" onclick="window.viewProfile('${escapeHTML(leader.id)}')" style="cursor:pointer;"><div class="lb-rank">${medal}</div><div class="lb-avatar">👤</div><div class="lb-info"><span class="lb-name">${escapeHTML(leader.nickname || 'Игрок')}</span><span class="lb-level">⭐ Ур. ${leader.level || 1}</span></div><div class="lb-stats"><span class="lb-xp">${displayXP} XP</span><span class="lb-wins">🏆 ${leader.wins || 0}</span></div></div>`;
         }).join('');
     } catch (error) {
         console.error('Ошибка загрузки лидеров:', error);
