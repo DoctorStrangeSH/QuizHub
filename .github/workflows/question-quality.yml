@@ -23,6 +23,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/quiz-rewards.test.mjs
       - name: Test deterministic daily challenge selection
         run: node --experimental-default-type=module --test tests/daily-challenge.test.mjs
+      - name: Test transactional server daily challenge
+        run: node --experimental-default-type=module --test tests/server-daily-challenge.test.mjs
       - name: Test daily challenge mode
         run: node --experimental-default-type=module --test tests/daily-challenge-mode.test.mjs
       - name: Test daily challenge dashboard
