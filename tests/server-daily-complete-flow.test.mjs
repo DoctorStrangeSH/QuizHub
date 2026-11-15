@@ -39,7 +39,7 @@ function memoryDatabase() {
         runTransaction(callback) {
             const operation = queue.then(async () => {
                 const changes = new Map();
-                const read = (key, map) => structuredClone(changes.get(key) ?? map.get(key));
+                const read = (key, map) => structuredClone(changes.get(key) ?? map.get(key.slice(2)));
                 const tx = {
                     getDailyAttempt: async key => read('a:' + key, attempts),
                     setDailyAttempt: async (key, value) => changes.set('a:' + key, structuredClone(value)),
