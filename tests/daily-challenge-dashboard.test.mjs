@@ -22,6 +22,13 @@ test('daily challenge launcher keeps the displayed date and selects the daily qu
     assert.match(dashboard, /window\.startGame\(\)/);
 });
 
+test('dashboard updates reset countdown and date without leaking timers', () => {
+    assert.match(dashboard, /daily-challenge-reset/);
+    assert.match(dashboard, /dailyResetCountdown/);
+    assert.match(dashboard, /clearInterval\\(window\\.__dailyChallengeTimer\\)/);
+    assert.match(dashboard, /setInterval\\(refreshDailyCountdown, 1000\\)/);
+});
+
 test('daily challenge dashboard card and quiz badge have responsive visual styles', () => {
     assert.match(dashboardStyles, /\.daily-challenge-card/);
     assert.match(dashboardStyles, /@media \(max-width: 520px\)/);
