@@ -38,4 +38,14 @@ jobs:
         run: |
           set -euo pipefail
           gcloud auth print-access-token >/dev/null
-          echo "Google Cloud OIDC authentication succeeded (no Firestore access or deployment attempted)."
+          echo "Google Cloud OIDC authentication succeeded (no Firestore data access or deployment attempted)."
+      - name: Inspect Firestore database edition (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Metadata only: no user documents, security rules or credentials.
+          if gcloud firestore databases list --project=quizhub-e65f5 --format='table(name,edition)' >/tmp/quizhub-firestore-editions.txt 2>/tmp/quizhub-firestore-inspect-error.txt; then
+            sed -n '1,15p' /tmp/quizhub-firestore-editions.txt
+          else
+            echo "::notice::Firestore edition metadata unavailable to the CI identity; no database changes attempted."
+          fi
