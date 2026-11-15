@@ -59,9 +59,13 @@ export function createServerDailyChallenge({ catalog, store, durationMs = 15 * 6
             receipt: attempt.receipt ? { ...attempt.receipt } : null
         };
     };
-    const check = (uid, date, now) => {
+    const check = (uid, date, now, allowPriorDay = false) => {
         assertUid(uid);
-        if (typeof date !== 'string' || date !== utcDailyKey(now)) throw new Error('INVALID_DAILY_DATE');
+        const today = utcDailyKey(now);
+        const yesterday = utcDailyKey(Math.max(0, now - DAY_MS));
+        if (typeof date !== 'string' || (date !== today && !(allowPriorDay && date === yesterday))) {
+            throw new Error('INVALID_DAILY_DATE');
+        }
     };
     return {
         async start({ uid, now, language = 'ru' }) {
@@ -83,7 +87,7 @@ export function createServerDailyChallenge({ catalog, store, durationMs = 15 * 6
             });
         },
         async resume({ uid, date, now, language = 'ru' }) {
-            check(uid, date, now);
+            check(uid, date, now, true);
             return store.runTransaction(async tx => {
                 const attempt = await tx.getDailyAttempt(attemptKey(uid, date));
                 if (!attempt || attempt.uid !== uid) throw new Error('DAILY_ATTEMPT_NOT_FOUND');
@@ -109,7 +113,7 @@ export function createServerDailyChallenge({ catalog, store, durationMs = 15 * 6
             });
         },
         async complete({ uid, date, now }) {
-            check(uid, date, now);
+            check(uid, date, now, true);
             return store.runTransaction(async tx => {
                 const key = attemptKey(uid, date);
                 const stored = await tx.getDailyAttempt(key);
