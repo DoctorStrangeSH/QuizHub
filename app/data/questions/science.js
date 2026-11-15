@@ -4307,11 +4307,13 @@ const hardQuestions = [
         points: 30
     },
     {
-        questionRU: 'Какой химический символ имеет ртуть?',
-        questionEN: 'What is the chemical symbol for mercury?',
-        optionsRU: ['Me', 'Hg', 'Pb', 'Sn'],
-        optionsEN: ['Me', 'Hg', 'Pb', 'Sn'],
+        questionRU: 'Какой элемент имеет атомный номер 80?',
+        questionEN: 'Which element has atomic number 80?',
+        optionsRU: ['Золото', 'Ртуть', 'Свинец', 'Серебро'],
+        optionsEN: ['Gold', 'Mercury', 'Lead', 'Silver'],
         correctIndex: 1,
+            explanationRU: 'Атомный номер ртути — 80; он равен числу протонов в её ядре.',
+            explanationEN: 'Mercury has atomic number 80, equal to the number of protons in its nucleus.',
         points: 30
     },
     {
