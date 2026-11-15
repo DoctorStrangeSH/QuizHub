@@ -304,3 +304,70 @@
     color: var(--gold, #fbbf24);
     border: 1px solid rgba(251, 191, 36, 0.3);
 }
+
+/* Daily Challenge: practice-only result breakdown */
+.daily-challenge-result {
+    overflow: hidden;
+    border: 1px solid rgba(251, 191, 36, 0.22);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.12), transparent 58%),
+        var(--bg-card);
+}
+.daily-challenge-result .result-icon { margin-bottom: 8px; }
+.daily-result-breakdown {
+    margin-top: 22px;
+    padding: 20px;
+    text-align: left;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(251, 191, 36, 0.22);
+    background: rgba(251, 191, 36, 0.045);
+}
+.daily-result-caption {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    align-items: center;
+}
+.daily-result-eyebrow {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gold, #fbbf24);
+}
+.daily-result-caption strong { font-size: 1.15rem; }
+.daily-result-percent {
+    grid-column: 2;
+    grid-row: 2;
+    color: var(--gold, #fbbf24);
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.daily-result-segments {
+    display: flex;
+    gap: 5px;
+    margin-top: 14px;
+}
+.daily-result-segment {
+    flex: 1;
+    height: 11px;
+    min-width: 0;
+    border-radius: 4px;
+    background: rgba(148, 163, 184, 0.24);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+.daily-result-segment.is-correct {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-color: rgba(251, 191, 36, 0.65);
+}
+.daily-result-hint {
+    margin: 14px 0 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+@media (max-width: 480px) {
+    .daily-challenge-result { padding: 28px 16px; }
+    .daily-result-breakdown { padding: 16px 12px; }
+}
