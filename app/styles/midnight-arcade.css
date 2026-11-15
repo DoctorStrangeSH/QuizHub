@@ -276,3 +276,53 @@ input::placeholder,textarea::placeholder { opacity: .75; }
   html { scroll-behavior: auto; }
   .glass-card,.sidebar-link,.answer-card,.btn-premium,.play-btn { transition-duration: .01ms; }
 }
+
+
+/* Lobby identity, unified pictograms and clear selected-state treatments */
+.arcade-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-size: 3.2rem;
+  line-height: 1;
+  filter: drop-shadow(0 7px 16px var(--accent-glow));
+}
+.arcade-mark span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -56%);
+  color: #111a28;
+  font: 900 1.1rem 'Trebuchet MS',sans-serif;
+}
+.sidebar-link-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 9px;
+  font-size: 1.12rem;
+  background: rgba(168,155,255,.09);
+}
+.sidebar-link.active .sidebar-link-icon {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+.daily-challenge-art i { font-size: 2.3rem; color: var(--gold); }
+.section-heading i { color: var(--accent-secondary); margin-right: 8px; }
+.play-btn { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.play-btn .bi { font-size: 1.6rem; }
+.play-btn-arrow { position: absolute; right: 26px; font-size: 1.25rem; opacity: .65; }
+.selector-btn[aria-pressed="true"] {
+  border-color: var(--accent-secondary);
+  background: rgba(168,155,255,.18);
+}
+@media (max-width: 520px) {
+  .play-btn-arrow { right: 17px; }
+  .daily-challenge-art i { font-size: 1.65rem; }
+}
