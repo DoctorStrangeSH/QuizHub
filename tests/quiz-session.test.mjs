@@ -177,7 +177,7 @@ test('duel restart cancels its pending round result callback', async () => {
         .replace(/^import .*;\s*$/gm, '')
         .replace('export class DuelMode', 'class DuelMode');
     const DuelMode = new Function('BaseMode', 'getState', 'increment',
-        `${duelStripped}\\nreturn DuelMode;`
+        `${duelStripped}\nreturn DuelMode;`
     )(BaseMode, () => ({ gameSettings: { difficulty: 'easy' } }), value => value);
     const duel = new DuelMode();
     let callbacks = 0;
