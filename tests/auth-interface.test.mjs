@@ -50,3 +50,12 @@ test('pending daily reward UI cannot be attached to a different user', () => {
     assert.match(router, /getState\(\)\.currentUser\?\.uid !== ownerUid/);
     assert.match(app, /getElementById\('daily-popup-container'\)\?\.remove\(\)/);
 });
+
+test('temporary profile load failures cannot be mistaken for new accounts', () => {
+    assert.match(app, /return null;\s*\}\s*\}\s*async function checkWeeklyReset/);
+    assert.match(app, /hasProfile === null \? 'profileUnavailable'/);
+    assert.match(router, /profileUnavailable: \(\) =>/);
+    assert.match(router, /id="retry-profile"/);
+    assert.match(router, /Создавать новый аккаунт не нужно/);
+    assert.match(router, /location\.reload\(\)/);
+});
