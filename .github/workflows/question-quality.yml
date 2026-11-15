@@ -21,6 +21,8 @@ jobs:
         run: |
           node --check app/modules/auth/auth.js
           node --test tests/auth-interface.test.mjs
+      - name: Test privacy-safe public profile projection
+        run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Validate quiz questions
         run: node --experimental-default-type=module scripts/validate-questions.mjs
       - name: Test quiz rewards
