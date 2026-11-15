@@ -86,7 +86,7 @@ export async function renderDashboard() {
                             <div class="daily-challenge-meta">${isEN ? 'DAILY CHALLENGE' : 'ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ'} <span>${dailyDate}</span></div>
                             <h2 id="daily-challenge-title">${isEN ? 'A new challenge every day' : 'Новое испытание каждый день'}</h2>
                             <p>${isEN ? '10 questions · 3 easy · 3 medium · 4 hard. The same set for everyone.' : '10 вопросов · 3 лёгких · 3 средних · 4 сложных. Одинаковый набор для всех.'}</p>
-                            <button class="btn-premium daily-challenge-button" type="button" onclick="window.startDailyChallenge()">${isEN ? 'Play today’s challenge' : 'Пройти испытание'} <span aria-hidden="true">→</span></button>
+                            <button class="btn-premium daily-challenge-button" type="button" onclick="window.startDailyChallenge('${dailyDate}')">${isEN ? 'Play today’s challenge' : 'Пройти испытание'} <span aria-hidden="true">→</span></button>
                             <small>${isEN ? 'Preview mode: special rewards will be enabled after server verification.' : 'Предпросмотр: особые награды появятся после подключения серверной проверки.'}</small>
                         </div>
                     </section>
@@ -175,8 +175,8 @@ export function attachDashboardListeners() {
         document.getElementById('selected-category-display').textContent = `${icon} ${name}`;
         setTimeout(() => window.closeCategoryModal(), 150);
     };
-    window.startDailyChallenge = () => {
-        const challengeDate = getUtcDateKey();
+    window.startDailyChallenge = (dateKey) => {
+        const challengeDate = dateKey || getUtcDateKey();
         window.gameSettings = {
             mode: 'daily',
             category: 'all',
