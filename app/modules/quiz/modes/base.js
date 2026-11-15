@@ -121,7 +121,7 @@ export class BaseMode {
                 
                 <div class="quiz-answers animate-in animate-in-delay-2" id="answers-container">
                     ${shuffled.map((opt, i) => `
-                        <div class="answer-card glass-card" data-index="${i}" data-correct="${opt.isCorrect}" onclick="window.${this.getAnswerHandler()}">
+                        <div class="answer-card glass-card" role="button" tabindex="0" aria-pressed="false" data-index="${i}" data-correct="${opt.isCorrect}" onclick="window.${this.getAnswerHandler()}" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();window.${this.getAnswerHandler()}}">
                             <span class="answer-letter">${String.fromCharCode(65 + i)}</span>
                             <span class="answer-text">${escapeHTML(opt.text)}</span>
                             <span class="answer-icon"></span>
@@ -152,8 +152,12 @@ export class BaseMode {
         this.hasAnswered = true;
         const allCards = container.querySelectorAll('.answer-card');
 
-        allCards.forEach(c => c.classList.add('answered'));
+        allCards.forEach(c => {
+            c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
+        });
         el.classList.add('selected');
+        el.setAttribute('aria-pressed', 'true');
 
         allCards.forEach(c => {
             const icon = c.querySelector('.answer-icon');
