@@ -38,7 +38,9 @@ async function checkUserProfile(user) {
         return snapshot.exists() && Boolean(snapshot.data()?.nickname);
     } catch (error) {
         console.error('Ошибка проверки профиля:', error);
-        return false;
+        // Unknown is not the same as a missing profile: never force account creation
+        // when Firestore is temporarily unreachable or access is denied.
+        return null;
     }
 }
 
@@ -113,10 +115,11 @@ async function init() {
                         sessionStorage.removeItem('lastRoute');
                     }
                     sessionStorage.setItem('lastRouteOwnerUid', user.uid);
-                    const safeSavedRoute = hasProfile && savedRoute && !['auth', 'createProfile', 'quiz'].includes(savedRoute);
+                    const safeSavedRoute = hasProfile === true && savedRoute && !['auth', 'createProfile', 'quiz', 'profileUnavailable'].includes(savedRoute);
                     setState(
                         'currentRoute',
-                        safeSavedRoute ? savedRoute : (hasProfile ? 'home' : 'createProfile')
+                        hasProfile === null ? 'profileUnavailable' :
+                            safeSavedRoute ? savedRoute : (hasProfile ? 'home' : 'createProfile')
                     );
                 }
 
