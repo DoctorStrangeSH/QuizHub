@@ -135,3 +135,38 @@ test('successful reward write stays saved if profile follow-up fails', async () 
         console.warn = oldWarn;
     }
 });
+
+test('reinitializing a mode cancels stale transitions from its previous game', async () => {
+    const mode = new BaseMode();
+    await mode.init(makeQuestions(2), {});
+    let replacements = 0;
+    const container = {
+        isConnected: true,
+        style: {},
+        set outerHTML(value) { replacements++; }
+    };
+    const previousDocument = globalThis.document;
+    globalThis.document = { querySelector: () => container };
+    try {
+        mode.hasAnswered = true;
+        await mode.nextQuestion();
+        assert.equal(mode.isTransitioning, true);
+        await mode.init(makeQuestions(3), {});
+        await new Promise(resolve => setTimeout(resolve, 350));
+        assert.equal(replacements, 0);
+        assert.equal(mode.currentIndex, 0);
+        assert.equal(mode.isTransitioning, false);
+        assert.equal(mode.questions.length, 3);
+    } finally {
+        globalThis.document = previousDocument;
+        mode.dispose();
+    }
+});
+
+test('reinitializing a mode clears any active mode-specific timer', async () => {
+    const mode = new BaseMode();
+    let calls = 0;
+    mode.clearTimer = () => { calls++; };
+    await mode.init(makeQuestions(1), {});
+    assert.equal(calls, 1);
+});
