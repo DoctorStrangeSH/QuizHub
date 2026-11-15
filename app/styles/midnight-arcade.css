@@ -1239,3 +1239,126 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .answer-feedback { animation: none; }
 }
+
+
+/* Round finale: accuracy is the hero; only confirmed rewards appear as earned. */
+.arcade-result {
+  position: relative;
+  overflow: hidden;
+  max-width: 690px;
+  margin-inline: auto;
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid rgba(168,155,255,.3);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% -15%, rgba(184,250,85,.14), transparent 45%),
+    radial-gradient(circle at 110% 90%, rgba(168,155,255,.1), transparent 38%),
+    var(--bg-glass);
+}
+.arcade-result::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-secondary), var(--accent), transparent);
+}
+.arcade-result-eyebrow {
+  color: var(--accent-secondary);
+  font-size: .74rem;
+  font-weight: 900;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.arcade-result-icon {
+  display: grid;
+  place-items: center;
+  width: 94px;
+  height: 94px;
+  margin: 14px auto 20px;
+  border: 1px solid rgba(255,210,122,.3);
+  border-radius: 28px;
+  background: radial-gradient(circle at 35% 25%, rgba(255,210,122,.19), rgba(168,155,255,.075));
+  box-shadow: 0 16px 35px rgba(255,210,122,.09);
+  font-size: 3.4rem;
+  animation: arcade-trophy-pop .6s cubic-bezier(.2,1.4,.4,1) both;
+}
+.arcade-accuracy {
+  margin: 24px auto;
+  padding: 17px 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--bg-card);
+}
+.arcade-accuracy-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 11px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.arcade-accuracy-heading strong {
+  color: var(--accent);
+  font-size: 1.55rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.arcade-accuracy-track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(135,152,190,.17);
+}
+.arcade-accuracy-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-secondary), var(--accent));
+  box-shadow: 0 0 18px var(--accent-glow);
+  transform-origin: left;
+  animation: arcade-accuracy-grow .8s ease-out both;
+}
+.arcade-result .result-stats { margin-top: 0; }
+.arcade-result .result-stat {
+  height: 100%;
+  min-height: 100px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(168,155,255,.055);
+}
+.arcade-result .result-value { font-variant-numeric: tabular-nums; }
+.arcade-xp-reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 17px;
+  padding: 12px 18px;
+  border: 1px solid rgba(255,210,122,.24);
+  border-radius: 14px;
+  background: rgba(255,210,122,.055);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.arcade-xp-reward > span:first-child { color: var(--gold); }
+.arcade-xp-reward strong { color: var(--gold); font-size: 1.13rem; }
+.arcade-result-actions { margin-top: 24px; }
+.arcade-result-actions > button { min-width: 170px; min-height: 48px; }
+@keyframes arcade-trophy-pop {
+  from { opacity: 0; transform: translateY(12px) scale(.82); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes arcade-accuracy-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@media (max-width: 520px) {
+  .arcade-result { padding: 22px 15px; border-radius: 23px; }
+  .arcade-result-icon { width: 80px; height: 80px; font-size: 3rem; }
+  .arcade-result .result-stat { padding-inline: 5px; min-height: 95px; }
+  .arcade-result .result-value { font-size: clamp(1.05rem, 4.7vw, 1.4rem); }
+  .arcade-result-actions > button { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arcade-result-icon, .arcade-accuracy-fill { animation: none; }
+}
