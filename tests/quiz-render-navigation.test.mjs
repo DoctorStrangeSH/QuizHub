@@ -15,7 +15,7 @@ function loadQuizModule(Mode, settings = { mode: 'classic', category: 'science',
     const quiz = new Function('getState', 'getQuestions', 'ClassicMode', 'SurvivalMode',
         'TimeTrialMode', 'DuelMode', 'DailyChallengeMode', 'createDailyChallenge',
         'getUtcDateKey', 'window',
-        source + '\\nreturn { renderQuiz, resetQuiz, attachQuizListeners };'
+        source + String.fromCharCode(10) + 'return { renderQuiz, resetQuiz, attachQuizListeners };'
     )(() => ({ gameSettings: settings }), () => questions,
         TrackedMode, TrackedMode, TrackedMode, TrackedMode, TrackedMode,
         date => {
