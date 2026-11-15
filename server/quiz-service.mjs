@@ -16,6 +16,10 @@ export function createQuizService({ catalog, store, sessionDurationMs = 15 * 60 
 
     return {
         async start({ uid, mode, category, difficulty, count, language = 'ru', now }) {
+            // Only Classic scoring has been verified end-to-end on this server.
+            // Survival, Time Trial and Duel need dedicated trusted scoring rules
+            // before they can create a reward-bearing session.
+            if (mode !== 'classic') throw new Error('UNSUPPORTED_QUIZ_MODE');
             if (!Number.isSafeInteger(now) || now < 0 || !Number.isSafeInteger(now + sessionDurationMs)) {
                 throw new Error('INVALID_TIME');
             }
