@@ -16,7 +16,7 @@ export async function renderDashboard() {
         if (docSnap.exists()) profile = docSnap.data();
     } catch (error) { console.error('Ошибка загрузки профиля:', error); }
     
-    const nickname = profile?.nickname || user.email;
+    const nickname = String(profile?.nickname || user.email || 'Игрок').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     const level = profile?.level || 1;
     const coins = profile?.coins || 0;
     const quizzesCompleted = profile?.quizzesCompleted || 0;
@@ -42,18 +42,18 @@ export async function renderDashboard() {
             <div class="sidebar-overlay" id="sidebar-overlay" onclick="window.closeSidebar()"></div>
             <aside class="dashboard-sidebar glass-card" id="sidebar">
                 <div class="sidebar-header">
-                    <div class="sidebar-logo">👑</div>
-                    <h3 class="sidebar-title text-gradient">Quiz Empire</h3>
+                    <div class="sidebar-logo arcade-mark" aria-hidden="true"><i class="bi bi-hexagon-fill"></i><span>Q</span></div>
+                    <h3 class="sidebar-title text-gradient">QuizHub</h3>
                 </div>
                 <nav class="sidebar-nav">
-                    <a class="sidebar-link active" onclick="window.navigateTo('home'); window.closeSidebar();"><span class="sidebar-link-icon">🏠</span><span>Главная</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('chat'); window.closeSidebar();"><span class="sidebar-link-icon">💬</span><span>Чат</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('friends'); window.closeSidebar();"><span class="sidebar-link-icon">👥</span><span>Друзья</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('leaderboard'); window.closeSidebar();"><span class="sidebar-link-icon">🏅</span><span>Лидеры</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('achievements'); window.closeSidebar();"><span class="sidebar-link-icon">🏆</span><span>Достижения</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('shop'); window.closeSidebar();"><span class="sidebar-link-icon">🛒</span><span>Магазин</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('profile'); window.closeSidebar();"><span class="sidebar-link-icon">👤</span><span>Профиль</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('events'); window.closeSidebar();"><span class="sidebar-link-icon">📅</span><span>События</span></a>
+                    <a class="sidebar-link active" onclick="window.navigateTo('home'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-house-door-fill"></i></span><span>Главная</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('chat'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-chat-dots-fill"></i></span><span>Чат</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('friends'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-people-fill"></i></span><span>Друзья</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('leaderboard'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-trophy-fill"></i></span><span>Лидеры</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('achievements'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-award-fill"></i></span><span>Достижения</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('shop'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-bag-fill"></i></span><span>Магазин</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('profile'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-person-circle"></i></span><span>Профиль</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('events'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-calendar-event-fill"></i></span><span>События</span></a>
                 </nav>
                 <div class="sidebar-footer">
                     <button class="sidebar-btn" onclick="window.toggleTheme()">${getState().theme === 'dark' ? '☀️ Светлая' : '🌙 Тёмная'}</button>
@@ -63,8 +63,8 @@ export async function renderDashboard() {
             <main class="dashboard-main">
                 <div class="dashboard-content-wrapper">
                     <header class="mobile-header glass-card">
-                        <button class="burger-btn" onclick="window.toggleSidebar()">☰</button>
-                        <span class="text-gradient fw-bold">Quiz Empire</span>
+                        <button class="burger-btn" type="button" aria-label="Открыть меню" aria-controls="sidebar" aria-expanded="false" onclick="window.toggleSidebar()"><i class="bi bi-list" aria-hidden="true"></i></button>
+                        <span class="text-gradient fw-bold">QuizHub</span>
                         <div class="d-flex align-items-center gap-2">
                             <span class="level-badge">⭐ ${level}</span>
                             <span class="coins-badge">🪙 ${coins}</span>
@@ -83,7 +83,7 @@ export async function renderDashboard() {
                         </div>
                     </section>
                     <section class="daily-challenge-card glass-card animate-in" aria-labelledby="daily-challenge-title">
-                        <div class="daily-challenge-art" aria-hidden="true">📅</div>
+                        <div class="daily-challenge-art" aria-hidden="true"><i class="bi bi-calendar2-week"></i></div>
                         <div class="daily-challenge-content">
                             <div class="daily-challenge-meta">${isEN ? 'DAILY CHALLENGE' : 'ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ'} <span id="daily-challenge-date">${dailyDate}</span></div>
                             <h2 id="daily-challenge-title">${isEN ? 'A new challenge every day' : 'Новое испытание каждый день'}</h2>
@@ -94,7 +94,7 @@ export async function renderDashboard() {
                         </div>
                     </section>
                     <section class="game-section">
-                        <h2 class="section-heading">⚔️ Новая игра</h2>
+                        <h2 class="section-heading"><i class="bi bi-controller" aria-hidden="true"></i> Новая игра</h2>
                         <div class="selector-row glass-card">
                             <div class="selector-label">Режим</div>
                             <div class="selector-options">
@@ -121,7 +121,7 @@ export async function renderDashboard() {
                                 </button>
                             </div>
                         </div>
-                        <button class="play-btn" onclick="window.startGame()">⚡ ИГРАТЬ</button>
+                        <button class="play-btn" type="button" onclick="window.startGame()"><i class="bi bi-play-fill" aria-hidden="true"></i> ИГРАТЬ <span class="play-btn-arrow" aria-hidden="true">↗</span></button>
                         <div class="quick-stats">
                             <div class="row g-3">
                                 <div class="col-6 col-md-3"><div class="stat-mini-card glass-card text-center"><span class="stat-mini-value text-gradient">${quizzesCompleted}</span><span class="stat-mini-label">Квизов</span></div></div>
@@ -139,7 +139,7 @@ export async function renderDashboard() {
             <div class="category-modal-content glass-card">
                 <div class="category-modal-header">
                     <h3>📚 Выберите категорию</h3>
-                    <button class="modal-close-btn" onclick="window.closeCategoryModal()">✕</button>
+                    <button class="modal-close-btn" type="button" aria-label="Закрыть выбор категории" onclick="window.closeCategoryModal()">✕</button>
                 </div>
                 <div class="category-modal-body">
                     ${categoriesModalHTML}
@@ -174,13 +174,15 @@ export function attachDashboardListeners() {
     window.__dailyChallengeTimer = setInterval(refreshDailyCountdown, 1000);
     
     window.selectMode = (el) => {
-        document.querySelectorAll('.selector-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[data-mode].selector-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
         el.classList.add('active');
+        el.setAttribute('aria-pressed', 'true');
         window.gameSettings.mode = el.dataset.mode;
     };
     window.selectDifficulty = (el) => {
-        document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.diff-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
         el.classList.add('active');
+        el.setAttribute('aria-pressed', 'true');
         window.gameSettings.difficulty = el.dataset.difficulty;
     };
     window.openCategoryModal = () => { document.getElementById('category-modal').classList.add('open'); document.body.style.overflow = 'hidden'; };
@@ -214,8 +216,8 @@ export function attachDashboardListeners() {
             import('../../router.js').then(r => r.default());
         });
     };
-    window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); };
-    window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
+    window.toggleSidebar = () => { const opened = document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open', opened); document.querySelector('.burger-btn')?.setAttribute('aria-expanded', String(opened)); };
+    window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); document.querySelector('.burger-btn')?.setAttribute('aria-expanded', 'false'); };
     
     const activeCat = document.querySelector('.sidebar-cat-item.active');
     if (activeCat) {
