@@ -174,7 +174,7 @@ test('reinitializing a mode clears any active mode-specific timer', async () => 
 test('duel restart cancels its pending round result callback', async () => {
     const duelSource = await readFile(resolve('app/modules/quiz/modes/duel.js'), 'utf8');
     const duelStripped = duelSource
-        .replace(/^import .*;\\s*$/gm, '')
+        .replace(/^import .*;\s*$/gm, '')
         .replace('export class DuelMode', 'class DuelMode');
     const DuelMode = new Function('BaseMode', 'getState', 'increment',
         `${duelStripped}\\nreturn DuelMode;`
