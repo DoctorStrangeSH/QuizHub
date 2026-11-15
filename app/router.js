@@ -90,9 +90,13 @@ const routes = {
 };
 
 async function checkDailyReward(revision) {
+    const ownerUid = getState().currentUser?.uid;
+    if (!ownerUid) return;
     try {
         const m = await import('./modules/daily/daily.js');
         const rewardData = await m.checkDailyReward();
+        if (revision !== renderRevision || getState().currentRoute !== 'home' ||
+            getState().currentUser?.uid !== ownerUid) return;
         if (rewardData.canClaim) {
             const popupHTML = m.renderDailyPopup(rewardData);
             const container = document.createElement('div');
@@ -103,7 +107,9 @@ async function checkDailyReward(revision) {
             document.body.appendChild(container);
 
             window.claimAndClose = async () => {
+                if (getState().currentUser?.uid !== ownerUid) return;
                 const reward = await m.claimDailyReward();
+                if (getState().currentUser?.uid !== ownerUid) return;
                 if (reward) {
                     container.innerHTML = `<div class="daily-popup glass-card animate-in text-center"><div class="result-icon">🎉</div><h3>Получено!</h3><p class="text-gold fw-bold">+${reward.coins} монет</p><button class="btn-premium mt-3" onclick="document.getElementById('daily-popup-container').remove()">Отлично!</button></div>`;
                 }
