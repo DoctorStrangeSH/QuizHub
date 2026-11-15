@@ -74,10 +74,12 @@ test('authenticated browser: complete a real classic quiz and persist earned rew
     assert.deepEqual(errors, [], 'No uncaught browser exceptions');
 
     await page.reload();
+    await page.locator('.play-btn').waitFor({ timeout: 30000 });
     await page.waitForFunction(async () => {
-      const { auth } = await import('./app/firebase-config.js');
-      return Boolean(auth.currentUser);
-    }, { timeout: 30000 });
+      const { auth, db, doc, getDoc } = await import('./app/firebase-config.js');
+      if (!auth.currentUser) return false;
+      return (await getDoc(doc(db, 'users', auth.currentUser.uid))).exists();
+    }, null, { timeout: 30000 });
     const persisted = await page.evaluate(async () => {
       const { auth, db, doc, getDoc } = await import('./app/firebase-config.js');
       return (await getDoc(doc(db, 'users', auth.currentUser.uid))).data();
