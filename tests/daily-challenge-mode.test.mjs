@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createDailyChallenge, createSeededRandom } from '../app/modules/quiz/daily-challenge.js';
+import { getDailyResultSummary } from '../app/modules/quiz/daily-results.js';
 
 const source = (await readFile(resolve('app/modules/quiz/modes/daily-challenge.js'), 'utf8'))
     .replace(/^import .*;.*$/gm, '')
@@ -39,9 +40,9 @@ class FakeClassicMode {
 
 let language = 'ru';
 const DailyChallengeMode = new Function(
-    'ClassicMode', 'getState', 'createSeededRandom', 'getUtcDateKey',
+    'ClassicMode', 'getState', 'createSeededRandom', 'getUtcDateKey', 'getDailyResultSummary',
     source + String.fromCharCode(10) + 'return DailyChallengeMode;'
-)(FakeClassicMode, () => ({ language }), createSeededRandom, () => '2026-11-15');
+)(FakeClassicMode, () => ({ language }), createSeededRandom, () => '2026-11-15', getDailyResultSummary);
 
 test('daily mode uses the same question and answer ordering for the same date', async () => {
     const questions = createDailyChallenge('2026-11-15').questions;
