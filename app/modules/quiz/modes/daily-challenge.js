@@ -1,4 +1,5 @@
 import { ClassicMode } from './classic.js';
+import { getState } from '../../../store/state.js';
 import { createSeededRandom, getUtcDateKey } from '../daily-challenge.js';
 
 export class DailyChallengeMode extends ClassicMode {
@@ -42,7 +43,7 @@ export class DailyChallengeMode extends ClassicMode {
     }
 
     getSaveStatusHTML() {
-        const isEN = this.settings?.language === 'en';
+        const isEN = getState().language === 'en';
         const message = isEN
             ? '🎯 Daily challenge preview: verified daily rewards will unlock after server validation is deployed.'
             : '🎯 Предпросмотр ежедневного испытания: награды появятся после подключения серверной проверки.';
