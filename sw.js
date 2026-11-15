@@ -1,9 +1,10 @@
-const CACHE_NAME = 'quizhub-v5';
+const CACHE_NAME = 'quizhub-v6';
 const SCOPE = new URL(self.registration.scope);
 const scoped = (path) => new URL(path, SCOPE).href;
 const CORE_ASSETS = [
     '', 'index.html', 'offline.html', 'manifest.json',
     'app/styles/themes.css', 'app/styles/main.css',
+    'app/styles/midnight-arcade.css', 'app/assets/quizhub-mark.svg',
     'app/locales/ru.json', 'app/locales/en.json'
 ].map(scoped);
 
