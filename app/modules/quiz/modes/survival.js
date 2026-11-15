@@ -58,11 +58,13 @@ export class SurvivalMode extends BaseMode {
     }
     
     async finishQuiz() {
+        // Preserve the owner of this run across the asynchronous reward save.
+        // The signed-in account may change before that request completes.
+        const user = auth.currentUser;
         await this.saveResults();
 
         // A record is a maximum, not an accumulated number of correct answers.
         // Transaction keeps concurrent sessions from overwriting a better record.
-        const user = auth.currentUser;
         if (user && this.bestStreak > 0) {
             try {
                 const userRef = doc(db, 'users', user.uid);
