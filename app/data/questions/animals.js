@@ -57,11 +57,13 @@ const animalsQuestions = {
     ],
     hard: [
         {
-            questionRU: 'Какое животное имеет три сердца?',
-            questionEN: 'Which animal has three hearts?',
-            optionsRU: ['Кальмар', 'Осьминог', 'Медуза', 'Крокодил'],
-            optionsEN: ['Squid', 'Octopus', 'Jellyfish', 'Crocodile'],
+            questionRU: 'Какие млекопитающие способны к активному, а не планирующему полёту?',
+            questionEN: 'Which mammals are capable of powered, rather than gliding, flight?',
+            optionsRU: ['Летучие мыши', 'Белки-летяги', 'Лемуры', 'Поссумы'],
+            optionsEN: ['Bats', 'Flying squirrels', 'Lemurs', 'Possums'],
             correctIndex: 1,
+            explanationRU: 'Летучие мыши — единственная группа млекопитающих, освоившая активный машущий полёт.',
+            explanationEN: 'Bats are the only group of mammals capable of sustained powered flight.',
             points: 30
         },
         {
