@@ -1,6 +1,7 @@
 import { ClassicMode } from './classic.js';
 import { getState } from '../../../store/state.js';
 import { createSeededRandom, getUtcDateKey } from '../daily-challenge.js';
+import { getDailyResultSummary } from '../daily-results.js';
 
 export class DailyChallengeMode extends ClassicMode {
     constructor() {
@@ -85,6 +86,10 @@ export class DailyChallengeMode extends ClassicMode {
         if (!result) return;
 
         const isEN = getState().language === 'en';
+        const summary = getDailyResultSummary(this.correctAnswers, this.totalQuestions, isEN ? 'en' : 'ru');
+        result.classList.add('daily-challenge-result');
+        const icon = result.querySelector('.result-icon');
+        if (icon) icon.textContent = summary.icon;
         const heading = result.querySelector('h2');
         if (heading) {
             heading.textContent = isEN
@@ -95,8 +100,8 @@ export class DailyChallengeMode extends ClassicMode {
         const feedback = result.querySelector('p.text-secondary.mb-3');
         if (feedback) {
             feedback.textContent = isEN
-                ? 'Your daily result is ready.'
-                : 'Твой результат за сегодня готов.';
+                ? summary.detail
+                : summary.detail;
         }
 
         const labels = result.querySelectorAll('.result-label');
@@ -107,6 +112,42 @@ export class DailyChallengeMode extends ClassicMode {
         });
         const lastValue = values[values.length - 1];
         if (lastValue) lastValue.textContent = '—';
+
+        // Build a read-only breakdown from the local practice outcome; no leaderboard claims.
+        const breakdown = document.createElement('section');
+        breakdown.className = 'daily-result-breakdown';
+        breakdown.setAttribute('aria-label', isEN ? 'Daily answer breakdown' : 'Итоги ответов');
+        const caption = document.createElement('div');
+        caption.className = 'daily-result-caption';
+        const eyebrow = document.createElement('span');
+        eyebrow.className = 'daily-result-eyebrow';
+        eyebrow.textContent = (isEN ? 'PRACTICE · ' : 'ТРЕНИРОВКА · ') + (this.challengeDate || getUtcDateKey());
+        const title = document.createElement('strong');
+        title.textContent = summary.title;
+        const ratio = document.createElement('span');
+        ratio.className = 'daily-result-percent';
+        ratio.textContent = summary.percent + '%';
+        caption.append(eyebrow, title, ratio);
+        const segments = document.createElement('div');
+        segments.className = 'daily-result-segments';
+        segments.setAttribute('role', 'img');
+        segments.setAttribute('aria-label', isEN
+            ? `${summary.correct} correct out of ${summary.total}`
+            : `${summary.correct} правильных из ${summary.total}`);
+        for (let index = 0; index < summary.total; index++) {
+            const segment = document.createElement('span');
+            segment.className = index < summary.correct ? 'daily-result-segment is-correct' : 'daily-result-segment';
+            segment.setAttribute('aria-hidden', 'true');
+            segments.append(segment);
+        }
+        const hint = document.createElement('p');
+        hint.className = 'daily-result-hint';
+        hint.textContent = isEN
+            ? 'Practice result only · Not included in rankings or prize claims.'
+            : 'Только тренировочный результат · Не влияет на рейтинг и награды.';
+        breakdown.append(caption, segments, hint);
+        const stats = result.querySelector('.result-stats');
+        if (stats) stats.insertAdjacentElement('beforebegin', breakdown);
 
         const buttons = result.querySelectorAll('button');
         if (buttons[0]) buttons[0].textContent = isEN ? '← Home' : '← В меню';
