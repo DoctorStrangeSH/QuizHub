@@ -1176,3 +1176,6 @@ input::placeholder,textarea::placeholder { opacity: .75; }
   .events-section .event-card { flex-direction: row; text-align: left; }
   .events-section .daily-rewards-row { justify-content: stretch; }
 }
+
+/* Identity lock: authentication uses the same mark as launch and PWA */
+.auth-logo-image { display: block; width: 86px; height: 86px; margin: 0 auto; object-fit: contain; filter: drop-shadow(0 12px 28px rgba(184,250,85,.12)); }
