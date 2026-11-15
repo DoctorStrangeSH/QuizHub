@@ -34,14 +34,14 @@ npx -y firebase-tools@latest emulators:start --only auth,firestore,functions --p
 
 Use the Auth emulator to sign in test users and call `dailyChallenge` with a Firebase Functions client connected to the Functions emulator. The Firestore and Auth emulators must run at the same time; without them the Admin SDK could connect to real resources.
 
-The current CI tests validate the pure callable boundary, transaction adapter and bundle compilation. A full emulator-based authenticated network test is **still required** before any deployment.
+The **Firebase emulator integration** GitHub Actions workflow now boots Auth, Firestore Standard and Functions emulators under `demo-quizhub`, creates two anonymous test identities, invokes the callable over HTTP, and verifies authentication, forged identity rejection, independent attempts, persisted answers, retries and error mapping. Run #4 passed on 2026-11-15. This verifies the network boundary, but is **not** production sign-in or a complete release test.
 
 ## Security and migration gates
 
 1. Confirm Firebase billing/Blaze availability for second-generation Cloud Functions.
 2. Check the functions service identity has narrowly scoped Firestore access. The GitHub OIDC CI identity currently has **no Firestore or deployment role**.
 3. Verify `dailyAttempts`, `dailyReceipts`, `dailyRankings`, and `dailyPrizes` collections do not conflict with existing user data.
-4. Test emulator transactions under concurrency, failed/replayed requests and UTC rollover.
+4. Expand emulator testing to simultaneous writes, failure recovery, UTC rollover and full ten-question completion (basic replay and persistence smoke tests now pass).
 5. Migrate client session entry to the callable, remove competitive access to client-side answer keys, and retire direct client economy writes.
 6. Audit and test restrictive Firestore Security Rules **before** enabling ranked rewards.
 7. Deploy only after explicit release approval. Never use an unscoped `firebase deploy` command here.
