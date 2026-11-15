@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
     getFirestore,
     doc,
@@ -18,7 +18,8 @@ import {
     arrayUnion,
     arrayRemove,
     increment,
-    runTransaction
+    runTransaction,
+    connectFirestoreEmulator
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -30,9 +31,23 @@ const firebaseConfig = {
     appId: "1:144587612719:web:f2aa2c729002abb098dcda"
 };
 
-const app = initializeApp(firebaseConfig);
+// Local-only opt-in for browser integration tests. Production and preview
+// deployments never switch projects from URL parameters.
+const useLocalEmulators =
+    ['localhost', '127.0.0.1'].includes(location.hostname) &&
+    new URLSearchParams(location.search).get('firebaseEmulator') === '1';
+const selectedConfig = useLocalEmulators
+    ? { ...firebaseConfig, projectId: 'demo-quizhub', authDomain: 'demo-quizhub.firebaseapp.com' }
+    : firebaseConfig;
+
+const app = initializeApp(selectedConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+if (useLocalEmulators) {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
 
 export {
     doc,
