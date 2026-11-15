@@ -12,8 +12,8 @@ export function renderProfileCreate() {
                 <div class="bg-circle bg-circle-3"></div>
             </div>
             <div class="profile-create-card glass-card animate-in">
-                <div class="profile-icon-wrapper"><div class="profile-icon-glow"></div><span class="profile-icon">👑</span></div>
-                <div class="profile-header text-center"><h1 class="profile-title text-gradient">Quiz Empire</h1><p class="profile-subtitle">Создайте своё королевское имя</p></div>
+                <div class="profile-icon-wrapper"><div class="profile-icon-glow"></div><span class="profile-icon" aria-hidden="true"><i class="bi bi-hexagon-fill"></i><b>Q</b></span></div>
+                <div class="profile-header text-center"><h1 class="profile-title text-gradient">QuizHub</h1><p class="profile-subtitle">Создайте своё королевское имя</p></div>
                 <form id="profile-form" class="profile-form">
                     <div class="nickname-input-wrapper">
                         <label class="nickname-label"><span class="label-icon">⚜️</span>Ваш никнейм</label>
