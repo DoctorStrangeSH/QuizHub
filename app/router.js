@@ -2,6 +2,7 @@ import { getState, setState } from './store/state.js';
 import { renderAuth, attachAuthListeners } from './modules/auth/auth.js';
 
 const appRoot = document.getElementById('app-root');
+let renderRevision = 0;
 
 const routes = {
     auth: () => {
@@ -34,9 +35,13 @@ const routes = {
         m.attachFriendsListeners();
     },
 
-    quiz: async () => {
+    quiz: async (revision) => {
         const m = await import('./modules/quiz/quiz.js');
-        appRoot.innerHTML = await m.renderQuiz();
+        if (revision !== renderRevision || getState().currentRoute !== 'quiz') return;
+        const html = await m.renderQuiz();
+        // An older render must never replace the screen selected afterward.
+        if (revision !== renderRevision || getState().currentRoute !== 'quiz') return;
+        appRoot.innerHTML = html;
         m.attachQuizListeners();
     },
 
@@ -107,9 +112,10 @@ window.navigateTo = async (route) => {
 };
 
 export default async function router() {
+    const revision = ++renderRevision;
     const route = getState().currentRoute;
     sessionStorage.setItem('lastRoute', route);
     if (Object.hasOwn(routes, route)) {
-        await routes[route]();
+        await routes[route](revision);
     }
 }
