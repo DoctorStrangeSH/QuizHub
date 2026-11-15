@@ -27,3 +27,15 @@ test('offline app shell caches the new icon and Midnight Arcade stylesheet', () 
   assert.match(worker, /app\/assets\/quizhub-mark\.svg/);
   assert.match(worker, /app\/styles\/midnight-arcade\.css/);
 });
+
+test('guest authentication screen uses the QuizHub brand in both languages', () => {
+  const auth = readFileSync(new URL('../app/modules/auth/auth.js', import.meta.url), 'utf8');
+  const russian = JSON.parse(readFileSync(new URL('../app/locales/ru.json', import.meta.url), 'utf8'));
+  const english = JSON.parse(readFileSync(new URL('../app/locales/en.json', import.meta.url), 'utf8'));
+
+  assert.match(auth, /class="auth-logo-image" src="\.\/app\/assets\/quizhub-mark\.svg"/);
+  assert.equal(russian.auth.title, 'QuizHub');
+  assert.equal(english.auth.title, 'QuizHub');
+  assert.doesNotMatch(russian.auth.subtitle, /Quiz Empire/i);
+  assert.doesNotMatch(english.auth.subtitle, /Quiz Empire/i);
+});
