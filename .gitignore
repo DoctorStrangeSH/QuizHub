@@ -5,3 +5,7 @@ gha-creds-*.json
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
+
+# Generated Firebase Functions output and dependencies
+functions/node_modules/
+functions/dist/
