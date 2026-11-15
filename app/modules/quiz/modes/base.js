@@ -117,6 +117,7 @@ export class BaseMode {
                 
                 <div class="quiz-question-card glass-card animate-in animate-in-delay-1">
                     ${this.renderModeSpecificHeader()}
+                    <div class="quiz-question-kicker"><span class="quiz-kicker-dot" aria-hidden="true"></span>${isRU ? 'ВОПРОС РАУНДА' : 'ROUND QUESTION'}</div>
                     <h3 class="question-text">${escapeHTML(qText)}</h3>
                 </div>
                 
