@@ -102,8 +102,8 @@ export function renderAuth() {
         <div class="auth-container">
             <div class="auth-card glass-card animate-in">
                 <div class="auth-header">
-                    <div class="auth-logo mb-3"><span class="auth-logo-icon">👑</span></div>
-                    <h1 class="text-gradient fw-bold mb-2">${t.title || 'Quiz Empire'}</h1>
+                    <div class="auth-logo mb-3"><img class="auth-logo-image" src="./app/assets/quizhub-mark.svg" alt="" aria-hidden="true" /></div>
+                    <h1 class="text-gradient fw-bold mb-2">${t.title || 'QuizHub'}</h1>
                     <p class="text-secondary">${t.subtitle || ''}</p>
                 </div>
 
