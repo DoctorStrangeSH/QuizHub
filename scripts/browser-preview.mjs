@@ -29,6 +29,10 @@ try {
       if (!response?.ok()) throw new Error('HTTP response not OK: ' + response?.status());
       await page.locator('#initial-splash.hidden').waitFor({ timeout: 30000 });
       await page.locator('#app-root').getByText('QuizHub', { exact: true }).first().waitFor({ timeout: 15000 });
+      const logo = page.locator('.auth-logo-image');
+      await logo.waitFor({ state: 'visible', timeout: 15000 });
+      const logoLoaded = await logo.evaluate(image => image.complete && image.naturalWidth > 0);
+      if (!logoLoaded) throw new Error('QuizHub auth logo did not load');
       const metrics = await page.evaluate(() => {
         const bg = getComputedStyle(document.body).backgroundColor;
         const hasOverflow = document.documentElement.scrollWidth > window.innerWidth + 2;
