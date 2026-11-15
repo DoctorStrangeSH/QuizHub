@@ -1,109 +1,62 @@
 <div align="center">
-  <img src="assets/favicon.svg" alt="QuizHub Logo" width="80" height="80">
-  
+  <img src="assets/favicon.svg" alt="QuizHub" width="80" height="80">
+
   # 🧠 QuizHub
-  
-  **Платформа для квизов с real-time рейтингом**
-  
-  [![GitHub Pages](https://img.shields.io/badge/Демо-GitHub%20Pages-FF6B9D?style=for-the-badge&logo=github)](https://doctorstrangesh.github.io/QuizHub/)
-  [![Firebase](https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com)
-  [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/ru/docs/Web/JavaScript)
+
+  **Quiz Empire — викторины, игровые режимы и рейтинг игроков**
+
+  [Открыть опубликованную версию](https://doctorstrangesh.github.io/QuizHub/) · [Исходный код](https://github.com/DoctorStrangeSH/QuizHub) · [Проверяемые изменения (PR #1)](https://github.com/DoctorStrangeSH/QuizHub/pull/1)
 </div>
 
----
+## О проекте
 
+QuizHub — браузерная игра-викторина на JavaScript с русским и английским интерфейсом. Приложение использует Firebase Authentication для входа и Cloud Firestore для профилей, прогресса и рейтингов. Вопросы и игровые режимы организованы в отдельные модули.
 
-## 📋 О проекте
+**Важно о версиях:** ссылка на GitHub Pages открывает опубликованную стабильную версию, а не обязательно изменения из ветки `refactor/foundation-stability`. Актуальная работа над стабильностью и тестами ведётся в [PR #1](https://github.com/DoctorStrangeSH/QuizHub/pull/1). Не используйте демоверсию как подтверждение того, что все изменения PR уже выпущены.
 
-**QuizHub** — это SPA-приложение, разработанное для демонстрации навыков full-stack разработки. Пользователи могут проходить квизы на двух языках, соревноваться в real-time таблице лидеров и отслеживать свой прогресс.
+## Возможности
 
-### 🎯 Бизнес-задачи, которые решает проект
-- **Удержание пользователей** — геймификация через систему очков и рейтингов
-- **Вовлечение** — соревновательный элемент (таблица лидеров)
-- **Монетизация** — архитектура готова к добавлению платных категорий вопросов
-- **Аналитика** — Firestore позволяет анализировать результаты пользователей
+- Несколько режимов викторины, в том числе дуэль и режим с таймером.
+- Вопросы, результаты, опыт и внутриигровые монеты.
+- Профиль, прогресс и рейтинги через Firebase.
+- Русский и английский интерфейс.
+- Адаптивное оформление и управление ответами с клавиатуры (в ветке рефакторинга).
 
----
+Для входа и синхронизации прогресса необходимо подключение к сети. Наличие локальных вопросов **не означает полностью автономную работу**: авторизация и сохранение данных используют Firebase.
 
-## 🛠 Технический стек
+## Локальный запуск
 
-<table>
-  <tr>
-    <td><strong>Frontend</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript&logoColor=black">
-      <img src="https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=flat-square&logo=bootstrap">
-      <img src="https://img.shields.io/badge/CSS-Animations-1572B6?style=flat-square&logo=css3">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Backend</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Firebase-Auth-FFCA28?style=flat-square&logo=firebase">
-      <img src="https://img.shields.io/badge/Firestore-NoSQL-FFCA28?style=flat-square&logo=firebase">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>API</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/Open_Trivia_DB-REST-00C853?style=flat-square">
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Деплой</strong></td>
-    <td>
-      <img src="https://img.shields.io/badge/GitHub-Pages-222222?style=flat-square&logo=github">
-    </td>
-  </tr>
-</table>
-
----
-
-## ✨ Ключевые фичи
-
-| Фича | Описание | Технология |
-|------|----------|------------|
-| 🔐 **Google Auth** | Вход через Google-аккаунт с сохранением профиля | Firebase Auth |
-| 🌍 **Два языка** | Русский (локальная база) и английский (Open Trivia DB) | Fetch API + JSON |
-| ⏱ **Таймер** | 15 секунд на вопрос, визуальное предупреждение при <5 сек | setInterval + CSS Animations |
-| 🎯 **Система очков** | Бонус за скорость × множитель сложности | Алгоритм в Vanilla JS |
-| 🏆 **Real-time лидеры** | Топ-3 с медалями + полная таблица (20 игроков) | Firestore onSnapshot |
-| 🎉 **Конфетти** | Анимация при 70+ очках | Canvas-free CSS Animations |
-| 📱 **Адаптив** | От 320px до 4K | Bootstrap Grid + Media Queries |
-| 🔴 **Офлайн-режим** | Русские вопросы работают без интернета | Локальная база (52 вопроса) |
-
----
-
-text
-
-### 🧩 Принципы проектирования
-- **SPA-архитектура** — все экраны в одном HTML, переключение через `display: none/block`
-- **Разделение ответственности** — UI, логика квиза, API вынесены в отдельные модули
-- **Event-driven** — клики, таймеры, IntersectionObserver
-- **Graceful degradation** — при недоступности API используется локальная база вопросов
-
----
-
-## 🔧 Быстрый старт
-
-### Предварительные требования
-- Любой современный браузер
-- Live Server (VS Code) или Python 3.x
-
-### Локальный запуск (2 минуты)
+Понадобятся Git, современный браузер и локальный HTTP-сервер, например Python 3.
 
 ```bash
-# 1. Клонируй репозиторий
-git clone https://doctorstrangesh.github.io/QuizHub/
-cd quizhub
-
-# 2. Замени конфиг Firebase
-# Открой js/firebase-config.js и вставь свои ключи
-
-# 3. Запусти сервер
-# Вариант A: VS Code + Live Server
-# ПКМ на index.html → Open with Live Server
-
-# Вариант B: Python
+git clone https://github.com/DoctorStrangeSH/QuizHub.git
+cd QuizHub
 python -m http.server 8000
-# Открой http://localhost:8000
+```
+
+Затем откройте http://localhost:8000/. Открывать `index.html` напрямую через `file://` не рекомендуется: ES-модулям и запросам нужен HTTP-сервер.
+
+Конфигурация клиентского приложения расположена в `app/firebase-config.js`. Для собственного проекта Firebase настройте свою конфигурацию и разрешённые домены аутентификации в консоли Firebase. Не публикуйте сервисные ключи или закрытые учётные данные. Существующий публичный клиентский конфиг сам по себе **не даёт** административного доступа.
+
+## Разработка и проверка
+
+Основной код расположен в `app/`, автоматические проверки — в `tests/`, подготовительные серверные контракты — в `server/`.
+
+Ветка `refactor/foundation-stability` содержит тесты жизненного цикла квизов, навигации, результатов и подготовку серверной проверки начислений. Проверяйте актуальный статус GitHub Actions в PR перед объединением.
+
+```bash
+node --experimental-default-type=module --test tests/*.test.mjs
+```
+
+## Безопасность начислений
+
+**Серверная защита от накрутки наград пока не развёрнута.** Сейчас клиент может записывать опыт и монеты напрямую в Firestore. Серверные модули в `server/` и их тесты — подготовка к миграции, а не действующая защита. До изменения правил Firestore необходимо перенести начисления на проверяемый серверный путь, протестировать его на Firebase Emulator и убедиться в совместимости существующих данных.
+
+Подробный план и ограничения: [docs/ECONOMY_SECURITY.md](docs/ECONOMY_SECURITY.md).
+
+## Перед выпуском
+
+1. Проверить PR и все CI-проверки.
+2. Пройти игровые режимы с тестовым аккаунтом на отдельном окружении.
+3. Проверить фактические Firebase Rules и начисления без риска для реальных профилей.
+4. После успешных проверок объединить изменения и удостовериться, что GitHub Pages обновился.
