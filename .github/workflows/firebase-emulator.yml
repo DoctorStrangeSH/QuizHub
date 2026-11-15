@@ -36,4 +36,4 @@ jobs:
           npx --yes firebase-tools@latest emulators:exec
           --project demo-quizhub
           --only auth,firestore,functions
-          "node --test tests/firebase-daily-emulator.test.mjs"
+          "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs"
