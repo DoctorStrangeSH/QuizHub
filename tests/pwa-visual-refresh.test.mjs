@@ -45,7 +45,7 @@ test('application styles fetch fresh content, with offline fallback', async () =
   const worker = setupWorker(async () => {
     calls++;
     if (offline) throw new Error('offline');
-    return new Response('new theme', { status: 200 });
+    return { ok: true, type: 'basic', clone() { return this; }, async text() { return 'new theme'; } };
   });
   const request = { method: 'GET', url: 'https://example.test/QuizHub/app/styles/midnight-arcade.css', mode: 'cors' };
   const runFetch = async () => {
