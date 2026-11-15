@@ -53,10 +53,12 @@ export async function renderQuiz() {
     }
     
     // Инициализируем режим
-    await currentMode.init(questions, settings);
+    await mode.init(questions, settings);
+    // Ignore work belonging to an older navigation.
+    if (currentMode !== mode || mode.isDisposed) return '';
     
     // Показываем первый вопрос
-    return currentMode.renderQuestion(0);
+    return mode.renderQuestion(0);
 }
 
 // ========== ВЫБОР ОТВЕТА (обычные режимы) ==========
