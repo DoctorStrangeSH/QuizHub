@@ -35,6 +35,8 @@ export class BaseMode {
         this.earnedXP = 0;
         this.saveStatus = 'pending';
         this.correctAnswers = 0;
+        this.feedbackStreak = 0;
+        this.bestFeedbackStreak = 0;
         this.hasAnswered = false;
         this.isFinished = false;
         this.isDisposed = false;
@@ -59,6 +61,8 @@ export class BaseMode {
         this.earnedXP = 0;
         this.saveStatus = 'pending';
         this.correctAnswers = 0;
+        this.feedbackStreak = 0;
+        this.bestFeedbackStreak = 0;
         this.hasAnswered = false;
         this.isFinished = false;
         this.isDisposed = false;
@@ -175,6 +179,8 @@ export class BaseMode {
 
         const isCorrect = el.dataset.correct === 'true';
         const points = this.questions[this.currentIndex].points;
+        const previousScore = this.score;
+        this.recordFeedbackStreak(isCorrect);
 
         if (isCorrect) {
             this.score += points;
@@ -182,7 +188,7 @@ export class BaseMode {
         }
 
         this.onAnswer(isCorrect, points);
-        this.showAnswerFeedback(isCorrect, points);
+        this.showAnswerFeedback(isCorrect, this.score - previousScore);
         this.showAnswerExplanation();
 
         document.getElementById('next-btn-container').style.display = 'block';
@@ -191,21 +197,34 @@ export class BaseMode {
 
     onAnswer(isCorrect, points) { }
 
-    showAnswerFeedback(isCorrect, points) {
+    recordFeedbackStreak(isCorrect) {
+        this.feedbackStreak = isCorrect ? this.feedbackStreak + 1 : 0;
+        this.bestFeedbackStreak = Math.max(this.bestFeedbackStreak, this.feedbackStreak);
+    }
+
+    showAnswerFeedback(isCorrect, points, reason = 'answer') {
         const feedback = document.getElementById('answer-feedback');
         if (!feedback) return;
         const isRU = getState().language !== 'en';
-        feedback.dataset.result = isCorrect ? 'correct' : 'wrong';
+        feedback.dataset.result = reason === 'timeout' ? 'timeout' : isCorrect ? 'correct' : 'wrong';
         feedback.replaceChildren();
         const symbol = document.createElement('span');
         symbol.className = 'answer-feedback-symbol';
         symbol.setAttribute('aria-hidden', 'true');
-        symbol.textContent = isCorrect ? '✓' : '↗';
+        symbol.textContent = reason === 'timeout' ? '⏱' : isCorrect ? '✓' : '↗';
         const message = document.createElement('strong');
-        message.textContent = isCorrect
-            ? (isRU ? 'Верно! Отличный ход' : 'Correct! Great move')
-            : (isRU ? 'Почти! Запомни правильный ответ' : 'Not quite! Learn the right answer');
+        message.textContent = reason === 'timeout'
+            ? (isRU ? 'Время вышло! Правильный ответ ниже' : 'Time is up! See the correct answer below')
+            : isCorrect
+                ? (isRU ? 'Верно! Отличный ход' : 'Correct! Great move')
+                : (isRU ? 'Почти! Запомни правильный ответ' : 'Not quite! Learn the right answer');
         feedback.append(symbol, message);
+        if (isCorrect && this.feedbackStreak >= 2) {
+            const combo = document.createElement('span');
+            combo.className = 'answer-feedback-combo';
+            combo.textContent = '🔥 ' + this.feedbackStreak + (isRU ? ' подряд' : ' in a row');
+            feedback.append(combo);
+        }
         if (isCorrect && Number.isFinite(points) && points > 0) {
             const reward = document.createElement('span');
             reward.className = 'answer-feedback-points';
