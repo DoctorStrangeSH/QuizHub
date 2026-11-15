@@ -31,6 +31,8 @@ jobs:
         run: node --test tests/collection-design.test.mjs
       - name: Verify responsive player identity card
         run: node --test tests/player-card-design.test.mjs
+      - name: Verify leaderboard arena and keyboard navigation
+        run: node --test tests/leaderboard-design.test.mjs
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Test dry-run public profile migration planner
