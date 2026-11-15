@@ -136,6 +136,10 @@ test('real browser: password reset email request and new-password sign-in', { ti
             const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
             await signOut(auth);
         });
+        await page.locator('#auth-form').waitFor({ timeout: 15000 });
+        if (await page.locator('#auth-password[autocomplete="new-password"]').count()) {
+            await page.evaluate(() => window.switchAuthMode());
+        }
         await page.locator('#auth-reset').waitFor({ timeout: 15000 });
 
         await page.locator('#auth-reset').click();
