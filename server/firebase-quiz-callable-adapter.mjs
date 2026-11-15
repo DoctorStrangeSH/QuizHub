@@ -6,15 +6,16 @@ const INVALID = new Set([
     'INVALID_LANGUAGE', 'INVALID_MODE', 'INVALID_QUESTIONS',
     'INVALID_QUESTION_ID', 'INVALID_ANSWER', 'INVALID_SESSION_ID',
     'INVALID_TIME', 'INVALID_DURATION', 'INVALID_DEADLINE',
-    'INVALID_CATEGORY', 'INVALID_DIFFICULTY', 'INVALID_COUNT'
+    'INVALID_CATEGORY', 'INVALID_DIFFICULTY', 'INVALID_COUNT',
+    'INVALID_SELECTION'
 ]);
 const NOT_FOUND = new Set(['SESSION_NOT_FOUND', 'QUESTION_NOT_FOUND', 'USER_NOT_FOUND']);
 const PRECONDITION = new Set([
     'SESSION_CLOSED', 'SESSION_EXPIRED', 'SESSION_INCOMPLETE',
     'ALREADY_FINALIZED', 'ALL_QUESTIONS_ANSWERED', 'OUT_OF_ORDER',
-    'NOT_SESSION_OWNER', 'ANSWER_ALREADY_LOCKED', 'INVALID_ANSWER_LOG',
+    'ANSWER_ALREADY_LOCKED', 'INVALID_ANSWER_LOG',
     'INVALID_USER_BALANCE', 'INVALID_USER_STATS', 'BALANCE_OVERFLOW',
-    'MISSING_RECEIPT'
+    'MISSING_RECEIPT', 'NOT_ENOUGH_QUESTIONS'
 ]);
 
 export function createQuizCallableAdapter({ handle, HttpsError, clock = Date.now }) {
@@ -42,6 +43,7 @@ export function createQuizCallableAdapter({ handle, HttpsError, clock = Date.now
             if (code === 'AUTH_REQUIRED') throw new HttpsError('unauthenticated', code);
             if (INVALID.has(code)) throw new HttpsError('invalid-argument', code);
             if (NOT_FOUND.has(code)) throw new HttpsError('not-found', code);
+            if (code === 'NOT_SESSION_OWNER') throw new HttpsError('permission-denied', code);
             if (PRECONDITION.has(code)) throw new HttpsError('failed-precondition', code);
             // Unrecognized errors must not expose internal Firestore paths,
             // profile data, server stack traces or adapter implementation.
