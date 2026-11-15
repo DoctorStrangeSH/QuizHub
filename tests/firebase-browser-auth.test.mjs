@@ -82,6 +82,10 @@ test('real browser: register, persist session, log out, sign in again and sync p
         assert.equal(otherProfile?.nickname, nickname, 'Profile must sync through Firestore');
         assert.equal(otherProfile?.coins, 100, 'Initial progress must be available on second browser');
         assert.equal(otherProfile?.level, 1);
+        await otherPage.evaluate(() => window.navigateTo('leaderboard'));
+        await otherPage.locator('.lb-name').filter({ hasText: nickname }).waitFor({ timeout: 15000 });
+        const leaderboardText = await otherPage.locator('#leaderboard-list').textContent();
+        assert.ok(!leaderboardText.includes(email), 'Leaderboard must not display private email');
         assert.deepEqual(otherErrors, [], `Second browser errors: ${otherErrors.join(' | ')}`);
         await otherContext.close();
 
