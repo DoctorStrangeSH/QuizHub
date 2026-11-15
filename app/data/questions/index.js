@@ -2,6 +2,7 @@ import scienceQuestions from './science.js';
 import historyQuestions from './history.js';
 import sportsQuestions from './sports.js';
 import moviesQuestions from './movies.js';
+import gamingQuestions from './gaming.js';
 import geographyQuestions from './geography.js';
 import technologyQuestions from './technology.js';
 import artQuestions from './art.js';
