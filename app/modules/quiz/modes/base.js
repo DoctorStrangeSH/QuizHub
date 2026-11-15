@@ -145,10 +145,11 @@ export class BaseMode {
     getNextButtonText() { return 'Далее →'; }
 
     handleAnswer(el) {
+        const container = document.getElementById('answers-container');
+        // An old answer element can still dispatch a click after navigation.
+        if (!el || !container?.contains(el)) return;
         if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
         this.hasAnswered = true;
-
-        const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
 
         allCards.forEach(c => c.classList.add('answered'));
