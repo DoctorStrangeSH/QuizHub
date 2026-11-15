@@ -29,7 +29,8 @@ export async function renderQuiz() {
     
     // Останавливаем таймер предыдущей игры перед повторным запуском.
     resetQuiz();
-    currentMode = createMode(settings.mode);
+    const mode = createMode(settings.mode);
+    currentMode = mode;
     
     // Загружаем вопросы
     const questions = getQuestions(settings.category, settings.difficulty);
