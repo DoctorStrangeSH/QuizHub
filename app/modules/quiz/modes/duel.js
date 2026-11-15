@@ -71,8 +71,12 @@ export class DuelMode extends BaseMode {
         this.hasAnswered = true;
         const allCards = container.querySelectorAll('.answer-card');
         
-        allCards.forEach(c => c.classList.add('answered'));
+        allCards.forEach(c => {
+            c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
+        });
         el.classList.add('selected');
+        el.setAttribute('aria-pressed', 'true');
         
         // Показываем правильный ответ
         allCards.forEach(c => {
