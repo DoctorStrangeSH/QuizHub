@@ -32,3 +32,13 @@ test('buttons cannot dispatch duplicate requests while authentication is pending
     assert.match(auth, /lockButtons\(true\)/);
     assert.match(auth, /finally \{\s*lockButtons\(false\)/);
 });
+
+test('account switching invalidates stale profile checks and saved routes', () => {
+    assert.match(app, /let authRevision = 0/);
+    assert.match(app, /const revision = \+\+authRevision/);
+    assert.match(app, /revision !== authRevision \|\| auth\.currentUser\?\.uid !== user\.uid/);
+    assert.match(app, /ownerUid === user\.uid \? sessionStorage\.getItem\('lastRoute'\) : null/);
+    assert.match(app, /sessionStorage\.setItem\('lastRouteOwnerUid', user\.uid\)/);
+    assert.match(app, /sessionStorage\.removeItem\('lastRouteOwnerUid'\)/);
+    assert.match(app, /setState\('profile', null\)/);
+});
