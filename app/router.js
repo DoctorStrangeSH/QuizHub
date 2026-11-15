@@ -3,6 +3,7 @@ import { renderAuth, attachAuthListeners } from './modules/auth/auth.js';
 
 const appRoot = document.getElementById('app-root');
 let renderRevision = 0;
+let lastRenderedRoute = null;
 
 const routes = {
     profileUnavailable: () => {
@@ -151,7 +152,13 @@ export default async function router() {
     const revision = ++renderRevision;
     const route = getState().currentRoute;
     sessionStorage.setItem('lastRoute', route);
+    if (lastRenderedRoute === 'chat' && route !== 'chat') {
+        const chatModule = await import('./modules/chat/chat.js');
+        chatModule.cleanupChatListeners();
+    }
+    if (revision !== renderRevision) return;
     if (Object.hasOwn(routes, route)) {
+        lastRenderedRoute = route;
         await routes[route](revision);
     }
 }
