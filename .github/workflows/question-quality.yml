@@ -35,6 +35,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-daily-complete-flow.test.mjs
       - name: Test daily challenge mode
         run: node --experimental-default-type=module --test tests/daily-challenge-mode.test.mjs
+      - name: Test UTC daily countdown and rollover
+        run: node --experimental-default-type=module --test tests/daily-countdown.test.mjs
       - name: Test daily challenge dashboard
         run: node --experimental-default-type=module --test tests/daily-challenge-dashboard.test.mjs
       - name: Test quiz session lifecycle
