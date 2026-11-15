@@ -79,3 +79,34 @@ test('attaching listeners repeatedly starts first-question effects exactly once'
     assert.equal(attachments, 2);
     quiz.resetQuiz();
 });
+
+test('older asynchronous quiz route cannot replace a newer quiz screen', async () => {
+    const source = readFileSync(new URL('../app/router.js', import.meta.url), 'utf8')
+        .replace(/^import .*;\s*$/gm, '')
+        .replace('export default async function router()', 'async function router()')
+        .replaceAll("await import('./modules/quiz/quiz.js')", 'Promise.resolve(quizModule)');
+    let currentRoute = 'quiz';
+    const root = { innerHTML: '' };
+    const waiting = [];
+    let attachments = 0;
+    const quizModule = {
+        renderQuiz: () => new Promise(resolve => { waiting.push(resolve); }),
+        attachQuizListeners: () => { attachments++; }
+    };
+    const router = new Function(
+        'getState', 'setState', 'document', 'window', 'sessionStorage', 'quizModule',
+        source + '\nreturn router;'
+    )(() => ({ currentRoute }), (_, value) => { currentRoute = value; },
+        { getElementById: () => root }, {}, { setItem: () => {} }, quizModule);
+    const oldNavigation = router();
+    await Promise.resolve();
+    const newNavigation = router();
+    await Promise.resolve();
+    assert.equal(waiting.length, 2);
+    waiting[1]('new question');
+    await newNavigation;
+    waiting[0]('old question');
+    await oldNavigation;
+    assert.equal(root.innerHTML, 'new question');
+    assert.equal(attachments, 1);
+});
