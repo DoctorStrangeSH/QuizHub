@@ -36,11 +36,15 @@ export class ClassicMode extends BaseMode {
     }
     
     async finishQuiz() {
-        await this.saveResults({
+        const saving = this.saveResults({
             wins: increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0),
             'stats.totalWins': increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0)
         });
-        
+
+        // Show the result immediately; a slow network must not freeze the game.
+        this.showResults();
+        await saving;
+        // Update the reward status only if the player is still on this screen.
         this.showResults();
     }
     
@@ -49,7 +53,7 @@ export class ClassicMode extends BaseMode {
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
         const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
-        const coinsEarned = this.earnedCoins;
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : this.earnedCoins;
         
         let emoji, text;
         if (isWin) { emoji = '🏆'; text = 'Отличный результат!'; }
@@ -77,7 +81,7 @@ export class ClassicMode extends BaseMode {
                         </div>
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value coin-color">+${coinsEarned}</span>
+                                <span class="result-value coin-color">${this.saveStatus === 'saving' ? coinsEarned : `+${coinsEarned}`}</span>
                                 <span class="result-label">Монет</span>
                             </div>
                         </div>
