@@ -109,7 +109,7 @@ export class BaseMode {
                         <span class="text-secondary">${this.getProgressText()}</span>
                         <div class="d-flex align-items-center gap-3">
                             <span class="text-secondary small">${catIcon} ${escapeHTML(catName)}</span>
-                            <span class="text-gradient fw-bold">${this.score} очков</span>
+                            <span class="text-gradient fw-bold" data-live-score>${this.score} ${isRU ? 'очков' : 'points'}</span>
                         </div>
                     </div>
                     ${this.renderProgressBar()}
@@ -131,7 +131,8 @@ export class BaseMode {
                     `).join('')}
                 </div>
                 
-                <div id="answer-explanation" class="glass-card mt-3 animate-in" role="status" aria-live="polite" style="display:none;"></div>
+                <div id="answer-feedback" class="answer-feedback" role="status" aria-live="polite" hidden></div>
+                <div id="answer-explanation" class="glass-card mt-3 animate-in" aria-label="${isRU ? 'Разбор ответа' : 'Answer explanation'}" style="display:none;"></div>
 
                 <div class="text-center mt-4" id="next-btn-container" style="display:none;">
                     <button class="btn-premium btn-next" onclick="window.nextQuestion()">${this.getNextButtonText()}</button>
@@ -181,6 +182,7 @@ export class BaseMode {
         }
 
         this.onAnswer(isCorrect, points);
+        this.showAnswerFeedback(isCorrect, points);
         this.showAnswerExplanation();
 
         document.getElementById('next-btn-container').style.display = 'block';
@@ -188,6 +190,32 @@ export class BaseMode {
     }
 
     onAnswer(isCorrect, points) { }
+
+    showAnswerFeedback(isCorrect, points) {
+        const feedback = document.getElementById('answer-feedback');
+        if (!feedback) return;
+        const isRU = getState().language !== 'en';
+        feedback.dataset.result = isCorrect ? 'correct' : 'wrong';
+        feedback.replaceChildren();
+        const symbol = document.createElement('span');
+        symbol.className = 'answer-feedback-symbol';
+        symbol.setAttribute('aria-hidden', 'true');
+        symbol.textContent = isCorrect ? '✓' : '↗';
+        const message = document.createElement('strong');
+        message.textContent = isCorrect
+            ? (isRU ? 'Верно! Отличный ход' : 'Correct! Great move')
+            : (isRU ? 'Почти! Запомни правильный ответ' : 'Not quite! Learn the right answer');
+        feedback.append(symbol, message);
+        if (isCorrect && Number.isFinite(points) && points > 0) {
+            const reward = document.createElement('span');
+            reward.className = 'answer-feedback-points';
+            reward.textContent = '+' + points + (isRU ? ' очков' : ' points');
+            feedback.append(reward);
+        }
+        feedback.hidden = false;
+        const score = document.querySelector('[data-live-score]');
+        if (score) score.textContent = this.score + (isRU ? ' очков' : ' points');
+    }
 
     showAnswerExplanation() {
         const panel = document.getElementById('answer-explanation');
