@@ -260,3 +260,57 @@ test('survival record remains owned by the player who finished the run', async (
     assert.deepEqual(recordOwners, ['player-a']);
     mode.dispose();
 });
+
+test('classic results render before reward request completes and refresh afterward', async () => {
+    const source = await readFile(resolve('app/modules/quiz/modes/classic.js'), 'utf8');
+    const classicSource = source
+        .replace(/^import .*;\s*$/gm, '')
+        .replace('export class ClassicMode', 'class ClassicMode');
+    const ClassicMode = new Function('BaseMode', 'increment',
+        classicSource + '\nreturn ClassicMode;'
+    )(BaseMode, value => value);
+    const mode = new ClassicMode();
+    await mode.init(makeQuestions(1), {});
+    const statuses = [];
+    let completeSave;
+    mode.saveResults = () => {
+        mode.saveStatus = 'saving';
+        return new Promise(resolve => { completeSave = () => {
+            mode.saveStatus = 'saved';
+            mode.earnedCoins = 8;
+            resolve(true);
+        }; });
+    };
+    mode.showResults = () => {
+        if (!mode.isDisposed) statuses.push({ status: mode.saveStatus, coins: mode.earnedCoins });
+    };
+    const pending = mode.finishQuiz();
+    assert.deepEqual(statuses, [{ status: 'saving', coins: 0 }]);
+    completeSave();
+    await pending;
+    assert.deepEqual(statuses, [
+        { status: 'saving', coins: 0 },
+        { status: 'saved', coins: 8 }
+    ]);
+    mode.dispose();
+});
+
+test('classic pending save does not repaint results after leaving the game', async () => {
+    const source = await readFile(resolve('app/modules/quiz/modes/classic.js'), 'utf8');
+    const ClassicMode = new Function('BaseMode', 'increment',
+        source.replace(/^import .*;\s*$/gm, '').replace('export class ClassicMode', 'class ClassicMode')
+        + '\nreturn ClassicMode;'
+    )(BaseMode, value => value);
+    const mode = new ClassicMode();
+    await mode.init(makeQuestions(1), {});
+    let resolveSave;
+    mode.saveResults = () => new Promise(resolve => { resolveSave = resolve; });
+    let renders = 0;
+    mode.showResults = () => { if (!mode.isDisposed) renders++; };
+    const pending = mode.finishQuiz();
+    assert.equal(renders, 1);
+    mode.dispose();
+    resolveSave(true);
+    await pending;
+    assert.equal(renders, 1);
+});
