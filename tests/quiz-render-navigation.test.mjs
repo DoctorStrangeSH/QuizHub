@@ -84,7 +84,7 @@ test('older asynchronous quiz route cannot replace a newer quiz screen', async (
     const source = readFileSync(new URL('../app/router.js', import.meta.url), 'utf8')
         .replace(/^import .*;\s*$/gm, '')
         .replace('export default async function router()', 'async function router()')
-        .replaceAll("await import('./modules/quiz/quiz.js')", 'Promise.resolve(quizModule)');
+        .replaceAll("await import('./modules/quiz/quiz.js')", 'await Promise.resolve(quizModule)');
     let currentRoute = 'quiz';
     const root = { innerHTML: '' };
     const waiting = [];
