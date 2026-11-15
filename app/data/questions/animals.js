@@ -37,11 +37,13 @@ const animalsQuestions = {
             points: 20
         },
         {
-            questionRU: 'Какое млекопитающее откладывает яйца?',
-            questionEN: 'Which mammal lays eggs?',
-            optionsRU: ['Кенгуру', 'Утконос', 'Дельфин', 'Кит'],
-            optionsEN: ['Kangaroo', 'Platypus', 'Dolphin', 'Whale'],
+            questionRU: 'Какое животное использует эхолокацию для ориентации и поиска добычи?',
+            questionEN: 'Which animal uses echolocation to navigate and find prey?',
+            optionsRU: ['Панда', 'Летучая мышь', 'Коала', 'Верблюд'],
+            optionsEN: ['Panda', 'Bat', 'Koala', 'Camel'],
             correctIndex: 1,
+            explanationRU: 'Многие летучие мыши издают ультразвуковые сигналы и ориентируются по отражённому эху.',
+            explanationEN: 'Many bats emit ultrasonic calls and navigate by listening to the returning echoes.',
             points: 20
         },
         {
