@@ -2,6 +2,7 @@ import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc } from '../../firebase-config.js';
 import { getCategoriesList } from '../../data/questions/index.js';
 import { getUtcDateKey } from '../quiz/daily-challenge.js';
+import { dailyResetCountdown } from '../quiz/daily-countdown.js';
 
 export async function renderDashboard() {
     const t = getState().translations.dashboard || {};
@@ -25,6 +26,7 @@ export async function renderDashboard() {
     const categories = getCategoriesList(getState().language);
     const isEN = getState().language === 'en';
     const dailyDate = getUtcDateKey();
+    const dailyCountdown = dailyResetCountdown(new Date(), getState().language);
     
     const categoriesModalHTML = categories.map(cat => `
         <div class="sidebar-cat-item ${window.gameSettings?.category === cat.id ? 'active' : (cat.id === 'science' && !window.gameSettings?.category ? 'active' : '')}" 
@@ -83,10 +85,11 @@ export async function renderDashboard() {
                     <section class="daily-challenge-card glass-card animate-in" aria-labelledby="daily-challenge-title">
                         <div class="daily-challenge-art" aria-hidden="true">📅</div>
                         <div class="daily-challenge-content">
-                            <div class="daily-challenge-meta">${isEN ? 'DAILY CHALLENGE' : 'ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ'} <span>${dailyDate}</span></div>
+                            <div class="daily-challenge-meta">${isEN ? 'DAILY CHALLENGE' : 'ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ'} <span id="daily-challenge-date">${dailyDate}</span></div>
                             <h2 id="daily-challenge-title">${isEN ? 'A new challenge every day' : 'Новое испытание каждый день'}</h2>
                             <p>${isEN ? '10 questions · 3 easy · 3 medium · 4 hard. The same set for everyone.' : '10 вопросов · 3 лёгких · 3 средних · 4 сложных. Одинаковый набор для всех.'}</p>
-                            <button class="btn-premium daily-challenge-button" type="button" onclick="window.startDailyChallenge('${dailyDate}')">${isEN ? 'Play today’s challenge' : 'Пройти испытание'} <span aria-hidden="true">→</span></button>
+                            <div class="daily-challenge-reset" id="daily-challenge-reset" role="timer" aria-live="off">${dailyCountdown.label}: <time>${dailyCountdown.time}</time> UTC</div>
+                            <button class="btn-premium daily-challenge-button" type="button" onclick="window.startDailyChallenge()">${isEN ? 'Play today’s challenge' : 'Пройти испытание'} <span aria-hidden="true">→</span></button>
                             <small>${isEN ? 'Preview mode: special rewards will be enabled after server verification.' : 'Предпросмотр: особые награды появятся после подключения серверной проверки.'}</small>
                         </div>
                     </section>
@@ -153,6 +156,22 @@ export async function renderDashboard() {
 
 export function attachDashboardListeners() {
     if (!window.gameSettings) window.gameSettings = { mode: 'classic', difficulty: 'easy', category: 'science' };
+
+    if (window.__dailyChallengeTimer) clearInterval(window.__dailyChallengeTimer);
+    const refreshDailyCountdown = () => {
+        const timer = document.getElementById('daily-challenge-reset');
+        const dateLabel = document.getElementById('daily-challenge-date');
+        if (!timer || !dateLabel) {
+            clearInterval(window.__dailyChallengeTimer);
+            window.__dailyChallengeTimer = null;
+            return;
+        }
+        const countdown = dailyResetCountdown(new Date(), getState().language);
+        dateLabel.textContent = countdown.date;
+        timer.textContent = `${countdown.label}: ${countdown.time} UTC`;
+    };
+    refreshDailyCountdown();
+    window.__dailyChallengeTimer = setInterval(refreshDailyCountdown, 1000);
     
     window.selectMode = (el) => {
         document.querySelectorAll('.selector-btn').forEach(b => b.classList.remove('active'));
@@ -176,7 +195,8 @@ export function attachDashboardListeners() {
         setTimeout(() => window.closeCategoryModal(), 150);
     };
     window.startDailyChallenge = (dateKey) => {
-        const challengeDate = dateKey || getUtcDateKey();
+        // Always take today's UTC date on click; a dashboard can cross midnight.
+        const challengeDate = getUtcDateKey();
         window.gameSettings = {
             mode: 'daily',
             category: 'all',
