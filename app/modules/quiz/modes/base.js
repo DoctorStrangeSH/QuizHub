@@ -44,6 +44,12 @@ export class BaseMode {
     }
 
     async init(allQuestions, settings) {
+        // A reused mode must not receive callbacks from the previous run.
+        if (this.pendingTransition !== null) {
+            clearTimeout(this.pendingTransition);
+            this.pendingTransition = null;
+        }
+        this.clearTimer?.();
         this.questions = this.shuffleArray([...allQuestions]);
         this.settings = settings;
         this.currentIndex = 0;
