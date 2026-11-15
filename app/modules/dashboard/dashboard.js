@@ -29,12 +29,12 @@ export async function renderDashboard() {
     const dailyCountdown = dailyResetCountdown(new Date(), getState().language);
     
     const categoriesModalHTML = categories.map(cat => `
-        <div class="sidebar-cat-item ${window.gameSettings?.category === cat.id ? 'active' : (cat.id === 'science' && !window.gameSettings?.category ? 'active' : '')}" 
-             data-category="${cat.id}" onclick="window.selectCategorySidebar('${cat.id}', this)">
+        <button type="button" class="sidebar-cat-item ${window.gameSettings?.category === cat.id ? 'active' : (cat.id === 'science' && !window.gameSettings?.category ? 'active' : '')}" 
+             data-category="${cat.id}" aria-pressed="${window.gameSettings?.category === cat.id || (cat.id === 'science' && !window.gameSettings?.category)}" onclick="window.selectCategorySidebar('${cat.id}', this)">
             <span class="sidebar-cat-icon">${cat.icon}</span>
             <span class="sidebar-cat-name">${cat.name}</span>
-            <span class="sidebar-cat-check">✓</span>
-        </div>
+            <span class="sidebar-cat-check" aria-hidden="true">✓</span>
+        </button>
     `).join('');
     
     return `
@@ -115,7 +115,7 @@ export async function renderDashboard() {
                         <div class="selector-row glass-card">
                             <div class="selector-label">Категория</div>
                             <div class="category-display">
-                                <button class="category-trigger" onclick="window.openCategoryModal()">
+                                <button class="category-trigger" type="button" aria-haspopup="dialog" aria-controls="category-modal" onclick="window.openCategoryModal()">
                                     <span id="selected-category-display">🔬 Наука</span>
                                     <span class="category-arrow">▾</span>
                                 </button>
@@ -134,20 +134,20 @@ export async function renderDashboard() {
                 </div>
             </main>
         </div>
-        <div class="category-modal" id="category-modal">
-            <div class="category-modal-backdrop" onclick="window.closeCategoryModal()"></div>
+        <div class="category-modal" id="category-modal" role="dialog" aria-modal="true" aria-labelledby="category-modal-title" aria-hidden="true">
+            <div class="category-modal-backdrop" aria-hidden="true" onclick="window.closeCategoryModal()"></div>
             <div class="category-modal-content glass-card">
                 <div class="category-modal-header">
-                    <h3>📚 Выберите категорию</h3>
+                    <h3 id="category-modal-title"><i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i> Выберите категорию</h3>
                     <button class="modal-close-btn" type="button" aria-label="Закрыть выбор категории" onclick="window.closeCategoryModal()">✕</button>
                 </div>
                 <div class="category-modal-body">
                     ${categoriesModalHTML}
-                    <div class="sidebar-cat-item ${window.gameSettings?.category === 'all' ? 'active' : ''}" data-category="all" onclick="window.selectCategorySidebar('all', this)">
+                    <button type="button" class="sidebar-cat-item ${window.gameSettings?.category === 'all' ? 'active' : ''}" data-category="all" aria-pressed="${window.gameSettings?.category === 'all'}" onclick="window.selectCategorySidebar('all', this)">
                         <span class="sidebar-cat-icon">🎲</span>
                         <span class="sidebar-cat-name">${getState().language === 'ru' ? 'Всё сразу' : 'All'}</span>
-                        <span class="sidebar-cat-check">✓</span>
-                    </div>
+                        <span class="sidebar-cat-check" aria-hidden="true">✓</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -185,11 +185,37 @@ export function attachDashboardListeners() {
         el.setAttribute('aria-pressed', 'true');
         window.gameSettings.difficulty = el.dataset.difficulty;
     };
-    window.openCategoryModal = () => { document.getElementById('category-modal').classList.add('open'); document.body.style.overflow = 'hidden'; };
-    window.closeCategoryModal = () => { document.getElementById('category-modal').classList.remove('open'); document.body.style.overflow = ''; };
+    let categoryReturnFocus = null;
+    window.openCategoryModal = () => {
+        const modal = document.getElementById('category-modal');
+        categoryReturnFocus = document.activeElement;
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        modal.querySelector('.sidebar-cat-item.active, .sidebar-cat-item, .modal-close-btn')?.focus();
+    };
+    window.closeCategoryModal = () => {
+        const modal = document.getElementById('category-modal');
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        categoryReturnFocus?.focus?.();
+        categoryReturnFocus = null;
+    };
+    const categoryModal = document.getElementById('category-modal');
+    categoryModal?.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') { event.preventDefault(); window.closeCategoryModal(); return; }
+        if (event.key !== 'Tab') return;
+        const focusable = [...categoryModal.querySelectorAll('button:not(:disabled)')];
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
     window.selectCategorySidebar = (cat, el) => {
-        document.querySelectorAll('.sidebar-cat-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.sidebar-cat-item').forEach(i => { i.classList.remove('active'); i.setAttribute('aria-pressed', 'false'); });
         el.classList.add('active');
+        el.setAttribute('aria-pressed', 'true');
         window.gameSettings.category = cat;
         const icon = el.querySelector('.sidebar-cat-icon').textContent;
         const name = el.querySelector('.sidebar-cat-name').textContent;
