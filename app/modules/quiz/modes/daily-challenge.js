@@ -38,6 +38,25 @@ export class DailyChallengeMode extends ClassicMode {
         return result;
     }
 
+    getProgressText() {
+        const isEN = getState().language === 'en';
+        const label = isEN ? 'Question' : 'Вопрос';
+        return `${label} ${this.currentIndex + 1}/${this.totalQuestions}`;
+    }
+
+    getNextButtonText() {
+        const isEN = getState().language === 'en';
+        const isLastQuestion = this.currentIndex >= this.totalQuestions - 1;
+        if (isLastQuestion) return isEN ? 'Finish 🏁' : 'Завершить 🏁';
+        return isEN ? 'Next →' : 'Далее →';
+    }
+
+    renderModeSpecificHeader() {
+        const isEN = getState().language === 'en';
+        const label = isEN ? 'DAILY CHALLENGE' : 'ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ';
+        return `<div class="mode-badge daily-challenge-badge">📅 ${label} · ${this.challengeDate}</div>`;
+    }
+
     async finishQuiz() {
         if (this.resultsShown) return;
         this.resultsShown = true;
@@ -73,11 +92,24 @@ export class DailyChallengeMode extends ClassicMode {
                 : 'Ежедневное испытание завершено!';
         }
 
+        const feedback = result.querySelector('p.text-secondary.mb-3');
+        if (feedback) {
+            feedback.textContent = isEN
+                ? 'Your daily result is ready.'
+                : 'Твой результат за сегодня готов.';
+        }
+
         const labels = result.querySelectorAll('.result-label');
         const values = result.querySelectorAll('.result-value');
-        const lastLabel = labels[labels.length - 1];
+        const translatedLabels = isEN ? ['Correct', 'Score', 'Daily bonus'] : ['Правильно', 'Очки', 'Дневной бонус'];
+        labels.forEach((label, index) => {
+            if (translatedLabels[index]) label.textContent = translatedLabels[index];
+        });
         const lastValue = values[values.length - 1];
-        if (lastLabel) lastLabel.textContent = isEN ? 'Daily bonus' : 'Дневной бонус';
         if (lastValue) lastValue.textContent = '—';
+
+        const buttons = result.querySelectorAll('button');
+        if (buttons[0]) buttons[0].textContent = isEN ? '← Home' : '← В меню';
+        if (buttons[1]) buttons[1].textContent = isEN ? 'Play again 🔄' : 'Играть снова 🔄';
     }
 }
