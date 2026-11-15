@@ -87,11 +87,13 @@ const spaceQuestions = {
     ],
     medium: [
         {
-            questionRU: 'Сколько планет в Солнечной системе?',
-            questionEN: 'How many planets are in the Solar System?',
-            optionsRU: ['7', '8', '9', '10'],
-            optionsEN: ['7', '8', '9', '10'],
+            questionRU: 'Какая планета вращается вокруг своей оси почти «лёжа на боку»?',
+            questionEN: 'Which planet rotates on its axis almost on its side?',
+            optionsRU: ['Юпитер', 'Уран', 'Марс', 'Меркурий'],
+            optionsEN: ['Jupiter', 'Uranus', 'Mars', 'Mercury'],
             correctIndex: 1,
+            explanationRU: 'Наклон оси Урана составляет примерно 98 градусов, поэтому его вращение часто описывают как движение «на боку».',
+            explanationEN: 'Uranus has an axial tilt of about 98 degrees, so it is often described as rotating on its side.',
             points: 20
         },
         {
