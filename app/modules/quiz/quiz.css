@@ -67,6 +67,30 @@
     border: 1px solid var(--border);
 }
 
+.answer-card:focus-visible {
+    outline: 3px solid var(--accent-secondary);
+    outline-offset: 3px;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 5px var(--accent-glow);
+}
+
+.answer-card[aria-disabled="true"] {
+    cursor: default;
+}
+
+@media (max-width: 480px) {
+    .answer-card {
+        min-height: 56px;
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .answer-text {
+        overflow-wrap: anywhere;
+        line-height: 1.4;
+    }
+}
+
 .answer-card:hover {
     border-color: var(--accent);
     background: rgba(124, 92, 252, 0.06);
