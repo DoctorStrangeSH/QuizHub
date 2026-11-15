@@ -29,6 +29,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-authenticated-daily-challenge.test.mjs
       - name: Test secure daily leaderboard projection
         run: node --experimental-default-type=module --test tests/server-daily-leaderboard.test.mjs
+      - name: Test end-of-day ranking sealing
+        run: node --experimental-default-type=module --test tests/server-daily-ranking-seal.test.mjs
       - name: Test sealed daily prize claims
         run: node --experimental-default-type=module --test tests/server-daily-prize.test.mjs
       - name: Test complete ranked daily flow across players
