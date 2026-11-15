@@ -54,6 +54,10 @@ test('daily mode uses the same question and answer ordering for the same date', 
         ['easy', 'easy', 'easy', 'medium', 'medium', 'medium', 'hard', 'hard', 'hard', 'hard']
     );
     assert.deepEqual(
+        first.questions.map(question => question.difficulty),
+        ['easy', 'easy', 'easy', 'medium', 'medium', 'medium', 'hard', 'hard', 'hard', 'hard']
+    );
+    assert.deepEqual(
         first.questions.map(question => question.dailyQuestionId),
         second.questions.map(question => question.dailyQuestionId)
     );
@@ -84,4 +88,17 @@ test('daily mode explains the reward limitation in Russian and English', () => {
     assert.match(mode.getSaveStatusHTML(), /Предпросмотр ежедневного испытания/);
     language = 'en';
     assert.match(mode.getSaveStatusHTML(), /Daily challenge preview/);
+});
+
+
+test('daily results are shown even when the quiz engine has already marked the run finished', async () => {
+    const mode = new DailyChallengeMode();
+    await mode.init(createDailyChallenge('2026-11-15').questions, { challengeDate: '2026-11-15' });
+    mode.isFinished = true;
+    mode.showResults = () => { mode.didShowResults = true; };
+
+    await mode.finishQuiz();
+
+    assert.equal(mode.didShowResults, true);
+    assert.equal(mode.resultsShown, true);
 });
