@@ -25,6 +25,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/daily-challenge.test.mjs
       - name: Test daily challenge mode
         run: node --experimental-default-type=module --test tests/daily-challenge-mode.test.mjs
+      - name: Test daily challenge dashboard
+        run: node --experimental-default-type=module --test tests/daily-challenge-dashboard.test.mjs
       - name: Test quiz session lifecycle
         run: node --experimental-default-type=module --test tests/quiz-session.test.mjs
       - name: Test timed events and reward boosts
