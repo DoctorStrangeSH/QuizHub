@@ -1,0 +1,37 @@
+name: Verify Google Cloud OIDC
+
+on:
+  push:
+    branches: [refactor/foundation-stability]
+    paths:
+      - '.github/workflows/verify-gcp-oidc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-identity:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Authenticate with short-lived GitHub identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: quizhub-e65f5
+          workload_identity_provider: projects/144587612719/locations/global/workloadIdentityPools/quizhub-github/providers/quizhub-provider
+          service_account: quizhub-github-ci@quizhub-e65f5.iam.gserviceaccount.com
+          create_credentials_file: true
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+      - name: Verify token exchange without printing a credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth print-access-token >/dev/null
+          echo "Google Cloud OIDC authentication succeeded (no Firestore access or deployment attempted)."
