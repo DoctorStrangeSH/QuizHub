@@ -128,6 +128,7 @@ export class TimeTrialMode extends BaseMode {
         const allCards = container.querySelectorAll('.answer-card');
         allCards.forEach(c => {
             c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
             if (c.dataset.correct === 'true') {
                 c.classList.add('correct');
                 c.querySelector('.answer-icon').textContent = '✓';
