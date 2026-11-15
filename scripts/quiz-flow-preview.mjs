@@ -20,7 +20,7 @@ try {
     const page = await context.newPage();
     try {
       await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.locator('#initial-splash.hidden').waitFor({ timeout: 30000 });
+      await page.locator('#initial-splash').waitFor({ state: 'hidden', timeout: 30000 });
       await page.evaluate(async ({ baseSource, classicSource }) => {
         // Load the actual UI mode methods with isolated collaborators; no sign-in,
         // writes, real rewards or network-side account operations in this test.
