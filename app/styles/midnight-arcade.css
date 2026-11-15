@@ -754,3 +754,118 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .shop-item,.achievement-card,.achievement-popup { animation: none; transition: none; }
 }
+
+
+/* Player card — identity, progression and earned milestones */
+.profile-page-wrapper { width: 100%; max-width: 910px; }
+.profile-header-card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(26px,5vw,46px);
+  margin-bottom: 19px;
+  border-color: rgba(168,155,255,.35);
+  background:
+    radial-gradient(ellipse at 94% 0%,rgba(168,155,255,.22),transparent 48%),
+    radial-gradient(ellipse at 0% 100%,rgba(184,250,85,.11),transparent 65%),
+    var(--bg-glass);
+}
+.profile-header-card::after {
+  content: 'Q';
+  position: absolute;
+  right: 15px;
+  bottom: -92px;
+  color: var(--accent-secondary);
+  font-size: clamp(12rem,25vw,19rem);
+  font-weight: 900;
+  line-height: 1;
+  opacity: .055;
+  pointer-events: none;
+}
+.profile-hero-eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 23px;
+  font-size: .74rem;
+  letter-spacing: .16em;
+  font-weight: 900;
+  color: var(--accent);
+}
+.profile-avatar-section { position: relative; z-index: 1; gap: 26px; margin-bottom: 29px; }
+.profile-avatar-frame {
+  width: 112px;
+  height: 112px;
+  border-radius: 30px;
+  background: linear-gradient(140deg,rgba(168,155,255,.25),rgba(184,250,85,.1));
+  box-shadow: 0 14px 28px rgba(0,0,0,.2);
+}
+.profile-avatar-emoji { font-size: 3.4rem; color: var(--accent); }
+.profile-nickname { font-size: clamp(1.6rem,4vw,2.5rem); font-weight: 900; letter-spacing: -.055em; overflow-wrap: anywhere; }
+.profile-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 13px;
+  border-radius: 10px;
+  font-weight: 800;
+}
+.profile-badge.level { background: var(--accent-glow); color: var(--accent); }
+.profile-badge.coins { background: var(--gold-glow); color: var(--gold); border-color: rgba(255,210,122,.3); }
+.profile-badge.you { background: rgba(121,230,173,.12); color: var(--success); }
+.exp-bar-section { position: relative; z-index: 1; margin-top: 20px; }
+.exp-bar {
+  height: 12px;
+  border-radius: 20px;
+  background: rgba(132,153,187,.19);
+  border: 1px solid var(--border);
+}
+.exp-fill { background: linear-gradient(90deg,var(--accent-secondary),var(--accent)); box-shadow: 0 0 12px var(--accent-glow); }
+.profile-stats-grid { gap: 13px; margin-bottom: 20px; }
+.profile-stats-grid .stat-box {
+  min-height: 139px;
+  padding: 23px 13px;
+  border-radius: 19px;
+  background: radial-gradient(circle at 100% 0%,rgba(168,155,255,.09),transparent 65%),var(--bg-glass);
+}
+.profile-stats-grid .stat-icon { font-size: 1.5rem; margin-bottom: 10px; }
+.profile-stats-grid .stat-number { font-size: clamp(1.25rem,2.8vw,1.85rem); font-weight: 900; font-variant-numeric: tabular-nums; }
+.profile-stats-grid .stat-text { font-weight: 750; letter-spacing: .09em; }
+.profile-achievements { padding: clamp(20px,3vw,29px); border-radius: 22px; }
+.profile-achievements .section-label { font-size: 1.12rem; font-weight: 900; }
+.profile-ach-item {
+  padding: 11px 15px;
+  border-radius: 13px;
+  border-color: rgba(255,210,122,.3);
+  background: rgba(255,210,122,.07);
+}
+.profile-ach-item .ach-name { font-size: .9rem; font-weight: 750; }
+.profile-footer-info { border-radius: 16px; }
+.profile-create-card .profile-icon {
+  position: relative;
+  color: var(--accent);
+  font-size: 3.45rem;
+  border-radius: 25px;
+}
+.profile-create-card .profile-icon b {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-55%);
+  color: #101a1d;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+.profile-create-card .check-btn { color: var(--accent); background: var(--accent-glow); }
+.profile-create-card .check-btn:hover { color: var(--text-primary); }
+@media (max-width: 520px) {
+  .profile-header-card { padding: 24px 18px; }
+  .profile-avatar-section { gap: 13px; }
+  .profile-avatar-frame { width: 94px; height: 94px; border-radius: 25px; }
+  .profile-stats-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .profile-stats-grid .stat-box { min-height: 118px; padding: 17px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-stats-grid .stat-box,.profile-ach-item { transition: none; }
+}
