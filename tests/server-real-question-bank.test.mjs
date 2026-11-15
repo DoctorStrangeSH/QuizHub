@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import questionBank from '../app/data/questions/index.js';
+import questionBank, { getCategoriesList, getQuestions } from '../app/data/questions/index.js';
 import {
     buildQuestionCatalog, selectQuestions, publicQuestion
 } from '../server/question-delivery.mjs';
@@ -41,5 +41,19 @@ test('real questions selected for the client never expose private answer fields'
                 assert.equal(Object.hasOwn(payload, 'points'), false);
             }
         }
+    }
+});
+
+
+test('video games category is available in both languages and all difficulty levels', () => {
+    const russian = getCategoriesList('ru').find(category => category.id === 'gaming');
+    const english = getCategoriesList('en').find(category => category.id === 'gaming');
+    assert.deepEqual(russian, { id: 'gaming', name: 'Видеоигры', icon: '🎮' });
+    assert.deepEqual(english, { id: 'gaming', name: 'Video Games', icon: '🎮' });
+
+    for (const difficulty of ['easy', 'medium', 'hard']) {
+        const questions = getQuestions('gaming', difficulty);
+        assert.equal(questions.length, 6);
+        assert.ok(questions.every(question => question.category === 'gaming'));
     }
 });
