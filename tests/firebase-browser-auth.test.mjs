@@ -33,11 +33,11 @@ test('real browser: register, persist session, log out and sign in again', { tim
         await page.waitForFunction(async () => {
             const { auth } = await import('./app/firebase-config.js');
             return Boolean(auth.currentUser?.uid);
-        }, { timeout: 30000 });
+        }, null, { timeout: 30000 });
 
         const firstIdentity = await page.evaluate(async () => {
             const { auth } = await import('./app/firebase-config.js');
-            return { uid: auth.currentUser.uid, projectId: auth.app.options.projectId };
+            return { uid: auth.currentUser?.uid, projectId: auth.app.options.projectId };
         });
         assert.equal(firstIdentity.projectId, project);
         assert.ok(firstIdentity.uid);
@@ -46,10 +46,10 @@ test('real browser: register, persist session, log out and sign in again', { tim
         await page.waitForFunction(async () => {
             const { auth } = await import('./app/firebase-config.js');
             return Boolean(auth.currentUser?.uid);
-        }, { timeout: 30000 });
+        }, null, { timeout: 30000 });
         const persistedUid = await page.evaluate(async () => {
             const { auth } = await import('./app/firebase-config.js');
-            return auth.currentUser.uid;
+            return auth.currentUser?.uid;
         });
         assert.equal(persistedUid, firstIdentity.uid);
 
@@ -65,7 +65,7 @@ test('real browser: register, persist session, log out and sign in again', { tim
         await page.waitForFunction(async () => {
             const { auth } = await import('./app/firebase-config.js');
             return Boolean(auth.currentUser?.uid);
-        }, { timeout: 30000 });
+        }, null, { timeout: 30000 });
         const secondUid = await page.evaluate(async () => {
             const { auth } = await import('./app/firebase-config.js');
             return auth.currentUser.uid;
