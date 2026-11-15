@@ -1362,3 +1362,41 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   .arcade-result-icon, .arcade-accuracy-fill { animation: none; }
 }
+
+
+/* Answer combos remain celebratory but never affect score or saved rewards. */
+.answer-feedback-combo {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,210,122,.36);
+  border-radius: 999px;
+  background: rgba(255,210,122,.1);
+  color: var(--gold);
+  font-size: .88rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.answer-feedback[data-result="timeout"] {
+  border-color: rgba(168,155,255,.45);
+  background: linear-gradient(115deg, rgba(168,155,255,.14), rgba(168,155,255,.025));
+}
+.answer-feedback[data-result="timeout"] .answer-feedback-symbol {
+  color: var(--accent-secondary);
+  background: rgba(168,155,255,.15);
+}
+.arcade-streak-summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 0 auto 5px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255,210,122,.24);
+  border-radius: 999px;
+  background: rgba(255,210,122,.08);
+  color: var(--gold);
+  font-weight: 800;
+}
+@media (max-width: 520px) {
+  .answer-feedback-combo { margin-left: 45px; }
+}
