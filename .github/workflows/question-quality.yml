@@ -27,6 +27,8 @@ jobs:
         run: node --test tests/lobby-design.test.mjs
       - name: Verify responsive playable quiz design
         run: node --test tests/quiz-round-design.test.mjs
+      - name: Verify accessible answer feedback and score updates
+        run: node --test tests/answer-feedback.test.mjs
       - name: Verify collectible shop and achievements design
         run: node --test tests/collection-design.test.mjs
       - name: Verify responsive player identity card
