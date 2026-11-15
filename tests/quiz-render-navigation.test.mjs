@@ -2,16 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-function loadQuizModule(Mode, settings = { mode: 'classic', category: 'science', difficulty: 'easy' }) {
+function loadQuizModule(Mode, settings = { mode: 'classic', category: 'science', difficulty: 'easy' }, questions = [{ questionRU: 'Test' }]) {
     const source = readFileSync(new URL('../app/modules/quiz/quiz.js', import.meta.url), 'utf8')
         .replace(/^import .*;\s*$/gm, '')
         .replace(/export (async function|function)/g, '$1');
     const win = {};
-    return new Function('getState', 'getQuestions', 'ClassicMode', 'SurvivalMode',
+    let constructions = 0;
+    class TrackedMode extends Mode {
+        constructor() { super(); constructions++; }
+    }
+    const quiz = new Function('getState', 'getQuestions', 'ClassicMode', 'SurvivalMode',
         'TimeTrialMode', 'DuelMode', 'window',
         source + '\nreturn { renderQuiz, resetQuiz, attachQuizListeners };'
-    )(() => ({ gameSettings: settings }), () => [{ questionRU: 'Test' }],
-        Mode, Mode, Mode, Mode, win);
+    )(() => ({ gameSettings: settings }), () => questions,
+        TrackedMode, TrackedMode, TrackedMode, TrackedMode, win);
+    return { ...quiz, getConstructionCount: () => constructions };
 }
 
 test('navigating away during async initialization never renders the disposed game', async () => {
@@ -41,5 +46,36 @@ test('normal completed initialization still renders the question', async () => {
     }
     const quiz = loadQuizModule(FakeMode);
     assert.equal(await quiz.renderQuiz(), 'question 0');
+    quiz.resetQuiz();
+});
+
+test('empty question selection never instantiates or attaches a game mode', async () => {
+    class FakeMode {
+        afterQuestionRendered() { throw new Error('must not attach an empty quiz'); }
+    }
+    const quiz = loadQuizModule(FakeMode, { mode: 'time', category: 'empty', difficulty: 'easy' }, []);
+    const html = await quiz.renderQuiz();
+    assert.match(html, /Нет вопросов/);
+    assert.equal(quiz.getConstructionCount(), 0);
+    quiz.attachQuizListeners();
+    quiz.resetQuiz();
+});
+
+test('attaching listeners repeatedly starts first-question effects exactly once', async () => {
+    let attachments = 0;
+    class FakeMode {
+        async init() {}
+        renderQuestion() { return 'question'; }
+        afterQuestionRendered() { attachments++; }
+        dispose() {}
+    }
+    const quiz = loadQuizModule(FakeMode);
+    await quiz.renderQuiz();
+    quiz.attachQuizListeners();
+    quiz.attachQuizListeners();
+    assert.equal(attachments, 1);
+    await quiz.renderQuiz();
+    quiz.attachQuizListeners();
+    assert.equal(attachments, 2);
     quiz.resetQuiz();
 });
