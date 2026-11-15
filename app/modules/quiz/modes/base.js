@@ -8,6 +8,7 @@ const CATEGORY_NAMES = {
     history: { ru: 'История', en: 'History' },
     sports: { ru: 'Спорт', en: 'Sports' },
     movies: { ru: 'Кино', en: 'Movies' },
+    gaming: { ru: 'Видеоигры', en: 'Video Games' },
     geography: { ru: 'География', en: 'Geography' },
     technology: { ru: 'Технологии', en: 'Technology' },
     art: { ru: 'Искусство', en: 'Art' },
@@ -20,7 +21,7 @@ const CATEGORY_NAMES = {
 };
 
 const CATEGORY_ICONS = {
-    science: '🔬', history: '📜', sports: '⚽', movies: '🎬',
+    science: '🔬', history: '📜', sports: '⚽', movies: '🎬', gaming: '🎮',
     geography: '🌍', technology: '💻', art: '🎨', music: '🎵',
     it: '🖥️', literature: '📖', food: '🍕', animals: '🦁', space: '🚀'
 };
