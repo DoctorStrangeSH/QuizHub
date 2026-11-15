@@ -56,6 +56,12 @@ const allQuestions = {
         icon: '🎬',
         ...moviesQuestions
     },
+    gaming: {
+        nameRU: 'Видеоигры',
+        nameEN: 'Video Games',
+        icon: '🎮',
+        ...gamingQuestions
+    },
     geography: {
         nameRU: 'География',
         nameEN: 'Geography',
