@@ -99,6 +99,7 @@ async function checkDailyReward(revision) {
             container.id = 'daily-popup-container';
             container.innerHTML = popupHTML;
             container.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);';
+            document.getElementById('daily-popup-container')?.remove();
             document.body.appendChild(container);
 
             window.claimAndClose = async () => {
