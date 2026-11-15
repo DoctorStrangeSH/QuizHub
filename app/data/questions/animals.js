@@ -37,8 +37,8 @@ const animalsQuestions = {
             points: 20
         },
         {
-            questionRU: 'Какое животное использует эхолокацию для ориентации и поиска добычи?',
-            questionEN: 'Which animal uses echolocation to navigate and find prey?',
+            questionRU: 'Какое летающее млекопитающее использует эхолокацию для ориентации и поиска добычи?',
+            questionEN: 'Which flying mammal uses echolocation to navigate and find prey?',
             optionsRU: ['Панда', 'Летучая мышь', 'Коала', 'Верблюд'],
             optionsEN: ['Panda', 'Bat', 'Koala', 'Camel'],
             correctIndex: 1,
