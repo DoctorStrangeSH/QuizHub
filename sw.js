@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quizhub-v4';
+const CACHE_NAME = 'quizhub-v5';
 const SCOPE = new URL(self.registration.scope);
 const scoped = (path) => new URL(path, SCOPE).href;
 const CORE_ASSETS = [
@@ -52,6 +52,25 @@ self.addEventListener('fetch', (event) => {
                     (await caches.match(scoped('index.html'))) ||
                     (await caches.match(scoped('offline.html'))) ||
                     Response.error())
+        );
+        return;
+    }
+
+    // App code, styles and translations must refresh after each release.
+    // Keep the last working version for genuine offline use.
+    const isApplicationAsset = /\.(?:js|css|json)$/.test(url.pathname);
+    if (isApplicationAsset) {
+        event.respondWith(
+            fetch(request)
+                .then((response) => {
+                    if (response.ok && response.type === 'basic') {
+                        const copy = response.clone();
+                        event.waitUntil(caches.open(CACHE_NAME)
+                            .then((cache) => cache.put(request, copy)));
+                    }
+                    return response;
+                })
+                .catch(async () => (await caches.match(request)) || Response.error())
         );
         return;
     }
