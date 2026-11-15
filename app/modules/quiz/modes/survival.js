@@ -61,7 +61,9 @@ export class SurvivalMode extends BaseMode {
         // Preserve the owner of this run across the asynchronous reward save.
         // The signed-in account may change before that request completes.
         const user = auth.currentUser;
-        await this.saveResults();
+        const saving = this.saveResults();
+        this.showResults();
+        await saving;
 
         // A record is a maximum, not an accumulated number of correct answers.
         // Transaction keeps concurrent sessions from overwriting a better record.
@@ -88,7 +90,7 @@ export class SurvivalMode extends BaseMode {
         if (this.isDisposed) return;
         const resultContainer = document.querySelector('.quiz-container');
         if (!resultContainer) return;
-        const coinsEarned = this.earnedCoins;
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : `+${this.earnedCoins}`;
         const streak = this.bestStreak;
         
         resultContainer.innerHTML = `
@@ -112,7 +114,7 @@ export class SurvivalMode extends BaseMode {
                         </div>
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value coin-color">+${coinsEarned}</span>
+                                <span class="result-value coin-color">${coinsEarned}</span>
                                 <span class="result-label">Монет</span>
                             </div>
                         </div>
