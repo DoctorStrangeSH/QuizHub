@@ -41,6 +41,8 @@ jobs:
         run: node --test tests/event-hall-design.test.mjs
       - name: Test PWA refresh and mobile visual overrides
         run: node --test tests/pwa-visual-refresh.test.mjs
+      - name: Verify QuizHub branded PWA and launch screen
+        run: node --test tests/brand-identity.test.mjs
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Test dry-run public profile migration planner
