@@ -40,7 +40,7 @@ test('answer cards can be activated by Enter or Space in every mode', () => {
     const classicHTML = mode.renderQuestion(0);
     assert.equal((classicHTML.match(/role="button"/g) || []).length, 2);
     assert.equal((classicHTML.match(/tabindex="0"/g) || []).length, 2);
-    assert.match(classicHTML, /onkeydown="if\(event\.key===&#39;Enter&#39;/);
+    assert.match(classicHTML, /onkeydown="if\(event\.key==='Enter'/);
     mode.getAnswerHandler = () => 'duelAnswer(this)';
     assert.match(mode.renderQuestion(0), /window\.duelAnswer\(this\)/);
 });
