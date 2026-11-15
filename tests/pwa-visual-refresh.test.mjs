@@ -36,7 +36,7 @@ function setupWorker(fetchFn) {
 }
 
 test('PWA activates a fresh cache revision', () => {
-  assert.match(source, /CACHE_NAME = 'quizhub-v5'/);
+  assert.match(source, /CACHE_NAME = 'quizhub-v6'/);
 });
 
 test('application styles fetch fresh content, with offline fallback', async () => {
