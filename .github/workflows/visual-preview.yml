@@ -10,6 +10,8 @@ on:
       - 'sw.js'
       - 'scripts/browser-preview.mjs'
       - '.github/workflows/visual-preview.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
