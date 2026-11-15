@@ -15,6 +15,10 @@ export class DuelMode extends BaseMode {
     }
     
     async init(allQuestions, settings) {
+        if (this.roundResultTimeout !== null && this.roundResultTimeout !== undefined) {
+            clearTimeout(this.roundResultTimeout);
+            this.roundResultTimeout = null;
+        }
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
         this.totalQuestions = this.questions.length;
