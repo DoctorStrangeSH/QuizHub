@@ -86,3 +86,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 6. Trusted server finalization is idempotent under retries and concurrency, and existing gameplay still works in Chromium.
 
 **Current gate status: BLOCKED.** No reviewed Firestore rules, privacy-safe public collection, or trusted economy migration is deployed. Keep the PR as draft and do not publish a claim that profile data or balances are secured.
+
+## Firestore edition discovery attempt (2026-11-15)
+
+- The existing GitHub OIDC CI service account `quizhub-github-ci@quizhub-e65f5.iam.gserviceaccount.com` successfully authenticated without storing permanent credentials.
+- A **read-only** `gcloud firestore databases list --project=quizhub-e65f5` metadata query could not complete under that account's current permissions. The CI logs intentionally omit error details and never print credentials or user data.
+- The production database edition and selected database ID remain **unverified**. Do not infer Standard/Enterprise from the presence of the browser Firebase SDK or local emulator tests.
+- **No Firestore changes, IAM grants, rules deployments or data reads were attempted.** Do not add IAM roles silently. Request explicit project-owner approval for narrow metadata-only access or obtain a verified edition/database ID before authoring a production Firestore store adapter.
