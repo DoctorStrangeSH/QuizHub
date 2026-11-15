@@ -17,11 +17,13 @@ const animalsQuestions = {
             points: 10
         },
         {
-            questionRU: 'Сколько ног у паука?',
-            questionEN: 'How many legs does a spider have?',
-            optionsRU: ['6', '8', '10', '12'],
-            optionsEN: ['6', '8', '10', '12'],
+            questionRU: 'К какой группе животных относятся лягушки и саламандры?',
+            questionEN: 'Which animal group includes frogs and salamanders?',
+            optionsRU: ['Рептилии', 'Земноводные', 'Млекопитающие', 'Рыбы'],
+            optionsEN: ['Reptiles', 'Amphibians', 'Mammals', 'Fish'],
             correctIndex: 1,
+            explanationRU: 'Лягушки и саламандры относятся к земноводным: их жизненный цикл обычно связан и с водой, и с сушей.',
+            explanationEN: 'Frogs and salamanders are amphibians, a group whose life cycles are commonly linked to both water and land.',
             points: 10
         }
     ],
