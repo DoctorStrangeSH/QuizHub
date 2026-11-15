@@ -27,6 +27,8 @@ jobs:
         run: node --test tests/lobby-design.test.mjs
       - name: Verify responsive playable quiz design
         run: node --test tests/quiz-round-design.test.mjs
+      - name: Verify collectible shop and achievements design
+        run: node --test tests/collection-design.test.mjs
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Test dry-run public profile migration planner
