@@ -2,7 +2,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
 const categories = [
-  'science', 'history', 'sports', 'movies', 'geography', 'technology',
+  'science', 'history', 'sports', 'movies', 'gaming', 'geography', 'technology',
   'art', 'music', 'it', 'literature', 'food', 'animals', 'space'
 ];
 const difficulties = ['easy', 'medium', 'hard'];
