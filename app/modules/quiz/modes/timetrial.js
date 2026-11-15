@@ -135,6 +135,8 @@ export class TimeTrialMode extends BaseMode {
             }
         });
         
+        this.recordFeedbackStreak(false);
+        this.showAnswerFeedback(false, 0, 'timeout');
         this.showAnswerExplanation();
         document.getElementById('next-btn-container').style.display = 'block';
     }
