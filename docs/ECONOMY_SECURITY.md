@@ -8,7 +8,7 @@ Status: migration plan, **not deployed security protection**.
 - `app/modules/quiz/modes/base.js` calls `updateDoc(users/{uid})` with `increment()` for `experience`, `weeklyExperience`, `coins`, `quizzesCompleted`, and stats.
 - Individual quiz modes also supply win counters through `extraData`.
 - The browser knows the question's `correctIndex` and controls `score`; therefore client-supplied results **cannot be considered authoritative**, even with client-side validation.
-- No `firestore.rules`, `firebase.json`, or Functions package is committed to this branch. Deployed rules and Firebase billing/function availability have **not** been inspected.
+- `firebase.json` and a Functions package are now committed for emulator and daily-challenge development; **no `firestore.rules` is committed**. Current emulator tests therefore do not prove ownership restrictions. Deployed production rules, Firebase billing/function availability and the live database configuration have **not** been inspected.
 - `saveResults` is single-flight per in-memory quiz session. This is a UX safeguard, **not** cross-device idempotency or fraud prevention.
 
 ## Implemented preparation (not deployed)
@@ -47,3 +47,39 @@ Status: migration plan, **not deployed security protection**.
 ## Release gate
 
 Do **not** deploy restrictive Firestore rules alone: the current browser client would lose reward updates. Do **not** claim anti-cheat until the answer key and score calculation move to a trusted backend. Review the actual Firebase project/rules and database edition first.
+
+## Security review update (2026-11-15): public profiles and private account data
+
+Review of the browser modules reveals an architectural conflict that must be resolved **before** writing restrictive rules:
+
+- `app/modules/profile/profile.js` stores `email`, `nickname`, `nicknameLower`, coins, XP, stats and friends together in `users/{uid}`.
+- `app/modules/friends/friends.js` searches `users` with a nickname range query, reads other users' documents and writes `friendRequests`, `sentRequests` and `friends` on **both** parties' documents.
+- `app/modules/leaderboard/leaderboard.js` queries the entire `users` collection ordered by `experience` or `weeklyExperience`, and `app/modules/profile/public-profile.js` reads another player's user document.
+- Firestore rules secure entire documents, **not individual returned fields**. A rule allowing a foreign user to read `users/{uid}` for rankings also exposes the email and any other private data in that document.
+- A rule allowing only `request.auth.uid == userId` would protect private fields but immediately break friend search, leaderboards, public profiles and cross-user friend-request mutations.
+- The present emulator integration starts without a committed security rules file. Its successful Auth/UI tests must **never** be presented as tests of Firestore authorization.
+
+### Required schema split and access matrix (planned; not implemented)
+
+| Path | Read permission | Client writes | Data |
+| --- | --- | --- | --- |
+| `users/{uid}` (private) | Owner only | Profile preferences only, validated | Email, account settings; no public list |
+| `publicProfiles/{uid}` | Signed-in users | Trusted server for ranks; tightly validated profile edits | Nickname, public avatar, level and ranking summary; **no email** |
+| `friendRequests/{recipient}/{requestId}` or dedicated collection | Sender and recipient as appropriate | Validated create/cancel/accept operations | Sender UID, recipient UID, state, timestamps |
+| `quizSessions/{sessionId}` | Session owner | Trusted server for authoritative results | Session state, claim receipt, score calculation |
+| `users/{uid}` economic fields | Owner can read | **Server only** after backend migration | Coins, XP, wins, purchase state |
+
+Before choosing the exact paths, inventory all remaining reads and writes for chat, events, daily challenges, achievements, shop and each quiz mode. Use a staged backfill for existing accounts; validate existing public queries against the new collections and indexes.
+
+### Minimum emulator attack-suite release gate
+
+Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rules` (never with implicit open rules). In the suite, create two different Auth users and assert:
+
+1. Anonymous attempts cannot list private user profiles; user B cannot get/update/delete user A's private document.
+2. User A cannot assign admin claims, change email/owner metadata or inject extra fields, oversized strings or invalid types.
+3. User A cannot inflate coins, XP, wins, weekly XP or achievements directly via the Web SDK.
+4. Valid public-profile queries remain possible without revealing email; malformed public documents fail validation on create **and** update.
+5. A request from A to B cannot alter B's rewards, friends or unrelated fields; accepting/cancelling requests follows an authorized state transition.
+6. Trusted server finalization is idempotent under retries and concurrency, and existing gameplay still works in Chromium.
+
+**Current gate status: BLOCKED.** No reviewed Firestore rules, privacy-safe public collection, or trusted economy migration is deployed. Keep the PR as draft and do not publish a claim that profile data or balances are secured.
