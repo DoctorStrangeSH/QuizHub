@@ -12,7 +12,7 @@ permissions:
 jobs:
   emulator-daily:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,13 +27,17 @@ jobs:
           npm install --prefix functions --no-audit --no-fund
           npm run --prefix functions build
           npm run --prefix functions check
-      - name: Network test against isolated Firebase emulators
+      - name: Install browser smoke-test runtime
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Network and browser tests against isolated Firebase emulators
         env:
           GCLOUD_PROJECT: demo-quizhub
           GOOGLE_CLOUD_PROJECT: demo-quizhub
           CI: 'true'
-        run: >-
-          npx --yes firebase-tools@latest emulators:exec
-          --project demo-quizhub
-          --only auth,firestore,functions
-          "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs"
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 &
+          npx --yes firebase-tools@latest emulators:exec \
+            --project demo-quizhub --only auth,firestore,functions \
+            "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs tests/firebase-browser-auth.test.mjs"
