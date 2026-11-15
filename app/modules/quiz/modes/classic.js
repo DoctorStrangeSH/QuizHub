@@ -83,6 +83,7 @@ export class ClassicMode extends BaseMode {
                 <div class="result-icon arcade-result-icon" aria-hidden="true">${icon}</div>
                 <h2 class="text-gradient fw-bold mb-1">${isEN ? 'Quiz complete!' : 'Квиз завершён!'}</h2>
                 <p class="text-secondary mb-3">${headline}</p>
+                ${this.bestFeedbackStreak >= 2 ? `<div class="arcade-streak-summary">🔥 ${isEN ? 'Best streak' : 'Лучшая серия'}: ${this.bestFeedbackStreak}</div>` : ''}
                 <section class="arcade-accuracy" aria-label="${accuracyLabel}">
                     <div class="arcade-accuracy-heading">
                         <span>${accuracyLabel}</span>
