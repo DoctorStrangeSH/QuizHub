@@ -230,3 +230,33 @@ test('stale duel answer cannot change scores or schedule a round result', async 
         duel.dispose();
     }
 });
+
+test('survival record remains owned by the player who finished the run', async () => {
+    const source = await readFile(resolve('app/modules/quiz/modes/survival.js'), 'utf8');
+    const survivalSource = source
+        .replace(/^import .*;\s*$/gm, '')
+        .replace('export class SurvivalMode', 'class SurvivalMode');
+    const auth = { currentUser: { uid: 'player-a' } };
+    const recordOwners = [];
+    const SurvivalMode = new Function('BaseMode', 'auth', 'db', 'doc', 'runTransaction',
+        survivalSource + '\nreturn SurvivalMode;'
+    )(BaseMode, auth, {}, (_, collection, uid) => {
+        recordOwners.push(uid);
+        return { uid };
+    }, async (_, callback) => callback({
+        get: async () => ({ exists: () => true, data: () => ({ stats: {} }) }),
+        update: () => {}
+    }));
+    const mode = new SurvivalMode();
+    await mode.init(makeQuestions(1), {});
+    mode.bestStreak = 2;
+    mode.showResults = () => {};
+    let finishSave;
+    mode.saveResults = () => new Promise(resolve => { finishSave = resolve; });
+    const pending = mode.finishQuiz();
+    auth.currentUser = { uid: 'player-b' };
+    finishSave(true);
+    await pending;
+    assert.deepEqual(recordOwners, ['player-a']);
+    mode.dispose();
+});
