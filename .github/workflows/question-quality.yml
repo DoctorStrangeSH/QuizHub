@@ -27,6 +27,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-daily-challenge.test.mjs
       - name: Test authenticated daily challenge boundary
         run: node --experimental-default-type=module --test tests/server-authenticated-daily-challenge.test.mjs
+      - name: Test secure daily leaderboard projection
+        run: node --experimental-default-type=module --test tests/server-daily-leaderboard.test.mjs
       - name: Test daily challenge mode
         run: node --experimental-default-type=module --test tests/daily-challenge-mode.test.mjs
       - name: Test daily challenge dashboard
