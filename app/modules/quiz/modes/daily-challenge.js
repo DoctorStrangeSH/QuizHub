@@ -10,12 +10,14 @@ export class DailyChallengeMode extends ClassicMode {
         this.challengeDate = null;
         this.random = null;
         this.preserveQuestionOrder = false;
+        this.resultsShown = false;
     }
 
     async init(questions, settings = {}) {
         this.challengeDate = settings.challengeDate || getUtcDateKey();
         this.random = createSeededRandom(`${this.challengeDate}:daily-presentation`);
         this.preserveQuestionOrder = true;
+        this.resultsShown = false;
         await super.init(questions, settings);
         this.questions = this.questions.slice(0, 10);
         this.totalQuestions = this.questions.length;
@@ -37,7 +39,8 @@ export class DailyChallengeMode extends ClassicMode {
     }
 
     async finishQuiz() {
-        if (this.isFinished) return;
+        if (this.resultsShown) return;
+        this.resultsShown = true;
         this.isFinished = true;
 
         // Daily attempts are practice-only until a server-authoritative,
