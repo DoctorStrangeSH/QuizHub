@@ -106,3 +106,74 @@ test('real browser: register, persist session, log out, sign in again and sync p
         await browser.close();
     }
 });
+
+test('real browser: password reset email request and new-password sign-in', { timeout: 90000 }, async () => {
+    assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Auth emulator required');
+    assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project);
+
+    const browser = await chromium.launch({ headless: true });
+    try {
+        const context = await browser.newContext({ serviceWorkers: 'block' });
+        const page = await context.newPage();
+        const errors = [];
+        page.on('pageerror', error => errors.push(error.message));
+        await page.goto(url);
+        await page.locator('#auth-form').waitFor({ timeout: 25000 });
+
+        const email = `reset-${Date.now()}@example.test`;
+        const originalPassword = 'Before-reset-5830';
+        const updatedPassword = 'After-reset-5830';
+
+        await page.evaluate(() => window.switchAuthMode());
+        await page.locator('#auth-password[autocomplete="new-password"]').waitFor();
+        await page.locator('#auth-email').fill(email);
+        await page.locator('#auth-password').fill(originalPassword);
+        await page.locator('#auth-form button[type="submit"]').click();
+        const firstIdentity = await waitForIdentity(page);
+
+        await page.evaluate(async () => {
+            const { auth } = await import('./app/firebase-config.js');
+            const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+            await signOut(auth);
+        });
+        await page.locator('#auth-reset').waitFor({ timeout: 15000 });
+
+        await page.locator('#auth-reset').click();
+        await page.locator('#auth-feedback.auth-feedback--error').waitFor();
+        assert.match(await page.locator('#auth-feedback').textContent(), /Введите адрес|Enter your email/);
+
+        await page.locator('#auth-email').fill(email);
+        await page.locator('#auth-reset').click();
+        await page.locator('#auth-feedback.auth-feedback--success').waitFor({ timeout: 15000 });
+
+        // Auth Emulator captures out-of-band emails without contacting a real mailbox.
+        const response = await fetch(`http://127.0.0.1:9099/emulator/v1/projects/${project}/oobCodes`);
+        assert.equal(response.ok, true, 'Auth Emulator must expose the reset code');
+        const { oobCodes } = await response.json();
+        const reset = oobCodes.find(code => code.requestType === 'PASSWORD_RESET' && code.email === email);
+        assert.ok(reset?.oobCode, 'Password-reset code must target the registered address');
+
+        await page.evaluate(async ({ code, password }) => {
+            const { auth } = await import('./app/firebase-config.js');
+            const { confirmPasswordReset } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+            await confirmPasswordReset(auth, code, password);
+        }, { code: reset.oobCode, password: updatedPassword });
+
+        await page.locator('#auth-password').fill(originalPassword);
+        await page.locator('#auth-form button[type="submit"]').click();
+        await page.locator('#auth-feedback.auth-feedback--error').waitFor({ timeout: 15000 });
+        assert.equal(await page.evaluate(async () => {
+            const { auth } = await import('./app/firebase-config.js');
+            return auth.currentUser?.uid || null;
+        }), null, 'Old password must be rejected after reset');
+
+        await page.locator('#auth-password').fill(updatedPassword);
+        await page.locator('#auth-form button[type="submit"]').click();
+        const newIdentity = await waitForIdentity(page);
+        assert.equal(newIdentity.uid, firstIdentity.uid, 'Password reset must preserve UID');
+        assert.deepEqual(errors, [], `Browser errors: ${errors.join(' | ')}`);
+        await context.close();
+    } finally {
+        await browser.close();
+    }
+});
