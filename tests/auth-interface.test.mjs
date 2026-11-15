@@ -5,6 +5,7 @@ import test from 'node:test';
 const auth = readFileSync(new URL('../app/modules/auth/auth.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../app/modules/auth/auth.css', import.meta.url), 'utf8');
 const app = readFileSync(new URL('../app/app.js', import.meta.url), 'utf8');
+const router = readFileSync(new URL('../app/router.js', import.meta.url), 'utf8');
 
 test('login and registration preserve Firebase identity and existing profile routing', () => {
     assert.match(auth, /signInWithEmailAndPassword\(auth, email, password\)/);
@@ -41,4 +42,11 @@ test('account switching invalidates stale profile checks and saved routes', () =
     assert.match(app, /sessionStorage\.setItem\('lastRouteOwnerUid', user\.uid\)/);
     assert.match(app, /sessionStorage\.removeItem\('lastRouteOwnerUid'\)/);
     assert.match(app, /setState\('profile', null\)/);
+});
+
+test('pending daily reward UI cannot be attached to a different user', () => {
+    assert.match(router, /const ownerUid = getState\(\)\.currentUser\?\.uid/);
+    assert.match(router, /revision !== renderRevision \|\| getState\(\)\.currentRoute !== 'home'/);
+    assert.match(router, /getState\(\)\.currentUser\?\.uid !== ownerUid/);
+    assert.match(app, /getElementById\('daily-popup-container'\)\?\.remove\(\)/);
 });
