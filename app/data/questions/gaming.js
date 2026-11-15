@@ -1,8 +1,8 @@
 const gamingQuestions = {
     easy: [
         {
-            questionRU: 'В каком году Minecraft вышла из раннего доступа и получила полноценный релиз?',
-            questionEN: 'In which year did Minecraft leave beta and receive its full release?',
+            questionRU: 'В каком году вышла полная версия Minecraft 1.0?',
+            questionEN: 'In which year was Minecraft 1.0 fully released?',
             optionsRU: ['2009', '2011', '2013', '2015'],
             optionsEN: ['2009', '2011', '2013', '2015'],
             correctIndex: 1,
@@ -43,8 +43,8 @@ const gamingQuestions = {
         {
             questionRU: 'Какой покемон стал главным талисманом франшизы Pokémon?',
             questionEN: 'Which Pokémon became the main mascot of the Pokémon franchise?',
-            optionsRU: ['Чарizard', 'Пикачу', 'Сквиртл', 'Иви'],
-            optionsEN: ['Charizard', 'Pikachu', 'Squirtle', 'Eevee'],
+            optionsRU: ['Чармандер', 'Пикачу', 'Сквиртл', 'Иви'],
+            optionsEN: ['Charmander', 'Pikachu', 'Squirtle', 'Eevee'],
             correctIndex: 1,
             explanationRU: 'Пикачу стал самым узнаваемым символом Pokémon и постоянным спутником Эша в аниме.',
             explanationEN: 'Pikachu became the best-known symbol of Pokémon and Ash’s longtime anime companion.',
