@@ -170,3 +170,21 @@ test('reinitializing a mode clears any active mode-specific timer', async () => 
     await mode.init(makeQuestions(1), {});
     assert.equal(calls, 1);
 });
+
+test('duel restart cancels its pending round result callback', async () => {
+    const duelSource = await readFile(resolve('app/modules/quiz/modes/duel.js'), 'utf8');
+    const duelStripped = duelSource
+        .replace(/^import .*;\\s*$/gm, '')
+        .replace('export class DuelMode', 'class DuelMode');
+    const DuelMode = new Function('BaseMode', 'getState', 'increment',
+        `${duelStripped}\\nreturn DuelMode;`
+    )(BaseMode, () => ({ gameSettings: { difficulty: 'easy' } }), value => value);
+    const duel = new DuelMode();
+    let callbacks = 0;
+    duel.roundResultTimeout = setTimeout(() => { callbacks++; }, 30);
+    await duel.init(makeQuestions(3), {});
+    await new Promise(resolve => setTimeout(resolve, 60));
+    assert.equal(callbacks, 0);
+    assert.equal(duel.currentRound, 0);
+    duel.dispose();
+});
