@@ -5,6 +5,19 @@ const appRoot = document.getElementById('app-root');
 let renderRevision = 0;
 
 const routes = {
+    profileUnavailable: () => {
+        const en = getState().language === 'en';
+        const title = en ? 'Could not load your profile' : 'Не удалось загрузить профиль';
+        const details = en
+            ? 'Your account is safe. Check the connection and try again. Do not create another account.'
+            : 'Ваш аккаунт сохранён. Проверьте подключение и повторите попытку. Создавать новый аккаунт не нужно.';
+        const retry = en ? 'Try again' : 'Повторить';
+        appRoot.innerHTML = `<main class="container py-5 text-center" role="alert">
+            <h1>${title}</h1><p class="text-secondary">${details}</p>
+            <button type="button" class="btn-premium" id="retry-profile">${retry}</button>
+        </main>`;
+        document.getElementById('retry-profile')?.addEventListener('click', () => location.reload());
+    },
     auth: () => {
         appRoot.innerHTML = renderAuth();
         attachAuthListeners();
