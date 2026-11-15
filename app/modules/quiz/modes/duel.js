@@ -64,10 +64,11 @@ export class DuelMode extends BaseMode {
     }
     
     handlePlayerAnswer(el) {
+        const container = document.getElementById('answers-container');
+        // Ignore clicks on answer cards detached during route changes.
+        if (!el || !container?.contains(el)) return;
         if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
         this.hasAnswered = true;
-        
-        const container = document.getElementById('answers-container');
         const allCards = container.querySelectorAll('.answer-card');
         
         allCards.forEach(c => c.classList.add('answered'));
