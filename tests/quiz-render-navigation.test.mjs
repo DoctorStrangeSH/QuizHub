@@ -110,3 +110,38 @@ test('older asynchronous quiz route cannot replace a newer quiz screen', async (
     assert.equal(root.innerHTML, 'new question');
     assert.equal(attachments, 1);
 });
+
+test('slow dashboard render cannot overwrite quiz after route change', async () => {
+    const source = readFileSync(new URL('../app/router.js', import.meta.url), 'utf8')
+        .replace(/^import .*;\s*$/gm, '')
+        .replace('export default async function router()', 'async function router()')
+        .replaceAll("await import('./modules/dashboard/dashboard.js')", 'await Promise.resolve(dashboardModule)')
+        .replaceAll("await import('./modules/quiz/quiz.js')", 'await Promise.resolve(quizModule)');
+    let currentRoute = 'home';
+    const root = { innerHTML: '' };
+    let completeDashboard;
+    let dashboardAttachments = 0;
+    const dashboardModule = {
+        renderDashboard: () => new Promise(resolve => { completeDashboard = resolve; }),
+        attachDashboardListeners: () => { dashboardAttachments++; }
+    };
+    const quizModule = {
+        renderQuiz: async () => '<div>Quiz</div>',
+        attachQuizListeners: () => {}
+    };
+    const router = new Function(
+        'getState', 'setState', 'document', 'window', 'sessionStorage',
+        'dashboardModule', 'quizModule',
+        source + '\nreturn router;'
+    )(() => ({ currentRoute }), (_, value) => { currentRoute = value; },
+        { getElementById: () => root }, {}, { setItem: () => {} },
+        dashboardModule, quizModule);
+    const pendingHome = router();
+    await Promise.resolve();
+    currentRoute = 'quiz';
+    await router();
+    completeDashboard('<div>Old dashboard</div>');
+    await pendingHome;
+    assert.equal(root.innerHTML, '<div>Quiz</div>');
+    assert.equal(dashboardAttachments, 0);
+});
