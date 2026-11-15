@@ -9,17 +9,23 @@ export class DailyChallengeMode extends ClassicMode {
         this.totalQuestions = 10;
         this.challengeDate = null;
         this.random = null;
+        this.preserveQuestionOrder = false;
     }
 
     async init(questions, settings = {}) {
         this.challengeDate = settings.challengeDate || getUtcDateKey();
         this.random = createSeededRandom(`${this.challengeDate}:daily-presentation`);
+        this.preserveQuestionOrder = true;
         await super.init(questions, settings);
         this.questions = this.questions.slice(0, 10);
         this.totalQuestions = this.questions.length;
     }
 
     shuffleArray(items) {
+        if (this.preserveQuestionOrder) {
+            this.preserveQuestionOrder = false;
+            return [...items];
+        }
         if (!this.random) return super.shuffleArray(items);
 
         const result = [...items];
@@ -56,7 +62,7 @@ export class DailyChallengeMode extends ClassicMode {
         const result = document.querySelector('.quiz-result');
         if (!result) return;
 
-        const isEN = this.settings?.language === 'en';
+        const isEN = getState().language === 'en';
         const heading = result.querySelector('h2');
         if (heading) {
             heading.textContent = isEN
