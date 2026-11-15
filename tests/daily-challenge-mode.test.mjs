@@ -98,3 +98,22 @@ test('daily results are shown even when the quiz engine has already marked the r
     assert.equal(mode.didShowResults, true);
     assert.equal(mode.resultsShown, true);
 });
+
+
+test('daily challenge progress and navigation labels follow the selected language', async () => {
+    const mode = new DailyChallengeMode();
+    await mode.init(createDailyChallenge('2026-11-15').questions, { challengeDate: '2026-11-15' });
+
+    language = 'ru';
+    assert.equal(mode.getProgressText(), 'Вопрос 1/10');
+    assert.equal(mode.getNextButtonText(), 'Далее →');
+    assert.match(mode.renderModeSpecificHeader(), /ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ/);
+
+    language = 'en';
+    assert.equal(mode.getProgressText(), 'Question 1/10');
+    assert.equal(mode.getNextButtonText(), 'Next →');
+    assert.match(mode.renderModeSpecificHeader(), /DAILY CHALLENGE/);
+
+    mode.currentIndex = 9;
+    assert.equal(mode.getNextButtonText(), 'Finish 🏁');
+});
