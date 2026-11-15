@@ -210,8 +210,8 @@ test('stale answer card cannot score a different active question', async () => {
 test('stale duel answer cannot change scores or schedule a round result', async () => {
     const duelSource = await readFile(resolve('app/modules/quiz/modes/duel.js'), 'utf8');
     const DuelMode = new Function('BaseMode', 'getState', 'increment',
-        duelSource.replace(/^import .*;\\s*$/gm, '').replace('export class DuelMode', 'class DuelMode')
-        + '\\nreturn DuelMode;'
+        duelSource.replace(/^import .*;\s*$/gm, '').replace('export class DuelMode', 'class DuelMode')
+        + '\nreturn DuelMode;'
     )(BaseMode, () => ({ gameSettings: { difficulty: 'easy' } }), value => value);
     const duel = new DuelMode();
     await duel.init(makeQuestions(2), {});
