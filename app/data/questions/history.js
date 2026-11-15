@@ -95,11 +95,13 @@ const historyQuestions = {
             points: 20
         },
         {
-            questionRU: 'В каком году пала Берлинская стена?',
-            questionEN: 'What year did the Berlin Wall fall?',
-            optionsRU: ['1987', '1989', '1991', '1993'],
-            optionsEN: ['1987', '1989', '1991', '1993'],
+            questionRU: 'В каком году была подписана Великая хартия вольностей?',
+            questionEN: 'In what year was Magna Carta sealed?',
+            optionsRU: ['1204', '1215', '1291', '1302'],
+            optionsEN: ['1204', '1215', '1291', '1302'],
             correctIndex: 1,
+            explanationRU: 'Король Иоанн скрепил Великую хартию вольностей печатью в 1215 году.',
+            explanationEN: 'King John sealed Magna Carta in 1215.',
             points: 20
         },
         {
