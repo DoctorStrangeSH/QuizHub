@@ -15,7 +15,7 @@ test('real Firestore emulator: session persistence, concurrent idempotent claim 
     const db = getFirestore(app);
     const uid = 'emulator-' + randomUUID();
     const sessionId = randomUUID();
-    const store = createQuizFirestoreStore(db);
+    const store = createQuizFirestoreStore(db, { syncPublicProfiles: true });
 
     const userRef = db.collection('users').doc(uid);
     const sessionRef = db.collection('quizSessions').doc(sessionId);
@@ -33,7 +33,7 @@ test('real Firestore emulator: session persistence, concurrent idempotent claim 
     });
     await store.runTransaction(tx => tx.setSession(sessionId, session));
 
-    const otherProcess = createQuizFirestoreStore(db);
+    const otherProcess = createQuizFirestoreStore(db, { syncPublicProfiles: true });
     const persisted = await otherProcess.runTransaction(tx => tx.getSession(sessionId));
     assert.equal(persisted.answers.length, 1);
     assert.equal(persisted.questions[0].correctIndex, 1);
@@ -56,6 +56,13 @@ test('real Firestore emulator: session persistence, concurrent idempotent claim 
     assert.equal(saved.stats.badges, 12);
     assert.equal(saved.email, 'private@example.test');
     assert.deepEqual(saved.friends, ['friend-one']);
+    const publicProfile = (await db.collection('publicProfiles').doc(uid).get()).data();
+    assert.equal(publicProfile.nickname, 'Unchanged');
+    assert.equal(publicProfile.experience, 24);
+    assert.equal(publicProfile.weeklyExperience, 24);
+    assert.equal('email' in publicProfile, false);
+    assert.equal('coins' in publicProfile, false);
+    assert.equal('friends' in publicProfile, false);
     const finalized = (await sessionRef.get()).data();
     assert.equal(finalized.finalized, true);
     assert.deepEqual(finalized.receipt.coins, 10);
