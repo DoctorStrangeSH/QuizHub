@@ -124,3 +124,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - The adapter reads the existing `publicProfiles/{uid}` document before writes, then fully replaces it with the allowlisted `buildPublicProfile(uid, nextUser)` projection. Missing or malformed legacy nicknames skip projection; no malformed public document is created.
 - Unit and real Firestore emulator tests verify atomic three-document claims, correct XP/weekly XP, private-email/friends exclusion, concurrent claim idempotency, and replay no-op. All CI passed at `dbda502c553e582333f34fa9c407b74ff2ea4f43`.
 - **Deployment is blocked:** the opt-in is not enabled in the callable or browser; `quizSessionPreview` remains emulator-only and production rules have not been migrated. A backend-driven account/profile edit path is still needed to keep nicknames and cosmetics in sync outside reward claims.
+
+## Server-only unique nickname rename contract (2026-11-16)
+
+- `server/profile-rename.mjs` stages an authenticated-host-only Firestore transaction to rename an existing profile by reserving `nicknameClaims/{lowercaseName}`. The operation updates `users/{uid}`, replaces the safe `publicProfiles/{uid}` projection, creates the new claim and deletes the old claim atomically. It does not accept score, coins or other profile mutations.
+- Case-insensitive collisions cannot be resolved by a client-side nickname query alone; the transaction rejects occupied claims. Two concurrent attempts to use one name yield one successful rename and one `NICKNAME_TAKEN` response in the Firestore emulator. A same-name retry is a no-op.
+- **Migration gate:** existing `users/{uid}` with no matching, owner-validated `nicknameClaims/{nicknameLower}` cannot rename (`PROFILE_MIGRATION_REQUIRED`). A safe, collision-reviewed claims backfill is required before enabling this endpoint. There is no live HTTP callable, no backfill, and no deployed rules authorizing this yet.
+- The emulator suite also rejects malformed nicknames and confirms that email/coins do not leak into the public profile after a rename. All CI passed on `5f47c36214dbf6d5f94f9940981cddd89df5584a`.
