@@ -41,3 +41,13 @@ jobs:
           npx --yes firebase-tools@latest emulators:exec \
             --project demo-quizhub --only auth,firestore,functions \
             "node --test tests/firebase-auth-emulator.test.mjs tests/firebase-daily-emulator.test.mjs tests/firebase-browser-auth.test.mjs tests/firebase-quiz-browser.test.mjs tests/firebase-public-profile-backfill.test.mjs functions/test-quiz-firestore-emulator.mjs functions/test-quiz-callable-emulator.mjs"
+      - name: Verify server-owned sessions reject all client access
+        env:
+          GCLOUD_PROJECT: demo-quizhub
+          GOOGLE_CLOUD_PROJECT: demo-quizhub
+          CI: 'true'
+        run: |
+          npx --yes firebase-tools@latest emulators:exec \\
+            --config firebase.rules-preview.json \\
+            --project demo-quizhub --only auth,firestore \\
+            "node --test functions/test-quiz-session-rules-emulator.mjs"
