@@ -1,5 +1,6 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, updateDoc, arrayUnion } from '../../firebase-config.js';
+import { profileCollectionForViewer } from './profile-read-source.js';
 
 // Достижения для отображения
 const ALL_ACHIEVEMENTS = [
@@ -182,7 +183,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
 // ========== ЗАГРУЗКА ПРОФИЛЯ ==========
 export async function loadProfile(userId) {
     try {
-        const docSnap = await getDoc(doc(db, 'users', userId));
+        const docSnap = await getDoc(doc(db, profileCollectionForViewer(auth.currentUser?.uid, userId), userId));
         if (docSnap.exists()) {
             return { uid: userId, ...docSnap.data() };
         }
