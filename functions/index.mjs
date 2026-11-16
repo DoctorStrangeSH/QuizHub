@@ -8,6 +8,11 @@ import { createAuthenticatedDailyChallengeHandler } from '../server/authenticate
 import { createDailyFirestoreStore } from '../server/daily-firestore-store.mjs';
 import { createDailyCallableAdapter } from '../server/firebase-daily-callable-adapter.mjs';
 
+import { createQuizFirestoreStore } from '../server/quiz-firestore-store.mjs';
+import { createQuizService } from '../server/quiz-service.mjs';
+import { createAuthenticatedQuizHandler } from '../server/authenticated-quiz-handler.mjs';
+import { createQuizCallableAdapter } from '../server/firebase-quiz-callable-adapter.mjs';
+
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
 const catalog = buildQuestionCatalog(questionBank);
@@ -22,3 +27,27 @@ export const dailyChallenge = onCall({
     memory: '256MiB',
     timeoutSeconds: 30
 }, createDailyCallableAdapter({ handle, HttpsError }));
+
+// Emulator-only integration preview. This callable intentionally refuses every
+// request in real Firebase projects, even from authenticated users, because
+// the browser still exposes the answer key and production security rules have
+// not been migrated. Do NOT remove this guard during routine deployment.
+const quizPreview = createQuizCallableAdapter({
+    handle: createAuthenticatedQuizHandler(
+        createQuizService({ catalog, store: createQuizFirestoreStore(getFirestore()) })
+    ),
+    HttpsError
+});
+export const quizSessionPreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'QUIZ_PREVIEW_DISABLED');
+    }
+    return quizPreview(request);
+});
