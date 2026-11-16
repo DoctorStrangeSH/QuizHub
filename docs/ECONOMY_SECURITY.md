@@ -139,3 +139,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Matching existing reservations are skipped for idempotent reruns; reports include only UIDs, normalized public nicknames and reason codes, never private emails, balances or source account payloads.
 - Unit tests validate deterministic sorting, uniqueness, privacy, invalid data, conflicts and retries. All four CI workflows passed on `6d19bf945613e31caeabe739e83a35cc6e90745a`.
 - **Next release gate:** a privileged, reviewed backfill runner must first take consistent production snapshots, display dry-run counts, resolve duplicates, and apply claims with create-only preconditions. This planner alone does not make nickname renaming or account creation ready for production.
+
+## Emulator-only nickname reservation migration executor (2026-11-16)
+
+- `server/nickname-claims-apply.mjs` consumes the reviewed snapshot plan. Its default `dry-run` mode reports counts without touching Firestore.
+- `apply` requires exact `APPLY_DEMO_NICKNAME_CLAIMS` confirmation, `projectId: 'demo-quizhub'`, a running Firestore emulator, and zero planned conflicts or invalid records. It **refuses all production projects**, regardless of confirmation.
+- Every proposed claim is verified in a Firestore Admin transaction against the **current** user's nickname and lowercase field. It creates only absent `nicknameClaims/{normalized}` documents; already-owned claims are idempotent, foreign-owned claims fail without overwrite, and changed/deleted users abort that transaction. Neither private account fields nor public profiles are changed.
+- Transactions are per claim, not one global all-or-nothing migration: later failures may leave earlier valid claims. Regenerate a plan from a fresh snapshot and safely retry after resolving conflicts. The emulator integration test exercises opt-in guards, stale data, malicious ownership collisions and reruns.
+- **Production remains blocked:** requires consistent production snapshot and a controlled write freeze or equivalent coordination, full conflict resolution, reviewed production executor/rollback procedure, authentication migration and deployable security rules. This test executor is not a production migration command.
