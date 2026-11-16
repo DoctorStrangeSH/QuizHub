@@ -112,6 +112,37 @@ test('reward claim updates only economy fields and replays exactly once', async 
     ].sort());
 });
 
+test('opt-in reward claim atomically refreshes a privacy-safe public ranking projection', async () => {
+    const db = fakeFirestore();
+    const session = createSession({
+        uid: 'alice', mode: 'classic', startedAt: 1000, deadlineAt: 5000,
+        questions: [{ id: 'q', optionCount: 2, correctIndex: 1, points: 20 }]
+    });
+    submitAnswer(session, { uid: 'alice', questionId: 'q', answerIndex: 1, at: 2000 });
+    db.records.set('quizSessions/session_pub', session);
+    db.records.set('users/alice', {
+        nickname: 'TestPlayer', email: 'private@example.test', coins: 20,
+        experience: 5, weeklyExperience: 5, quizzesCompleted: 0,
+        stats: { totalGames: 0, totalQuestions: 0, correctAnswers: 0 }
+    });
+    db.records.set('publicProfiles/alice', { uid: 'alice', email: 'old-leak@example.test', coins: 123 });
+    const store = createQuizFirestoreStore(db, { syncPublicProfiles: true });
+    const result = await claimSessionReward({ store, uid: 'alice', sessionId: 'session_pub', at: 3000 });
+    const profile = db.records.get('publicProfiles/alice');
+    assert.equal(profile.nickname, 'TestPlayer');
+    assert.equal(profile.experience, 5 + result.xp);
+    assert.equal(profile.weeklyExperience, 5 + result.xp);
+    assert.equal('email' in profile, false);
+    assert.equal('coins' in profile, false);
+    assert.equal(db.records.get('users/alice').email, 'private@example.test');
+    const before = db.mutations.length;
+    assert.equal((await claimSessionReward({ store, uid: 'alice', sessionId: 'session_pub', at: 3000 })).alreadyClaimed, true);
+    assert.equal(db.mutations.length, before, 'replayed claims must not republish the profile');
+    assert.deepEqual(db.mutations.slice(0, 3).map(item => item.path).sort(), [
+        'users/alice', 'quizSessions/session_pub', 'publicProfiles/alice'
+    ].sort());
+});
+
 test('failed reward claim makes no partial user or session writes', async () => {
     const db = fakeFirestore();
     db.records.set('quizSessions/session_3', createSession({
