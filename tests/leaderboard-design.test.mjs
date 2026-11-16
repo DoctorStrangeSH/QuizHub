@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const leaderboard = readFileSync(new URL('../app/modules/leaderboard/leaderboard.js', import.meta.url), 'utf8');
+const sourceGate = readFileSync(new URL('../app/modules/profile/profile-read-source.js', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../app/styles/midnight-arcade.css', import.meta.url), 'utf8');
 
 test('rankings use the unified arena identity and highlight the podium', () => {
@@ -25,7 +26,8 @@ test('profile selection uses delegated click and keyboard handling', () => {
 
 test('rankings preserve public projection, guarded rollout and responsive styles', () => {
   assert.ok(leaderboard.includes('buildPublicProfile'));
-  assert.ok(leaderboard.includes('PUBLIC_PROFILE_READS_ENABLED = false'));
+  assert.ok(sourceGate.includes('PUBLIC_PROFILE_READS_ENABLED = false'));
+  assert.ok(leaderboard.includes('directoryCollection()'));
   assert.ok(leaderboard.includes('escapeHTML(leader.nickname'));
   assert.ok(styles.includes('.leaderboard-item.current-user'));
   assert.match(styles, /@media \(max-width: 560px\)/);
