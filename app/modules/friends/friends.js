@@ -1,4 +1,5 @@
 import { getState } from '../../store/state.js';
+import { directoryCollection, profileCollectionForViewer } from '../profile/profile-read-source.js';
 import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from '../../firebase-config.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -78,7 +79,7 @@ async function loadFriendsList(user) {
         if (friends.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-people" aria-hidden="true"></i></span><p class="text-secondary mt-2">У вас пока нет друзей</p></div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
-            const friendDoc = await getDoc(doc(db, 'users', friendId));
+            const friendDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, friendId), friendId));
             if (friendDoc.exists()) friendsData.push({ id: friendId, ...friendDoc.data() });
         }
         tabContent.innerHTML = friendsData.map(f => `
@@ -100,7 +101,7 @@ async function loadFriendRequests(user) {
         if (requests.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-envelope-paper" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет входящих заявок</p></div>'; return; }
         const requestsData = [];
         for (const reqId of requests) {
-            const reqDoc = await getDoc(doc(db, 'users', reqId));
+            const reqDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, reqId), reqId));
             if (reqDoc.exists()) requestsData.push({ id: reqId, ...reqDoc.data() });
         }
         tabContent.innerHTML = requestsData.map(r => `
@@ -122,7 +123,7 @@ async function loadSentRequests(user) {
         if (sent.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-send" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет отправленных заявок</p></div>'; return; }
         const sentData = [];
         for (const sentId of sent) {
-            const sentDoc = await getDoc(doc(db, 'users', sentId));
+            const sentDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, sentId), sentId));
             if (sentDoc.exists()) sentData.push({ id: sentId, ...sentDoc.data() });
         }
         tabContent.innerHTML = sentData.map(s => `
@@ -144,7 +145,7 @@ function setupSearch(user) {
         const q = searchInput.value.trim().toLowerCase();
         if (!q) return;
         resultsDiv.innerHTML = '<p class="text-secondary small">Поиск...</p>';
-        const usersRef = collection(db, 'users');
+        const usersRef = collection(db, directoryCollection());
         const qQuery = query(usersRef, where('nicknameLower', '>=', q), where('nicknameLower', '<=', q + '\uf8ff'));
         let snapshot;
         try { snapshot = await getDocs(qQuery); }
