@@ -101,3 +101,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - `functions/test-quiz-callable-emulator.mjs` performs real HTTP calls to the Functions emulator using Auth emulator tokens. It tests anonymous rejection, forged identities, unsupported modes, cross-user session access, answer replay, one-time reward claim and persistence in the Firestore emulator.
 - The Functions build, authenticated HTTP test, isolated Firestore transaction suite and existing browser smoke tests all passed in GitHub Actions.
 - **Release gate unchanged:** do not remove the emulator-only guard or connect the browser until private server-only answer keys, reviewed Firestore rules, trusted reward paths for other game modes and account migration checks are complete.
+
+## Isolated Firestore session-rule prototype (2026-11-16)
+
+- `tests/fixtures/quiz-sessions.rules` defaults to deny and disallows **all client operations** on `quizSessions/{sessionId}` (including owner reads). This protects canonical answers and receipts behind server-only Firebase Admin access.
+- `firebase.rules-preview.json` is a dedicated **emulator-only** configuration. It intentionally denies all other collections and is **not suitable for production deployment** or the current browser application's full feature set.
+- `functions/test-quiz-session-rules-emulator.mjs` creates two distinct Auth emulator identities, seeds a session using the trusted Admin SDK, then tests anonymous, owner and cross-user GET/list/create/update/delete and attempted reward forgery via the Firestore REST client. It asserts every client attempt is denied and verifies the canonical session remains intact.
+- The GitHub Actions Firebase emulator job runs the existing browser/Function integration first, then launches a **separate** emulator with the restricted rules. Both steps passed on commit `622bc05cc4f6562b31439ce39af36bf16a3ec7fc`.
+- **Still blocked for production:** profile privacy split, cross-user friends workflows, full collections/query inventory, removal of direct client economy writes and private answer-key migration. No production rules or callable deployment has occurred.
