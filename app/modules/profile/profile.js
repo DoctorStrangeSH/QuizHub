@@ -1,6 +1,7 @@
 import { getState, setState } from '../../store/state.js';
 import { auth, db, doc, getDoc, setDoc, collection, query, where, getDocs, serverTimestamp } from '../../firebase-config.js';
 import { renderPublicProfile, loadProfile } from './public-profile.js';
+import { directoryCollection } from './profile-read-source.js';
 
 export function renderProfileCreate() {
     const t = getState().translations.profile || {};
@@ -75,7 +76,7 @@ export function attachProfileListeners() {
         statusDiv.className = 'nickname-status checking';
         statusDiv.innerHTML = '🔍 Проверяем...';
         try {
-            const usersRef = collection(db, 'users');
+            const usersRef = collection(db, directoryCollection());
             const q = query(usersRef, where('nicknameLower', '==', nickname.toLowerCase()));
             const snap = await getDocs(q);
             if (snap.empty) {
