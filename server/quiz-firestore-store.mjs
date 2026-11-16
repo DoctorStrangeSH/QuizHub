@@ -1,3 +1,5 @@
+import { buildPublicProfile } from '../app/modules/profile/public-profile-data.js';
+
 // Firestore Standard backend adapter for trusted quiz sessions.
 // No browser access: only Firebase Admin may instantiate this adapter.
 // Sessions contain canonical answer keys and MUST NOT be readable or writable
@@ -21,12 +23,13 @@ function requireSessionId(sessionId) {
 
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
 
-export function createQuizFirestoreStore(db) {
+export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}) {
     if (!db || typeof db.runTransaction !== 'function' || typeof db.collection !== 'function') {
         throw new Error('INVALID_FIRESTORE_ADAPTER');
     }
     const sessionRef = id => db.collection('quizSessions').doc(requireSessionId(id));
     const userRef = uid => db.collection('users').doc(requireUid(uid));
+    const publicRef = uid => db.collection('publicProfiles').doc(requireUid(uid));
 
     return {
         runTransaction(callback) {
@@ -38,7 +41,14 @@ export function createQuizFirestoreStore(db) {
                         // Server-generated canonical session, receipt and claim marker.
                         native.set(sessionRef(id), value);
                     },
-                    getUser: async uid => data(await native.get(userRef(uid))),
+                    getUser: async uid => {
+                        const user = data(await native.get(userRef(uid)));
+                        if (syncPublicProfiles && user) {
+                            // Firestore transactions must finish all reads before any write.
+                            await native.get(publicRef(uid));
+                        }
+                        return user;
+                    },
                     setUser: async (uid, value) => {
                         if (!value || !value.stats) throw new Error('INVALID_USER_STATS');
                         // Update only authoritative reward fields. Do not replace
@@ -52,6 +62,12 @@ export function createQuizFirestoreStore(db) {
                             'stats.totalQuestions': value.stats.totalQuestions,
                             'stats.correctAnswers': value.stats.correctAnswers
                         });
+                        if (syncPublicProfiles && typeof value.nickname === 'string' &&
+                            /^[A-Za-z0-9_]{3,20}$/.test(value.nickname)) {
+                            // Same native transaction as the credit and claim marker.
+                            // Replace rather than merge so legacy secrets cannot linger.
+                            native.set(publicRef(uid), buildPublicProfile(uid, value));
+                        }
                     }
                 });
             });
