@@ -1,16 +1,13 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, collection, query, orderBy, limit, getDocs } from '../../firebase-config.js';
 import { buildPublicProfile } from '../profile/public-profile-data.js';
+import { directoryCollection } from '../profile/profile-read-source.js';
 
 function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[char]);
 }
-
-// Migration gate: enabled only after publicProfiles has been fully backfilled
-// and its read rules have been verified. The legacy collection remains in use.
-const PUBLIC_PROFILE_READS_ENABLED = false;
 
 
 export function renderLeaderboard() {
@@ -54,7 +51,7 @@ export async function loadLeaderboard(type = 'global') {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
     try {
-        const source = PUBLIC_PROFILE_READS_ENABLED ? 'publicProfiles' : 'users';
+        const source = directoryCollection();
         const usersRef = collection(db, source);
         const scoreField = type === 'weekly' ? 'weeklyExperience' : 'experience';
         const snapshot = await getDocs(query(usersRef, orderBy(scoreField, 'desc'), limit(50)));
