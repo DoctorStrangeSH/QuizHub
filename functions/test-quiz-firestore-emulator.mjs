@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { createQuizFirestoreStore } from '../server/quiz-firestore-store.mjs';
 import { createSession, submitAnswer } from '../server/quiz-session-core.mjs';
@@ -77,4 +77,6 @@ test('real Firestore emulator: session persistence, concurrent idempotent claim 
         store, sessionId: missingId, uid: unclaimable.uid, at: 3000
     }), /USER_NOT_FOUND/);
     assert.equal((await db.collection('quizSessions').doc(missingId).get()).data().finalized, false);
+    await db.terminate();
+    await deleteApp(app);
 });
