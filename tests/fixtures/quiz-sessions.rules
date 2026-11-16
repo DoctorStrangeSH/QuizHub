@@ -1,0 +1,49 @@
+// ===============================================================
+// Assumed Data Model — isolated security test fixture
+// ===============================================================
+// quizSessions/{sessionId}: server-owned session record.
+//   uid: string (required, immutable owner ID)
+//   mode: string (required)
+//   status: string (required)
+//   questions: list (server-only canonical question data)
+//   answers: list (server-only answer attempts)
+//   receipt: map or null (server-only reward claim)
+// No client may get, list, create, update, or delete these documents.
+// This file is NOT a deployable application-wide production policy.
+// Every unrelated collection is also denied here on purpose.
+// ===============================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function uidUnchanged(data) {
+      return !('uid' in data) || (isAuthenticated() && data.uid == request.auth.uid);
+    }
+    function uidNotModified(before, after) {
+      return !('uid' in after) || (('uid' in before) && after.uid == before.uid);
+    }
+    function isValidQuizSession(data) {
+      return data.keys().hasAll(['uid', 'mode', 'status', 'questions', 'answers']) &&
+        data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        data.mode is string && data.mode.size() <= 32 &&
+        data.status is string && data.status.size() <= 32 &&
+        data.questions is list && data.questions.size() <= 100 &&
+        data.answers is list && data.answers.size() <= 100;
+    }
+
+    match /quizSessions/{sessionId} {
+      // The Admin SDK bypasses rules; clients must never see answer keys,
+      // change attempts, forge receipts or replay reward transactions.
+      allow read, create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
