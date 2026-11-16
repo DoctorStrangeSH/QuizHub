@@ -46,8 +46,4 @@ jobs:
           GCLOUD_PROJECT: demo-quizhub
           GOOGLE_CLOUD_PROJECT: demo-quizhub
           CI: 'true'
-        run: |
-          npx --yes firebase-tools@latest emulators:exec \\
-            --config firebase.rules-preview.json \\
-            --project demo-quizhub --only auth,firestore \\
-            "node --test functions/test-quiz-session-rules-emulator.mjs"
+        run: npx --yes firebase-tools@latest emulators:exec --config firebase.rules-preview.json --project demo-quizhub --only auth,firestore "node --test functions/test-quiz-session-rules-emulator.mjs"
