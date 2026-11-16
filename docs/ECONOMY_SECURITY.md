@@ -117,3 +117,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Tests include malformed UIDs/nicknames, missing accounts, update idempotency, unapproved-field stripping and three concurrent syncs using the real Firestore emulator. Existing browser and server workflows remain green on commit `fccbfbcd183a97f3801afd60d5e9f353727c84b6`.
 - `app/modules/profile/profile-read-source.js` centralizes a **disabled** public collection read switch for leaderboard, nickname availability, friends search and other-user cards; own-profile data still comes from `users`. Production reads have not switched.
 - **Not a live sync trigger:** this module must be invoked from reviewed server-side account creation, profile edits and authoritative score updates after the secure backend and rules migration. No backfill or production database write has been performed.
+
+## Atomic reward and public ranking projection (2026-11-16)
+
+- `createQuizFirestoreStore(db, { syncPublicProfiles: true })` adds an **explicit opt-in** to stage public-profile changes in the same native Firestore transaction as the authoritative user reward and quiz claim marker. The default remains `false`.
+- The adapter reads the existing `publicProfiles/{uid}` document before writes, then fully replaces it with the allowlisted `buildPublicProfile(uid, nextUser)` projection. Missing or malformed legacy nicknames skip projection; no malformed public document is created.
+- Unit and real Firestore emulator tests verify atomic three-document claims, correct XP/weekly XP, private-email/friends exclusion, concurrent claim idempotency, and replay no-op. All CI passed at `dbda502c553e582333f34fa9c407b74ff2ea4f43`.
+- **Deployment is blocked:** the opt-in is not enabled in the callable or browser; `quizSessionPreview` remains emulator-only and production rules have not been migrated. A backend-driven account/profile edit path is still needed to keep nicknames and cosmetics in sync outside reward claims.
