@@ -94,3 +94,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - A **read-only** `gcloud firestore databases list --project=quizhub-e65f5` metadata query could not complete under that account's current permissions. The CI logs intentionally omit error details and never print credentials or user data.
 - The production database edition is now **confirmed by the project owner’s Firebase Console screenshot (2026-11-16)**: **Standard**, database ID **`(default)`**. CI metadata permission remains restricted; no IAM changes were made.
 - **No Firestore changes, IAM grants, rules deployments or data reads were attempted.** Do not add IAM roles silently. Request explicit project-owner approval for narrow metadata-only access or obtain a verified edition/database ID before authoring a production Firestore store adapter.
+
+## Emulator-only authenticated quiz callable (2026-11-16)
+
+- `functions/index.mjs` now exports `quizSessionPreview` with a **fail-closed emulator-only guard**: the project must be `demo-quizhub`, and Functions, Firestore and Auth emulator environment signals must all be present. In any real Firebase project the callable returns `QUIZ_PREVIEW_DISABLED` without writing sessions or rewards.
+- `functions/test-quiz-callable-emulator.mjs` performs real HTTP calls to the Functions emulator using Auth emulator tokens. It tests anonymous rejection, forged identities, unsupported modes, cross-user session access, answer replay, one-time reward claim and persistence in the Firestore emulator.
+- The Functions build, authenticated HTTP test, isolated Firestore transaction suite and existing browser smoke tests all passed in GitHub Actions.
+- **Release gate unchanged:** do not remove the emulator-only guard or connect the browser until private server-only answer keys, reviewed Firestore rules, trusted reward paths for other game modes and account migration checks are complete.
