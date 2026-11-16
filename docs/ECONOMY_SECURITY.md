@@ -131,3 +131,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Case-insensitive collisions cannot be resolved by a client-side nickname query alone; the transaction rejects occupied claims. Two concurrent attempts to use one name yield one successful rename and one `NICKNAME_TAKEN` response in the Firestore emulator. A same-name retry is a no-op.
 - **Migration gate:** existing `users/{uid}` with no matching, owner-validated `nicknameClaims/{nicknameLower}` cannot rename (`PROFILE_MIGRATION_REQUIRED`). A safe, collision-reviewed claims backfill is required before enabling this endpoint. There is no live HTTP callable, no backfill, and no deployed rules authorizing this yet.
 - The emulator suite also rejects malformed nicknames and confirms that email/coins do not leak into the public profile after a rename. All CI passed on `5f47c36214dbf6d5f94f9940981cddd89df5584a`.
+
+## Nickname claims dry-run migration planner (2026-11-16)
+
+- `server/nickname-claims-backfill.mjs` provides a **pure, read-only** migration plan from existing `users/{uid}` snapshots and `nicknameClaims/{normalized}` snapshots. It batches proposed reservations up to 400 per group. **It does not query or write any live database.**
+- Duplicate names (including case variants) produce conflicts for **all** affected players; no arbitrary first-winner selection occurs. Foreign-owned or malformed claim records are never overwritten. Duplicate UIDs, inconsistent lowercase fields, invalid characters and missing nicknames are quarantined.
+- Matching existing reservations are skipped for idempotent reruns; reports include only UIDs, normalized public nicknames and reason codes, never private emails, balances or source account payloads.
+- Unit tests validate deterministic sorting, uniqueness, privacy, invalid data, conflicts and retries. All four CI workflows passed on `6d19bf945613e31caeabe739e83a35cc6e90745a`.
+- **Next release gate:** a privileged, reviewed backfill runner must first take consistent production snapshots, display dry-run counts, resolve duplicates, and apply claims with create-only preconditions. This planner alone does not make nickname renaming or account creation ready for production.
