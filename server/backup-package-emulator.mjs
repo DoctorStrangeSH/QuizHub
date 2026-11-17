@@ -1,4 +1,4 @@
-import { assertIsolatedQuizHubEmulator, restoreQuizHubSnapshotInEmulator } from './backup-restore-emulator.mjs';
+import { assertIsolatedQuizHubEmulator, planQuizHubEmulatorRestore, restoreQuizHubSnapshotInEmulator } from './backup-restore-emulator.mjs';
 import { verifyBackupIntegrity } from './backup-integrity.mjs';
 import { protectedQuizHubManifestKeys } from './firestore-migration-inventory.mjs';
 
@@ -60,4 +60,25 @@ export async function restoreSealedQuizHubBackupInEmulator(db, backupPackage, op
     assertIsolatedQuizHubEmulator();
     const { snapshot, manifest } = verifyPackageFields(backupPackage);
     return restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, options);
+}
+
+
+// Diagnostic only: the restore transaction re-checks conflicts atomically.
+// Never expose player IDs or values in this report.
+export async function preflightSealedQuizHubRestoreInEmulator(db, backupPackage) {
+    assertIsolatedQuizHubEmulator();
+    const { snapshot, manifest } = verifyPackageFields(backupPackage);
+    const plan = planQuizHubEmulatorRestore(snapshot, manifest);
+    if (plan.operations.length > 200) throw new RangeError('EMULATOR_REHEARSAL_DOCUMENT_LIMIT');
+    const refs = plan.operations.map(operation => db.doc(operation.path));
+    const existing = refs.length ? await db.getAll(...refs) : [];
+    const conflicts = existing.filter(doc => doc.exists).length;
+    return {
+        status: conflicts ? 'blocked_existing_documents' : 'ready',
+        documentCount: plan.operations.length,
+        conflictingDocuments: conflicts,
+        checkedCollections: plan.protectedKeys.length,
+        rootSha256: manifest.rootSha256,
+        readOnly: true
+    };
 }
