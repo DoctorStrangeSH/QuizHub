@@ -27,3 +27,10 @@ export function projectProfileForViewer(viewerUid, targetUid, rawProfile) {
     }
     return buildPublicProfile(targetUid, rawProfile);
 }
+
+// Shared boundary for friends search, friend lists and leaderboard entries.
+// Firestore still downloads legacy private users until the cutover gate opens;
+// this boundary ensures only the explicit public allowlist reaches UI code.
+export function projectDirectoryProfile(uid, rawProfile) {
+    return buildPublicProfile(uid, rawProfile);
+}
