@@ -5,6 +5,7 @@ import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp, GeoPoint, DocumentReference } from 'firebase-admin/firestore';
 import { captureQuizHubEmulatorSnapshot, captureStableQuizHubEmulatorSnapshot } from '../server/backup-capture-emulator.mjs';
 import { restoreQuizHubSnapshotInEmulator } from '../server/backup-restore-emulator.mjs';
+import { sealQuizHubEmulatorBackup, restoreSealedQuizHubBackupInEmulator } from '../server/backup-package-emulator.mjs';
 import { verifyBackupIntegrity } from '../server/backup-integrity.mjs';
 import { protectedQuizHubManifestKeys } from '../server/firestore-migration-inventory.mjs';
 
@@ -34,7 +35,20 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         // Parent dailyAttempts/{date} intentionally DOES NOT exist.
         await refs[3].create({ score: 123 });
         const options = { firestoreTypes: { Timestamp, GeoPoint, DocumentReference } };
-        const { snapshot, manifest, summary } = await captureQuizHubEmulatorSnapshot(db, options);
+        const captured = await captureStableQuizHubEmulatorSnapshot(db, options);
+        const { snapshot, manifest, summary } = captured;
+        const sealed = sealQuizHubEmulatorBackup(captured);
+        assert.equal(sealed.state, 'complete');
+        assert.equal(sealed.metadata.documentCount, 4);
+        assert.throws(() => sealQuizHubEmulatorBackup({ ...captured, summary: { ...summary, stableAcrossTwoPasses: false } }), /UNSTABLE_OR_INCOMPLETE_EMULATOR_CAPTURE/);
+        const truncated = structuredClone(sealed);
+        truncated.snapshot.users.pop();
+        await assert.rejects(restoreSealedQuizHubBackupInEmulator(db, truncated, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR', ...options
+        }), /INCOMPLETE_OR_CORRUPT_EMULATOR_BACKUP_PACKAGE/);
+        await assert.rejects(restoreSealedQuizHubBackupInEmulator(db, { ...sealed, state: 'writing' }, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR', ...options
+        }), /INCOMPLETE_EMULATOR_BACKUP_PACKAGE/);
         assert.equal(summary.documentCount, 4);
         assert.equal(summary.consistentAtSingleInstant, false);
         assert.equal(Object.keys(snapshot).length, protectedQuizHubManifestKeys().length);
@@ -58,7 +72,7 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
             ...options
         }), /BACKUP_INTEGRITY_NOT_VERIFIED/);
         for (const ref of refs) assert.equal((await ref.get()).exists, false);
-        const restored = await restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, {
+        const restored = await restoreSealedQuizHubBackupInEmulator(db, sealed, {
             confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
             ...options
         });
