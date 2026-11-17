@@ -123,3 +123,44 @@ test('two-pass capture rejects a document changed between passes', async () => {
         await deleteApp(app);
     }
 });
+
+
+test('unknown root blocks capture without modifying the fixture', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'unknown-root-' + randomUUID());
+    const db = getFirestore(app);
+    const ref = db.doc('untrackedCollection/' + randomUUID().replaceAll('-', ''));
+    try {
+        await ref.create({ shouldSurvive: true });
+        await assert.rejects(
+            captureStableQuizHubEmulatorSnapshot(db),
+            /UNKNOWN_ROOT_EMULATOR_COLLECTION/
+        );
+        assert.equal((await ref.get()).data().shouldSurvive, true);
+    } finally {
+        await ref.delete();
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
+
+test('two-pass capture rejects a nested document deleted between passes', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'deleted-nested-' + randomUUID());
+    const db = getFirestore(app);
+    const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
+    const ref = db.doc('dailyPrizes/2099-' + suffix + '/users/u_' + suffix);
+    try {
+        // This nested document has a deliberately absent parent.
+        await ref.create({ item: 'reward', claimed: false });
+        await assert.rejects(
+            captureStableQuizHubEmulatorSnapshot(db, {
+                betweenPasses: async () => ref.delete()
+            }),
+            /EMULATOR_SNAPSHOT_CHANGED_DURING_CAPTURE/
+        );
+        assert.equal((await ref.get()).exists, false);
+    } finally {
+        await ref.delete();
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
