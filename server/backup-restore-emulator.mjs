@@ -103,7 +103,11 @@ export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedMan
     });
     const integrity = verifyBackupIntegrity(restored, expectedManifest);
     if (result.status !== 'preserved' || !integrity.matched) {
-        throw new Error('EMULATOR_RESTORE_VERIFICATION_FAILED');
+        const actual = createBackupIntegrityManifest(restored);
+        const failedCollections = Object.keys(actual.collections).filter(key =>
+            actual.collections[key].sha256 !== expectedManifest.collections[key]?.sha256);
+        // Diagnostics contain collection LABELS only, never private document IDs or values.
+        throw new Error('EMULATOR_RESTORE_VERIFICATION_FAILED: ' + failedCollections.join(','));
     }
     return {
         status: 'verified',
