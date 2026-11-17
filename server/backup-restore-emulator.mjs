@@ -74,8 +74,16 @@ export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedMan
         value.__quizhub_firestore_type_v1 === 'date' ||
         Object.values(value).some(hasDateTag)
     );
+    const hasSubMicrosecondTimestamp = value => value && typeof value === 'object' && (
+        (value.__quizhub_firestore_type_v1 === 'timestamp' &&
+            Number.isInteger(value.nanoseconds) && value.nanoseconds % 1000 !== 0) ||
+        Object.values(value).some(hasSubMicrosecondTimestamp)
+    );
     const decoded = plan.operations.map(operation => {
         if (hasDateTag(operation.data)) throw new Error('FIRESTORE_DATE_REQUIRES_TIMESTAMP_CANONICALIZATION');
+        if (hasSubMicrosecondTimestamp(operation.data)) {
+            throw new Error('FIRESTORE_TIMESTAMP_PRECISION_EXCEEDS_MICROSECONDS');
+        }
         const data = decodeFirestoreBackupData(operation.data, codec);
         const normalized = encodeFirestoreBackupData(data, codec);
         if (!isDeepStrictEqual(normalized, operation.data)) {
