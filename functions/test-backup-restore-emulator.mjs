@@ -142,3 +142,27 @@ test('unsupported tagged Date is blocked BEFORE any Firestore write', async () =
         await deleteApp(app);
     }
 });
+
+test('sub-microsecond Firestore Timestamp is rejected before any document is created', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'submicro-' + randomUUID());
+    const db = getFirestore(app);
+    const snapshot = fixture(randomUUID().replaceAll('-', '').slice(0, 12));
+    snapshot.users[0].data.joinedAt = {
+        __quizhub_firestore_type_v1: 'timestamp',
+        seconds: 1700000000,
+        nanoseconds: 987654321
+    };
+    try {
+        await assert.rejects(
+            restoreQuizHubSnapshotInEmulator(db, snapshot, createBackupIntegrityManifest(snapshot), {
+                confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+                firestoreTypes: { Timestamp, GeoPoint, DocumentReference }
+            }),
+            /FIRESTORE_TIMESTAMP_PRECISION_EXCEEDS_MICROSECONDS/
+        );
+        assert.equal((await db.collection('users').doc(snapshot.users[0].id).get()).exists, false);
+    } finally {
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
