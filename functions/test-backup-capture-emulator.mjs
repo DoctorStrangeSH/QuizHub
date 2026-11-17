@@ -203,3 +203,26 @@ test('two-pass capture rejects a nested document deleted between passes', async 
         await deleteApp(app);
     }
 });
+
+
+test('empty protected snapshot is a valid no-op restore rehearsal', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'empty-restore-' + randomUUID());
+    const db = getFirestore(app);
+    try {
+        const capture = await captureStableQuizHubEmulatorSnapshot(db);
+        assert.equal(capture.summary.documentCount, 0);
+        const sealed = sealQuizHubEmulatorBackup(capture);
+        const preflight = await preflightSealedQuizHubRestoreInEmulator(db, sealed);
+        assert.equal(preflight.status, 'ready');
+        assert.equal(preflight.documentCount, 0);
+        const result = await restoreSealedQuizHubBackupInEmulator(db, sealed, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR'
+        });
+        assert.equal(result.status, 'verified');
+        assert.equal(result.restoredDocuments, 0);
+        assert.equal(result.rootSha256, sealed.manifest.rootSha256);
+    } finally {
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
