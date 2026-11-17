@@ -74,3 +74,31 @@ export async function captureQuizHubEmulatorSnapshot(db, {
         }
     };
 }
+
+
+// A two-pass stability probe for a disposable emulator. Matching hashes
+// detect many concurrent-write races, but cannot establish a point-in-time
+// export: writes can occur between reads or be reverted between passes.
+export async function captureStableQuizHubEmulatorSnapshot(db, {
+    betweenPasses,
+    ...options
+} = {}) {
+    assertIsolatedQuizHubEmulator();
+    if (betweenPasses !== undefined && typeof betweenPasses !== 'function') {
+        throw new TypeError('INVALID_EMULATOR_BETWEEN_PASSES_HOOK');
+    }
+    const first = await captureQuizHubEmulatorSnapshot(db, options);
+    if (betweenPasses) await betweenPasses();
+    const second = await captureQuizHubEmulatorSnapshot(db, options);
+    if (first.manifest.rootSha256 !== second.manifest.rootSha256) {
+        throw new Error('EMULATOR_SNAPSHOT_CHANGED_DURING_CAPTURE');
+    }
+    return {
+        ...second,
+        summary: {
+            ...second.summary,
+            stableAcrossTwoPasses: true,
+            consistentAtSingleInstant: false
+        }
+    };
+}
