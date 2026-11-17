@@ -53,6 +53,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/profile-read-source.test.mjs
       - name: Test collision-safe nickname claims migration planner
         run: node --experimental-default-type=module --test tests/nickname-claims-backfill.test.mjs
+      - name: Audit legacy account migration readiness without writes
+        run: node --experimental-default-type=module --test tests/legacy-account-audit.test.mjs
       - name: Test trusted public profile synchronization
         run: node --experimental-default-type=module --test tests/server-public-profile-sync.test.mjs
       - name: Test dry-run public profile migration planner
