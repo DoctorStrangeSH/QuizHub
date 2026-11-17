@@ -233,3 +233,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Emulator tests now seed an unrecognized root collection and require the collector to fail closed without changing its document.
 - A second test creates a protected nested `dailyPrizes/{date}/users/{uid}` document whose parent does not exist, then removes it between capture passes. The two-pass checker must reject the now-incomplete snapshot.
 - These checks cover specific failure modes, **not** a proof that the repository inventory includes every collection in a live Firestore database. The production inventory and a coordinated consistent export still require independent review.
+
+
+## Complete-package emulator restore gate (2026-11-17)
+
+- `server/backup-package-emulator.mjs` adds a versioned `complete` envelope, emitted only for a verified two-pass emulator capture. It records the manifest root and total protected-document count.
+- `restoreSealedQuizHubBackupInEmulator` checks the exact envelope structure, required protected collections, document count and SHA-256 integrity **before** invoking the existing create-only emulator restore.
+- The integration suite rejects a simulated `writing` state and a truncated player snapshot, then restores a valid sealed capture and compares the resulting checksum.
+- The envelope helps reject **accidentally incomplete artifacts**; it is not a cryptographic signature, cannot prevent a malicious actor from forging an internally consistent file, and does not replace a production-consistent export or secure external storage.
