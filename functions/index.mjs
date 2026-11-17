@@ -12,6 +12,8 @@ import { createQuizFirestoreStore } from '../server/quiz-firestore-store.mjs';
 import { createQuizService } from '../server/quiz-service.mjs';
 import { createAuthenticatedQuizHandler } from '../server/authenticated-quiz-handler.mjs';
 import { createQuizCallableAdapter } from '../server/firebase-quiz-callable-adapter.mjs';
+import { createPlayerProfile } from '../server/profile-create.mjs';
+import { createProfileCallableAdapter } from '../server/profile-create-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -50,4 +52,26 @@ export const quizSessionPreview = onCall({
         throw new HttpsError('failed-precondition', 'QUIZ_PREVIEW_DISABLED');
     }
     return quizPreview(request);
+});
+
+
+// Preview of authenticated profile registration: only runs in the isolated
+// Auth + Firestore + Functions emulators. Production browser registration is
+// unchanged until legacy nickname claims and Firestore rules are migrated.
+const profilePreview = createProfileCallableAdapter({
+    create: args => createPlayerProfile(getFirestore(), args),
+    HttpsError
+});
+export const profileCreatePreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'PROFILE_CREATE_PREVIEW_DISABLED');
+    }
+    return profilePreview(request);
 });
