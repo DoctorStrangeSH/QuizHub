@@ -89,13 +89,13 @@ test('emulator restores typed Firestore fields, then re-encodes readback for exa
     const snapshot = fixture(suffix);
     snapshot.users[0].data = encodeFirestoreBackupData({
         ...snapshot.users[0].data,
-        joinedAt: new Timestamp(1700000000, 987654321),
+        joinedAt: new Timestamp(1700000000, 987654000),
         location: new GeoPoint(60.1234, 24.9876),
         portrait: Buffer.from([1, 20, 255]),
         teammate: db.collection('users').doc('friend_' + suffix)
     }, options);
     snapshot.chatMessages[0].data = encodeFirestoreBackupData({
-        text: 'Timestamp-backed chat', sentAt: new Timestamp(1700000001, 123456789)
+        text: 'Timestamp-backed chat', sentAt: new Timestamp(1700000001, 123456000)
     }, options);
     const manifest = createBackupIntegrityManifest(snapshot);
     const plan = planQuizHubEmulatorRestore(snapshot, manifest);
@@ -108,10 +108,10 @@ test('emulator restores typed Firestore fields, then re-encodes readback for exa
         assert.equal(result.status, 'verified');
         assert.equal(result.rootSha256, manifest.rootSha256);
         const saved = (await db.collection('users').doc(snapshot.users[0].id).get()).data();
-        assert.equal(saved.joinedAt.nanoseconds, 987654321);
+        assert.equal(saved.joinedAt.nanoseconds, 987654000);
         assert.deepEqual(saved.portrait, Buffer.from([1, 20, 255]));
         assert.equal(saved.teammate.path, 'users/friend_' + suffix);
-        assert.equal((await db.doc(plan.operations.find(x => x.key === 'chatMessages').path).get()).data().sentAt.nanoseconds, 123456789);
+        assert.equal((await db.doc(plan.operations.find(x => x.key === 'chatMessages').path).get()).data().sentAt.nanoseconds, 123456000);
     } finally {
         await Promise.all(refs.reverse().map(ref => ref.delete()));
         await db.terminate();
