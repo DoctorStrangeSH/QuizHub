@@ -241,3 +241,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - `restoreSealedQuizHubBackupInEmulator` checks the exact envelope structure, required protected collections, document count and SHA-256 integrity **before** invoking the existing create-only emulator restore.
 - The integration suite rejects a simulated `writing` state and a truncated player snapshot, then restores a valid sealed capture and compares the resulting checksum.
 - The envelope helps reject **accidentally incomplete artifacts**; it is not a cryptographic signature, cannot prevent a malicious actor from forging an internally consistent file, and does not replace a production-consistent export or secure external storage.
+
+
+## Read-only restore conflict preflight (2026-11-17)
+
+- `preflightSealedQuizHubRestoreInEmulator` checks the sealed package and queries the intended target documents without writing. It reports only aggregate conflict counts, required collection count, checksum and whether restoration is currently `ready` or `blocked_existing_documents`.
+- The emulator test sees four conflicts before fixture deletion and zero after deletion; neither preflight changes existing records or exposes private UIDs in its report.
+- **Not a lock:** records can change after this diagnostic. The create-only Firestore transaction in `restoreQuizHubSnapshotInEmulator` still independently checks for conflicts before writes and must remain authoritative.
