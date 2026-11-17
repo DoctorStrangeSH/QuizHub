@@ -93,7 +93,7 @@ export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedMan
     });
     await db.runTransaction(async tx => {
         // Firestore transactions must finish every read before the first write.
-        const current = await tx.getAll(...refs);
+        const current = refs.length ? await tx.getAll(...refs) : [];
         if (current.some(doc => doc.exists)) throw new Error('RESTORE_TARGET_ALREADY_EXISTS');
         for (let i = 0; i < refs.length; i++) tx.create(refs[i], decoded[i]);
     });
