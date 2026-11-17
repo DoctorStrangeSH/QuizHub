@@ -20,7 +20,8 @@ export function verifyLegacyDataPreservation(before, after, {
         const byId = new Map();
         for (const record of records) {
             if (typeof record?.id !== 'string' || !record.id ||
-                record.id.includes('/') || !Object.hasOwn(record, 'data') ||
+                record.id.split('/').some(segment => !segment || segment === '.' || segment === '..') ||
+                !Object.hasOwn(record, 'data') ||
                 byId.has(record.id)) {
                 throw new TypeError('INVALID_OR_DUPLICATE_SNAPSHOT_RECORD: ' + collection);
             }
