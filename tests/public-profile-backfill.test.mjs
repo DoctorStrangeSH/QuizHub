@@ -37,8 +37,32 @@ test('invalid profiles and duplicate UIDs are quarantined without leaking source
         user('b', '<script>'),
         { uid: '../bad', data: { nickname: 'PlayerGood', email: 'sensitive@example.test' } }
     ]);
-    assert.equal(result.writeCount, 1);
-    assert.equal(result.invalidCount, 3);
+    assert.equal(result.writeCount, 0);
+    assert.equal(result.invalidCount, 4);
     assert.ok(!JSON.stringify(result).includes('sensitive@example.test'));
     assert.throws(() => planPublicProfileBackfill([], [], { batchSize: 401 }), /Batch size/);
+});
+
+test('duplicate nicknames in different letter case quarantine all owners', () => {
+    const result = planPublicProfileBackfill([
+        user('a', 'Sherlock'), user('b', 'SHERLOCK'), user('c', 'UniquePlayer')
+    ]);
+    assert.deepEqual(result.conflicts, ['a', 'b']);
+    assert.deepEqual(result.batches.flat().map(item => item.path), ['publicProfiles/c']);
+});
+
+test('public profile backfill is stable regardless of user snapshot ordering', () => {
+    const accounts = [user('z', 'ZuluPlayer'), user('b', 'BravoPlayer'), user('a', 'AlphaPlayer')];
+    const forward = planPublicProfileBackfill(accounts, [], { batchSize: 2 });
+    const reverse = planPublicProfileBackfill([...accounts].reverse(), [], { batchSize: 2 });
+    assert.deepEqual(forward, reverse);
+});
+
+test('existing divergent public data remains blocked even if it contains private fields', () => {
+    const result = planPublicProfileBackfill([user('a', 'PlayerOne')], [{
+        uid: 'a', data: { nickname: 'PlayerOne', email: 'private@example.test' }
+    }]);
+    assert.equal(result.writeCount, 0);
+    assert.deepEqual(result.conflicts, ['a']);
+    assert.ok(!JSON.stringify(result).includes('private@example.test'));
 });
