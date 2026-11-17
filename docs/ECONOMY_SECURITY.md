@@ -226,3 +226,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - An emulator integration test deliberately changes a seeded player's coin balance between reads and confirms the capture fails, leaving that changed fixture untouched until test cleanup.
 - Matching passes are **not** a point-in-time consistent snapshot: writes can occur within a pass or be reverted between passes. The response explicitly keeps `consistentAtSingleInstant: false`.
 - **Production release remains blocked:** coordinate a real write freeze or use a supported consistent export mechanism, independently validate the complete inventory and verify a recoverable snapshot before any migration.
+
+
+## Completeness failure scenarios (2026-11-17)
+
+- Emulator tests now seed an unrecognized root collection and require the collector to fail closed without changing its document.
+- A second test creates a protected nested `dailyPrizes/{date}/users/{uid}` document whose parent does not exist, then removes it between capture passes. The two-pass checker must reject the now-incomplete snapshot.
+- These checks cover specific failure modes, **not** a proof that the repository inventory includes every collection in a live Firestore database. The production inventory and a coordinated consistent export still require independent review.
