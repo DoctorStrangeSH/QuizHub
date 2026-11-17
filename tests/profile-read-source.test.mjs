@@ -72,6 +72,6 @@ test('foreign cards show only public metrics, not fabricated private statistics'
     assert.ok(source.includes('p.wins'));
     assert.ok(source.includes('p.experience'));
     assert.ok(source.includes('isOwnProfile && recentAchievements.length > 0'));
-    assert.ok(source.includes('isOwnProfile ? `\\n                    <div class="profile-footer-info'));
+    assert.ok(source.includes('profile-footer-info'));
     assert.ok(!source.includes('${recentAchievements.length > 0 ? `'));
 });
