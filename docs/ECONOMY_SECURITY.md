@@ -255,3 +255,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - An integration test now runs a clean preflight, then simulates a competing writer creating an intended destination document before restore.
 - The create-only transaction must reject with `RESTORE_TARGET_ALREADY_EXISTS`; the competing writer's document is unchanged and none of the other snapshot records may be restored.
 - After removing only that disposable test fixture, the original sealed snapshot can be restored and verified normally. This tests all-or-nothing conflict handling in the emulator, **not** production recovery readiness.
+
+
+## PR #2 final review edge case (2026-11-17)
+
+- Reviewed the branch diff against `main`: the changes are limited to emulator-only backup capture/package, their test workflow, docs and a one-line existing emulator-restorer guard.
+- Found and fixed an empty-backup edge case: invoking Firestore transaction `getAll()` with zero document references could fail. Empty protected snapshots now perform a verified no-op restore.
+- A dedicated emulator integration test checks zero-document capture, sealing, preflight and restore, with the same root checksum.
+- **No production safety claim:** these routines still require `demo-quizhub` and a localhost Firestore emulator. Existing deployed app, rules and real player data remain unchanged.
