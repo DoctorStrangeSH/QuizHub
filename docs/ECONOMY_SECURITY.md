@@ -263,3 +263,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Found and fixed an empty-backup edge case: invoking Firestore transaction `getAll()` with zero document references could fail. Empty protected snapshots now perform a verified no-op restore.
 - A dedicated emulator integration test checks zero-document capture, sealing, preflight and restore, with the same root checksum.
 - **No production safety claim:** these routines still require `demo-quizhub` and a localhost Firestore emulator. Existing deployed app, rules and real player data remain unchanged.
+
+
+## Foreign profile UI redaction while migration is pending (2026-11-17)
+
+- `projectProfileForViewer` now strips foreign player objects down to the same trusted public projection used by server sync. `loadProfile` and foreign card rendering call this projection before returning/rendering data; coin badges show only for the owner's card.
+- Tests cover spoofed IDs, email, balance, admin flags, friend arrays and malformed public identities. The profile read migration flag remains disabled so existing gameplay/query behavior is not switched.
+- **Critical limitation:** this is UI/data-flow redaction only. The legacy browser still downloads `users/{otherUid}` where rules allow it, so private fields can remain visible in network traffic. Actual privacy requires backfilling `publicProfiles`, changing all foreign queries, and deploying reviewed Firestore rules. Do not describe this change as secured profile reads.
