@@ -1,4 +1,6 @@
 import { getState } from '../../../store/state.js';
+import { calculateQuizRewards } from '../rewards.js';
+import { escapeHTML } from '../escape-html.js';
 import { auth, db, doc, getDoc, updateDoc, increment } from '../../../firebase-config.js';
 
 const CATEGORY_NAMES = {
@@ -6,6 +8,7 @@ const CATEGORY_NAMES = {
     history: { ru: 'История', en: 'History' },
     sports: { ru: 'Спорт', en: 'Sports' },
     movies: { ru: 'Кино', en: 'Movies' },
+    gaming: { ru: 'Видеоигры', en: 'Video Games' },
     geography: { ru: 'География', en: 'Geography' },
     technology: { ru: 'Технологии', en: 'Technology' },
     art: { ru: 'Искусство', en: 'Art' },
@@ -18,7 +21,7 @@ const CATEGORY_NAMES = {
 };
 
 const CATEGORY_ICONS = {
-    science: '🔬', history: '📜', sports: '⚽', movies: '🎬',
+    science: '🔬', history: '📜', sports: '⚽', movies: '🎬', gaming: '🎮',
     geography: '🌍', technology: '💻', art: '🎨', music: '🎵',
     it: '🖥️', literature: '📖', food: '🍕', animals: '🦁', space: '🚀'
 };
@@ -28,18 +31,43 @@ export class BaseMode {
         this.questions = [];
         this.currentIndex = 0;
         this.score = 0;
+        this.earnedCoins = 0;
+        this.earnedXP = 0;
+        this.saveStatus = 'pending';
         this.correctAnswers = 0;
+        this.feedbackStreak = 0;
+        this.bestFeedbackStreak = 0;
+        this.hasAnswered = false;
         this.isFinished = false;
+        this.isDisposed = false;
+        this.isTransitioning = false;
+        this.resultsPromise = null;
+        this.pendingTransition = null;
         this.type = 'base';
     }
 
     async init(allQuestions, settings) {
+        // A reused mode must not receive callbacks from the previous run.
+        if (this.pendingTransition !== null) {
+            clearTimeout(this.pendingTransition);
+            this.pendingTransition = null;
+        }
+        this.clearTimer?.();
         this.questions = this.shuffleArray([...allQuestions]);
         this.settings = settings;
         this.currentIndex = 0;
         this.score = 0;
+        this.earnedCoins = 0;
+        this.earnedXP = 0;
+        this.saveStatus = 'pending';
         this.correctAnswers = 0;
+        this.feedbackStreak = 0;
+        this.bestFeedbackStreak = 0;
+        this.hasAnswered = false;
         this.isFinished = false;
+        this.isDisposed = false;
+        this.isTransitioning = false;
+        this.resultsPromise = null;
     }
 
     shuffleArray(arr) {
@@ -84,8 +112,8 @@ export class BaseMode {
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="text-secondary">${this.getProgressText()}</span>
                         <div class="d-flex align-items-center gap-3">
-                            <span class="text-secondary small">${catIcon} ${catName}</span>
-                            <span class="text-gradient fw-bold">${this.score} очков</span>
+                            <span class="text-secondary small">${catIcon} ${escapeHTML(catName)}</span>
+                            <span class="text-gradient fw-bold" data-live-score>${this.score} ${isRU ? 'очков' : 'points'}</span>
                         </div>
                     </div>
                     ${this.renderProgressBar()}
@@ -93,19 +121,23 @@ export class BaseMode {
                 
                 <div class="quiz-question-card glass-card animate-in animate-in-delay-1">
                     ${this.renderModeSpecificHeader()}
-                    <h3 class="question-text">${qText}</h3>
+                    <div class="quiz-question-kicker"><span class="quiz-kicker-dot" aria-hidden="true"></span>${isRU ? 'ВОПРОС РАУНДА' : 'ROUND QUESTION'}</div>
+                    <h3 class="question-text">${escapeHTML(qText)}</h3>
                 </div>
                 
                 <div class="quiz-answers animate-in animate-in-delay-2" id="answers-container">
                     ${shuffled.map((opt, i) => `
-                        <div class="answer-card glass-card" data-index="${i}" data-correct="${opt.isCorrect}" onclick="window.${this.getAnswerHandler()}">
+                        <div class="answer-card glass-card" role="button" tabindex="0" aria-pressed="false" data-index="${i}" data-correct="${opt.isCorrect}" onclick="window.${this.getAnswerHandler()}" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();window.${this.getAnswerHandler()}}">
                             <span class="answer-letter">${String.fromCharCode(65 + i)}</span>
-                            <span class="answer-text">${opt.text}</span>
+                            <span class="answer-text">${escapeHTML(opt.text)}</span>
                             <span class="answer-icon"></span>
                         </div>
                     `).join('')}
                 </div>
                 
+                <div id="answer-feedback" class="answer-feedback" role="status" aria-live="polite" hidden></div>
+                <div id="answer-explanation" class="glass-card mt-3 animate-in" aria-label="${isRU ? 'Разбор ответа' : 'Answer explanation'}" style="display:none;"></div>
+
                 <div class="text-center mt-4" id="next-btn-container" style="display:none;">
                     <button class="btn-premium btn-next" onclick="window.nextQuestion()">${this.getNextButtonText()}</button>
                 </div>
@@ -120,13 +152,19 @@ export class BaseMode {
     getNextButtonText() { return 'Далее →'; }
 
     handleAnswer(el) {
-        if (el.classList.contains('answered')) return;
-
         const container = document.getElementById('answers-container');
+        // An old answer element can still dispatch a click after navigation.
+        if (!el || !container?.contains(el)) return;
+        if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
+        this.hasAnswered = true;
         const allCards = container.querySelectorAll('.answer-card');
 
-        allCards.forEach(c => c.classList.add('answered'));
+        allCards.forEach(c => {
+            c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
+        });
         el.classList.add('selected');
+        el.setAttribute('aria-pressed', 'true');
 
         allCards.forEach(c => {
             const icon = c.querySelector('.answer-icon');
@@ -141,6 +179,8 @@ export class BaseMode {
 
         const isCorrect = el.dataset.correct === 'true';
         const points = this.questions[this.currentIndex].points;
+        const previousScore = this.score;
+        this.recordFeedbackStreak(isCorrect);
 
         if (isCorrect) {
             this.score += points;
@@ -148,6 +188,8 @@ export class BaseMode {
         }
 
         this.onAnswer(isCorrect, points);
+        this.showAnswerFeedback(isCorrect, this.score - previousScore);
+        this.showAnswerExplanation();
 
         document.getElementById('next-btn-container').style.display = 'block';
         document.getElementById('next-btn-container').classList.add('animate-in');
@@ -155,25 +197,111 @@ export class BaseMode {
 
     onAnswer(isCorrect, points) { }
 
+    recordFeedbackStreak(isCorrect) {
+        this.feedbackStreak = isCorrect ? this.feedbackStreak + 1 : 0;
+        this.bestFeedbackStreak = Math.max(this.bestFeedbackStreak, this.feedbackStreak);
+    }
+
+    showAnswerFeedback(isCorrect, points, reason = 'answer') {
+        const feedback = document.getElementById('answer-feedback');
+        if (!feedback) return;
+        const isRU = getState().language !== 'en';
+        feedback.dataset.result = reason === 'timeout' ? 'timeout' : isCorrect ? 'correct' : 'wrong';
+        feedback.replaceChildren();
+        const symbol = document.createElement('span');
+        symbol.className = 'answer-feedback-symbol';
+        symbol.setAttribute('aria-hidden', 'true');
+        symbol.textContent = reason === 'timeout' ? '⏱' : isCorrect ? '✓' : '↗';
+        const message = document.createElement('strong');
+        message.textContent = reason === 'timeout'
+            ? (isRU ? 'Время вышло! Правильный ответ ниже' : 'Time is up! See the correct answer below')
+            : isCorrect
+                ? (isRU ? 'Верно! Отличный ход' : 'Correct! Great move')
+                : (isRU ? 'Почти! Запомни правильный ответ' : 'Not quite! Learn the right answer');
+        feedback.append(symbol, message);
+        if (isCorrect && this.feedbackStreak >= 2) {
+            const combo = document.createElement('span');
+            combo.className = 'answer-feedback-combo';
+            combo.textContent = '🔥 ' + this.feedbackStreak + (isRU ? ' подряд' : ' in a row');
+            feedback.append(combo);
+        }
+        if (isCorrect && Number.isFinite(points) && points > 0) {
+            const reward = document.createElement('span');
+            reward.className = 'answer-feedback-points';
+            reward.textContent = '+' + points + (isRU ? ' очков' : ' points');
+            feedback.append(reward);
+        }
+        feedback.hidden = false;
+        const score = document.querySelector('[data-live-score]');
+        if (score) score.textContent = this.score + (isRU ? ' очков' : ' points');
+    }
+
+    showAnswerExplanation() {
+        const panel = document.getElementById('answer-explanation');
+        const question = this.getCurrentQuestion();
+        if (!panel || !question) return;
+
+        const isRU = getState().language !== 'en';
+        const correctOption = (isRU ? question.optionsRU : question.optionsEN)?.[question.correctIndex];
+        const explanation = isRU ? question.explanationRU : question.explanationEN;
+        const title = isRU ? '💡 Разбор ответа' : '💡 Answer explained';
+        const answerLabel = isRU ? 'Правильный ответ:' : 'Correct answer:';
+
+        // Text content avoids interpreting question data as HTML.
+        panel.replaceChildren();
+        const heading = document.createElement('strong');
+        heading.textContent = title;
+        const answer = document.createElement('p');
+        answer.className = 'mb-1 mt-2';
+        answer.textContent = `${answerLabel} ${correctOption ?? ''}`;
+        panel.append(heading, answer);
+        if (explanation) {
+            const detail = document.createElement('p');
+            detail.className = 'text-secondary mb-0';
+            detail.textContent = explanation;
+            panel.append(detail);
+        }
+        panel.style.display = 'block';
+    }
+
     async nextQuestion() {
-        if (this.isFinished) return;
+        if (this.isFinished || this.isTransitioning || !this.hasAnswered) return;
+        this.isTransitioning = true;
         this.currentIndex++;
 
         if (this.shouldEnd()) {
+            this.isFinished = true;
             await this.finishQuiz();
             return;
         }
 
         const quizContainer = document.querySelector('.quiz-container');
+        if (!quizContainer) return;
         quizContainer.style.opacity = '0';
         quizContainer.style.transform = 'translateY(20px)';
         quizContainer.style.transition = 'all 0.3s ease';
 
-        setTimeout(() => {
-            quizContainer.innerHTML = this.renderQuestion(this.currentIndex);
-            quizContainer.style.opacity = '1';
-            quizContainer.style.transform = 'translateY(0)';
+        this.pendingTransition = setTimeout(() => {
+            this.pendingTransition = null;
+            if (!quizContainer.isConnected || this.isFinished) return;
+            // renderQuestion returns a whole .quiz-container; replace, do not nest it.
+            quizContainer.outerHTML = this.renderQuestion(this.currentIndex);
+            this.hasAnswered = false;
+            this.isTransitioning = false;
+            this.afterQuestionRendered();
         }, 300);
+    }
+
+    afterQuestionRendered() { }
+
+    dispose() {
+        this.isDisposed = true;
+        this.isFinished = true;
+        if (this.pendingTransition !== null) {
+            clearTimeout(this.pendingTransition);
+            this.pendingTransition = null;
+        }
+        this.clearTimer?.();
     }
 
     shouldEnd() {
@@ -184,10 +312,32 @@ export class BaseMode {
         this.isFinished = true;
     }
 
-    async saveResults(extraData = {}) {
-        const user = auth.currentUser;
-        if (!user) return;
+    getSaveStatusHTML() {
+        const isEN = getState().language === 'en';
+        const statuses = {
+            saved: isEN ? '✅ Rewards saved to your profile.' : '✅ Награды сохранены в профиле.',
+            failed: isEN ? '⚠️ Could not confirm the reward. Check your connection and profile before playing again.' : '⚠️ Не удалось подтвердить награду. Проверь соединение и профиль перед новой игрой.',
+            guest: isEN ? 'ℹ️ Sign in to save rewards.' : 'ℹ️ Войди в аккаунт, чтобы сохранять награды.',
+            saving: isEN ? '⏳ Saving rewards…' : '⏳ Сохраняем награды…'
+        };
+        const message = statuses[this.saveStatus] || '';
+        return message ? `<p class="text-secondary small mt-3" role="status">${message}</p>` : '';
+    }
 
+    async saveResults(extraData = {}) {
+        if (this.resultsPromise) return this.resultsPromise;
+        this.resultsPromise = this.persistResults(extraData);
+        return this.resultsPromise;
+    }
+
+    async persistResults(extraData = {}) {
+        const user = auth.currentUser;
+        if (!user) {
+            this.saveStatus = 'guest';
+            return false;
+        }
+
+        this.saveStatus = 'saving';
         let xpMultiplier = 1;
         let coinMultiplier = 1;
         try {
@@ -195,38 +345,58 @@ export class BaseMode {
             const multipliers = eventsModule.getMultipliers();
             xpMultiplier = multipliers.xpMultiplier;
             coinMultiplier = multipliers.coinMultiplier;
-        } catch (e) { }
+        } catch (error) {
+            console.warn('Не удалось загрузить бонусы событий:', error);
+        }
 
-        const totalXP = Math.floor(this.score * xpMultiplier);
-        const totalCoins = Math.floor((this.score / 2) * coinMultiplier);
+        const { xp: totalXP, coins: totalCoins } = calculateQuizRewards(this.score, {
+            xpMultiplier, coinMultiplier
+        });
+        const userRef = doc(db, 'users', user.uid);
 
+        // Keep a single, non-retried write per session. A client-side retry of
+        // increment() can duplicate rewards if the first request did commit.
         try {
-            const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, {
                 experience: increment(totalXP),
-                weeklyExperience: increment(totalXP),  // 🔥 ДОБАВЛЕНО
+                weeklyExperience: increment(totalXP),
                 coins: increment(totalCoins),
                 quizzesCompleted: increment(1),
                 'stats.totalGames': increment(1),
-                'stats.totalQuestions': increment(this.correctAnswers + (this.currentIndex + 1 - this.correctAnswers)),
+                'stats.totalQuestions': increment(Math.min(this.currentIndex, this.questions.length)),
                 'stats.correctAnswers': increment(this.correctAnswers),
                 ...extraData
             });
+        } catch (error) {
+            this.saveStatus = 'failed';
+            console.error('Не удалось подтвердить сохранение награды:', error);
+            return false;
+        }
 
+        // A successful reward write remains successful even when secondary
+        // profile-level calculations or achievements fail.
+        this.earnedXP = totalXP;
+        this.earnedCoins = totalCoins;
+        this.saveStatus = 'saved';
+
+        try {
             const userDoc = await getDoc(userRef);
-            const data = userDoc.data();
+            const data = userDoc.data() || {};
             const newLevel = Math.floor((data.experience || 0) / 100) + 1;
             if (newLevel > (data.level || 1)) {
                 await updateDoc(userRef, { level: newLevel });
             }
-
-            try {
-                const achModule = await import('../../achievements/achievements.js');
-                await achModule.checkAchievements();
-            } catch (e) { }
-
         } catch (error) {
-            console.error('Ошибка сохранения:', error);
+            console.warn('Награда сохранена, но уровень не обновлён:', error);
         }
+
+        try {
+            const achModule = await import('../../achievements/achievements.js');
+            await achModule.checkAchievements();
+        } catch (error) {
+            console.warn('Награда сохранена, но достижения не проверены:', error);
+        }
+
+        return true;
     }
 }

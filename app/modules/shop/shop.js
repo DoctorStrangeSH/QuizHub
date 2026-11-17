@@ -7,16 +7,16 @@ export function renderShop() {
         <div class="dashboard-layout">
             <div class="sidebar-overlay" id="sidebar-overlay" onclick="window.closeSidebar()"></div>
             <aside class="dashboard-sidebar glass-card" id="sidebar">
-                <div class="sidebar-header"><div class="sidebar-logo">👑</div><h3 class="sidebar-title text-gradient">Quiz Empire</h3></div>
+                <div class="sidebar-header"><div class="sidebar-logo arcade-mark" aria-hidden="true"><i class="bi bi-hexagon-fill"></i><span>Q</span></div><h3 class="sidebar-title text-gradient">QuizHub</h3></div>
                 <nav class="sidebar-nav">
-                    <a class="sidebar-link" onclick="window.navigateTo('home'); window.closeSidebar();"><span class="sidebar-link-icon">🏠</span><span>Главная</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('chat'); window.closeSidebar();"><span class="sidebar-link-icon">💬</span><span>Чат</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('friends'); window.closeSidebar();"><span class="sidebar-link-icon">👥</span><span>Друзья</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('leaderboard'); window.closeSidebar();"><span class="sidebar-link-icon">🏅</span><span>Лидеры</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('achievements'); window.closeSidebar();"><span class="sidebar-link-icon">🏆</span><span>Достижения</span></a>
-                    <a class="sidebar-link active" onclick="window.navigateTo('shop'); window.closeSidebar();"><span class="sidebar-link-icon">🛒</span><span>Магазин</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('profile'); window.closeSidebar();"><span class="sidebar-link-icon">👤</span><span>Профиль</span></a>
-                    <a class="sidebar-link" onclick="window.navigateTo('events'); window.closeSidebar();"><span class="sidebar-link-icon">📅</span><span>События</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('home'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-house-door-fill"></i></span><span>Главная</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('chat'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-chat-dots-fill"></i></span><span>Чат</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('friends'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-people-fill"></i></span><span>Друзья</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('leaderboard'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-trophy-fill"></i></span><span>Лидеры</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('achievements'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-award-fill"></i></span><span>Достижения</span></a>
+                    <a class="sidebar-link active" onclick="window.navigateTo('shop'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-bag-fill"></i></span><span>Магазин</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('profile'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-person-circle"></i></span><span>Профиль</span></a>
+                    <a class="sidebar-link" onclick="window.navigateTo('events'); window.closeSidebar();"><span class="sidebar-link-icon" aria-hidden="true"><i class="bi bi-calendar-event-fill"></i></span><span>События</span></a>
                 </nav>
                 <div class="sidebar-footer">
                     <button class="sidebar-btn" onclick="window.toggleTheme()">${getState().theme === 'dark' ? '☀️ Светлая' : '🌙 Тёмная'}</button>
@@ -25,8 +25,8 @@ export function renderShop() {
             </aside>
             <main class="dashboard-main">
                 <div class="dashboard-content-wrapper">
-                    <header class="mobile-header glass-card"><button class="burger-btn" onclick="window.toggleSidebar()">☰</button><span class="text-gradient fw-bold">Quiz Empire</span><div id="shop-coins-display"><span class="coins-badge">🪙 0</span></div></header>
-                    <div class="shop-header glass-card animate-in"><h3 class="mb-0 fw-bold">🛒 Магазин</h3></div>
+                    <header class="mobile-header glass-card"><button class="burger-btn" type="button" aria-label="Открыть меню" aria-controls="sidebar" aria-expanded="false" onclick="window.toggleSidebar()"><i class="bi bi-list" aria-hidden="true"></i></button><span class="text-gradient fw-bold">QuizHub</span><div id="shop-coins-display"><span class="coins-badge">🪙 0</span></div></header>
+                    <div class="shop-header glass-card animate-in"><div class="collection-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> КОЛЛЕКЦИЯ</div><h3 class="mb-0 fw-bold"><i class="bi bi-bag-heart" aria-hidden="true"></i> Магазин</h3><p class="collection-subtitle">Украшай профиль и выбирай свой стиль игры.</p></div>
                     <div class="shop-tabs glass-card animate-in animate-in-delay-1">
                         <button class="shop-tab active" data-tab="themes" onclick="window.switchShopTab('themes', this)">🎨 Темы</button>
                         <button class="shop-tab" data-tab="frames" onclick="window.switchShopTab('frames', this)">🖼️ Рамки</button>
@@ -88,7 +88,7 @@ export async function loadShopItems(tab = 'themes') {
     } catch (error) { console.error('Ошибка загрузки магазина:', error); }
 }
 
-window.switchShopTab = (tab, el) => { document.querySelectorAll('.shop-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); loadShopItems(tab); };
+window.switchShopTab = (tab, el) => { document.querySelectorAll('.shop-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); }); el.classList.add('active'); el.setAttribute('aria-selected', 'true'); loadShopItems(tab); };
 
 window.buyItem = async (itemId, price, type) => {
     const user = auth.currentUser;

@@ -6,6 +6,8 @@ const easyQuestions = [
         optionsRU: ['Венера', 'Земля', 'Меркурий', 'Марс'],
         optionsEN: ['Venus', 'Earth', 'Mercury', 'Mars'],
         correctIndex: 2,
+        explanationRU: 'Меркурий — ближайшая к Солнцу планета. Один оборот вокруг Солнца занимает у него около 88 земных суток.',
+        explanationEN: 'Mercury is the closest planet to the Sun. It takes about 88 Earth days to complete one orbit.',
         points: 10
     },
     {
@@ -14,6 +16,8 @@ const easyQuestions = [
         optionsRU: ['6', '8', '10', '12'],
         optionsEN: ['6', '8', '10', '12'],
         correctIndex: 1,
+        explanationRU: 'У пауков восемь ходильных ног: они относятся к паукообразным, а не к насекомым, у которых шесть ног.',
+        explanationEN: 'Spiders have eight walking legs. They are arachnids, not insects, which have six legs.',
         points: 10
     },
     {
@@ -22,6 +26,8 @@ const easyQuestions = [
         optionsRU: ['Кислород', 'Азот', 'Углекислый газ', 'Водород'],
         optionsEN: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'],
         correctIndex: 2,
+        explanationRU: 'В выдыхаемом воздухе углекислого газа больше, чем во вдыхаемом; при этом основную долю выдыхаемого воздуха по-прежнему составляет азот.',
+        explanationEN: 'Exhaled air contains more carbon dioxide than inhaled air, although nitrogen still makes up most of it.',
         points: 10
     },
     {
@@ -30,6 +36,8 @@ const easyQuestions = [
         optionsRU: ['5', '6', '7', '8'],
         optionsEN: ['5', '6', '7', '8'],
         correctIndex: 2,
+        explanationRU: 'В распространённой англоязычной географической модели выделяют семь континентов; в некоторых странах используют модели с шестью.',
+        explanationEN: 'The commonly taught seven-continent model is used in many countries; other education systems use a six-continent model.',
         points: 10
     },
     {
@@ -38,6 +46,8 @@ const easyQuestions = [
         optionsRU: ['Сатурн', 'Юпитер', 'Нептун', 'Земля'],
         optionsEN: ['Saturn', 'Jupiter', 'Neptune', 'Earth'],
         correctIndex: 1,
+        explanationRU: 'Юпитер — самая большая планета Солнечной системы, газовый гигант с массой более чем в два раза больше массы всех остальных планет вместе.',
+        explanationEN: 'Jupiter is the largest planet in the Solar System and has more than twice the mass of all the other planets combined.',
         points: 10
     },
     {
@@ -4297,11 +4307,13 @@ const hardQuestions = [
         points: 30
     },
     {
-        questionRU: 'Какой химический символ имеет ртуть?',
-        questionEN: 'What is the chemical symbol for mercury?',
-        optionsRU: ['Me', 'Hg', 'Pb', 'Sn'],
-        optionsEN: ['Me', 'Hg', 'Pb', 'Sn'],
+        questionRU: 'Какой элемент имеет атомный номер 80?',
+        questionEN: 'Which element has atomic number 80?',
+        optionsRU: ['Золото', 'Ртуть', 'Свинец', 'Серебро'],
+        optionsEN: ['Gold', 'Mercury', 'Lead', 'Silver'],
         correctIndex: 1,
+            explanationRU: 'Атомный номер ртути — 80; он равен числу протонов в её ядре.',
+            explanationEN: 'Mercury has atomic number 80, equal to the number of protons in its nucleus.',
         points: 30
     },
     {

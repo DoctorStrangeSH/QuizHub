@@ -1,0 +1,11 @@
+# Ephemeral credentials created by google-github-actions/auth
+gha-creds-*.json
+
+# Local Firebase/Google Cloud state
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+# Generated Firebase Functions output and dependencies
+functions/node_modules/
+functions/dist/

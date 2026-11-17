@@ -1,0 +1,140 @@
+name: Question quality
+
+on:
+  push:
+    branches: [main, refactor/foundation-stability]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-questions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check authentication module syntax and UI contract
+        run: |
+          node --check app/modules/auth/auth.js
+          node --test tests/auth-interface.test.mjs
+      - name: Verify Midnight Arcade design system
+        run: node --test tests/visual-system.test.mjs
+      - name: Verify lobby design and selection behavior
+        run: node --test tests/lobby-design.test.mjs
+      - name: Verify responsive playable quiz design
+        run: node --test tests/quiz-round-design.test.mjs
+      - name: Verify accessible answer feedback and score updates
+        run: node --test tests/answer-feedback.test.mjs
+      - name: Verify quiz finale accuracy and reward presentation
+        run: node --test tests/quiz-finale-design.test.mjs
+      - name: Verify collectible shop and achievements design
+        run: node --test tests/collection-design.test.mjs
+      - name: Verify responsive player identity card
+        run: node --test tests/player-card-design.test.mjs
+      - name: Verify leaderboard arena and keyboard navigation
+        run: node --test tests/leaderboard-design.test.mjs
+      - name: Verify friends social club design and safe player names
+        run: node --test tests/social-club-design.test.mjs
+      - name: Verify messenger display and secure chat rendering
+        run: node --test tests/messenger-design.test.mjs
+      - name: Verify tournament hall and daily reward visuals
+        run: node --test tests/event-hall-design.test.mjs
+      - name: Test PWA refresh and mobile visual overrides
+        run: node --test tests/pwa-visual-refresh.test.mjs
+      - name: Verify QuizHub branded PWA and launch screen
+        run: node --test tests/brand-identity.test.mjs
+      - name: Test privacy-safe public profile projection
+        run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
+      - name: Verify centralized profile read migration gate
+        run: node --experimental-default-type=module --test tests/profile-read-source.test.mjs
+      - name: Test collision-safe nickname claims migration planner
+        run: node --experimental-default-type=module --test tests/nickname-claims-backfill.test.mjs
+      - name: Audit legacy account migration readiness without writes
+        run: node --experimental-default-type=module --test tests/legacy-account-audit.test.mjs
+      - name: Verify legacy private, social and game data preservation
+        run: node --experimental-default-type=module --test tests/legacy-data-preservation.test.mjs
+      - name: Verify repository-derived Firestore migration inventory
+        run: node --experimental-default-type=module --test tests/firestore-migration-inventory.test.mjs
+      - name: Test complete backup integrity manifests and checksums
+        run: node --experimental-default-type=module --test tests/backup-integrity.test.mjs
+      - name: Test trusted public profile synchronization
+        run: node --experimental-default-type=module --test tests/server-public-profile-sync.test.mjs
+      - name: Test dry-run public profile migration planner
+        run: node --experimental-default-type=module --test tests/public-profile-backfill.test.mjs
+      - name: Validate quiz questions
+        run: node --experimental-default-type=module scripts/validate-questions.mjs
+      - name: Test quiz rewards
+        run: node --experimental-default-type=module --test tests/quiz-rewards.test.mjs
+      - name: Test deterministic daily challenge selection
+        run: node --experimental-default-type=module --test tests/daily-challenge.test.mjs
+      - name: Test transactional server daily challenge
+        run: node --experimental-default-type=module --test tests/server-daily-challenge.test.mjs
+      - name: Test authenticated daily challenge boundary
+        run: node --experimental-default-type=module --test tests/server-authenticated-daily-challenge.test.mjs
+      - name: Test secure daily leaderboard projection
+        run: node --experimental-default-type=module --test tests/server-daily-leaderboard.test.mjs
+      - name: Test Firebase callable boundary
+        run: node --experimental-default-type=module --test tests/server-firebase-daily-callable.test.mjs
+      - name: Build Firebase Functions bundle
+        run: |
+          npm install --prefix functions --no-audit --no-fund
+          npm run --prefix functions build
+          npm run --prefix functions check
+      - name: Test Firestore daily persistence adapter
+        run: node --experimental-default-type=module --test tests/server-daily-firestore-store.test.mjs
+      - name: Test end-of-day ranking sealing
+        run: node --experimental-default-type=module --test tests/server-daily-ranking-seal.test.mjs
+      - name: Test sealed daily prize claims
+        run: node --experimental-default-type=module --test tests/server-daily-prize.test.mjs
+      - name: Test complete ranked daily flow across players
+        run: node --experimental-default-type=module --test tests/server-daily-complete-flow.test.mjs
+      - name: Test daily result summaries
+        run: node --experimental-default-type=module --test tests/daily-results.test.mjs
+      - name: Test daily challenge mode
+        run: node --experimental-default-type=module --test tests/daily-challenge-mode.test.mjs
+      - name: Test UTC daily countdown and rollover
+        run: node --experimental-default-type=module --test tests/daily-countdown.test.mjs
+      - name: Test daily challenge dashboard
+        run: node --experimental-default-type=module --test tests/daily-challenge-dashboard.test.mjs
+      - name: Test quiz session lifecycle
+        run: node --experimental-default-type=module --test tests/quiz-session.test.mjs
+      - name: Test timed events and reward boosts
+        run: node --experimental-default-type=module --test tests/quiz-events.test.mjs
+      - name: Audit quiz economy write boundary
+        run: node --experimental-default-type=module --test tests/quiz-economy-boundary.test.mjs
+      - name: Test server-side quiz session rules
+        run: node --experimental-default-type=module --test tests/server-quiz-session.test.mjs
+      - name: Test Firestore quiz session and reward adapter
+        run: node --experimental-default-type=module --test tests/server-quiz-firestore-store.test.mjs
+
+      - name: Test atomic reward claim contract
+        run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
+      - name: Test private question delivery contract
+        run: node --experimental-default-type=module --test tests/server-question-delivery.test.mjs
+      - name: Test complete server quiz lifecycle
+        run: node --experimental-default-type=module --test tests/server-quiz-service.test.mjs
+
+      - name: Test real question bank against server catalog
+        run: node --experimental-default-type=module --test tests/server-real-question-bank.test.mjs
+
+      - name: Test authenticated quiz request boundary
+        run: node --experimental-default-type=module --test tests/server-authenticated-quiz-handler.test.mjs
+
+      - name: Test verified quiz callable transport boundary
+        run: node --experimental-default-type=module --test tests/server-firebase-quiz-callable.test.mjs
+
+      - name: Test authenticated full quiz flow across users
+        run: node --experimental-default-type=module --test tests/server-authenticated-quiz-flow.test.mjs
+
+      - name: Test safe question HTML rendering
+        run: node --experimental-default-type=module --test tests/quiz-html-escaping.test.mjs
+
+      - name: Test accurate quiz countdown
+        run: node --experimental-default-type=module --test tests/quiz-timer.test.mjs
+
+      - name: Test navigating during quiz startup
+        run: node --experimental-default-type=module --test tests/quiz-render-navigation.test.mjs

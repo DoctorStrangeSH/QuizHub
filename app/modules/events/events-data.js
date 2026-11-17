@@ -169,99 +169,73 @@ export const ACTIVE_EVENTS = {
     ]
 };
 
-// Проверка активных событий
-export function getActiveEvents() {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const hour = now.getHours();
-    const monthDay = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    
-    const active = [];
-    
-    for (const event of ACTIVE_EVENTS.active) {
-        let isActive = false;
-        if (event.daysOfWeek && event.daysOfWeek.includes(dayOfWeek)) isActive = true;
-        if (event.hoursActive && event.hoursActive.includes(hour)) isActive = true;
-        if (isActive) active.push({ ...event, timeLeft: getTimeLeft(event) });
+// All event dates and hours are evaluated in the player's local time.
+function localISODate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function isWithinAnnualRange(today, start, end) {
+    // Ranges crossing New Year (e.g. 12-30 through 01-05) wrap around.
+    return start <= end
+        ? today >= start && today <= end
+        : today >= start || today <= end;
+}
+
+function isBoostActive(event, now) {
+    if (event.active === false) return false;
+    const today = localISODate(now);
+    if (event.startDate && today < event.startDate) return false;
+    if (event.endDate && today > event.endDate) return false;
+    if (event.daysOfWeek && !event.daysOfWeek.includes(now.getDay())) return false;
+    if (event.hoursActive && !event.hoursActive.includes(now.getHours())) return false;
+    return true;
+}
+
+function getTimeLeft(event, now) {
+    const end = new Date(now);
+    if (event.hoursActive?.length) {
+        // A boost ends when its current uninterrupted set of hours ends.
+        let hour = now.getHours();
+        while (hour < 24 && event.hoursActive.includes(hour)) hour++;
+        end.setHours(hour, 0, 0, 0);
+    } else if (event.daysOfWeek?.length) {
+        end.setHours(24, 0, 0, 0);
+    } else {
+        return '';
     }
-    
-    for (const holiday of ACTIVE_EVENTS.holidays) {
-        const startParts = holiday.dateStart.split('-');
-        const endParts = holiday.dateEnd.split('-');
-        const startMD = parseInt(startParts[0]) * 100 + parseInt(startParts[1]);
-        const endMD = parseInt(endParts[0]) * 100 + parseInt(endParts[1]);
-        const currentMD = parseInt(monthDay.split('-')[0]) * 100 + parseInt(monthDay.split('-')[1]);
-        
-        if (currentMD >= startMD && currentMD <= endMD) {
-            active.push({ ...holiday, active: true, timeLeft: 'До конца праздника' });
+
+    const remaining = Math.max(0, end.getTime() - now.getTime());
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    return `Ещё ${hours}ч ${minutes}м`;
+}
+
+export function getActiveEvents(now = new Date()) {
+    const monthDay = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const active = [];
+
+    for (const event of ACTIVE_EVENTS.active) {
+        if (isBoostActive(event, now)) {
+            active.push({ ...event, timeLeft: getTimeLeft(event, now) });
         }
     }
-    
+
+    for (const holiday of ACTIVE_EVENTS.holidays) {
+        if (holiday.active === false) continue;
+        if (isWithinAnnualRange(monthDay, holiday.dateStart, holiday.dateEnd)) {
+            active.push({ ...holiday, timeLeft: 'До конца праздника' });
+        }
+    }
+
     return active;
 }
 
-function getTimeLeft(event) {
-    const now = new Date();
-    
-    if (event.hoursActive && event.hoursActive.length > 0) {
-        const currentHour = now.getHours();
-        const remainingHours = event.hoursActive.filter(h => h > currentHour);
-        
-        if (remainingHours.length > 0) {
-            const nextHour = Math.min(...remainingHours);
-            const endTime = new Date();
-            endTime.setHours(nextHour, 0, 0, 0);
-            const diff = endTime - now;
-            
-            if (diff > 0) {
-                const hours = Math.floor(diff / 3600000);
-                const mins = Math.floor((diff % 3600000) / 60000);
-                return `Ещё ${hours}ч ${mins}м`;
-            }
-        } else {
-            // Все часы прошли — показываем до конца последнего часа
-            const lastHour = Math.max(...event.hoursActive);
-            const endTime = new Date();
-            endTime.setHours(lastHour + 1, 0, 0, 0);
-            const diff = endTime - now;
-            
-            if (diff > 0 && diff < 3600000) {
-                const mins = Math.floor(diff / 60000);
-                return `Ещё ${mins}м`;
-            }
-        }
-    }
-    
-    if (event.daysOfWeek && event.daysOfWeek.length > 0) {
-        const currentDay = now.getDay();
-        const remainingDays = event.daysOfWeek.filter(d => d >= currentDay);
-        
-        if (remainingDays.length > 0) {
-            const nextDay = Math.min(...remainingDays);
-            const daysUntil = nextDay - currentDay;
-            
-            if (daysUntil === 0) {
-                // Сегодня — до конца дня
-                const endOfDay = new Date();
-                endOfDay.setHours(23, 59, 59, 999);
-                const diff = endOfDay - now;
-                const hours = Math.floor(diff / 3600000);
-                const mins = Math.floor((diff % 3600000) / 60000);
-                return `Ещё ${hours}ч ${mins}м`;
-            }
-        }
-    }
-    
-    return '';
-}
-
-// Получить множители для квиза
-export function getMultipliers() {
-    const active = getActiveEvents();
+// Do not stack overlapping XP boosts; apply only the strongest active one.
+export function getMultipliers(now = new Date()) {
     let xpMultiplier = 1;
     let coinMultiplier = 1;
-    
-    for (const event of active) {
+
+    for (const event of getActiveEvents(now)) {
         if (event.effect === 'xp_multiplier') xpMultiplier = Math.max(xpMultiplier, event.multiplier);
         if (event.effect === 'coin_multiplier') coinMultiplier = Math.max(coinMultiplier, event.multiplier);
         if (event.effect === 'all_multiplier') {
@@ -269,6 +243,6 @@ export function getMultipliers() {
             coinMultiplier = Math.max(coinMultiplier, event.multiplier);
         }
     }
-    
+
     return { xpMultiplier, coinMultiplier };
 }

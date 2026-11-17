@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">QuizHub</title>
+  <desc id="desc">Геометрическая буква Q с лаймовым кольцом и фиолетовым акцентом</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#152238"/>
+      <stop offset="1" stop-color="#080d19"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#d5ff83"/>
+      <stop offset="1" stop-color="#9ce82b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#surface)"/>
+  <rect x="26" y="26" width="460" height="460" rx="96" fill="none" stroke="#a89bff" stroke-opacity=".25" stroke-width="4"/>
+  <circle cx="239" cy="238" r="122" fill="none" stroke="url(#ring)" stroke-width="57"/>
+  <circle cx="239" cy="238" r="51" fill="#101a2b"/>
+  <path d="M304 310 379 382" fill="none" stroke="#b8fa55" stroke-width="57" stroke-linecap="round"/>
+  <path d="M365 124 388 147 365 170 342 147Z" fill="#a89bff"/>
+  <path d="M125 359 142 376 125 393 108 376Z" fill="#a89bff"/>
+</svg>

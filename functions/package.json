@@ -1,0 +1,21 @@
+{
+  "name": "quizhub-functions",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.mjs",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "esbuild index.mjs --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/index.mjs",
+    "check": "node --check dist/index.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

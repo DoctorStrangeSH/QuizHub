@@ -15,8 +15,13 @@ export class DuelMode extends BaseMode {
     }
     
     async init(allQuestions, settings) {
+        if (this.roundResultTimeout !== null && this.roundResultTimeout !== undefined) {
+            clearTimeout(this.roundResultTimeout);
+            this.roundResultTimeout = null;
+        }
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
+        this.totalQuestions = this.questions.length;
         this.playerScore = 0;
         this.aiScore = 0;
         this.playerCorrect = 0;
@@ -59,13 +64,19 @@ export class DuelMode extends BaseMode {
     }
     
     handlePlayerAnswer(el) {
-        if (el.classList.contains('answered')) return;
-        
         const container = document.getElementById('answers-container');
+        // Ignore clicks on answer cards detached during route changes.
+        if (!el || !container?.contains(el)) return;
+        if (this.isFinished || this.isTransitioning || this.hasAnswered || el.classList.contains('answered')) return;
+        this.hasAnswered = true;
         const allCards = container.querySelectorAll('.answer-card');
         
-        allCards.forEach(c => c.classList.add('answered'));
+        allCards.forEach(c => {
+            c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
+        });
         el.classList.add('selected');
+        el.setAttribute('aria-pressed', 'true');
         
         // Показываем правильный ответ
         allCards.forEach(c => {
@@ -79,6 +90,8 @@ export class DuelMode extends BaseMode {
             }
         });
         
+        this.showAnswerExplanation();
+
         // Игрок ответил
         const playerCorrect = el.dataset.correct === 'true';
         const points = this.questions[this.currentRound].points;
@@ -98,9 +111,12 @@ export class DuelMode extends BaseMode {
             this.aiCorrect++;
         }
         
-        // Показываем результат раунда
-        setTimeout(() => {
-            this.showRoundResult(playerCorrect, aiCorrect);
+        // Avoid orphaned callbacks after leaving the quiz.
+        this.roundResultTimeout = setTimeout(() => {
+            this.roundResultTimeout = null;
+            if (!this.isFinished && document.getElementById('answers-container')) {
+                this.showRoundResult(playerCorrect, aiCorrect);
+            }
         }, 500);
     }
     
@@ -133,31 +149,51 @@ export class DuelMode extends BaseMode {
         document.getElementById('answers-container').after(resultDiv);
     }
     
+    dispose() {
+        super.dispose();
+        if (this.roundResultTimeout) clearTimeout(this.roundResultTimeout);
+    }
+
+    async nextQuestion() {
+        if (this.isFinished || this.isTransitioning || !this.hasAnswered) return;
+        this.currentRound = this.currentIndex + 1;
+        await super.nextQuestion();
+    }
+
     shouldEnd() {
-        return this.currentRound >= this.totalQuestions - 1;
+        return this.currentIndex >= this.questions.length;
     }
     
     async finishQuiz() {
         const playerWon = this.playerScore > this.aiScore;
         const isDraw = this.playerScore === this.aiScore;
         
-        await this.saveResults({
+        // Награды и статистика в BaseMode используют общие поля score/correctAnswers.
+        this.score = this.playerScore;
+        this.correctAnswers = this.playerCorrect;
+
+        const saving = this.saveResults({
             wins: increment(playerWon ? 1 : 0),
             'stats.totalWins': increment(playerWon ? 1 : 0)
         });
-        
+
+        this.showResults(playerWon, isDraw);
+        await saving;
         this.showResults(playerWon, isDraw);
     }
     
     showResults(playerWon, isDraw) {
-        const coinsEarned = Math.floor((this.playerScore) / 2);
+        if (this.isDisposed) return;
+        const resultContainer = document.querySelector('.quiz-container');
+        if (!resultContainer) return;
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : `+${this.earnedCoins}`;
         
         let emoji, title;
         if (isDraw) { emoji = '🤝'; title = 'Ничья!'; }
         else if (playerWon) { emoji = '🏆'; title = 'Победа!'; }
         else { emoji = '🤖'; title = 'ИИ победил!'; }
         
-        document.querySelector('.quiz-container').innerHTML = `
+        resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${emoji}</div>
                 <h2 class="text-gradient fw-bold mb-1">${title}</h2>
@@ -176,7 +212,8 @@ export class DuelMode extends BaseMode {
                         </div>
                     </div>
                 </div>
-                <p class="mt-3">+${coinsEarned} 🪙</p>
+                <p class="mt-3">${coinsEarned} 🪙</p>
+                ${this.getSaveStatusHTML()}
                 <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
                     <button class="btn-premium" onclick="window.navigateTo('home')">← В меню</button>
                     <button class="btn-gold" onclick="window.navigateTo('quiz')">Реванш 🔄</button>

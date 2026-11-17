@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+const dashboard = await readFile(resolve('app/modules/dashboard/dashboard.js'), 'utf8');
+const dashboardStyles = await readFile(resolve('app/modules/dashboard/dashboard.css'), 'utf8');
+const quizStyles = await readFile(resolve('app/modules/quiz/quiz.css'), 'utf8');
+
+test('dashboard exposes a bilingual daily challenge card with its displayed UTC date', () => {
+    assert.match(dashboard, /daily-challenge-card/);
+    assert.match(dashboard, /DAILY CHALLENGE/);
+    assert.match(dashboard, /ЕЖЕДНЕВНОЕ ИСПЫТАНИЕ/);
+    assert.ok(dashboard.includes('onclick="window.startDailyChallenge()"'));
+});
+
+test('daily challenge launcher keeps the displayed date and selects the daily quiz mode', () => {
+    assert.match(dashboard, /window\.startDailyChallenge = \(dateKey\) =>/);
+    assert.ok(dashboard.includes('const challengeDate = getUtcDateKey()'));
+    assert.match(dashboard, /mode: 'daily'/);
+    assert.match(dashboard, /challengeDate/);
+    assert.match(dashboard, /window\.startGame\(\)/);
+});
+
+test('dashboard updates reset countdown and date without leaking timers', () => {
+    assert.match(dashboard, /daily-challenge-reset/);
+    assert.match(dashboard, /dailyResetCountdown/);
+    assert.ok(dashboard.includes('clearInterval(window.__dailyChallengeTimer)'));
+    assert.ok(dashboard.includes('setInterval(refreshDailyCountdown, 1000)'));
+});
+
+test('daily challenge dashboard card and quiz badge have responsive visual styles', () => {
+    assert.match(dashboardStyles, /\.daily-challenge-card/);
+    assert.match(dashboardStyles, /@media \(max-width: 520px\)/);
+    assert.match(quizStyles, /\.daily-challenge-badge/);
+});

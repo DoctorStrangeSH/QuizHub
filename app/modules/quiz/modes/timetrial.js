@@ -1,5 +1,6 @@
 import { BaseMode } from './base.js';
 import { increment } from '../../../firebase-config.js';
+import { remainingSeconds } from '../timer.js';
 
 export class TimeTrialMode extends BaseMode {
     constructor() {
@@ -9,26 +10,49 @@ export class TimeTrialMode extends BaseMode {
         this.timePerQuestion = 15; // секунд
         this.timeLeft = 15;
         this.timerInterval = null;
+        this.deadlineAt = null;
     }
     
     async init(allQuestions, settings) {
         await super.init(allQuestions, settings);
         this.questions = this.questions.slice(0, this.totalQuestions);
+        this.totalQuestions = this.questions.length;
+        this.timeLeft = this.timePerQuestion;
+        this.deadlineAt = null;
+    }
+
+    afterQuestionRendered() {
         this.timeLeft = this.timePerQuestion;
         this.startTimer();
     }
-    
+
     startTimer() {
         this.clearTimer();
-        this.timerInterval = setInterval(() => {
-            this.timeLeft--;
+        this.deadlineAt = Date.now() + this.timePerQuestion * 1000;
+        const tick = () => {
+            if (this.isDisposed || this.isFinished || this.hasAnswered) {
+                this.clearTimer();
+                return;
+            }
+            this.timeLeft = remainingSeconds(this.deadlineAt);
             this.updateTimerDisplay();
-            
             if (this.timeLeft <= 0) {
                 this.clearTimer();
                 this.handleTimeout();
             }
-        }, 1000);
+        };
+        tick();
+        if (this.timeLeft > 0) this.timerInterval = setInterval(tick, 200);
+    }
+
+    handleAnswer(el) {
+        // Reject late clicks even when a background-tab timer callback was delayed.
+        if (this.deadlineAt !== null && remainingSeconds(this.deadlineAt) === 0) {
+            this.clearTimer();
+            this.handleTimeout();
+            return;
+        }
+        super.handleAnswer(el);
     }
     
     clearTimer() {
@@ -44,6 +68,11 @@ export class TimeTrialMode extends BaseMode {
             const urgent = this.timeLeft <= 5;
             timerEl.textContent = `⏱️ ${this.timeLeft}с`;
             timerEl.className = `timer-display ${urgent ? 'urgent' : ''}`;
+        }
+        const bar = document.querySelector('.timer-bar-fill');
+        if (bar) {
+            bar.style.width = `${Math.max(0, Math.min(100, this.timeLeft / this.timePerQuestion * 100))}%`;
+            bar.classList.toggle('urgent', this.timeLeft <= 5);
         }
     }
     
@@ -93,17 +122,22 @@ export class TimeTrialMode extends BaseMode {
     
     handleTimeout() {
         const container = document.getElementById('answers-container');
-        if (!container) return;
-        
+        if (!container || this.isFinished || this.hasAnswered) return;
+        this.hasAnswered = true;
+
         const allCards = container.querySelectorAll('.answer-card');
         allCards.forEach(c => {
             c.classList.add('answered');
+            c.setAttribute('aria-disabled', 'true');
             if (c.dataset.correct === 'true') {
                 c.classList.add('correct');
                 c.querySelector('.answer-icon').textContent = '✓';
             }
         });
         
+        this.recordFeedbackStreak(false);
+        this.showAnswerFeedback(false, 0, 'timeout');
+        this.showAnswerExplanation();
         document.getElementById('next-btn-container').style.display = 'block';
     }
     
@@ -114,28 +148,33 @@ export class TimeTrialMode extends BaseMode {
     async finishQuiz() {
         this.clearTimer();
         
-        await this.saveResults({
-            wins: increment(this.correctAnswers >= 7 ? 1 : 0),
-            'stats.totalWins': increment(this.correctAnswers >= 7 ? 1 : 0)
+        const saving = this.saveResults({
+            wins: increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0),
+            'stats.totalWins': increment(this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7) ? 1 : 0)
         });
-        
+
+        this.showResults();
+        await saving;
         this.showResults();
     }
     
     showResults() {
-        const isWin = this.correctAnswers >= 7;
-        const coinsEarned = Math.floor(this.score / 2);
+        if (this.isDisposed) return;
+        const resultContainer = document.querySelector('.quiz-container');
+        if (!resultContainer) return;
+        const isWin = this.correctAnswers >= Math.ceil(this.totalQuestions * 0.7);
+        const coinsEarned = this.saveStatus === 'saving' ? '…' : `+${this.earnedCoins}`;
         
-        document.querySelector('.quiz-container').innerHTML = `
+        resultContainer.innerHTML = `
             <div class="quiz-result glass-card text-center animate-in">
                 <div class="result-icon">${isWin ? '⚡' : '⏱️'}</div>
-                <h2 class="text-gradient fw-bold mb-1">Время вышло!</h2>
-                <p class="text-secondary mb-3">Правильно: ${this.correctAnswers}/10</p>
+                <h2 class="text-gradient fw-bold mb-1">Квиз завершён!</h2>
+                <p class="text-secondary mb-3">Правильно: ${this.correctAnswers}/${this.totalQuestions}</p>
                 <div class="result-stats">
                     <div class="row g-3">
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value text-gradient">${this.correctAnswers}/10</span>
+                                <span class="result-value text-gradient">${this.correctAnswers}/${this.totalQuestions}</span>
                                 <span class="result-label">Правильно</span>
                             </div>
                         </div>
@@ -147,12 +186,13 @@ export class TimeTrialMode extends BaseMode {
                         </div>
                         <div class="col-4">
                             <div class="result-stat">
-                                <span class="result-value coin-color">+${coinsEarned}</span>
+                                <span class="result-value coin-color">${coinsEarned}</span>
                                 <span class="result-label">Монет</span>
                             </div>
                         </div>
                     </div>
                 </div>
+                ${this.getSaveStatusHTML()}
                 <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
                     <button class="btn-premium" onclick="window.navigateTo('home')">← В меню</button>
                     <button class="btn-gold" onclick="window.navigateTo('quiz')">Играть снова 🔄</button>

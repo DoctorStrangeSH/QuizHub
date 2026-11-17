@@ -17,11 +17,13 @@ const animalsQuestions = {
             points: 10
         },
         {
-            questionRU: 'Сколько ног у паука?',
-            questionEN: 'How many legs does a spider have?',
-            optionsRU: ['6', '8', '10', '12'],
-            optionsEN: ['6', '8', '10', '12'],
+            questionRU: 'К какой группе животных относятся лягушки и саламандры?',
+            questionEN: 'Which animal group includes frogs and salamanders?',
+            optionsRU: ['Рептилии', 'Земноводные', 'Млекопитающие', 'Рыбы'],
+            optionsEN: ['Reptiles', 'Amphibians', 'Mammals', 'Fish'],
             correctIndex: 1,
+            explanationRU: 'Лягушки и саламандры относятся к земноводным: их жизненный цикл обычно связан и с водой, и с сушей.',
+            explanationEN: 'Frogs and salamanders are amphibians, a group whose life cycles are commonly linked to both water and land.',
             points: 10
         }
     ],
@@ -35,11 +37,13 @@ const animalsQuestions = {
             points: 20
         },
         {
-            questionRU: 'Какое млекопитающее откладывает яйца?',
-            questionEN: 'Which mammal lays eggs?',
-            optionsRU: ['Кенгуру', 'Утконос', 'Дельфин', 'Кит'],
-            optionsEN: ['Kangaroo', 'Platypus', 'Dolphin', 'Whale'],
+            questionRU: 'Какое летающее млекопитающее использует эхолокацию для ориентации и поиска добычи?',
+            questionEN: 'Which flying mammal uses echolocation to navigate and find prey?',
+            optionsRU: ['Панда', 'Летучая мышь', 'Коала', 'Верблюд'],
+            optionsEN: ['Panda', 'Bat', 'Koala', 'Camel'],
             correctIndex: 1,
+            explanationRU: 'Многие летучие мыши издают ультразвуковые сигналы и ориентируются по отражённому эху.',
+            explanationEN: 'Many bats emit ultrasonic calls and navigate by listening to the returning echoes.',
             points: 20
         },
         {
@@ -53,11 +57,13 @@ const animalsQuestions = {
     ],
     hard: [
         {
-            questionRU: 'Какое животное имеет три сердца?',
-            questionEN: 'Which animal has three hearts?',
-            optionsRU: ['Кальмар', 'Осьминог', 'Медуза', 'Крокодил'],
-            optionsEN: ['Squid', 'Octopus', 'Jellyfish', 'Crocodile'],
+            questionRU: 'Какие млекопитающие способны к активному, а не планирующему полёту?',
+            questionEN: 'Which mammals are capable of powered, rather than gliding, flight?',
+            optionsRU: ['Летучие мыши', 'Белки-летяги', 'Лемуры', 'Поссумы'],
+            optionsEN: ['Bats', 'Flying squirrels', 'Lemurs', 'Possums'],
             correctIndex: 1,
+            explanationRU: 'Летучие мыши — единственная группа млекопитающих, освоившая активный машущий полёт.',
+            explanationEN: 'Bats are the only group of mammals capable of sustained powered flight.',
             points: 30
         },
         {
