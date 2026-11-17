@@ -51,6 +51,13 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         // deletes seeded fixture documents. Never do this to a live database.
         for (const ref of [...refs].reverse()) await ref.delete();
         for (const ref of refs) assert.equal((await ref.get()).exists, false);
+        const tampered = structuredClone(snapshot);
+        tampered.users[0].data.coins = 999999;
+        await assert.rejects(restoreQuizHubSnapshotInEmulator(db, tampered, manifest, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+            ...options
+        }), /BACKUP_INTEGRITY_NOT_VERIFIED/);
+        for (const ref of refs) assert.equal((await ref.get()).exists, false);
         const restored = await restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, {
             confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
             ...options
