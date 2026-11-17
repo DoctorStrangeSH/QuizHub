@@ -68,7 +68,7 @@ test('auth omissions, orphan records and malformed legacy fields cannot be marke
     snapshot.publicProfiles.push({
         uid: 'orphan', data: { nickname: 'Orphan', email: 'secret@example.test' }
     });
-    snapshot.claims.push({ normalized: 'alice_1', uid: 'other' });
+    snapshot.claims.push({ normalized: 'wrong', uid: 'other' });
     const report = auditLegacyAccountMigration(snapshot);
     assert.equal(report.status, 'blocked');
     for (const code of [
