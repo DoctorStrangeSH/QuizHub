@@ -209,3 +209,57 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - The codec is now wired into the **emulator-only restoration rehearsal**: tagged values are decoded before the create-only transaction, then the readback is re-encoded for deep preservation and SHA-256 verification. Pass Firebase Admin `Timestamp`, `GeoPoint` and `DocumentReference` constructors via `firestoreTypes`. A tagged JS `Date` is deliberately rejected before writes: Firestore persists it as a Timestamp and thus changes its original tag. Backup exports should capture the SDK-read Timestamp, or perform an explicitly versioned Date-to-Timestamp canonicalization first. The real production export, recursive discovery, consistency boundary, encryption and signed proof are still pending.
 
 - **Firestore precision boundary:** although the SDK Timestamp object carries nanoseconds, Firestore persists timestamps with **microsecond** precision. Emulator restoration rejects tagged timestamps whose nanoseconds are not divisible by 1000 *before* any transaction, preventing a misleading integrity promise. The codec itself keeps nanosecond precision for offline roundtrip; backup inputs must be canonicalized to Firestore's stored precision before restore.
+
+## Read-only emulator snapshot capture (2026-11-17)
+
+- `server/backup-capture-emulator.mjs` recursively enumerates **known** Firestore document paths and subcollections and generates a tagged-JSON snapshot plus integrity manifest. It uses `listDocuments()` to find nested records under *nonexistent* parent documents, including daily results. Read-only calls only; no deploy or mutation.
+- Unknown root or nested collection paths block capture instead of being silently omitted; known ephemeral/projection roots such as `online`, `publicProfiles` and `nicknameClaims` are intentionally excluded from protected-data capture.
+- `functions/test-backup-capture-emulator.mjs` runs in a fresh `demo-quizhub` Firestore emulator, separated from the larger concurrent test suite. It checks typed values, nested messages, orphan-parent daily results, digests, caps, unexpected collection rejection and unchanged player data.
+- **Scope limit:** this is an emulator-only snapshot rehearsal, not a reliable live backup. Iterative reads do **not** represent one consistent instant if writes continue. A production-capable exporter requires a coherent snapshot/maintenance window, scalable paging, encrypted storage, signed provenance and discovery of every real legacy collection before any cutover.
+
+- **End-to-end rehearsal:** the isolated emulator test now captures four seeded documents (including orphan-parent daily data and a nested chat message), verifies a tampered snapshot is rejected before writes, deletes only its own test fixtures, restores the authentic snapshot with create-only transactions, re-captures it, and compares the root SHA-256. This proves the test pathway only; it does not establish production backup consistency or readiness.
+
+
+## Two-pass emulator backup stability probe (2026-11-17)
+
+- `captureStableQuizHubEmulatorSnapshot` performs two complete read-only captures in the **isolated demo emulator** and compares their canonical SHA-256 roots. It aborts with `EMULATOR_SNAPSHOT_CHANGED_DURING_CAPTURE` if data changes between the passes.
+- An emulator integration test deliberately changes a seeded player's coin balance between reads and confirms the capture fails, leaving that changed fixture untouched until test cleanup.
+- Matching passes are **not** a point-in-time consistent snapshot: writes can occur within a pass or be reverted between passes. The response explicitly keeps `consistentAtSingleInstant: false`.
+- **Production release remains blocked:** coordinate a real write freeze or use a supported consistent export mechanism, independently validate the complete inventory and verify a recoverable snapshot before any migration.
+
+
+## Completeness failure scenarios (2026-11-17)
+
+- Emulator tests now seed an unrecognized root collection and require the collector to fail closed without changing its document.
+- A second test creates a protected nested `dailyPrizes/{date}/users/{uid}` document whose parent does not exist, then removes it between capture passes. The two-pass checker must reject the now-incomplete snapshot.
+- These checks cover specific failure modes, **not** a proof that the repository inventory includes every collection in a live Firestore database. The production inventory and a coordinated consistent export still require independent review.
+
+
+## Complete-package emulator restore gate (2026-11-17)
+
+- `server/backup-package-emulator.mjs` adds a versioned `complete` envelope, emitted only for a verified two-pass emulator capture. It records the manifest root and total protected-document count.
+- `restoreSealedQuizHubBackupInEmulator` checks the exact envelope structure, required protected collections, document count and SHA-256 integrity **before** invoking the existing create-only emulator restore.
+- The integration suite rejects a simulated `writing` state and a truncated player snapshot, then restores a valid sealed capture and compares the resulting checksum.
+- The envelope helps reject **accidentally incomplete artifacts**; it is not a cryptographic signature, cannot prevent a malicious actor from forging an internally consistent file, and does not replace a production-consistent export or secure external storage.
+
+
+## Read-only restore conflict preflight (2026-11-17)
+
+- `preflightSealedQuizHubRestoreInEmulator` checks the sealed package and queries the intended target documents without writing. It reports only aggregate conflict counts, required collection count, checksum and whether restoration is currently `ready` or `blocked_existing_documents`.
+- The emulator test sees four conflicts before fixture deletion and zero after deletion; neither preflight changes existing records or exposes private UIDs in its report.
+- **Not a lock:** records can change after this diagnostic. The create-only Firestore transaction in `restoreQuizHubSnapshotInEmulator` still independently checks for conflicts before writes and must remain authoritative.
+
+
+## Restore preflight race rehearsal (2026-11-17)
+
+- An integration test now runs a clean preflight, then simulates a competing writer creating an intended destination document before restore.
+- The create-only transaction must reject with `RESTORE_TARGET_ALREADY_EXISTS`; the competing writer's document is unchanged and none of the other snapshot records may be restored.
+- After removing only that disposable test fixture, the original sealed snapshot can be restored and verified normally. This tests all-or-nothing conflict handling in the emulator, **not** production recovery readiness.
+
+
+## PR #2 final review edge case (2026-11-17)
+
+- Reviewed the branch diff against `main`: the changes are limited to emulator-only backup capture/package, their test workflow, docs and a one-line existing emulator-restorer guard.
+- Found and fixed an empty-backup edge case: invoking Firestore transaction `getAll()` with zero document references could fail. Empty protected snapshots now perform a verified no-op restore.
+- A dedicated emulator integration test checks zero-document capture, sealing, preflight and restore, with the same root checksum.
+- **No production safety claim:** these routines still require `demo-quizhub` and a localhost Firestore emulator. Existing deployed app, rules and real player data remain unchanged.
