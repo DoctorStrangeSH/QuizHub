@@ -248,3 +248,10 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - `preflightSealedQuizHubRestoreInEmulator` checks the sealed package and queries the intended target documents without writing. It reports only aggregate conflict counts, required collection count, checksum and whether restoration is currently `ready` or `blocked_existing_documents`.
 - The emulator test sees four conflicts before fixture deletion and zero after deletion; neither preflight changes existing records or exposes private UIDs in its report.
 - **Not a lock:** records can change after this diagnostic. The create-only Firestore transaction in `restoreQuizHubSnapshotInEmulator` still independently checks for conflicts before writes and must remain authoritative.
+
+
+## Restore preflight race rehearsal (2026-11-17)
+
+- An integration test now runs a clean preflight, then simulates a competing writer creating an intended destination document before restore.
+- The create-only transaction must reject with `RESTORE_TARGET_ALREADY_EXISTS`; the competing writer's document is unchanged and none of the other snapshot records may be restored.
+- After removing only that disposable test fixture, the original sealed snapshot can be restored and verified normally. This tests all-or-nothing conflict handling in the emulator, **not** production recovery readiness.
