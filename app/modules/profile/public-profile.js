@@ -1,6 +1,6 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, updateDoc, arrayUnion } from '../../firebase-config.js';
-import { profileCollectionForViewer } from './profile-read-source.js';
+import { profileCollectionForViewer, projectProfileForViewer } from './profile-read-source.js';
 
 // Достижения для отображения
 const ALL_ACHIEVEMENTS = [
@@ -36,7 +36,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
     const lang = getState().language;
     const isRU = lang === 'ru';
     
-    const p = profileData;
+    const p = isOwnProfile ? profileData : projectProfileForViewer(null, profileData?.uid, profileData);
     const stats = p.stats || {};
     const achievements = p.achievements || [];
     const frameStyle = FRAME_STYLES[p.equippedFrame] || FRAME_STYLES.frame_default;
@@ -95,7 +95,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                                 <h1 class="profile-nickname text-gradient">${escapeHTML(p.nickname || 'Игрок')}</h1>
                                 <div class="profile-badges">
                                     <span class="profile-badge level">⭐ Ур. ${level}</span>
-                                    <span class="profile-badge coins">🪙 ${p.coins || 0}</span>
+                                    ${isOwnProfile ? `<span class="profile-badge coins">🪙 ${p.coins || 0}</span>` : ''}
                                     ${isOwnProfile ? '<span class="profile-badge you">Это вы</span>' : `
                                         <button class="btn-premium btn-sm" onclick="window.sendFriendRequest('${p.uid || ''}')">👥 Добавить</button>
                                     `}
@@ -185,7 +185,7 @@ export async function loadProfile(userId) {
     try {
         const docSnap = await getDoc(doc(db, profileCollectionForViewer(auth.currentUser?.uid, userId), userId));
         if (docSnap.exists()) {
-            return { uid: userId, ...docSnap.data() };
+            return projectProfileForViewer(auth.currentUser?.uid, userId, docSnap.data());
         }
         return null;
     } catch (error) {
