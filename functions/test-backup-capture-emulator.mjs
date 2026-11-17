@@ -5,7 +5,7 @@ import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp, GeoPoint, DocumentReference } from 'firebase-admin/firestore';
 import { captureQuizHubEmulatorSnapshot, captureStableQuizHubEmulatorSnapshot } from '../server/backup-capture-emulator.mjs';
 import { restoreQuizHubSnapshotInEmulator } from '../server/backup-restore-emulator.mjs';
-import { sealQuizHubEmulatorBackup, restoreSealedQuizHubBackupInEmulator } from '../server/backup-package-emulator.mjs';
+import { sealQuizHubEmulatorBackup, restoreSealedQuizHubBackupInEmulator, preflightSealedQuizHubRestoreInEmulator } from '../server/backup-package-emulator.mjs';
 import { verifyBackupIntegrity } from '../server/backup-integrity.mjs';
 import { protectedQuizHubManifestKeys } from '../server/firestore-migration-inventory.mjs';
 
@@ -40,6 +40,12 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         const sealed = sealQuizHubEmulatorBackup(captured);
         assert.equal(sealed.state, 'complete');
         assert.equal(sealed.metadata.documentCount, 4);
+        const blockedPreflight = await preflightSealedQuizHubRestoreInEmulator(db, sealed);
+        assert.equal(blockedPreflight.status, 'blocked_existing_documents');
+        assert.equal(blockedPreflight.conflictingDocuments, 4);
+        assert.equal(blockedPreflight.documentCount, 4);
+        assert.equal(blockedPreflight.readOnly, true);
+        assert.equal(JSON.stringify(blockedPreflight).includes(uid), false);
         assert.throws(() => sealQuizHubEmulatorBackup({ ...captured, summary: { ...summary, stableAcrossTwoPasses: false } }), /UNSTABLE_OR_INCOMPLETE_EMULATOR_CAPTURE/);
         const truncated = structuredClone(sealed);
         truncated.snapshot.users.pop();
@@ -65,6 +71,9 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         // deletes seeded fixture documents. Never do this to a live database.
         for (const ref of [...refs].reverse()) await ref.delete();
         for (const ref of refs) assert.equal((await ref.get()).exists, false);
+        const readyPreflight = await preflightSealedQuizHubRestoreInEmulator(db, sealed);
+        assert.equal(readyPreflight.status, 'ready');
+        assert.equal(readyPreflight.conflictingDocuments, 0);
         const tampered = structuredClone(snapshot);
         tampered.users[0].data.coins = 999999;
         await assert.rejects(restoreQuizHubSnapshotInEmulator(db, tampered, manifest, {
