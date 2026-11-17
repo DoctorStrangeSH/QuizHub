@@ -1,5 +1,5 @@
 import { getState } from '../../store/state.js';
-import { directoryCollection, profileCollectionForViewer } from '../profile/profile-read-source.js';
+import { directoryCollection, profileCollectionForViewer, projectDirectoryProfile } from '../profile/profile-read-source.js';
 import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from '../../firebase-config.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -80,7 +80,10 @@ async function loadFriendsList(user) {
         const friendsData = [];
         for (const friendId of friends) {
             const friendDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, friendId), friendId));
-            if (friendDoc.exists()) friendsData.push({ id: friendId, ...friendDoc.data() });
+            if (friendDoc.exists()) {
+                try { friendsData.push({ id: friendId, ...projectDirectoryProfile(friendId, friendDoc.data()) }); }
+                catch { console.warn('Пропускаем повреждённый профиль игрока'); }
+            }
         }
         tabContent.innerHTML = friendsData.map(f => `
             <div class="friend-item glass-card">
@@ -102,7 +105,10 @@ async function loadFriendRequests(user) {
         const requestsData = [];
         for (const reqId of requests) {
             const reqDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, reqId), reqId));
-            if (reqDoc.exists()) requestsData.push({ id: reqId, ...reqDoc.data() });
+            if (reqDoc.exists()) {
+                try { requestsData.push({ id: reqId, ...projectDirectoryProfile(reqId, reqDoc.data()) }); }
+                catch { console.warn('Пропускаем повреждённый профиль игрока'); }
+            }
         }
         tabContent.innerHTML = requestsData.map(r => `
             <div class="friend-item glass-card">
@@ -124,7 +130,10 @@ async function loadSentRequests(user) {
         const sentData = [];
         for (const sentId of sent) {
             const sentDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, sentId), sentId));
-            if (sentDoc.exists()) sentData.push({ id: sentId, ...sentDoc.data() });
+            if (sentDoc.exists()) {
+                try { sentData.push({ id: sentId, ...projectDirectoryProfile(sentId, sentDoc.data()) }); }
+                catch { console.warn('Пропускаем повреждённый профиль игрока'); }
+            }
         }
         tabContent.innerHTML = sentData.map(s => `
             <div class="friend-item glass-card">
@@ -154,7 +163,9 @@ function setupSearch(user) {
         resultsDiv.innerHTML = '';
         snapshot.forEach(docSnap => {
             if (docSnap.id !== user.uid) {
-                const data = docSnap.data();
+                let data;
+                try { data = projectDirectoryProfile(docSnap.id, docSnap.data()); }
+                catch { return; }
                 resultsDiv.innerHTML += `<div class="search-result-item glass-card"><div class="d-flex align-items-center gap-2"><span class="fw-semibold">${escapeHtml(data.nickname || 'Игрок')}</span><span class="text-secondary small">Ур. ${Number.isFinite(Number(data.level)) ? Math.max(1, Math.trunc(Number(data.level))) : 1}</span></div><button class="btn-premium btn-sm" onclick="window.sendFriendRequest('${docSnap.id}')">Добавить</button></div>`;
             }
         });
