@@ -25,7 +25,7 @@ test('profile selection uses delegated click and keyboard handling', () => {
 });
 
 test('rankings preserve public projection, guarded rollout and responsive styles', () => {
-  assert.ok(leaderboard.includes('buildPublicProfile'));
+  assert.ok(leaderboard.includes('projectDirectoryProfile'));
   assert.ok(sourceGate.includes('PUBLIC_PROFILE_READS_ENABLED = false'));
   assert.ok(leaderboard.includes('directoryCollection()'));
   assert.ok(leaderboard.includes('escapeHTML(leader.nickname'));
