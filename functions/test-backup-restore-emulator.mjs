@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, GeoPoint, DocumentReference } from 'firebase-admin/firestore';
+import { encodeFirestoreBackupData } from '../server/firestore-backup-codec.mjs';
 import { createBackupIntegrityManifest } from '../server/backup-integrity.mjs';
 import { planQuizHubEmulatorRestore, restoreQuizHubSnapshotInEmulator } from '../server/backup-restore-emulator.mjs';
 import { protectedQuizHubManifestKeys } from '../server/firestore-migration-inventory.mjs';
@@ -78,4 +79,66 @@ test('restore planner fails closed for altered snapshot and ambiguous nested pat
     assert.throws(() => planQuizHubEmulatorRestore(bad, createBackupIntegrityManifest(bad)), /INVALID_RESTORE_ID_DEPTH/);
     const unknown = { ...snapshot, mystery: [{ id: 'someDoc', data: { secret: 1 } }] };
     assert.throws(() => planQuizHubEmulatorRestore(unknown, createBackupIntegrityManifest(unknown)), /RESTORE_COLLECTION_NOT_ALLOWED/);
+});
+
+test('emulator restores typed Firestore fields, then re-encodes readback for exact SHA-256 verification', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'typed-restore-' + randomUUID());
+    const db = getFirestore(app);
+    const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
+    const options = { Timestamp, GeoPoint, DocumentReference, db };
+    const snapshot = fixture(suffix);
+    snapshot.users[0].data = encodeFirestoreBackupData({
+        ...snapshot.users[0].data,
+        joinedAt: new Timestamp(1700000000, 987654321),
+        location: new GeoPoint(60.1234, 24.9876),
+        portrait: Buffer.from([1, 20, 255]),
+        teammate: db.collection('users').doc('friend_' + suffix)
+    }, options);
+    snapshot.chatMessages[0].data = encodeFirestoreBackupData({
+        text: 'Timestamp-backed chat', sentAt: new Timestamp(1700000001, 123456789)
+    }, options);
+    const manifest = createBackupIntegrityManifest(snapshot);
+    const plan = planQuizHubEmulatorRestore(snapshot, manifest);
+    const refs = plan.operations.map(operation => db.doc(operation.path));
+    try {
+        const result = await restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+            firestoreTypes: { Timestamp, GeoPoint, DocumentReference }
+        });
+        assert.equal(result.status, 'verified');
+        assert.equal(result.rootSha256, manifest.rootSha256);
+        const saved = (await db.collection('users').doc(snapshot.users[0].id).get()).data();
+        assert.equal(saved.joinedAt.nanoseconds, 987654321);
+        assert.deepEqual(saved.portrait, Buffer.from([1, 20, 255]));
+        assert.equal(saved.teammate.path, 'users/friend_' + suffix);
+        assert.equal((await db.doc(plan.operations.find(x => x.key === 'chatMessages').path).get()).data().sentAt.nanoseconds, 123456789);
+    } finally {
+        await Promise.all(refs.reverse().map(ref => ref.delete()));
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
+
+test('unsupported tagged Date is blocked BEFORE any Firestore write', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'date-restore-' + randomUUID());
+    const db = getFirestore(app);
+    const snapshot = fixture(randomUUID().replaceAll('-', '').slice(0, 12));
+    snapshot.users[0].data.createdAt = {
+        __quizhub_firestore_type_v1: 'date',
+        iso: '2024-01-01T00:00:00.000Z'
+    };
+    const manifest = createBackupIntegrityManifest(snapshot);
+    try {
+        await assert.rejects(
+            restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, {
+                confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+                firestoreTypes: { Timestamp, GeoPoint, DocumentReference }
+            }),
+            /FIRESTORE_DATE_REQUIRES_TIMESTAMP_CANONICALIZATION/
+        );
+        assert.equal((await db.collection('users').doc(snapshot.users[0].id).get()).exists, false);
+    } finally {
+        await db.terminate();
+        await deleteApp(app);
+    }
 });
