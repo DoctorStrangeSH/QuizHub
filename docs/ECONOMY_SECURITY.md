@@ -218,3 +218,11 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - **Scope limit:** this is an emulator-only snapshot rehearsal, not a reliable live backup. Iterative reads do **not** represent one consistent instant if writes continue. A production-capable exporter requires a coherent snapshot/maintenance window, scalable paging, encrypted storage, signed provenance and discovery of every real legacy collection before any cutover.
 
 - **End-to-end rehearsal:** the isolated emulator test now captures four seeded documents (including orphan-parent daily data and a nested chat message), verifies a tampered snapshot is rejected before writes, deletes only its own test fixtures, restores the authentic snapshot with create-only transactions, re-captures it, and compares the root SHA-256. This proves the test pathway only; it does not establish production backup consistency or readiness.
+
+
+## Two-pass emulator backup stability probe (2026-11-17)
+
+- `captureStableQuizHubEmulatorSnapshot` performs two complete read-only captures in the **isolated demo emulator** and compares their canonical SHA-256 roots. It aborts with `EMULATOR_SNAPSHOT_CHANGED_DURING_CAPTURE` if data changes between the passes.
+- An emulator integration test deliberately changes a seeded player's coin balance between reads and confirms the capture fails, leaving that changed fixture untouched until test cleanup.
+- Matching passes are **not** a point-in-time consistent snapshot: writes can occur within a pass or be reverted between passes. The response explicitly keeps `consistentAtSingleInstant: false`.
+- **Production release remains blocked:** coordinate a real write freeze or use a supported consistent export mechanism, independently validate the complete inventory and verify a recoverable snapshot before any migration.
