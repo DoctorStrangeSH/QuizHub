@@ -5,6 +5,7 @@ import {
     PUBLIC_PROFILE_READS_ENABLED,
     directoryCollection,
     profileCollectionForViewer,
+    projectDirectoryProfile,
     projectProfileForViewer
 } from '../app/modules/profile/profile-read-source.js';
 
@@ -74,4 +75,32 @@ test('foreign cards show only public metrics, not fabricated private statistics'
     assert.ok(source.includes('isOwnProfile && recentAchievements.length > 0'));
     assert.ok(source.includes('profile-footer-info'));
     assert.ok(!source.includes('${recentAchievements.length > 0 ? `'));
+});
+
+test('friend search, social tabs and leaderboard use a shared privacy-safe directory contract', () => {
+    const secret = {
+        nickname: 'Sherlock_7', level: 3, experience: 70, weeklyExperience: 20, wins: 2,
+        email: 'secret@example.test', coins: 888, friends: ['private-friend']
+    };
+    const projected = projectDirectoryProfile('safe-user', secret);
+    assert.deepEqual(Object.keys(projected).sort(), [
+        'uid', 'nickname', 'nicknameLower', 'level', 'experience',
+        'weeklyExperience', 'wins', 'equippedFrame'
+    ].sort());
+    assert.equal(projected.nickname, 'Sherlock_7');
+    assert.ok(!JSON.stringify(projected).includes('secret@example.test'));
+    assert.ok(!JSON.stringify(projected).includes('private-friend'));
+
+    const friends = readFileSync(new URL('../app/modules/friends/friends.js', import.meta.url), 'utf8');
+    const leaderboard = readFileSync(new URL('../app/modules/leaderboard/leaderboard.js', import.meta.url), 'utf8');
+    for (const fragment of [
+        'projectDirectoryProfile(friendId, friendDoc.data())',
+        'projectDirectoryProfile(reqId, reqDoc.data())',
+        'projectDirectoryProfile(sentId, sentDoc.data())',
+        'projectDirectoryProfile(docSnap.id, docSnap.data())'
+    ]) assert.ok(friends.includes(fragment), fragment);
+    assert.ok(leaderboard.includes('projectDirectoryProfile(userDoc.id, userDoc.data())'));
+    assert.ok(!friends.includes('...friendDoc.data()'));
+    assert.ok(!friends.includes('...reqDoc.data()'));
+    assert.ok(!friends.includes('...sentDoc.data()'));
 });
