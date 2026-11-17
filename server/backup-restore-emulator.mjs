@@ -1,6 +1,7 @@
 import { QUIZHUB_FIRESTORE_INVENTORY, validateQuizHubMigrationManifest } from './firestore-migration-inventory.mjs';
 import { createBackupIntegrityManifest, verifyBackupIntegrity } from './backup-integrity.mjs';
 import { verifyLegacyDataPreservation } from './legacy-data-preservation.mjs';
+import { decodeFirestoreBackupData, encodeFirestoreBackupData } from './firestore-backup-codec.mjs';
 
 // Deliberately restricted to the disposable local emulator. This is NOT a
 // production backup importer, export reader, or disaster-recovery command.
@@ -54,7 +55,8 @@ export function planQuizHubEmulatorRestore(snapshot, expectedManifest) {
 // One transaction: preflight existence check + create-only, never overwrite.
 // Deliberately small for a predictable emulator rehearsal (not production scale).
 export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedManifest, {
-    confirmation
+    confirmation,
+    firestoreTypes = {}
 } = {}) {
     assertIsolatedQuizHubEmulator();
     if (confirmation !== 'RESTORE_TO_DISPOSABLE_EMULATOR') {
@@ -63,17 +65,32 @@ export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedMan
     const plan = planQuizHubEmulatorRestore(snapshot, expectedManifest);
     if (plan.operations.length > 200) throw new RangeError('EMULATOR_REHEARSAL_DOCUMENT_LIMIT');
     const refs = plan.operations.map(operation => db.doc(operation.path));
+    const codec = { ...firestoreTypes, db };
+    // Decode and reject all corrupt or unsupported tagged values BEFORE writes.
+    // Firestore turns JS Date into Timestamp; accepting a tagged Date here would
+    // falsely promise an exact restore checksum. Real captured data uses Timestamp.
+    const decoded = plan.operations.map(operation => {
+        const data = decodeFirestoreBackupData(operation.data, codec);
+        const normalized = encodeFirestoreBackupData(data, codec);
+        if (JSON.stringify(normalized) !== JSON.stringify(operation.data)) {
+            throw new Error('NON_CANONICAL_OR_UNSTABLE_BACKUP_VALUE');
+        }
+        return data;
+    });
     await db.runTransaction(async tx => {
         // Firestore transactions must finish every read before the first write.
         const current = await tx.getAll(...refs);
         if (current.some(doc => doc.exists)) throw new Error('RESTORE_TARGET_ALREADY_EXISTS');
-        for (let i = 0; i < refs.length; i++) tx.create(refs[i], plan.operations[i].data);
+        for (let i = 0; i < refs.length; i++) tx.create(refs[i], decoded[i]);
     });
     const restored = Object.fromEntries(plan.protectedKeys.map(key => [key, []]));
     for (const operation of plan.operations) {
         const doc = await db.doc(operation.path).get();
         if (!doc.exists) throw new Error('RESTORED_DOCUMENT_MISSING');
-        restored[operation.key].push({ id: operation.id, data: doc.data() });
+        restored[operation.key].push({
+            id: operation.id,
+            data: encodeFirestoreBackupData(doc.data(), codec)
+        });
     }
     const result = verifyLegacyDataPreservation(snapshot, restored, {
         protectedCollections: plan.protectedKeys
