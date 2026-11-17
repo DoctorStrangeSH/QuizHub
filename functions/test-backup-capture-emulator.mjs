@@ -74,6 +74,22 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         const readyPreflight = await preflightSealedQuizHubRestoreInEmulator(db, sealed);
         assert.equal(readyPreflight.status, 'ready');
         assert.equal(readyPreflight.conflictingDocuments, 0);
+        // Simulate another writer racing AFTER a ready preflight.
+        await refs[1].create({ participants: ['concurrent-writer'], protected: true });
+        await assert.rejects(
+            restoreSealedQuizHubBackupInEmulator(db, sealed, {
+                confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+                ...options
+            }),
+            /RESTORE_TARGET_ALREADY_EXISTS/
+        );
+        assert.deepEqual((await refs[1].get()).data(), {
+            participants: ['concurrent-writer'], protected: true
+        });
+        for (const ref of [refs[0], refs[2], refs[3]]) {
+            assert.equal((await ref.get()).exists, false);
+        }
+        await refs[1].delete();
         const tampered = structuredClone(snapshot);
         tampered.users[0].data.coins = 999999;
         await assert.rejects(restoreQuizHubSnapshotInEmulator(db, tampered, manifest, {
