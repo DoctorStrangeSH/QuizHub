@@ -2,6 +2,7 @@ import { QUIZHUB_FIRESTORE_INVENTORY, validateQuizHubMigrationManifest } from '.
 import { createBackupIntegrityManifest, verifyBackupIntegrity } from './backup-integrity.mjs';
 import { verifyLegacyDataPreservation } from './legacy-data-preservation.mjs';
 import { decodeFirestoreBackupData, encodeFirestoreBackupData } from './firestore-backup-codec.mjs';
+import { isDeepStrictEqual } from 'node:util';
 
 // Deliberately restricted to the disposable local emulator. This is NOT a
 // production backup importer, export reader, or disaster-recovery command.
@@ -69,10 +70,15 @@ export async function restoreQuizHubSnapshotInEmulator(db, snapshot, expectedMan
     // Decode and reject all corrupt or unsupported tagged values BEFORE writes.
     // Firestore turns JS Date into Timestamp; accepting a tagged Date here would
     // falsely promise an exact restore checksum. Real captured data uses Timestamp.
+    const hasDateTag = value => value && typeof value === 'object' && (
+        value.__quizhub_firestore_type_v1 === 'date' ||
+        Object.values(value).some(hasDateTag)
+    );
     const decoded = plan.operations.map(operation => {
+        if (hasDateTag(operation.data)) throw new Error('FIRESTORE_DATE_REQUIRES_TIMESTAMP_CANONICALIZATION');
         const data = decodeFirestoreBackupData(operation.data, codec);
         const normalized = encodeFirestoreBackupData(data, codec);
-        if (JSON.stringify(normalized) !== JSON.stringify(operation.data)) {
+        if (!isDeepStrictEqual(normalized, operation.data)) {
             throw new Error('NON_CANONICAL_OR_UNSTABLE_BACKUP_VALUE');
         }
         return data;
