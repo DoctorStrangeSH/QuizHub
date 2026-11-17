@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp, GeoPoint, DocumentReference } from 'firebase-admin/firestore';
 import { captureQuizHubEmulatorSnapshot } from '../server/backup-capture-emulator.mjs';
+import { restoreQuizHubSnapshotInEmulator } from '../server/backup-restore-emulator.mjs';
 import { verifyBackupIntegrity } from '../server/backup-integrity.mjs';
 import { protectedQuizHubManifestKeys } from '../server/firestore-migration-inventory.mjs';
 
@@ -46,6 +47,22 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         assert.equal(verifyBackupIntegrity(snapshot, manifest).status, 'verified');
         await assert.rejects(captureQuizHubEmulatorSnapshot(db, { ...options, maxDocuments: 2 }), /EMULATOR_SNAPSHOT_DOCUMENT_LIMIT/);
         assert.equal((await refs[0].get()).data().coins, 500);
+        // The disposable emulator is the only place where this rehearsal
+        // deletes seeded fixture documents. Never do this to a live database.
+        for (const ref of [...refs].reverse()) await ref.delete();
+        for (const ref of refs) assert.equal((await ref.get()).exists, false);
+        const restored = await restoreQuizHubSnapshotInEmulator(db, snapshot, manifest, {
+            confirmation: 'RESTORE_TO_DISPOSABLE_EMULATOR',
+            ...options
+        });
+        assert.equal(restored.status, 'verified');
+        assert.equal(restored.restoredDocuments, 4);
+        assert.equal(restored.rootSha256, manifest.rootSha256);
+        const secondCapture = await captureQuizHubEmulatorSnapshot(db, options);
+        assert.equal(secondCapture.manifest.rootSha256, manifest.rootSha256);
+        assert.equal(secondCapture.summary.documentCount, 4);
+        assert.equal((await refs[0].get()).data().coins, 500);
+        assert.deepEqual((await refs[2].get()).data().text, 'Nested message');
     } finally {
         await Promise.all(refs.reverse().map(ref => ref.delete()));
         await db.terminate();
