@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp, GeoPoint, DocumentReference } from 'firebase-admin/firestore';
-import { captureQuizHubEmulatorSnapshot } from '../server/backup-capture-emulator.mjs';
+import { captureQuizHubEmulatorSnapshot, captureStableQuizHubEmulatorSnapshot } from '../server/backup-capture-emulator.mjs';
 import { restoreQuizHubSnapshotInEmulator } from '../server/backup-restore-emulator.mjs';
 import { verifyBackupIntegrity } from '../server/backup-integrity.mjs';
 import { protectedQuizHubManifestKeys } from '../server/firestore-migration-inventory.mjs';
@@ -65,7 +65,9 @@ test('read-only collector discovers ordinary, nested and orphan-parent documents
         assert.equal(restored.status, 'verified');
         assert.equal(restored.restoredDocuments, 4);
         assert.equal(restored.rootSha256, manifest.rootSha256);
-        const secondCapture = await captureQuizHubEmulatorSnapshot(db, options);
+        const secondCapture = await captureStableQuizHubEmulatorSnapshot(db, options);
+        assert.equal(secondCapture.summary.stableAcrossTwoPasses, true);
+        assert.equal(secondCapture.summary.consistentAtSingleInstant, false);
         assert.equal(secondCapture.manifest.rootSha256, manifest.rootSha256);
         assert.equal(secondCapture.summary.documentCount, 4);
         assert.equal((await refs[0].get()).data().coins, 500);
@@ -89,6 +91,32 @@ test('unknown nested collection fails closed without modifying data', async () =
             /UNKNOWN_NESTED_EMULATOR_COLLECTION/
         );
         assert.equal((await ref.get()).data().rareItem, true);
+    } finally {
+        await ref.delete();
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
+
+
+test('two-pass capture rejects a document changed between passes', async () => {
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'changing-capture-' + randomUUID());
+    const db = getFirestore(app);
+    const uid = 'changing_' + randomUUID().replaceAll('-', '').slice(0, 12);
+    const ref = db.doc('users/' + uid);
+    try {
+        await ref.create({ coins: 10 });
+        await assert.rejects(
+            captureStableQuizHubEmulatorSnapshot(db, {
+                betweenPasses: async () => ref.update({ coins: 999 })
+            }),
+            /EMULATOR_SNAPSHOT_CHANGED_DURING_CAPTURE/
+        );
+        assert.equal((await ref.get()).data().coins, 999);
+        await assert.rejects(
+            captureStableQuizHubEmulatorSnapshot(db, { betweenPasses: true }),
+            /INVALID_EMULATOR_BETWEEN_PASSES_HOOK/
+        );
     } finally {
         await ref.delete();
         await db.terminate();
