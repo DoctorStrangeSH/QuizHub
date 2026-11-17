@@ -24,21 +24,35 @@ export function planPublicProfileBackfill(users, existingPublic = [], { batchSiz
         existing.set(record.uid, record.data);
     }
 
-    const seen = new Set();
+    const uidCounts = new Map();
+    const nicknameOwners = new Map();
+    for (const user of users) {
+        const uid = user?.uid;
+        if (typeof uid === 'string') uidCounts.set(uid, (uidCounts.get(uid) || 0) + 1);
+        const nickname = user?.data?.nickname;
+        if (typeof nickname === 'string' && /^[A-Za-z0-9_]{3,20}$/.test(nickname)) {
+            const lower = nickname.toLowerCase();
+            nicknameOwners.set(lower, (nicknameOwners.get(lower) || 0) + 1);
+        }
+    }
+
     const writes = [];
     const skipped = [];
     const conflicts = [];
     const invalid = [];
+    // No first-wins behavior: every colliding identity stays quarantined.
     for (const user of users) {
         const uid = user?.uid;
-        if (typeof uid !== 'string' || seen.has(uid)) {
-            invalid.push({ uid: typeof uid === 'string' ? uid : null, reason: 'invalid_or_duplicate_uid' });
+        if (typeof uid !== 'string' || uidCounts.get(uid) !== 1) {
+            invalid.push({ uid: typeof uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(uid) ? uid : null,
+                reason: 'invalid_or_duplicate_uid' });
             continue;
         }
-        seen.add(uid);
         try {
             const publicRecord = buildPublicProfile(uid, user.data);
-            if (!existing.has(uid)) {
+            if (nicknameOwners.get(publicRecord.nicknameLower) !== 1) {
+                conflicts.push(uid);
+            } else if (!existing.has(uid)) {
                 writes.push({ path: `publicProfiles/${uid}`, data: publicRecord });
             } else if (samePublicRecord(existing.get(uid), publicRecord)) {
                 skipped.push(uid);
@@ -46,9 +60,14 @@ export function planPublicProfileBackfill(users, existingPublic = [], { batchSiz
                 conflicts.push(uid);
             }
         } catch {
-            invalid.push({ uid, reason: 'invalid_profile' });
+            invalid.push({ uid: /^[A-Za-z0-9_-]{1,128}$/.test(uid) ? uid : null,
+                reason: 'invalid_profile' });
         }
     }
+    writes.sort((a, b) => a.path.localeCompare(b.path));
+    skipped.sort();
+    conflicts.sort();
+    invalid.sort((a, b) => String(a.uid).localeCompare(String(b.uid)) || a.reason.localeCompare(b.reason));
 
     const batches = [];
     for (let i = 0; i < writes.length; i += batchSize) {
