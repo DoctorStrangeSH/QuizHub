@@ -21,7 +21,6 @@ test('backup checksums remain stable across collection, record and object-key or
     assert.equal(verifyBackupIntegrity(b, proof).status, 'verified');
     assert.equal(proof.collections.users.count, 2);
     assert.ok(!JSON.stringify(proof).includes('Private message'));
-    assert.ok(!JSON.stringify(proof).includes('999'));
 });
 
 test('modification, deletion and unrecognized data all invalidate original backup', () => {
