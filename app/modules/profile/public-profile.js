@@ -114,6 +114,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     </div>
                     
+                    ${isOwnProfile ? `
                     <div class="profile-stats-grid animate-in animate-in-delay-1">
                         <div class="stat-box glass-card">
                             <span class="stat-icon">🎮</span>
@@ -157,7 +158,23 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     </div>
                     
-                    ${recentAchievements.length > 0 ? `
+                    ` : `
+                    <div class="profile-stats-grid animate-in animate-in-delay-1">
+                        <div class="stat-box glass-card">
+                            <span class="stat-icon">🏆</span>
+                            <span class="stat-number">${p.wins}</span>
+                            <span class="stat-text">${isRU ? 'Побед' : 'Wins'}</span>
+                        </div>
+                        <div class="stat-box glass-card">
+                            <span class="stat-icon">⚡</span>
+                            <span class="stat-number">${p.experience}</span>
+                            <span class="stat-text">${isRU ? 'Всего XP' : 'Total XP'}</span>
+                        </div>
+                    </div>
+                    
+                    `}
+                    
+                    ${isOwnProfile && recentAchievements.length > 0 ? `
                         <div class="profile-achievements glass-card animate-in animate-in-delay-2">
                             <h4 class="section-label">🏆 Последние достижения</h4>
                             <div class="profile-ach-list">
@@ -171,9 +188,11 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     ` : ''}
                     
+                    ${isOwnProfile ? `
                     <div class="profile-footer-info glass-card animate-in animate-in-delay-3">
                         <p class="text-secondary small mb-0">🗓️ На сайте с ${createdDate}</p>
                     </div>
+                    ` : ''}
                 </div>
             </main>
         </div>
