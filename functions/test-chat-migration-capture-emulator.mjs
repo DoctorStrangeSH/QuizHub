@@ -4,8 +4,9 @@ import { randomUUID } from 'node:crypto';
 import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { inspectLegacyChatsInEmulator } from '../server/chat-migration-capture-emulator.mjs';
-import { directChatId } from '../server/chat-send.mjs';
+import { directChatId, sendDirectMessage } from '../server/chat-send.mjs';
 import { copyOrphanChatInEmulator } from '../server/chat-migration-copy-emulator.mjs';
+import { modifyDirectMessage } from '../server/chat-message-actions.mjs';
 
 test('read-only chat migration inventory detects orphan parents without touching message contents', async () => {
     assert.equal(process.env.GCLOUD_PROJECT, 'demo-quizhub');
@@ -20,6 +21,7 @@ test('read-only chat migration inventory detects orphan parents without touching
     const legacyRef = db.collection('chats').doc(legacyId);
     const msgRef = legacyRef.collection('messages').doc('legacyMessage');
     const newRef = db.collection('chats').doc(directChatId(alice, bob));
+    let nextMessageId;
     try {
         await Promise.all([
             refs[0].set({ friends: [bob], email: 'private@example.test' }),
@@ -48,6 +50,36 @@ test('read-only chat migration inventory detects orphan parents without touching
         assert.deepEqual((await newRef.collection('messages').doc('legacyMessage').get()).data(),
             (await msgRef.get()).data());
         assert.equal((await legacyRef.get()).exists, false);
+        const nextMessage = await sendDirectMessage(db, {
+            senderUid: bob, recipientUid: alice,
+            clientMessageId: 'integration_12345', text: 'Fresh message after migration'
+        });
+        nextMessageId = nextMessage.messageId;
+        assert.equal(nextMessage.status, 'sent');
+        assert.equal(nextMessage.chatId, newRef.id);
+        assert.equal((await newRef.collection('messages').get()).size, 2);
+        await assert.rejects(modifyDirectMessage(db, {
+            actorUid: bob, chatId: newRef.id, messageId: 'legacyMessage', action: 'edit', text: 'forged'
+        }), /CHAT_MESSAGE_NOT_OWNER/);
+        await modifyDirectMessage(db, {
+            actorUid: alice, chatId: newRef.id, messageId: 'legacyMessage',
+            action: 'edit', text: 'Edited after migration'
+        });
+        await modifyDirectMessage(db, {
+            actorUid: bob, chatId: newRef.id, messageId: 'legacyMessage',
+            action: 'react', reaction: '👍'
+        });
+        const evolved = (await newRef.collection('messages').doc('legacyMessage').get()).data();
+        assert.equal(evolved.text, 'Edited after migration');
+        assert.equal(evolved.edited, true);
+        assert.equal(evolved.reactions[bob], '👍');
+        assert.equal((await msgRef.get()).data().text, 'secret body');
+        assert.equal((await msgRef.get()).data().reactions[bob], '❤️');
+        await modifyDirectMessage(db, {
+            actorUid: bob, chatId: newRef.id, messageId: nextMessage.messageId,
+            action: 'delete'
+        });
+        assert.equal((await newRef.collection('messages').doc(nextMessage.messageId).get()).data().deleted, true);
         await assert.rejects(copyOrphanChatInEmulator(db, first.chats[0], {
             confirmation: 'COPY_ORPHAN_CHAT_IN_DISPOSABLE_EMULATOR'
         }), /CHAT_COPY_DESTINATION_NOT_EMPTY/);
@@ -58,6 +90,7 @@ test('read-only chat migration inventory detects orphan parents without touching
     } finally {
         await msgRef.delete();
         await newRef.collection('messages').doc('legacyMessage').delete();
+        if (nextMessageId) await newRef.collection('messages').doc(nextMessageId).delete();
         await newRef.delete();
         await Promise.all(refs.map(ref => ref.delete()));
         await db.terminate();

@@ -70,6 +70,13 @@ deployed security rules and recoverability have not been verified.
   compares every source/destination document. **Source documents are never
   deleted**, and production migration remains blocked; this exercise is not a
   resumable, live dual-write or point-in-time migration protocol.
+- The disposable-emulator chat lifecycle now continues **after** that copy:
+  a new server-owned message is sent to the migrated conversation, the copied
+  message is edited and reacted to by authorized participants, foreign editing
+  is denied, and a fresh message is soft-deleted. The original legacy message
+  is read back to confirm its body and reactions remained unchanged. This
+  rehearsal does not yet exercise a browser or two devices and cannot replace
+  a verified production rollout plan.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in
