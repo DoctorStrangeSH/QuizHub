@@ -71,6 +71,8 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         chatRef = db.collection('chats').doc(chatId);
         assert.deepEqual((await chatRef.get()).data().memberUids, [alice.uid, bob.uid].sort());
         assert.equal((await chatRef.collection('messages').doc(messageId).get()).data().senderId, alice.uid);
+        assert.equal((await chatRef.collection('members').doc(bob.uid).get()).data().unreadCount, 1);
+        assert.equal((await chatRef.collection('members').doc(alice.uid).get()).exists, false);
         const duplicate = await invoke(alice, message);
         assert.equal(duplicate.body.result?.status, 'unchanged', JSON.stringify(duplicate));
         const changed = await invoke(alice, { ...message, text: 'Другое сообщение' });
@@ -78,6 +80,7 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         const messages = await chatRef.collection('messages').get();
         assert.equal(messages.size, 1);
         assert.equal(messages.docs[0].data().text, 'Привет!');
+        assert.equal((await chatRef.collection('members').doc(bob.uid).get()).data().unreadCount, 1);
         assert.equal((await refs[0].get()).data().coins, 12);
 
         // Two independently authenticated clients send into the same chat at
@@ -121,6 +124,8 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
             converged.docs.map(doc => doc.data().text).sort(),
             ['Привет!', 'Сообщение от Alice', 'Сообщение от Bob', 'Одна доставка'].sort()
         );
+        assert.equal((await chatRef.collection('members').doc(bob.uid).get()).data().unreadCount, 3);
+        assert.equal((await chatRef.collection('members').doc(alice.uid).get()).data().unreadCount, 1);
         const base = { chatId, messageId };
         const outsiderReaction = await invoke(charlie, { ...base, action: 'react', reaction: '👍' }, actionEndpoint);
         assert.equal(outsiderReaction.body.error?.status, 'PERMISSION_DENIED');
