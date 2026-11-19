@@ -46,8 +46,19 @@ test('preflight detects collisions in legacy underscore-joined IDs', () => {
     assert.ok(plan.blockers.some(blocker => blocker.code === 'AMBIGUOUS_LEGACY_CHAT_ID'));
 });
 
+test('preflight allows multiple chunks below the bounded migration ceiling', () => {
+    const manyMessages = Array.from({ length: 205 }, (_, index) => ({
+        chatId: 'alice_bob', messageId: `message_${String(index).padStart(3, '0')}`,
+        senderId: index % 2 ? 'bob' : 'alice'
+    }));
+    const plan = planLegacyChatMigration({ users, messages: manyMessages });
+    assert.equal(plan.ready, true);
+    assert.equal(plan.mappedMessages, 205);
+    assert.equal(plan.chats[0].messageIds.length, 205);
+});
+
 test('preflight blocks a conversation larger than the copier transaction limit', () => {
-    const oversized = Array.from({ length: 101 }, (_, index) => ({
+    const oversized = Array.from({ length: 5001 }, (_, index) => ({
         chatId: 'alice_bob', messageId: `message_${String(index).padStart(3, '0')}`,
         senderId: index % 2 ? 'bob' : 'alice'
     }));
@@ -56,7 +67,7 @@ test('preflight blocks a conversation larger than the copier transaction limit',
     assert.equal(plan.chats.length, 0);
     assert.ok(plan.blockers.some(blocker =>
         blocker.code === 'CHAT_EXCEEDS_SINGLE_TRANSACTION_LIMIT' &&
-        blocker.messageCount === 101 && blocker.maximum === 100
+        blocker.messageCount === 5001 && blocker.maximum === 5000
     ));
 });
 
