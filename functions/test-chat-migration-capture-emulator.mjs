@@ -6,6 +6,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { inspectLegacyChatsInEmulator } from '../server/chat-migration-capture-emulator.mjs';
 import { directChatId, sendDirectMessage } from '../server/chat-send.mjs';
 import { copyOrphanChatInEmulator } from '../server/chat-migration-copy-emulator.mjs';
+import { copyLegacyChatInChunksEmulator } from '../server/chat-migration-chunked-emulator.mjs';
 import { modifyDirectMessage } from '../server/chat-message-actions.mjs';
 
 test('read-only chat migration inventory detects orphan parents without touching message contents', async () => {
@@ -129,6 +130,79 @@ test('read-only chat migration inventory detects orphan parents without touching
         if (nextMessageId) await newRef.collection('messages').doc(nextMessageId).delete();
         await newRef.delete();
         await Promise.all(refs.map(ref => ref.delete()));
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
+
+
+test('chunked legacy chat copy can pause and resume idempotently without deleting originals', async () => {
+    assert.equal(process.env.GCLOUD_PROJECT, 'demo-quizhub');
+    assert.ok(process.env.FIRESTORE_EMULATOR_HOST);
+    const app = initializeApp({ projectId: 'demo-quizhub' }, 'chat-chunked-' + randomUUID());
+    const db = getFirestore(app);
+    const suffix = randomUUID().slice(0, 10);
+    const alice = `chunk_alice_${suffix}`;
+    const bob = `chunk_bob_${suffix}`;
+    const legacyId = [alice, bob].sort().join('_');
+    const legacy = db.collection('chats').doc(legacyId);
+    const destination = db.collection('chats').doc(directChatId(alice, bob));
+    const userRefs = [db.collection('users').doc(alice), db.collection('users').doc(bob)];
+    try {
+        await Promise.all([
+            userRefs[0].set({ friends: [bob] }),
+            userRefs[1].set({ friends: [alice] })
+        ]);
+        const writes = [];
+        for (let i = 0; i < 205; i++) {
+            writes.push(legacy.collection('messages').doc(`message_${String(i).padStart(3, '0')}`).set({
+                senderId: i % 2 ? bob : alice,
+                text: `Legacy message ${i}`,
+                createdAt: new Date(Date.UTC(2026, 10, 1, 0, i)),
+                edited: i % 7 === 0,
+                replyTo: i > 0 ? `message_${String(i - 1).padStart(3, '0')}` : null,
+                reactions: i % 5 === 0 ? { [i % 2 ? alice : bob]: '👍' } : {}
+            }));
+        }
+        await Promise.all(writes);
+        const inventory = await inspectLegacyChatsInEmulator(db);
+        assert.equal(inventory.ready, true, JSON.stringify(inventory.blockers));
+        assert.equal(inventory.mappedMessages, 205);
+        const plan = inventory.chats.find(chat => chat.legacyId === legacyId);
+        assert.ok(plan);
+
+        const paused = await copyLegacyChatInChunksEmulator(db, plan, {
+            confirmation: 'COPY_CHAT_IN_CHUNKS_IN_DISPOSABLE_EMULATOR',
+            batchSize: 50,
+            stopAfterBatches: 2
+        });
+        assert.equal(paused.status, 'paused');
+        assert.equal(paused.completedBatches, 2);
+        assert.equal(paused.copiedMessageCount, 100);
+        assert.equal((await destination.collection('messages').get()).size, 100);
+        assert.equal((await legacy.get()).exists, false);
+
+        const resumed = await copyLegacyChatInChunksEmulator(db, plan, {
+            confirmation: 'COPY_CHAT_IN_CHUNKS_IN_DISPOSABLE_EMULATOR',
+            batchSize: 50
+        });
+        assert.equal(resumed.status, 'copied_and_verified');
+        assert.equal(resumed.messageCount, 205);
+        assert.equal(resumed.completedBatches, 5);
+        assert.equal(resumed.originalsDeleted, 0);
+        assert.equal((await destination.collection('messages').get()).size, 205);
+        assert.equal((await legacy.collection('messages').get()).size, 205);
+        const sourceSample = (await legacy.collection('messages').doc('message_150').get()).data();
+        const copiedSample = (await destination.collection('messages').doc('message_150').get()).data();
+        assert.deepEqual(copiedSample, sourceSample);
+        assert.equal(copiedSample.replyTo, 'message_149');
+    } finally {
+        const [source, target] = await Promise.all([
+            legacy.collection('messages').get(), destination.collection('messages').get()
+        ]);
+        await Promise.all([...source.docs, ...target.docs].map(doc => doc.ref.delete()));
+        await Promise.all(userRefs.map(ref => ref.delete()));
+        await destination.delete();
         await db.terminate();
         await deleteApp(app);
     }
