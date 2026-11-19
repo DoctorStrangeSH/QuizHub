@@ -1,5 +1,5 @@
 import { getState } from '../../store/state.js';
-import { auth, db, doc, getDoc, updateDoc, arrayUnion } from '../../firebase-config.js';
+import { auth, db, doc, getDoc } from '../../firebase-config.js';
 import { profileCollectionForViewer, projectProfileForViewer } from './profile-read-source.js';
 
 // Достижения для отображения
@@ -97,7 +97,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                                     <span class="profile-badge level">⭐ Ур. ${level}</span>
                                     ${isOwnProfile ? `<span class="profile-badge coins">🪙 ${p.coins || 0}</span>` : ''}
                                     ${isOwnProfile ? '<span class="profile-badge you">Это вы</span>' : `
-                                        <button class="btn-premium btn-sm" onclick="window.sendFriendRequest('${p.uid || ''}')">👥 Добавить</button>
+                                        <button class="btn-premium btn-sm" onclick="window.sendFriendRequestFromProfile('${p.uid || ''}')">👥 Добавить</button>
                                     `}
                                 </div>
                             </div>
@@ -213,20 +213,15 @@ export async function loadProfile(userId) {
     }
 }
 
-// ========== ОТПРАВКА ЗАЯВКИ В ДРУЗЬЯ ==========
-window.sendFriendRequest = async (friendId) => {
-    const user = auth.currentUser;
-    if (!user || !friendId) return;
-    
+// Карточка профиля может открываться до экрана друзей. Загружаем единый
+// обработчик по требованию, не подменяя его устаревшей второй реализацией.
+window.sendFriendRequestFromProfile = async (friendId) => {
+    if (!auth.currentUser || !friendId) return;
     try {
-        await updateDoc(doc(db, 'users', friendId), {
-            friendRequests: arrayUnion(user.uid)
-        });
-        await updateDoc(doc(db, 'users', user.uid), {
-            sentRequests: arrayUnion(friendId)
-        });
-        alert('Заявка отправлена!');
+        await import('../friends/friends.js');
+        await window.sendFriendRequest(friendId);
     } catch (error) {
-        alert('Ошибка: ' + error.message);
+        console.error('Ошибка отправки заявки из профиля:', error);
+        alert('Не удалось отправить заявку. Попробуйте ещё раз.');
     }
 };

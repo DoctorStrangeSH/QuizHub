@@ -19,3 +19,15 @@ test('unmigrated foreign reads and social writes force public-profile cutover to
     }
     assert.match(source('docs/FIRESTORE_PROFILE_CUTOVER.md'), /NOT READY/);
 });
+
+test('public player card delegates friend requests to the single guarded friends handler', () => {
+    const profile = source('app/modules/profile/public-profile.js');
+    const friends = source('app/modules/friends/friends.js');
+    assert.match(profile, /onclick="window\.sendFriendRequestFromProfile/);
+    assert.match(profile, /await import\('\.\.\/friends\/friends\.js'\)/);
+    assert.match(profile, /await window\.sendFriendRequest\(friendId\)/);
+    assert.doesNotMatch(profile, /window\.sendFriendRequest\s*=/);
+    assert.doesNotMatch(profile, /updateDoc\(/);
+    assert.match(friends, /window\.sendFriendRequest = async/);
+    assert.match(friends, /runFriendActionOnce\(user, 'send', friendId/);
+});
