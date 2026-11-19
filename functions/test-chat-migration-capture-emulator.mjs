@@ -5,6 +5,7 @@ import { initializeApp, deleteApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { inspectLegacyChatsInEmulator } from '../server/chat-migration-capture-emulator.mjs';
 import { directChatId } from '../server/chat-send.mjs';
+import { copyOrphanChatInEmulator } from '../server/chat-migration-copy-emulator.mjs';
 
 test('read-only chat migration inventory detects orphan parents without touching message contents', async () => {
     assert.equal(process.env.GCLOUD_PROJECT, 'demo-quizhub');
@@ -35,13 +36,28 @@ test('read-only chat migration inventory detects orphan parents without touching
         assert.equal(JSON.stringify(first).includes('private@example.test'), false);
         assert.equal((await msgRef.get()).data().text, 'secret body');
         await assert.rejects(inspectLegacyChatsInEmulator(db, { maxMessages: 0 }), /INVALID_CHAT_INSPECTION_CONFIG/);
-        await newRef.set({ memberUids: [alice, bob] });
+        await assert.rejects(copyOrphanChatInEmulator(db, first.chats[0]),
+            /EXPLICIT_EMULATOR_CHAT_COPY_CONFIRMATION_REQUIRED/);
+        assert.equal((await newRef.get()).exists, false);
+        const copied = await copyOrphanChatInEmulator(db, first.chats[0], {
+            confirmation: 'COPY_ORPHAN_CHAT_IN_DISPOSABLE_EMULATOR'
+        });
+        assert.equal(copied.status, 'copied_and_verified');
+        assert.equal(copied.messageCount, 1);
+        assert.equal(copied.originalsDeleted, 0);
+        assert.deepEqual((await newRef.collection('messages').doc('legacyMessage').get()).data(),
+            (await msgRef.get()).data());
+        assert.equal((await legacyRef.get()).exists, false);
+        await assert.rejects(copyOrphanChatInEmulator(db, first.chats[0], {
+            confirmation: 'COPY_ORPHAN_CHAT_IN_DISPOSABLE_EMULATOR'
+        }), /CHAT_COPY_DESTINATION_NOT_EMPTY/);
         const blocked = await inspectLegacyChatsInEmulator(db);
         assert.equal(blocked.ready, false);
         assert.ok(blocked.blockers.some(x => x.code === 'DESTINATION_ALREADY_EXISTS'));
         assert.equal((await msgRef.get()).data().reactions[bob], '❤️');
     } finally {
         await msgRef.delete();
+        await newRef.collection('messages').doc('legacyMessage').delete();
         await newRef.delete();
         await Promise.all(refs.map(ref => ref.delete()));
         await db.terminate();

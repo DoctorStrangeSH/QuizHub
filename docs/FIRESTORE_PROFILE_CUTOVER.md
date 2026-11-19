@@ -55,6 +55,15 @@ deployed security rules and recoverability have not been verified.
   the migration preflight without copying message text. CI runs it in a fresh,
   disposable Firestore emulator, never against the `(default)` production DB.
   It is still a non-transactional rehearsal, not a certified complete backup.
+- `copyOrphanChatInEmulator` now performs an **explicitly confirmed, small**
+  copy rehearsal in that disposable emulator only. It refuses non-mutual
+  friendships, changed message IDs, an existing destination, and legacy chat
+  parents with unknown metadata. One Firestore transaction creates a canonical
+  chat plus exact copies of source message documents, preserving original
+  timestamps, edits, deleted markers, replies and reactions. A post-copy check
+  compares every source/destination document. **Source documents are never
+  deleted**, and production migration remains blocked; this exercise is not a
+  resumable, live dual-write or point-in-time migration protocol.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in

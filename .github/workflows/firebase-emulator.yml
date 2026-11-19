@@ -47,7 +47,7 @@ jobs:
           GOOGLE_CLOUD_PROJECT: demo-quizhub
           CI: 'true'
         run: npx --yes firebase-tools@latest emulators:exec --project demo-quizhub --only firestore "node --test functions/test-backup-capture-emulator.mjs"
-      - name: Inspect legacy orphan chat histories without database writes
+      - name: Rehearse orphan chat copy in disposable Firestore emulator
         env:
           GCLOUD_PROJECT: demo-quizhub
           GOOGLE_CLOUD_PROJECT: demo-quizhub
