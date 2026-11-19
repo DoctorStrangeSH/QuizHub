@@ -51,9 +51,12 @@ export async function markDirectChatRead(db, { actorUid, chatId, lastReadMessage
         const previousTime = toMillis(previous.lastReadAt);
         const previousId = typeof previous.lastReadMessageId === 'string'
             ? previous.lastReadMessageId : '';
+        // Firestore's implicit document-name ordering is bytewise. Message
+        // IDs are restricted to ASCII, so JS relational comparison matches it;
+        // localeCompare is locale-sensitive and can order punctuation differently.
         const isBehind = Number.isFinite(previousTime) &&
             (messageTime < previousTime ||
-                (messageTime === previousTime && lastReadMessageId.localeCompare(previousId) <= 0));
+                (messageTime === previousTime && lastReadMessageId <= previousId));
         if (isBehind) {
             return {
                 status: previousId === lastReadMessageId ? 'unchanged' : 'stale',
