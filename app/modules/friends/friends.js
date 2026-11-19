@@ -165,8 +165,13 @@ function setupSearch(user) {
     const searchInput = document.getElementById('friend-search-input');
     const resultsDiv = document.getElementById('search-results');
     if (!searchBtn || !searchInput || !resultsDiv) return;
+    searchInput.addEventListener('input', () => {
+        friendsAsyncGuard.nextSearch();
+        resultsDiv.textContent = '';
+    });
     searchInput.addEventListener('keydown', event => { if (event.key === 'Enter') searchBtn.click(); });
     searchBtn.onclick = async () => {
+        const searchVersion = friendsAsyncGuard.nextSearch();
         const q = searchInput.value.trim().toLowerCase();
         if (!q) return;
         resultsDiv.innerHTML = '<p class="text-secondary small">Поиск...</p>';
@@ -174,7 +179,15 @@ function setupSearch(user) {
         const qQuery = query(usersRef, where('nicknameLower', '>=', q), where('nicknameLower', '<=', q + '\uf8ff'));
         let snapshot;
         try { snapshot = await getDocs(qQuery); }
-        catch (error) { console.error('Ошибка поиска игроков:', error); resultsDiv.innerHTML = '<p class="text-secondary small">Не удалось выполнить поиск. Попробуйте ещё раз.</p>'; return; }
+        catch (error) {
+            console.error('Ошибка поиска игроков:', error);
+            if (friendsAsyncGuard.isCurrentSearch(searchVersion) && resultsDiv.isConnected && auth.currentUser?.uid === user.uid) {
+                resultsDiv.innerHTML = '<p class="text-secondary small">Не удалось выполнить поиск. Попробуйте ещё раз.</p>';
+            }
+            return;
+        }
+        if (!friendsAsyncGuard.isCurrentSearch(searchVersion) || !resultsDiv.isConnected ||
+            auth.currentUser?.uid !== user.uid || searchInput.value.trim().toLowerCase() !== q) return;
         if (snapshot.empty) { resultsDiv.innerHTML = '<p class="text-secondary small">Никого не найдено</p>'; return; }
         resultsDiv.innerHTML = '';
         snapshot.forEach(docSnap => {

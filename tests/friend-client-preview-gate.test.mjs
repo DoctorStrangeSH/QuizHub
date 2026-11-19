@@ -33,3 +33,10 @@ test('rapid repeated social clicks are coalesced per user, target and operation'
     assert.match(friends, /friendsAsyncGuard\.runOnce\(key, action\)/);
     assert.equal((friends.match(/return runFriendActionOnce\(user, '/g) || []).length, 5);
 });
+
+test('search results refuse stale requests and switched accounts', () => {
+    assert.match(friends, /searchInput\.addEventListener\('input',/);
+    assert.match(friends, /friendsAsyncGuard\.isCurrentSearch\(searchVersion\)/);
+    assert.match(friends, /auth\.currentUser\?\.uid !== user\.uid/);
+    assert.match(friends, /searchInput\.value\.trim\(\)\.toLowerCase\(\) !== q/);
+});

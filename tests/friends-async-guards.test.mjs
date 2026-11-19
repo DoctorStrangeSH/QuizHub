@@ -38,3 +38,13 @@ test('a rejected action releases its lock for retry', async () => {
     await assert.rejects(guard.runOnce('alice:accept:bob', async () => { throw new Error('network'); }));
     assert.equal(await guard.runOnce('alice:accept:bob', async () => {}), true);
 });
+
+test('typing a new nickname invalidates pending search responses independently of tabs', () => {
+    const guard = createFriendsAsyncGuard();
+    const firstSearch = guard.nextSearch();
+    const friendsTab = guard.nextLoad();
+    assert.equal(guard.isCurrentSearch(firstSearch), true);
+    guard.nextSearch();
+    assert.equal(guard.isCurrentSearch(firstSearch), false);
+    assert.equal(guard.isCurrent(friendsTab), true);
+});
