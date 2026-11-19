@@ -5,14 +5,14 @@
 
   **Quiz Empire — викторины, игровые режимы и рейтинг игроков**
 
-  [Открыть опубликованную версию](https://doctorstrangesh.github.io/QuizHub/) · [Исходный код](https://github.com/DoctorStrangeSH/QuizHub) · [Проверяемые изменения (PR #1)](https://github.com/DoctorStrangeSH/QuizHub/pull/1)
+  [Открыть опубликованную версию](https://doctorstrangesh.github.io/QuizHub/) · [Исходный код](https://github.com/DoctorStrangeSH/QuizHub) · [ТЗ V1](docs/PRODUCT_SPECIFICATION_V1.md) · [Статус разработки](docs/IMPLEMENTATION_STATUS.md)
 </div>
 
 ## О проекте
 
 QuizHub — браузерная игра-викторина на JavaScript с русским и английским интерфейсом. Приложение использует Firebase Authentication для входа и Cloud Firestore для профилей, прогресса и рейтингов. Вопросы и игровые режимы организованы в отдельные модули.
 
-**Важно о версиях:** ссылка на GitHub Pages открывает опубликованную стабильную версию, а не обязательно изменения из ветки `refactor/foundation-stability`. Актуальная работа над стабильностью и тестами ведётся в [PR #1](https://github.com/DoctorStrangeSH/QuizHub/pull/1). Не используйте демоверсию как подтверждение того, что все изменения PR уже выпущены.
+**Источник требований:** объём V1, этапы и критерии готовности зафиксированы в [едином ТЗ](docs/PRODUCT_SPECIFICATION_V1.md). Фактическое состояние main и известные блокеры ведутся в [статусе реализации](docs/IMPLEMENTATION_STATUS.md). Наличие кода или зелёных emulator tests само по себе не означает production readiness.
 
 ## Возможности
 
@@ -48,7 +48,7 @@ python -m http.server 8000
 
 Основной код расположен в `app/`, автоматические проверки — в `tests/`, подготовительные серверные контракты — в `server/`.
 
-Ветка `refactor/foundation-stability` содержит тесты жизненного цикла квизов, навигации, результатов и подготовку серверной проверки начислений. Проверяйте актуальный статус GitHub Actions в PR перед объединением.
+Основная разработка ведётся через PR в `main`. Каждый PR должен ссылаться на Requirement ID из ТЗ, содержать критерии приёмки и тесты, а также описывать риски и rollback. Открытые PR не считаются частью продукта до объединения.
 
 ```bash
 node --experimental-default-type=module --test tests/*.test.mjs

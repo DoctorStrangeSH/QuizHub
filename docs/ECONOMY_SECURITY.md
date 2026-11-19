@@ -2,7 +2,7 @@
 
 Status: migration plan, **not deployed security protection**.
 
-## Current behavior (verified in `refactor/foundation-stability`)
+## Current behavior (verified in `main`, 2026-11-20)
 
 - The static browser app uses Firebase Auth and Firestore.
 - `app/modules/quiz/modes/base.js` calls `updateDoc(users/{uid})` with `increment()` for `experience`, `weeklyExperience`, `coins`, `quizzesCompleted`, and stats.
