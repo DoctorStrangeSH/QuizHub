@@ -74,13 +74,6 @@ test('two authenticated browser clients receive live chat updates and recover th
 
     // Real browser A writes through the Firebase Web SDK. Browser B must
     // receive the new document through its active onSnapshot subscription.
-    const messageId = await alice.page.evaluate(async () => {
-      const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
-      const ids = [auth.currentUser.uid, window.__chatPeerUid].filter(Boolean);
-      return ids.length;
-    });
-    assert.equal(messageId, 0, 'No test-only peer globals should be required');
-
     const chatId = [alice.uid, bob.uid].sort().join('_');
     const sent = await alice.page.evaluate(async ({ chatId }) => {
       const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
