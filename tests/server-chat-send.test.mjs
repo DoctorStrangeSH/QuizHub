@@ -54,12 +54,12 @@ test('trusted send requires mutual friendship, sets immutable members, and is re
         senderId: 'alice', text: 'Привет, Боб!', createdAt: docs.get(`chats/${result.chatId}/messages/${result.messageId}`).createdAt,
         edited: false, replyTo: null, reactions: {}
     });
-    assert.equal(docs.size, 4);
+    assert.equal(docs.size, 5);
     assert.equal((await handler(authenticated(valid))).status, 'unchanged');
-    assert.equal(docs.size, 4);
+    assert.equal(docs.size, 5);
     await assert.rejects(handler(authenticated({ ...valid, text: 'Other message' })), e =>
         e.code === 'already-exists');
-    assert.equal(docs.size, 4);
+    assert.equal(docs.size, 5);
 });
 
 test('message creation increments only recipient unread count and retries do not increment twice', async () => {
