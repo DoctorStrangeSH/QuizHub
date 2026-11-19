@@ -72,6 +72,7 @@ export {
     where,
     orderBy,
     limit,
+    startAfter,
     getDocs,
     addDoc,
     serverTimestamp,
