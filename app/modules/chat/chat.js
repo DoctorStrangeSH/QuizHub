@@ -517,7 +517,19 @@ export function cleanupChatListeners() {
     friendsLoadRevision++;
     formSubmitPending = false;
     formSubmitVersion++;
+    messageSession++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer && messagesScrollHandler) {
+        messagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    }
+    messagesScrollHandler = null;
+    olderMessagesCursor = null;
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
+    chatMessageCache = new Map();
+    realtimeMessageIds = new Set();
+    historicalMessageIds = new Set();
     onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
     onlineUnsubscribes = [];
     currentChatId = null;
