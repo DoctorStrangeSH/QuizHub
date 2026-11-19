@@ -39,7 +39,8 @@ const seed = {
     [`chats/${chatId}/messages/m_earlier`]: { senderId: bob, createdAt: earlier },
     [`chats/${chatId}/messages/m_later`]: { senderId: alice, createdAt: later },
     [`chats/${chatId}/messages/tie_a`]: { senderId: bob, createdAt: later },
-    [`chats/${chatId}/messages/tie_b`]: { senderId: alice, createdAt: later }
+    [`chats/${chatId}/messages/tie_b`]: { senderId: alice, createdAt: later },
+    [`chats/${chatId}/messages/tie-a`]: { senderId: bob, createdAt: later }
 };
 const auth = data => ({ auth: { uid: alice, token: { firebase: { sign_in_provider: 'password' } } }, data });
 
@@ -86,6 +87,14 @@ test('read cursor uses message ID as deterministic tie-breaker for equal timesta
     const stale = await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie_a' });
     assert.equal(stale.status, 'stale');
     assert.equal(docs.get(`chats/${chatId}/members/alice`).lastReadMessageId, 'tie_b');
+});
+
+test('equal-timestamp cursor ordering follows Firestore ASCII document ID order', async () => {
+    const { db, docs } = database(seed);
+    await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie_a' });
+    const stale = await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie-a' });
+    assert.equal(stale.status, 'stale');
+    assert.equal(docs.get(`chats/${chatId}/members/alice`).lastReadMessageId, 'tie_a');
 });
 
 test('outsiders and forged chat/message targets are rejected', async () => {
