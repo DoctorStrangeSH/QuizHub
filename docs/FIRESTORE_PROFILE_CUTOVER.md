@@ -83,6 +83,13 @@ deployed security rules and recoverability have not been verified.
   compares every source/destination document. **Source documents are never
   deleted**, and production migration remains blocked; this exercise is not a
   resumable, live dual-write or point-in-time migration protocol.
+- The disposable-emulator lifecycle test now seeds two legacy messages: one
+  with Firestore timestamps, edit metadata, a reply target/preview and a
+  reaction; another soft-deleted message with its timestamp and empty reaction
+  map. It verifies both documents are copied byte-for-byte at the Firestore
+  value level, checks the copied message count, then continues the new-chat
+  lifecycle. This validates representative field preservation, not completeness
+  of a real production snapshot or a resumable migration protocol.
 - The disposable-emulator chat lifecycle now continues **after** that copy:
   a new server-owned message is sent to the migrated conversation, the copied
   message is edited and reacted to by authorized participants, foreign editing
@@ -99,22 +106,9 @@ deployed security rules and recoverability have not been verified.
   active ruleset and indexes, review it separately, and capture a verifiable
   backup. Do not copy preview-only rules into production.
 
-| Consumer | Current behavior | Required before cutover |
-| --- | --- | --- |
-| `friends/friends.js` | Friends/search/requests/leaderboard-style directory reads are routed through the migration gate, but legacy mode still downloads private `users` documents. | Verify `publicProfiles` backfill, all friend lookup paths and queries. |
-| `leaderboard/leaderboard.js` | Directory query is gated and public fields are projected after fetching. | Verify public ranking fields and required indexes. |
-| `profile/public-profile.js` | Foreign card read is gated; friend requests now delegate to the shared friends handler, whose published path still performs cross-user writes. | Switch the shared handler to audited authenticated server operations and test both profile and friends navigation. |
-| `chat/chat.js` | Chat directory reads now use the shared migration gate, projecting only public identity fields. With the gate disabled, it still downloads full `users/{friendId}` documents. | Backfill and verify `publicProfiles/{friendId}` before enabling the gate and owner-only rules. |
-| `profile/profile.js` | Registration checks nickname uniqueness through a directory query on `users` while the gate is disabled. | Switch to verified `nicknameClaims` reservations and server-only registration. |
-| `reset-weekly.js` | Exported client routine reads and writes every account. | Remove from client authority; move reset to a trusted, idempotent scheduled server job. |
-| `app.js` | Authenticated user reads/writes own profile; also resets own weekly XP based on browser local storage. | Move weekly reset decision to trusted server time and ensure it cannot be triggered per device. |
-| `friends/friends.js` | Normal published UI still writes both users' arrays directly. | Deploy audited callable + rules, migrate client, then prohibit foreign writes. |
+## Release gates
 
-## Mandatory release gates
-
-1. ✅ Confirm the `(default)` **Standard** instance in `eur3` from the Console;
-   **still required:** inspect the deployed Firestore rules, indexes and Auth
-   provider configuration. No database migration is authorized by this inventory.
+1. Confirm the deployed Firestore rules, indexes and Auth provider configuration.
 2. Capture and verify a complete, restorable snapshot of protected user/game data.
 3. Reconcile every `users/{uid}` against `publicProfiles/{uid}` and
    `nicknameClaims/{normalized}`; quarantine collisions and malformed records.
