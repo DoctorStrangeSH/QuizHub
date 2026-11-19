@@ -16,6 +16,7 @@ import { createPlayerProfile } from '../server/profile-create.mjs';
 import { createProfileCallableAdapter } from '../server/profile-create-callable-adapter.mjs';
 import { updateFriendship } from '../server/friend-relationships.mjs';
 import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
+import { createChatSendCallableAdapter } from '../server/chat-send-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -93,4 +94,21 @@ export const friendOperationPreview = onCall({
         throw new HttpsError('failed-precondition', 'FRIEND_PREVIEW_DISABLED');
     }
     return friendPreview(request);
+});
+
+// New direct-message schema is isolated to emulators until legacy chats,
+// browser code and production security rules have been migrated.
+const chatSendPreviewHandler = createChatSendCallableAdapter({
+    db: getFirestore(), HttpsError
+});
+export const chatSendPreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_SEND_PREVIEW_DISABLED');
+    }
+    return chatSendPreviewHandler(request);
 });

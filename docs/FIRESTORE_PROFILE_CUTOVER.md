@@ -31,6 +31,13 @@ deployed security rules and recoverability have not been verified.
   until the server flows and UI are migrated and tested. Legacy chat records
   have no verified `memberUids` field; they require careful backfill before
   any chat membership read rule can safely replace the existing policy.
+- `chatSendPreview` is an emulator-only callable with strict Auth identity,
+  reciprocal-friendship checks, immutable member list, bounded message text,
+  and an idempotent client message ID. The new `dm_...` chat ID is unambiguous,
+  unlike the legacy underscore-joined UID convention. This is **not wired to
+  the browser**: migrating existing conversations and enforcing the deployed
+  message-write policy are prerequisites. A local mock transaction is not a
+  substitute for Auth + Functions + Firestore emulator integration.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in
