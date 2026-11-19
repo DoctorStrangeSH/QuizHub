@@ -279,7 +279,9 @@ async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, contai
         });
         if (snapshot.docs.length > 0) olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
         hasOlderMessages = snapshot.docs.length === 50;
-        renderCachedMessages(container, { preserveViewport: true });
+        // Pagination is triggered at the top edge: keep scrollTop at the top so
+        // the newly fetched older messages become visible immediately.
+        renderCachedMessages(container);
     } catch (error) {
         console.error('Не удалось загрузить старые сообщения:', error);
         if (lifecycle === chatLifecycle && session === messageSession && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
