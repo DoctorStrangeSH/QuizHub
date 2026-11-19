@@ -38,6 +38,17 @@ deployed security rules and recoverability have not been verified.
   the browser**: migrating existing conversations and enforcing the deployed
   message-write policy are prerequisites. A local mock transaction is not a
   substitute for Auth + Functions + Firestore emulator integration.
+- `planLegacyChatMigration` is a **read-only, snapshot-driven** preflight. It
+  maps existing `uids.join('_')` conversation IDs to collision-free `dm_...`
+  destinations and rejects ambiguous IDs, nonreciprocal friendships, unknown
+  senders, duplicate message paths and destinations containing data. It returns
+  IDs and blocker codes, never message text. This is **not a migration script**:
+  no messages are copied, deleted or modified. Before ever using it with real
+  data, verify a complete snapshot including orphaned `messages` subcollections
+  under missing chat parents, reconcile conversations after unfriend events,
+  check attachment/reaction formats, verify a restorable backup and test a
+  resumable dual-read cutover in isolated emulators. Incomplete snapshot input
+  can produce a misleadingly green preflight and must never authorize release.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in
