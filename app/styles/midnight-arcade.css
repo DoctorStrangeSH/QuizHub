@@ -1089,6 +1089,7 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 .message-wrapper:hover .message-actions,.message-wrapper:focus-within .message-actions { opacity: 1; }
 .reaction-btn { min-height: 31px; min-width: 32px; padding: 3px; border: 1px solid transparent; border-radius: 9px; background: transparent; }
 .reaction-btn:hover { border-color: var(--border); background: var(--bg-card); }
+.message-more-btn { min-height: 31px; min-width: 32px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-card); color: var(--text-primary); font-weight: 700; }
 .chat-input-area { padding: 15px; border-top: 1px solid var(--border); background: var(--bg-glass); }
 .chat-input-form { display: flex; align-items: stretch; gap: 10px; }
 .chat-send-status { margin: 6px 2px 0; color: var(--text-secondary); font-size: .85rem; }
@@ -1100,7 +1101,7 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 .context-menu { position: fixed; z-index: 500; min-width: 178px; padding: 7px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 13px; box-shadow: var(--shadow-card); }
 .context-menu button { display: block; width: 100%; min-height: 39px; padding: 8px 12px; border: 0; border-radius: 8px; text-align: left; background: transparent; color: var(--text-primary); }
 .context-menu button:hover { background: var(--bg-card); }
-.chat-friend-item:focus-visible,.chat-back-btn:focus-visible,.chat-send-btn:focus-visible,.reaction-btn:focus-visible,.context-menu button:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 2px; }
+.chat-friend-item:focus-visible,.chat-back-btn:focus-visible,.chat-send-btn:focus-visible,.reaction-btn:focus-visible,.message-more-btn:focus-visible,.context-menu button:focus-visible { outline: 3px solid var(--accent-secondary); outline-offset: 2px; }
 @media (max-width: 768px) {
   .chat-layout { display: block; min-height: 70vh; }
   .chat-list-panel { min-height: 65vh; }

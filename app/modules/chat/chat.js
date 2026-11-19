@@ -247,11 +247,12 @@ function renderMessage(msg, container) {
             ${reactionsHTML}
         </div>
         <div class="message-actions">
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
+            <button type="button" class="reaction-btn" aria-label="Нравится" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
+            <button type="button" class="reaction-btn" aria-label="Сердце" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
+            <button type="button" class="reaction-btn" aria-label="Смешно" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
+            <button type="button" class="reaction-btn" aria-label="Удивление" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
+            <button type="button" class="reaction-btn" aria-label="Грусть" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
+            <button type="button" class="message-more-btn" aria-label="Действия с сообщением" onclick="window.showContextMenu(event, '${msg.id}', ${isMine})">⋯</button>
         </div>
     `;
     container.appendChild(msgEl);
@@ -288,6 +289,7 @@ window.sendMessage = async (text, replyTo = null) => {
 // ========== КОНТЕКСТНОЕ МЕНЮ ==========
 window.showContextMenu = (e, messageId, isMine) => {
     e.preventDefault();
+    e.stopPropagation();
     selectedMessageId = messageId;
     const menu = document.getElementById('context-menu');
     menu.style.display = 'block';
@@ -296,8 +298,14 @@ window.showContextMenu = (e, messageId, isMine) => {
     const buttons = menu.querySelectorAll('button');
     buttons[0].style.display = isMine ? 'block' : 'none';
     buttons[1].style.display = isMine ? 'block' : 'none';
+    Array.from(buttons).find(button => button.style.display !== 'none')?.focus();
 };
 document.addEventListener('click', () => { const menu = document.getElementById('context-menu'); if (menu) menu.style.display = 'none'; });
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const menu = document.getElementById('context-menu');
+    if (menu) menu.style.display = 'none';
+});
 
 window.editMessage = () => {
     if (!selectedMessageId || !currentChatId) return;

@@ -89,3 +89,12 @@ test('send errors are visible and never replace the next chat status', () => {
   assert.match(chat, /lifecycle === chatLifecycle && currentChatId === chatId && auth\.currentUser\?\.uid === user\.uid/);
   assert.match(css, /\.chat-send-status:empty \{ display: none; \}/);
 });
+
+test('message actions are keyboard accessible and have understandable labels', () => {
+  assert.match(chat, /class="message-more-btn" aria-label="Действия с сообщением"/);
+  assert.match(chat, /e\.stopPropagation\(\)/);
+  assert.match(chat, /Array\.from\(buttons\)\.find\(button => button\.style\.display !== 'none'\)\?\.focus\(\)/);
+  assert.match(chat, /event\.key !== 'Escape'/);
+  for (const label of ['Нравится', 'Сердце', 'Смешно', 'Удивление', 'Грусть']) assert.ok(chat.includes(`aria-label="${label}"`));
+  assert.match(css, /\.message-more-btn:focus-visible/);
+});
