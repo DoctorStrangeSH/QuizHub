@@ -176,15 +176,11 @@ test('two authenticated browser clients receive live chat updates and recover th
     );
     await bob.page.locator('#chat-messages').evaluate(element => { element.scrollTop = 0; });
     await waitForMessage(bob.page, 'Page boundary message 000');
-    const firstOlder = bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 000' });
-    const lastOlder = bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 104' });
-    assert.equal(await firstOlder.count(), 1, 'Scrolling to the top must load the older page');
-    assert.ok(
-      await firstOlder.evaluate(element => element.closest('.message-wrapper').compareDocumentPosition(
-        document.querySelector('.message-wrapper[data-message-id] .message-text') || element
-      )) >= 0 || await lastOlder.count() === 1,
-      'Older messages remain in the message list'
-    );
+    const renderedTexts = await bob.page.locator('.message-wrapper .message-text').allTextContents();
+    const oldestIndex = renderedTexts.findIndex(text => text.includes('Page boundary message 000'));
+    const newestIndex = renderedTexts.findIndex(text => text.includes('Page boundary message 104'));
+    assert.ok(oldestIndex >= 0, 'Scrolling to the top must load the older page');
+    assert.ok(newestIndex > oldestIndex, 'Older messages must remain before newer messages');
 
     assert.deepEqual(alice.errors, [], `Alice browser errors: ${alice.errors.join(' | ')}`);
     assert.deepEqual(bob.errors, [], `Bob browser errors: ${bob.errors.join(' | ')}`);
