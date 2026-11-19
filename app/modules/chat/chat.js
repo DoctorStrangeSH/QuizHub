@@ -5,12 +5,17 @@ import { toggleChatReaction } from './chat-reactions.js';
 import { prepareChatMessageEdit, prepareChatMessageDelete } from './chat-message-edits.js';
 import {
     auth, db, doc, getDoc, setDoc,
-    collection, query, orderBy, limit,
+    collection, query, orderBy, limit, startAfter, getDocs,
     addDoc, serverTimestamp, onSnapshot, runTransaction
 } from '../../firebase-config.js';
 
 let currentChatId = null;
 let messagesUnsubscribe = null;
+let messagesScrollHandler = null;
+let olderMessagesCursor = null;
+let hasOlderMessages = false;
+let loadingOlderMessages = false;
+let chatMessageCache = new Map();
 let chatFriend = null;
 let currentUserProfile = null;
 let replyMessageId = null;
@@ -209,9 +214,68 @@ window.closeChatWindow = () => {
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    const oldMessagesContainer = document.getElementById('chat-messages');
+    if (oldMessagesContainer && messagesScrollHandler) oldMessagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    messagesScrollHandler = null;
+    olderMessagesCursor = null; hasOlderMessages = false; loadingOlderMessages = false; chatMessageCache = new Map();
     currentChatId = null; chatFriend = null;
     document.querySelectorAll('.chat-friend-item').forEach(el => el.classList.remove('active'));
 };
+
+function renderCachedMessages(container, { preserveViewport = false, stickToBottom = false } = {}) {
+    const previousTop = container.scrollTop;
+    const wasNearBottom = container.scrollHeight - container.clientHeight - previousTop < 72;
+    const anchor = preserveViewport
+        ? Array.from(container.querySelectorAll('.message-wrapper')).find(element => element.getBoundingClientRect().bottom > container.getBoundingClientRect().top)
+        : null;
+    const anchorId = anchor?.dataset.messageId || null;
+    const anchorOffset = anchor ? anchor.getBoundingClientRect().top - container.getBoundingClientRect().top : 0;
+
+    container.innerHTML = '';
+    const messages = Array.from(chatMessageCache.values()).sort((left, right) => {
+        const leftTime = left.createdAt?.toMillis ? left.createdAt.toMillis() : 0;
+        const rightTime = right.createdAt?.toMillis ? right.createdAt.toMillis() : 0;
+        return leftTime - rightTime || left.id.localeCompare(right.id);
+    });
+    messages.forEach(message => renderMessage(message, container));
+
+    if (stickToBottom || wasNearBottom) {
+        container.scrollTop = container.scrollHeight;
+    } else if (anchorId) {
+        const nextAnchor = container.querySelector(`.message-wrapper[data-message-id="${CSS.escape(anchorId)}"]`);
+        if (nextAnchor) container.scrollTop += nextAnchor.getBoundingClientRect().top - container.getBoundingClientRect().top - anchorOffset;
+        else container.scrollTop = previousTop;
+    } else {
+        container.scrollTop = previousTop;
+    }
+}
+
+async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
+    if (!hasOlderMessages || loadingOlderMessages || !olderMessagesCursor) return;
+    loadingOlderMessages = true;
+    const previousHeight = container.scrollHeight;
+    const previousTop = container.scrollTop;
+    try {
+        const olderQuery = query(
+            collection(db, 'chats', chatId, 'messages'),
+            orderBy('createdAt', 'desc'),
+            startAfter(olderMessagesCursor),
+            limit(50)
+        );
+        const snapshot = await getDocs(olderQuery);
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !container.isConnected) return;
+        snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
+        if (snapshot.docs.length > 0) olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
+        hasOlderMessages = snapshot.docs.length === 50;
+        renderCachedMessages(container, { preserveViewport: true });
+        container.scrollTop = previousTop + (container.scrollHeight - previousHeight);
+    } catch (error) {
+        console.error('Не удалось загрузить старые сообщения:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
+    } finally {
+        loadingOlderMessages = false;
+    }
+}
 
 function loadMessages() {
     if (!currentChatId) return;
@@ -220,17 +284,34 @@ function loadMessages() {
     const viewerUid = auth.currentUser?.uid;
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
+    chatMessageCache = new Map();
+    olderMessagesCursor = null;
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
     const messagesRef = collection(db, 'chats', chatId, 'messages');
-    // Fetch the newest page, then render it oldest-to-newest for chat chronology.
     const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
+
+    if (messagesScrollHandler) messagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    messagesScrollHandler = () => {
+        if (messagesContainer.scrollTop <= 80) {
+            loadOlderMessages({ chatId, lifecycle, viewerUid, container: messagesContainer });
+        }
+    };
+    messagesContainer.addEventListener('scroll', messagesScrollHandler, { passive: true });
+
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
-        messagesContainer.innerHTML = '';
-        if (snapshot.empty) { messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>'; return; }
-        snapshot.docs.slice().reverse().forEach(messageDoc => {
-            renderMessage({ id: messageDoc.id, ...messageDoc.data() }, messagesContainer);
-        });
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        const firstSnapshot = chatMessageCache.size === 0;
+        snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
+        if (!olderMessagesCursor && snapshot.docs.length > 0) {
+            olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
+            hasOlderMessages = snapshot.docs.length === 100;
+        }
+        if (snapshot.empty && chatMessageCache.size === 0) {
+            messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>';
+            return;
+        }
+        renderCachedMessages(messagesContainer, { preserveViewport: !firstSnapshot, stickToBottom: firstSnapshot });
     }, (error) => {
         console.error('Ошибка подписки на историю сообщений:', error);
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
