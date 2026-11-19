@@ -32,11 +32,12 @@ export async function sendDirectMessage(db, args) {
     const recipient = db.collection('users').doc(recipientUid);
     const chat = db.collection('chats').doc(chatId);
     const message = chat.collection('messages').doc(messageId);
+    const recipientMember = chat.collection('members').doc(recipientUid);
 
     return db.runTransaction(async tx => {
         // Firestore transactions must perform every read before the first write.
-        const [senderSnap, recipientSnap, chatSnap, messageSnap] = await Promise.all([
-            tx.get(sender), tx.get(recipient), tx.get(chat), tx.get(message)
+        const [senderSnap, recipientSnap, chatSnap, messageSnap, recipientMemberSnap] = await Promise.all([
+            tx.get(sender), tx.get(recipient), tx.get(chat), tx.get(message), tx.get(recipientMember)
         ]);
         if (!senderSnap.exists || !recipientSnap.exists) throw new Error('CHAT_PROFILE_NOT_FOUND');
         const a = senderSnap.data().friends;
@@ -65,6 +66,19 @@ export async function sendDirectMessage(db, args) {
             senderId: senderUid, text, createdAt: new Date(),
             edited: false, replyTo: null, reactions: {}
         });
+
+        // Increment the recipient's unread count in the same transaction as
+        // message creation. Idempotent retries return above without incrementing.
+        const previousUnread = recipientMemberSnap.exists
+            ? recipientMemberSnap.data().unreadCount ?? 0 : 0;
+        if (!Number.isSafeInteger(previousUnread) || previousUnread < 0) {
+            throw new Error('CHAT_UNREAD_STATE_INVALID');
+        }
+        tx.set(recipientMember, {
+            uid: recipientUid,
+            unreadCount: previousUnread + 1,
+            updatedAt: new Date()
+        }, { merge: true });
         return { status: 'sent', chatId, messageId };
     });
 }
