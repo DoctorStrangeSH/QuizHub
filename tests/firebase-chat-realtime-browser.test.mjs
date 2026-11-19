@@ -127,6 +127,11 @@ test('two authenticated browser clients receive live chat updates and recover th
     await bob.page.waitForTimeout(150);
     await openFriendChat(bob, alice.uid);
     await waitForMessage(bob.page, 'Message after reconnect');
+    assert.equal(
+      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Message after reconnect' }).count(),
+      1,
+      'Reopening a chat must not stack duplicate message listeners'
+    );
 
     assert.deepEqual(alice.errors, [], `Alice browser errors: ${alice.errors.join(' | ')}`);
     assert.deepEqual(bob.errors, [], `Bob browser errors: ${bob.errors.join(' | ')}`);
