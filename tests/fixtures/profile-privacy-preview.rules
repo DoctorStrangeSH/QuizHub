@@ -6,8 +6,10 @@
 // nicknameLower, equippedFrame (strings) and level, experience,
 // weeklyExperience, wins (nonnegative numbers). All authenticated readers.
 // nicknameClaims/{name}: server-only {uid: string} reservation.
-// quizSessions, chats/messages, and all other paths: server-only in this
-// preview, regardless of legacy client capabilities.
+// chats/{chatId}: server-owned {memberUids: list of exactly two Auth UIDs}.
+// chats/{chatId}/messages/{id}: server-authored {senderId: string,
+// text: string, createdAt: timestamp}, visible to both members only.
+// Chat message writes and all unrelated paths remain server-only here.
 // No client writes are permitted until field-level validators, callable flows,
 // and the entire existing UI are tested. Admin SDK bypasses these rules.
 rules_version = '2';
@@ -39,6 +41,13 @@ service cloud.firestore {
         data.weeklyExperience is int && data.weeklyExperience >= 0 &&
         data.wins is int && data.wins >= 0;
     }
+    function isChatMember(chatId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/chats/$(chatId)) &&
+        get(/databases/$(database)/documents/chats/$(chatId)).data.memberUids is list &&
+        get(/databases/$(database)/documents/chats/$(chatId)).data.memberUids.size() == 2 &&
+        request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberUids;
+    }
 
     match /users/{uid} {
       allow read: if isOwner(uid);
@@ -50,6 +59,19 @@ service cloud.firestore {
       // Backfill/projection must be server-authored; do not let clients forge ranks.
       allow read: if isAuthenticated();
       allow create, update, delete: if false;
+    }
+
+    match /chats/{chatId} {
+      // The parent document must have been created by trusted code.
+      allow read: if isAuthenticated() && resource.data.memberUids is list &&
+        resource.data.memberUids.size() == 2 &&
+        request.auth.uid in resource.data.memberUids;
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isChatMember(chatId);
+        allow create, update, delete: if false;
+      }
     }
 
     match /{document=**} {

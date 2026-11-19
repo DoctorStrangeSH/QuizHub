@@ -23,9 +23,14 @@ deployed security rules and recoverability have not been verified.
   emulator-only prototype: owner-only reads of private `users`, authenticated
   reads of server-projected `publicProfiles`, and zero client writes. The CI
   two-user test rejects private reads, bulk `users` queries, impersonation and
-  privileged writes. **This is not production-ready**: it deliberately breaks
-  existing client-side profile creation, friends/chat, economy and gameplay
-  writes until the server flows and UI are migrated and tested.
+  privileged writes. A separate Alice/Bob/Charlie scenario checks chat
+  membership: participants can read server-seeded messages, outsiders cannot,
+  and no client can rewrite membership or impersonate a sender. **This is not
+  production-ready**: it deliberately breaks existing client-side profile
+  creation, chat creation/message sending, friends, economy and gameplay writes
+  until the server flows and UI are migrated and tested. Legacy chat records
+  have no verified `memberUids` field; they require careful backfill before
+  any chat membership read rule can safely replace the existing policy.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in

@@ -92,3 +92,49 @@ test('private profiles are owner-only; public projections are authenticated read
         await deleteApp(app);
     }
 });
+
+test('only chat members can view messages; outsiders cannot forge membership', async () => {
+    assert.ok(process.env.FIRESTORE_EMULATOR_HOST);
+    assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST);
+    const app = initializeApp({ projectId: project }, 'chat-privacy-' + randomUUID());
+    const db = getFirestore(app);
+    const alice = await register();
+    const bob = await register();
+    const charlie = await register();
+    const chatId = randomUUID();
+    const chat = db.collection('chats').doc(chatId);
+    const message = chat.collection('messages').doc('greeting');
+    const messageData = { senderId: alice.uid, text: 'Привет!', createdAt: new Date() };
+    try {
+        await chat.set({ memberUids: [alice.uid, bob.uid] });
+        await message.set(messageData);
+
+        for (const token of [alice.token, bob.token]) {
+            await request(`/chats/${chatId}`, 'GET', token, undefined, 200);
+            const visible = await request(`/chats/${chatId}/messages/greeting`, 'GET', token, undefined, 200);
+            assert.equal(visible.fields.text.stringValue, 'Привет!');
+            await request(`/chats/${chatId}/messages?pageSize=10`, 'GET', token, undefined, 200);
+        }
+        for (const token of [charlie.token, null]) {
+            await request(`/chats/${chatId}`, 'GET', token, undefined, 403);
+            await request(`/chats/${chatId}/messages/greeting`, 'GET', token, undefined, 403);
+            await request(`/chats/${chatId}/messages?pageSize=10`, 'GET', token, undefined, 403);
+        }
+        const forged = { fields: { memberUids: { arrayValue: { values: [
+            { stringValue: alice.uid }, { stringValue: charlie.uid }
+        ] } } } };
+        await request(`/chats/${chatId}?updateMask.fieldPaths=memberUids`, 'PATCH', charlie.token, forged, 403);
+        await request(`/chats/${chatId}?updateMask.fieldPaths=memberUids`, 'PATCH', alice.token, forged, 403);
+        await request(`/chats/${chatId}/messages?documentId=spoofed`, 'POST', charlie.token,
+            { fields: { senderId: { stringValue: alice.uid }, text: { stringValue: 'forged' } } }, 403);
+        await request(`/chats/${chatId}/messages/greeting?updateMask.fieldPaths=text`, 'PATCH', bob.token,
+            { fields: { text: { stringValue: 'tampered' } } }, 403);
+        assert.equal((await message.get()).data().text, 'Привет!');
+        assert.deepEqual((await chat.get()).data().memberUids, [alice.uid, bob.uid]);
+    } finally {
+        await message.delete();
+        await chat.delete();
+        await db.terminate();
+        await deleteApp(app);
+    }
+});
