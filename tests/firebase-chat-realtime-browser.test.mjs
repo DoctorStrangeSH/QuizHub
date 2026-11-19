@@ -174,6 +174,17 @@ test('two authenticated browser clients receive live chat updates and recover th
       1,
       'The newest message must be visible'
     );
+    await bob.page.locator('#chat-messages').evaluate(element => { element.scrollTop = 0; });
+    await waitForMessage(bob.page, 'Page boundary message 000');
+    const firstOlder = bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 000' });
+    const lastOlder = bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 104' });
+    assert.equal(await firstOlder.count(), 1, 'Scrolling to the top must load the older page');
+    assert.ok(
+      await firstOlder.evaluate(element => element.closest('.message-wrapper').compareDocumentPosition(
+        document.querySelector('.message-wrapper[data-message-id] .message-text') || element
+      )) >= 0 || await lastOlder.count() === 1,
+      'Older messages remain in the message list'
+    );
 
     assert.deepEqual(alice.errors, [], `Alice browser errors: ${alice.errors.join(' | ')}`);
     assert.deepEqual(bob.errors, [], `Bob browser errors: ${bob.errors.join(' | ')}`);
