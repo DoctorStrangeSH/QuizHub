@@ -146,6 +146,35 @@ test('two authenticated browser clients receive live chat updates and recover th
       'Reopening a chat must not stack duplicate message listeners'
     );
 
+    // A conversation with more than one page must show its newest 100
+    // messages, not the oldest 100, while preserving chronological rendering.
+    await alice.page.evaluate(async ({ chatId }) => {
+      const { auth, db, collection, addDoc } = await import('./app/firebase-config.js');
+      const messages = Array.from({ length: 105 }, (_, index) => ({
+        senderId: auth.currentUser.uid,
+        senderName: 'Alice',
+        text: 'Page boundary message ' + String(index).padStart(3, '0'),
+        createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)),
+        edited: false,
+        replyTo: null,
+        reactions: {}
+      }));
+      await Promise.all(messages.map(message =>
+        addDoc(collection(db, 'chats', chatId, 'messages'), message)
+      ));
+    }, { chatId });
+    await waitForMessage(bob.page, 'Page boundary message 104');
+    assert.equal(
+      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 000' }).count(),
+      0,
+      'The oldest message must fall outside the newest-100 window'
+    );
+    assert.equal(
+      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 104' }).count(),
+      1,
+      'The newest message must be visible'
+    );
+
     assert.deepEqual(alice.errors, [], `Alice browser errors: ${alice.errors.join(' | ')}`);
     assert.deepEqual(bob.errors, [], `Bob browser errors: ${bob.errors.join(' | ')}`);
   } finally {
