@@ -328,7 +328,10 @@ function loadMessages() {
         });
         snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
         realtimeMessageIds = nextRealtimeIds;
-        if (!olderMessagesCursor && snapshot.docs.length > 0) {
+        // The first realtime snapshot can be partial while messages are
+        // still arriving. Keep the pagination boundary aligned with the latest
+        // live page until the first historical page is actually requested.
+        if (historicalMessageIds.size === 0 && !loadingOlderMessages && snapshot.docs.length > 0) {
             olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
             hasOlderMessages = snapshot.docs.length === 100;
         }
