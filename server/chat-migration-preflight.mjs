@@ -83,15 +83,15 @@ export function planLegacyChatMigration({ users, messages, destinationChatIds = 
 
     const chats = [...candidates.values()].filter(chat => chat.messageIds.length > 0);
     // The current emulator copier deliberately uses one Firestore transaction
-    // per conversation and has a 100-message safety ceiling. A green preflight
+    // per conversation and has a 5,000-message safety ceiling; the chunked copier writes at most 100 per transaction. A green preflight
     // must never promise a copy operation that the copier will reject.
     for (const chat of chats) {
-        if (chat.messageIds.length > 100) {
+        if (chat.messageIds.length > 5000) {
             blockers.push({
                 code: 'CHAT_EXCEEDS_SINGLE_TRANSACTION_LIMIT',
                 chatId: chat.legacyId,
                 messageCount: chat.messageIds.length,
-                maximum: 100
+                maximum: 5000
             });
         }
     }
