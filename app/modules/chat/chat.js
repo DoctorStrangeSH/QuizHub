@@ -26,6 +26,7 @@ let formSubmitPending = false;
 let formSubmitVersion = 0;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
+let messageSession = 0;
 let friendsLoadRevision = 0;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
@@ -215,6 +216,7 @@ window.closeChatWindow = () => {
     document.getElementById('chat-empty').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
+    messageSession++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
     const oldMessagesContainer = document.getElementById('chat-messages');
     if (oldMessagesContainer && messagesScrollHandler) oldMessagesContainer.removeEventListener('scroll', messagesScrollHandler);
@@ -259,7 +261,7 @@ function renderCachedMessages(container, { preserveViewport = false, stickToBott
     }
 }
 
-async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
+async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, container }) {
     if (!hasOlderMessages || loadingOlderMessages || !olderMessagesCursor) return;
     loadingOlderMessages = true;
     try {
@@ -270,7 +272,7 @@ async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
             limit(50)
         );
         const snapshot = await getDocs(olderQuery);
-        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !container.isConnected) return;
+        if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !container.isConnected) return;
         snapshot.docs.forEach(messageDoc => {
             historicalMessageIds.add(messageDoc.id);
             chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() });
@@ -280,7 +282,7 @@ async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
         renderCachedMessages(container, { preserveViewport: true });
     } catch (error) {
         console.error('Не удалось загрузить старые сообщения:', error);
-        if (lifecycle === chatLifecycle && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
+        if (lifecycle === chatLifecycle && session === messageSession && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
     } finally {
         loadingOlderMessages = false;
     }
@@ -290,6 +292,7 @@ function loadMessages() {
     if (!currentChatId) return;
     const chatId = currentChatId;
     const lifecycle = chatLifecycle;
+    const session = ++messageSession;
     const viewerUid = auth.currentUser?.uid;
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
@@ -305,13 +308,13 @@ function loadMessages() {
     if (messagesScrollHandler) messagesContainer.removeEventListener('scroll', messagesScrollHandler);
     messagesScrollHandler = () => {
         if (messagesContainer.scrollTop <= 80) {
-            loadOlderMessages({ chatId, lifecycle, viewerUid, container: messagesContainer });
+            loadOlderMessages({ chatId, lifecycle, session, viewerUid, container: messagesContainer });
         }
     };
     messagesContainer.addEventListener('scroll', messagesScrollHandler, { passive: true });
 
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
-        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
+        if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
         const firstSnapshot = chatMessageCache.size === 0;
         const nextRealtimeIds = new Set(snapshot.docs.map(messageDoc => messageDoc.id));
         realtimeMessageIds.forEach(messageId => {
@@ -335,7 +338,7 @@ function loadMessages() {
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
         messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary" role="alert">Не удалось загрузить сообщения.<br><button type="button" class="btn-premium btn-sm mt-2" id="retry-chat-messages">Повторить</button></div>';
         messagesContainer.querySelector('#retry-chat-messages').addEventListener('click', () => {
-            if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid) return;
+            if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid) return;
             if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
             loadMessages();
         });
