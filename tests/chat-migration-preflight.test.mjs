@@ -46,6 +46,20 @@ test('preflight detects collisions in legacy underscore-joined IDs', () => {
     assert.ok(plan.blockers.some(blocker => blocker.code === 'AMBIGUOUS_LEGACY_CHAT_ID'));
 });
 
+test('preflight blocks a conversation larger than the copier transaction limit', () => {
+    const oversized = Array.from({ length: 101 }, (_, index) => ({
+        chatId: 'alice_bob', messageId: `message_${String(index).padStart(3, '0')}`,
+        senderId: index % 2 ? 'bob' : 'alice'
+    }));
+    const plan = planLegacyChatMigration({ users, messages: oversized });
+    assert.equal(plan.ready, false);
+    assert.equal(plan.chats.length, 0);
+    assert.ok(plan.blockers.some(blocker =>
+        blocker.code === 'CHAT_EXCEEDS_SINGLE_TRANSACTION_LIMIT' &&
+        blocker.messageCount === 101 && blocker.maximum === 100
+    ));
+});
+
 test('preflight refuses existing destinations and forged senders', () => {
     const plan = planLegacyChatMigration({
         users, messages: [...messages, { chatId: 'alice_bob', messageId: 'm3', senderId: 'charlie' }],
