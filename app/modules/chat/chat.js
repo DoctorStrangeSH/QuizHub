@@ -16,6 +16,8 @@ let olderMessagesCursor = null;
 let hasOlderMessages = false;
 let loadingOlderMessages = false;
 let chatMessageCache = new Map();
+let realtimeMessageIds = new Set();
+let historicalMessageIds = new Set();
 let chatFriend = null;
 let currentUserProfile = null;
 let replyMessageId = null;
@@ -217,7 +219,7 @@ window.closeChatWindow = () => {
     const oldMessagesContainer = document.getElementById('chat-messages');
     if (oldMessagesContainer && messagesScrollHandler) oldMessagesContainer.removeEventListener('scroll', messagesScrollHandler);
     messagesScrollHandler = null;
-    olderMessagesCursor = null; hasOlderMessages = false; loadingOlderMessages = false; chatMessageCache = new Map();
+    olderMessagesCursor = null; hasOlderMessages = false; loadingOlderMessages = false; chatMessageCache = new Map(); realtimeMessageIds = new Set(); historicalMessageIds = new Set();
     currentChatId = null; chatFriend = null;
     document.querySelectorAll('.chat-friend-item').forEach(el => el.classList.remove('active'));
 };
@@ -269,7 +271,10 @@ async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
         );
         const snapshot = await getDocs(olderQuery);
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !container.isConnected) return;
-        snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
+        snapshot.docs.forEach(messageDoc => {
+            historicalMessageIds.add(messageDoc.id);
+            chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() });
+        });
         if (snapshot.docs.length > 0) olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
         hasOlderMessages = snapshot.docs.length === 50;
         renderCachedMessages(container, { preserveViewport: true });
@@ -289,6 +294,8 @@ function loadMessages() {
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
     chatMessageCache = new Map();
+    realtimeMessageIds = new Set();
+    historicalMessageIds = new Set();
     olderMessagesCursor = null;
     hasOlderMessages = false;
     loadingOlderMessages = false;
@@ -306,7 +313,14 @@ function loadMessages() {
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
         const firstSnapshot = chatMessageCache.size === 0;
+        const nextRealtimeIds = new Set(snapshot.docs.map(messageDoc => messageDoc.id));
+        realtimeMessageIds.forEach(messageId => {
+            if (!nextRealtimeIds.has(messageId) && !historicalMessageIds.has(messageId)) {
+                chatMessageCache.delete(messageId);
+            }
+        });
         snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
+        realtimeMessageIds = nextRealtimeIds;
         if (!olderMessagesCursor && snapshot.docs.length > 0) {
             olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
             hasOlderMessages = snapshot.docs.length === 100;
