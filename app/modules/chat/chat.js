@@ -261,7 +261,7 @@ function renderCachedMessages(container, { preserveViewport = false, stickToBott
     }
 }
 
-async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, container }) {
+async async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, container }) {
     if (!hasOlderMessages || loadingOlderMessages || !olderMessagesCursor) return;
     loadingOlderMessages = true;
     try {
