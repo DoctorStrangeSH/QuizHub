@@ -253,8 +253,6 @@ function renderCachedMessages(container, { preserveViewport = false, stickToBott
 async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
     if (!hasOlderMessages || loadingOlderMessages || !olderMessagesCursor) return;
     loadingOlderMessages = true;
-    const previousHeight = container.scrollHeight;
-    const previousTop = container.scrollTop;
     try {
         const olderQuery = query(
             collection(db, 'chats', chatId, 'messages'),
@@ -268,7 +266,6 @@ async function loadOlderMessages({ chatId, lifecycle, viewerUid, container }) {
         if (snapshot.docs.length > 0) olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
         hasOlderMessages = snapshot.docs.length === 50;
         renderCachedMessages(container, { preserveViewport: true });
-        container.scrollTop = previousTop + (container.scrollHeight - previousHeight);
     } catch (error) {
         console.error('Не удалось загрузить старые сообщения:', error);
         if (lifecycle === chatLifecycle && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
