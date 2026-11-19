@@ -180,3 +180,29 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 Продолжить аудит PR #3 без merge: разделить его изменения по Requirement IDs, проверить критичные security-sensitive файлы и определить, какие части должны попасть в этап 2 (profiles), а какие — в этап 3 (friends/chats). Параллельно запросить у владельца необходимые read-only production evidence для завершения этапа 0.
 
 Новые продуктовые функции не добавлять.
+
+
+## 10. Дополнительный source review PR #3 (2026-11-20)
+
+Проверены server friendship transitions, friend callable adapter, chat send/actions/read-state adapters, chat migration preflight/chunked emulator copy, privacy preview rules, Functions exports и связанные тесты.
+
+Положительные свойства preview-кода:
+- Actor UID берётся из Firebase Auth context, а не из payload.
+- Callable adapters используют строгие allowlists полей и отклоняют anonymous Auth.
+- Дружба обновляет обе стороны в одной транзакции и сохраняет несоциальные поля.
+- Отправка сообщения проверяет взаимную дружбу, immutable memberUids, длину/формат текста и идемпотентный clientMessageId.
+- Редактирование/удаление ограничено автором; реакция — только собственным ключом участника.
+- Preview Functions явно закрыты вне изолированных Auth/Firestore/Functions emulators.
+- Миграционный copy ограничен disposable emulator, требует явного confirmation, сохраняет legacy source и сверяет скопированные сообщения.
+
+Найденные несоответствия/незакрытые требования:
+1. **CHAT-03 — unread reconciliation не завершён.** markDirectChatRead сохраняет lastReadMessageId/lastReadAt, но намеренно не пересчитывает unreadCount. Тест явно подтверждает, что счётчик остаётся прежним. Это cursor prototype, не завершённая read/unread система.
+2. **DATA-01 — inventory не расширен под новую схему чата.** sendDirectMessage создаёт chats/{chatId}/members/{uid}, но server/firestore-migration-inventory.mjs не включает members subcollection. Backup/migration inventory должен учитывать её до принятия схемы.
+3. **RANK-02 / PROF-02 — redaction не является сетевой приватностью.** Пока PUBLIC_PROFILE_READS_ENABLED выключен, directory reads всё ещё получают users documents с клиента; projectProfileForViewer лишь фильтрует поля перед передачей UI. Это не заменяет publicProfiles и owner-only Rules.
+4. **CHAT-04 — миграция только emulator rehearsal.** Capture/copy не является production snapshot, не даёт point-in-time guarantee и не доказывает resumable rollout на живых данных.
+5. **SEC-02 / REL-01 — production Rules и Functions deployment не подтверждены.** Preview rules/functions должны оставаться изолированными; их нельзя включать на production без полной миграции клиентов и отдельного release gate.
+6. PR объединяет профильную приватность, friend transitions, chat transport, read-state, миграцию и визуальные изменения в одном крупном изменении. Для управляемой поставки эти области следует разделить на небольшие PR по этапам ТЗ.
+
+### Решение по PR #3
+
+**Не объединять сейчас.** Зелёный CI подтверждает только описанные тестовые сценарии; он не снимает перечисленные архитектурные и release blockers. Сначала разделить изменения по Requirement IDs, добавить недостающий members inventory, довести unread reconciliation до acceptance criteria и провести повторное ревью. Любое production cutover остаётся запрещённым до закрытия DATA-01, SEC-02 и DATA-02.
