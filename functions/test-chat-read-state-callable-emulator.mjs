@@ -49,6 +49,9 @@ test('chat read cursor is authenticated, member-scoped and monotonic in emulator
         await chat.collection('messages').doc('message_tie_b').set({
             senderId: alice.uid, text: 'Tie B', createdAt: new Date('2030-01-01T10:02:00.000Z')
         });
+        await chat.collection('messages').doc('message-tie-a').set({
+            senderId: bob.uid, text: 'Tie punctuation', createdAt: new Date('2030-01-01T10:02:00.000Z')
+        });
         await chat.collection('members').doc(alice.uid).set({ uid: alice.uid, unreadCount: 4 });
 
         const unauthenticated = await invoke(null, { chatId, lastReadMessageId: 'message_later' });
@@ -66,6 +69,8 @@ test('chat read cursor is authenticated, member-scoped and monotonic in emulator
         assert.equal(tieAdvance.body.result?.status, 'updated', JSON.stringify(tieAdvance));
         const tieStale = await invoke(alice, { chatId, lastReadMessageId: 'message_tie_a' });
         assert.equal(tieStale.body.result?.status, 'stale', JSON.stringify(tieStale));
+        const punctuationStale = await invoke(alice, { chatId, lastReadMessageId: 'message-tie-a' });
+        assert.equal(punctuationStale.body.result?.status, 'stale', JSON.stringify(punctuationStale));
 
         const aliceState = (await chat.collection('members').doc(alice.uid).get()).data();
         assert.equal(aliceState.lastReadMessageId, 'message_tie_b');
