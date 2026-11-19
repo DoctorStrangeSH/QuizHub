@@ -118,24 +118,30 @@ test('two authenticated browser clients receive live chat updates and recover th
     // returns, Firestore's existing listener should catch up with a later write.
     await bob.context.setOffline(true);
     await bob.page.waitForTimeout(1200);
-    await bob.context.setOffline(false);
     await alice.page.evaluate(async ({ chatId }) => {
       const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
         senderId: auth.currentUser.uid, senderName: 'Alice',
-        text: 'Message after reconnect', createdAt: serverTimestamp(),
+        text: 'Message sent while Bob offline', createdAt: serverTimestamp(),
         edited: false, replyTo: null, reactions: {}
       });
     }, { chatId });
-    await waitForMessage(bob.page, 'Message after reconnect');
+    await bob.page.waitForTimeout(800);
+    assert.equal(
+      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Message sent while Bob offline' }).count(),
+      0,
+      'Offline browser must not receive the new message before reconnecting'
+    );
+    await bob.context.setOffline(false);
+    await waitForMessage(bob.page, 'Message sent while Bob offline');
 
     // Leaving and reopening a conversation must replace (not stack) listeners.
     await bob.page.evaluate(() => window.closeChatWindow());
     await bob.page.waitForTimeout(150);
     await openFriendChat(bob, alice.uid);
-    await waitForMessage(bob.page, 'Message after reconnect');
+    await waitForMessage(bob.page, 'Message sent while Bob offline');
     assert.equal(
-      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Message after reconnect' }).count(),
+      await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Message sent while Bob offline' }).count(),
       1,
       'Reopening a chat must not stack duplicate message listeners'
     );
