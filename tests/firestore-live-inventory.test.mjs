@@ -58,11 +58,11 @@ test('inventory recursively finds nested collections under missing parent docume
         { field: 'inventory[].quantity', types: { integer: 1 } },
         { field: 'inventory[].sku', types: { string: 1 } },
         { field: 'nickname', types: { string: 1 } },
-        { field: 'tags', types: { array: 1 } },
-        { field: 'tags[]', types: { string: 2 } },
         { field: 'stats', types: { map: 1 } },
         { field: 'stats.totalGames', types: { integer: 1 } },
-        { field: 'stats.wins', types: { integer: 1 } }
+        { field: 'stats.wins', types: { integer: 1 } },
+        { field: 'tags', types: { array: 1 } },
+        { field: 'tags[]', types: { string: 2 } }
     ]);
     const serialized = JSON.stringify(report);
     for (const secret of ['alice-private-id', 'orphan-chat-id', 'message-secret-id',
