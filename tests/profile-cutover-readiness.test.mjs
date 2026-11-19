@@ -38,5 +38,5 @@ test('chat friend list retains only projected public identity fields', () => {
     assert.match(chat, /friendsData\.push\(\{ id: publicFriend\.uid, nickname: publicFriend\.nickname \}\)/);
     assert.doesNotMatch(chat, /\.\.\.friendDoc\.data\(\)/);
     assert.doesNotMatch(chat, /\.\.\.userDoc\.data\(\)/);
-    assert.match(chat, /lifecycle !== chatLifecycle \|\| auth\.currentUser\?\.uid !== user\.uid/);
+    assert.match(chat, /lifecycle !== chatLifecycle \|\| revision !== friendsLoadRevision \|\| auth\.currentUser\?\.uid !== user\.uid/);
 });

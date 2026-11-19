@@ -72,3 +72,12 @@ test('chat switching clears reply context and pending submissions are scoped to 
   assert.match(chat, /const submitVersion = \+\+formSubmitVersion/);
   assert.match(chat, /submitVersion === formSubmitVersion\) formSubmitPending = false/);
 });
+
+test('failed friend loading exposes a retry control without reviving obsolete responses', () => {
+  assert.match(chat, /function showChatFriendsError\(\)/);
+  assert.match(chat, /id="retry-chat-friends"/);
+  assert.match(chat, /addEventListener\('click', \(\) => loadChatFriends\(\)\)/);
+  assert.match(chat, /const revision = \+\+friendsLoadRevision/);
+  assert.match(chat, /revision === friendsLoadRevision && auth\.currentUser\?\.uid === user\.uid\) showChatFriendsError/);
+  assert.match(chat, /friendsLoadRevision\+\+;/);
+});

@@ -16,7 +16,15 @@ let formSubmitPending = false;
 let formSubmitVersion = 0;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
+let friendsLoadRevision = 0;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+
+function showChatFriendsError() {
+    const list = document.getElementById('chat-friends-list');
+    if (!list) return;
+    list.innerHTML = '<div class="text-center py-3 text-secondary" role="alert">Не удалось загрузить список друзей.<br><button type="button" class="btn-premium btn-sm mt-2" id="retry-chat-friends">Повторить</button></div>';
+    list.querySelector('#retry-chat-friends').addEventListener('click', () => loadChatFriends());
+}
 
 // ========== ОТРИСОВКА ==========
 export function renderChat() {
@@ -87,12 +95,18 @@ export function renderChat() {
 // ========== ЗАГРУЗКА ДРУЗЕЙ ==========
 export async function loadChatFriends() {
     const lifecycle = chatLifecycle;
+    const revision = ++friendsLoadRevision;
     const user = auth.currentUser;
     if (!user) return;
+    const loadingList = document.getElementById('chat-friends-list');
+    if (loadingList) loadingList.innerHTML = '<div class="text-center py-3"><div class="loading-spinner"></div></div>';
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== user.uid) return;
-        if (!userDoc.exists()) return;
+        if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || auth.currentUser?.uid !== user.uid) return;
+        if (!userDoc.exists()) {
+            showChatFriendsError();
+            return;
+        }
         currentUserProfile = { nickname: userDoc.data().nickname };
         const friends = userDoc.data().friends || [];
         const list = document.getElementById('chat-friends-list');
@@ -100,7 +114,7 @@ export async function loadChatFriends() {
         if (friends.length === 0) { list.innerHTML = '<div class="text-center py-3 text-secondary">Нет друзей для чата</div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
-            if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== user.uid) return;
+            if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || auth.currentUser?.uid !== user.uid) return;
             const friendDoc = await getDoc(doc(db, 'users', friendId));
             if (friendDoc.exists()) {
                 try {
@@ -113,13 +127,13 @@ export async function loadChatFriends() {
         }
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];
-        if (lifecycle !== chatLifecycle || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
-        list.innerHTML = friendsData.map((friend, index) => `
+        if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
+        list.innerHTML = friendsData.length ? friendsData.map((friend, index) => `
             <button type="button" class="chat-friend-item" data-chat-index="${index}" data-friend-id="${escapeHtml(friend.id)}">
                 <span class="avatar-circle small"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
                 <span class="chat-friend-info"><span class="fw-semibold">${escapeHtml(friend.nickname || 'Игрок')}</span><span class="online-dot offline" id="online-${escapeHtml(friend.id)}"></span></span>
             </button>
-        `).join('');
+        `).join('') : '<div class="text-center py-3 text-secondary">Нет доступных друзей для чата</div>';
         list.onclick = event => {
             const button = event.target.closest('[data-chat-index]');
             if (!button || !list.contains(button)) return;
@@ -127,7 +141,10 @@ export async function loadChatFriends() {
             if (friend) window.openChat(friend.id, friend.nickname || 'Игрок');
         };
         friendsData.forEach(friend => watchOnlineStatus(friend.id));
-    } catch (error) { console.error('Ошибка загрузки друзей:', error); }
+    } catch (error) {
+        console.error('Ошибка загрузки друзей:', error);
+        if (lifecycle === chatLifecycle && revision === friendsLoadRevision && auth.currentUser?.uid === user.uid) showChatFriendsError();
+    }
 }
 
 function watchOnlineStatus(friendId) {
@@ -309,6 +326,7 @@ window.addReaction = async (messageId, reaction) => {
 // ========== ОБРАБОТЧИКИ ==========
 export function cleanupChatListeners() {
     chatLifecycle++;
+    friendsLoadRevision++;
     formSubmitPending = false;
     formSubmitVersion++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
