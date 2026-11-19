@@ -51,6 +51,9 @@ test('forged, inconsistent and oversized social operations are refused', () => {
     assert.throws(() => perform('accept', empty(), empty()), /REQUEST_NOT_FOUND/);
     assert.throws(() => perform('send', { ...empty(), friends: ['bob'] }, empty()), /SOCIAL_STATE_CONFLICT/);
     assert.throws(() => perform('send', { ...empty(), friends: ['x', 'x'] }, empty()), /SOCIAL_MIGRATION_REQUIRED/);
+    assert.throws(() => perform('send', { ...empty(), friends: ['alice'] }, empty()), /SOCIAL_STATE_CONFLICT/);
+    assert.throws(() => perform('send', { ...empty(), friends: ['charlie'], sentRequests: ['charlie'] }, empty()), /SOCIAL_STATE_CONFLICT/);
+    assert.throws(() => perform('accept', { ...empty(), friendRequests: ['alice'] }, empty(), 'bob', 'alice'), /SOCIAL_STATE_CONFLICT/);
     assert.throws(() => perform('send', { ...empty(), friends: Array.from({length: 501}, (_, i) => 'u' + i) }, empty()), /SOCIAL_MIGRATION_REQUIRED/);
     const a = { ...empty(), friendRequests: ['bob'], sentRequests: ['bob'] };
     const b = { ...empty(), friendRequests: ['alice'], sentRequests: ['alice'] };

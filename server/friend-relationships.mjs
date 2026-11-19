@@ -13,6 +13,21 @@ function readIds(profile, field) {
     return raw;
 }
 
+function readRelationships(profile, ownerUid) {
+    const relationships = {
+        friends: readIds(profile, 'friends'),
+        friendRequests: readIds(profile, 'friendRequests'),
+        sentRequests: readIds(profile, 'sentRequests')
+    };
+    // A user cannot befriend/request themselves, or occupy multiple states
+    // simultaneously. Refuse legacy corruption before staging any writes.
+    const allIds = Object.values(relationships).flat();
+    if (allIds.includes(ownerUid) || new Set(allIds).size !== allIds.length) {
+        throw new Error('SOCIAL_STATE_CONFLICT');
+    }
+    return relationships;
+}
+
 function add(ids, uid) {
     if (ids.includes(uid)) return ids;
     if (ids.length >= MAX_RELATIONSHIPS) throw new Error('SOCIAL_LIST_FULL');
@@ -28,16 +43,8 @@ export function transitionFriendship(operation, actorUid, targetUid, actor, targ
     if (!['send', 'accept', 'decline', 'cancel', 'remove'].includes(operation)) {
         throw new Error('INVALID_SOCIAL_OPERATION');
     }
-    const a = {
-        friends: readIds(actor, 'friends'),
-        friendRequests: readIds(actor, 'friendRequests'),
-        sentRequests: readIds(actor, 'sentRequests')
-    };
-    const b = {
-        friends: readIds(target, 'friends'),
-        friendRequests: readIds(target, 'friendRequests'),
-        sentRequests: readIds(target, 'sentRequests')
-    };
+    const a = readRelationships(actor, actorUid);
+    const b = readRelationships(target, targetUid);
     const areFriends = a.friends.includes(targetUid) && b.friends.includes(actorUid);
     const incoming = a.friendRequests.includes(targetUid) && b.sentRequests.includes(actorUid);
     const outgoing = a.sentRequests.includes(targetUid) && b.friendRequests.includes(actorUid);
