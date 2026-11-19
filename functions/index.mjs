@@ -14,6 +14,11 @@ import { createAuthenticatedQuizHandler } from '../server/authenticated-quiz-han
 import { createQuizCallableAdapter } from '../server/firebase-quiz-callable-adapter.mjs';
 import { createPlayerProfile } from '../server/profile-create.mjs';
 import { createProfileCallableAdapter } from '../server/profile-create-callable-adapter.mjs';
+import { updateFriendship } from '../server/friend-relationships.mjs';
+import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
+import { createChatSendCallableAdapter } from '../server/chat-send-callable-adapter.mjs';
+import { createChatActionsCallableAdapter } from '../server/chat-message-actions-callable-adapter.mjs';
+import { createChatReadStateCallableAdapter } from '../server/chat-read-state-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -74,4 +79,71 @@ export const profileCreatePreview = onCall({
         throw new HttpsError('failed-precondition', 'PROFILE_CREATE_PREVIEW_DISABLED');
     }
     return profilePreview(request);
+});
+
+// Preview only: the browser still performs legacy cross-user writes.
+// Require isolated emulators until the client and Firestore rules are migrated.
+const friendPreview = createFriendCallableAdapter({
+    update: args => updateFriendship(getFirestore(), args), HttpsError
+});
+export const friendOperationPreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'FRIEND_PREVIEW_DISABLED');
+    }
+    return friendPreview(request);
+});
+
+// New direct-message schema is isolated to emulators until legacy chats,
+// browser code and production security rules have been migrated.
+const chatSendPreviewHandler = createChatSendCallableAdapter({
+    db: getFirestore(), HttpsError
+});
+export const chatSendPreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_SEND_PREVIEW_DISABLED');
+    }
+    return chatSendPreviewHandler(request);
+});
+
+const chatActionsPreviewHandler = createChatActionsCallableAdapter({
+    db: getFirestore(), HttpsError
+});
+export const chatActionsPreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_ACTIONS_PREVIEW_DISABLED');
+    }
+    return chatActionsPreviewHandler(request);
+});
+
+
+// Per-member read cursor preview. This remains emulator-only until the legacy
+// chat schema and production Firestore rules are migrated together.
+const chatReadStatePreviewHandler = createChatReadStateCallableAdapter({
+    db: getFirestore(), HttpsError
+});
+export const chatReadStatePreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_READ_STATE_PREVIEW_DISABLED');
+    }
+    return chatReadStatePreviewHandler(request);
 });

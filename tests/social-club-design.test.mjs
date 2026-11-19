@@ -31,7 +31,7 @@ test('friends tabs communicate selection to assistive technology', () => {
 test('search supports keyboard submit and handles lookup errors', () => {
   assert.match(friends, /searchInput\.addEventListener\('keydown'/);
   assert.match(friends, /if \(event\.key === 'Enter'\) searchBtn\.click\(\)/);
-  assert.match(friends, /catch \(error\) \{ console\.error\('Ошибка поиска игроков:'/);
+  assert.match(friends, /catch \(error\) \{\s*console\.error\('Ошибка поиска игроков:'/);
 });
 
 test('Midnight Arcade social screens adapt to small screens', () => {

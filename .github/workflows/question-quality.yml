@@ -51,6 +51,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Verify centralized profile read migration gate
         run: node --experimental-default-type=module --test tests/profile-read-source.test.mjs
+      - name: Test trusted friend request transitions
+        run: node --experimental-default-type=module --test tests/server-friend-relationships.test.mjs
       - name: Test collision-safe nickname claims migration planner
         run: node --experimental-default-type=module --test tests/nickname-claims-backfill.test.mjs
       - name: Audit legacy account migration readiness without writes
@@ -59,6 +61,22 @@ jobs:
         run: node --experimental-default-type=module --test tests/legacy-data-preservation.test.mjs
       - name: Verify repository-derived Firestore migration inventory
         run: node --experimental-default-type=module --test tests/firestore-migration-inventory.test.mjs
+      - name: Keep preview Firestore rules separate from production configuration
+        run: node --test tests/firestore-rules-inventory.test.mjs
+      - name: Check isolated chat send service and callable authorization
+        run: node --test tests/server-chat-send.test.mjs
+      - name: Check message edit, delete and reaction authorization
+        run: node --test tests/server-chat-message-actions.test.mjs
+      - name: Check per-member chat read cursor authorization and monotonicity
+        run: node --test tests/server-chat-read-state.test.mjs
+      - name: Keep chat transport gated and expose legacy action errors
+        run: node --test tests/chat-transport-gate.test.mjs
+      - name: Verify atomic legacy chat reactions
+        run: node --test tests/chat-reactions.test.mjs
+      - name: Verify sender-only transactional message edits and deletion
+        run: node --test tests/chat-message-edits.test.mjs
+      - name: Verify legacy chat history migration preflight
+        run: node --test tests/chat-migration-preflight.test.mjs
       - name: Test complete backup integrity manifests and checksums
         run: node --experimental-default-type=module --test tests/backup-integrity.test.mjs
       - name: Test trusted public profile synchronization

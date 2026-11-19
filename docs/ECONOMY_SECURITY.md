@@ -263,3 +263,27 @@ Run tests with `firebase.json` explicitly referencing a reviewed `firestore.rule
 - Found and fixed an empty-backup edge case: invoking Firestore transaction `getAll()` with zero document references could fail. Empty protected snapshots now perform a verified no-op restore.
 - A dedicated emulator integration test checks zero-document capture, sealing, preflight and restore, with the same root checksum.
 - **No production safety claim:** these routines still require `demo-quizhub` and a localhost Firestore emulator. Existing deployed app, rules and real player data remain unchanged.
+
+
+## Foreign profile UI redaction while migration is pending (2026-11-17)
+
+- `projectProfileForViewer` now strips foreign player objects down to the same trusted public projection used by server sync. `loadProfile` and foreign card rendering call this projection before returning/rendering data; coin badges show only for the owner's card.
+- Tests cover spoofed IDs, email, balance, admin flags, friend arrays and malformed public identities. The profile read migration flag remains disabled so existing gameplay/query behavior is not switched.
+- **Critical limitation:** this is UI/data-flow redaction only. The legacy browser still downloads `users/{otherUid}` where rules allow it, so private fields can remain visible in network traffic. Actual privacy requires backfilling `publicProfiles`, changing all foreign queries, and deploying reviewed Firestore rules. Do not describe this change as secured profile reads.
+
+
+## Public profile dry-run collision hardening (2026-11-17)
+
+- `planPublicProfileBackfill()` is still a **pure in-memory preview**; it does not query or write Firebase and has no production backfill runner.
+- Duplicate private-account UIDs are now fully quarantined: neither the first nor subsequent duplicate can produce a proposed public record.
+- Nickname collisions are case-insensitive; all affected accounts are reported as conflicts instead of arbitrarily choosing a winner.
+- Proposed writes, skips and conflicts are deterministically ordered, and existing divergent public records remain blocked for review (never silently overwritten).
+- These safety checks are **not** a cutover approval. Complete snapshot consistency, ownership of nickname claims, private-field audits, server-only updates, verified access rules and client-query migration are still required before enabling public profile reads.
+
+
+## Directory consumer data boundary (2026-11-17)
+
+- The social search UI, friend lists, received/sent invitations and leaderboards now share `projectDirectoryProfile(uid, raw)` to discard private account fields before data is passed to UI renderers.
+- Invalid public projections are skipped in those lists. The owner continues to read their own private `users/{uid}` account data for settings and social arrays.
+- The migration switch remains **disabled**: legacy queries still download entire foreign `users/{uid}` documents. Client-side projection reduces accidental UI exposure but **does not provide network-level privacy**.
+- Before enabling `PUBLIC_PROFILE_READS_ENABLED`, verify all existing `publicProfiles` records, cut over every foreign read, change friend-request cross-user writes to authenticated server operations and test reviewed rules in the emulator. Do not turn on strict owner-only rules while the current social writes depend on `users/{otherUid}`.

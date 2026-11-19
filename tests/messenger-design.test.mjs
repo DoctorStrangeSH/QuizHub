@@ -56,3 +56,54 @@ test('stale friend data cannot reattach listeners after chat route closes', () =
   assert.match(chat, /!list\.isConnected/);
   assert.match(chat, /auth\.currentUser\?\.uid !== user\.uid/);
 });
+
+test('old realtime callbacks and slow sends cannot overwrite a newer chat or draft', () => {
+  assert.match(chat, /lifecycle !== chatLifecycle \|\| currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== viewerUid \|\| !messagesContainer\.isConnected/);
+  assert.match(chat, /lifecycle !== chatLifecycle \|\| auth\.currentUser\?\.uid !== viewerUid/);
+  assert.match(chat, /await addDoc\(collection\(db, 'chats', chatId, 'messages'\)/);
+  assert.match(chat, /currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== user\.uid/);
+  assert.match(chat, /if \(input\?\.value === text\)/);
+});
+
+test('chat switching clears reply context and pending submissions are scoped to a chat', () => {
+  assert.match(chat, /window\.openChat = async[\s\S]*?replyMessageId = null;[\s\S]*?selectedMessageId = null;/);
+  assert.match(chat, /window\.closeChatWindow = \(\) => \{[\s\S]*?replyMessageId = null;[\s\S]*?selectedMessageId = null;/);
+  assert.match(chat, /if \(formSubmitPending\) return;/);
+  assert.match(chat, /const submitVersion = \+\+formSubmitVersion/);
+  assert.match(chat, /submitVersion === formSubmitVersion\) formSubmitPending = false/);
+});
+
+test('failed friend loading exposes a retry control without reviving obsolete responses', () => {
+  assert.match(chat, /function showChatFriendsError\(\)/);
+  assert.match(chat, /id="retry-chat-friends"/);
+  assert.match(chat, /addEventListener\('click', \(\) => loadChatFriends\(\)\)/);
+  assert.match(chat, /const revision = \+\+friendsLoadRevision/);
+  assert.match(chat, /revision === friendsLoadRevision && auth\.currentUser\?\.uid === user\.uid\) showChatFriendsError/);
+  assert.match(chat, /friendsLoadRevision\+\+;/);
+});
+
+test('send errors are visible and never replace the next chat status', () => {
+  assert.match(chat, /id="chat-send-status" role="status" aria-live="polite"/);
+  assert.match(chat, /function setChatSendStatus\(message\)/);
+  assert.match(chat, /Не удалось отправить сообщение\. Текст сохранён/);
+  assert.match(chat, /lifecycle === chatLifecycle && currentChatId === chatId && auth\.currentUser\?\.uid === user\.uid/);
+  assert.match(css, /\.chat-send-status:empty \{ display: none; \}/);
+});
+
+test('message actions are keyboard accessible and have understandable labels', () => {
+  assert.match(chat, /class="message-more-btn" aria-label="Действия с сообщением"/);
+  assert.match(chat, /e\.stopPropagation\(\)/);
+  assert.match(chat, /Array\.from\(buttons\)\.find\(button => button\.style\.display !== 'none'\)\?\.focus\(\)/);
+  assert.match(chat, /event\.key !== 'Escape'/);
+  for (const label of ['Нравится', 'Сердце', 'Смешно', 'Удивление', 'Грусть']) assert.ok(chat.includes(`aria-label="${label}"`));
+  assert.match(css, /\.message-more-btn:focus-visible/);
+});
+
+test('failed realtime message subscriptions present a retry button for the active chat', () => {
+  assert.match(chat, /onSnapshot\(q, \(snapshot\) => \{/);
+  assert.match(chat, /\}, \(error\) => \{\s*console\.error\('Ошибка подписки на историю сообщений:'/);
+  assert.match(chat, /id="retry-chat-messages"/);
+  assert.match(chat, /querySelector\('#retry-chat-messages'\)\.addEventListener\('click'/);
+  assert.match(chat, /currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== viewerUid/);
+  assert.match(chat, /if \(messagesUnsubscribe\) \{ messagesUnsubscribe\(\); messagesUnsubscribe = null; \}\s*loadMessages\(\)/);
+});

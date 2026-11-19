@@ -1,19 +1,46 @@
 import { getState } from '../../store/state.js';
+import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
+import { chatIdForUsers } from './chat-transport-gate.js';
+import { toggleChatReaction } from './chat-reactions.js';
+import { prepareChatMessageEdit, prepareChatMessageDelete } from './chat-message-edits.js';
 import {
-    auth, db, doc, getDoc, setDoc, updateDoc,
-    collection, query, orderBy, limit, getDocs,
-    addDoc, serverTimestamp, onSnapshot, arrayUnion, arrayRemove
+    auth, db, doc, getDoc, setDoc,
+    collection, query, orderBy, limit, startAfter, getDocs,
+    addDoc, serverTimestamp, onSnapshot, runTransaction
 } from '../../firebase-config.js';
 
 let currentChatId = null;
 let messagesUnsubscribe = null;
+let messagesScrollHandler = null;
+let olderMessagesCursor = null;
+let hasOlderMessages = false;
+let loadingOlderMessages = false;
+let chatMessageCache = new Map();
+let realtimeMessageIds = new Set();
+let historicalMessageIds = new Set();
 let chatFriend = null;
 let currentUserProfile = null;
 let replyMessageId = null;
 let selectedMessageId = null;
+let formSubmitPending = false;
+let formSubmitVersion = 0;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
+let messageSession = 0;
+let friendsLoadRevision = 0;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+
+function showChatFriendsError() {
+    const list = document.getElementById('chat-friends-list');
+    if (!list) return;
+    list.innerHTML = '<div class="text-center py-3 text-secondary" role="alert">Не удалось загрузить список друзей.<br><button type="button" class="btn-premium btn-sm mt-2" id="retry-chat-friends">Повторить</button></div>';
+    list.querySelector('#retry-chat-friends').addEventListener('click', () => loadChatFriends());
+}
+
+function setChatSendStatus(message) {
+    const status = document.getElementById('chat-send-status');
+    if (status) status.textContent = message;
+}
 
 // ========== ОТРИСОВКА ==========
 export function renderChat() {
@@ -67,6 +94,7 @@ export function renderChat() {
                                     <input type="text" id="chat-input" class="chat-input" placeholder="Написать сообщение..." aria-label="Текст сообщения" maxlength="2000" autocomplete="off" />
                                     <button type="submit" class="chat-send-btn" aria-label="Отправить сообщение"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
                                 </form>
+                                <p class="chat-send-status" id="chat-send-status" role="status" aria-live="polite"></p>
                             </div>
                         </div>
                     </div>
@@ -84,30 +112,45 @@ export function renderChat() {
 // ========== ЗАГРУЗКА ДРУЗЕЙ ==========
 export async function loadChatFriends() {
     const lifecycle = chatLifecycle;
+    const revision = ++friendsLoadRevision;
     const user = auth.currentUser;
     if (!user) return;
+    const loadingList = document.getElementById('chat-friends-list');
+    if (loadingList) loadingList.innerHTML = '<div class="text-center py-3"><div class="loading-spinner"></div></div>';
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists()) return;
-        currentUserProfile = { id: user.uid, ...userDoc.data() };
+        if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || auth.currentUser?.uid !== user.uid) return;
+        if (!userDoc.exists()) {
+            showChatFriendsError();
+            return;
+        }
+        currentUserProfile = { nickname: userDoc.data().nickname };
         const friends = userDoc.data().friends || [];
         const list = document.getElementById('chat-friends-list');
         if (!list || lifecycle !== chatLifecycle) return;
         if (friends.length === 0) { list.innerHTML = '<div class="text-center py-3 text-secondary">Нет друзей для чата</div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
-            const friendDoc = await getDoc(doc(db, 'users', friendId));
-            if (friendDoc.exists()) friendsData.push({ id: friendId, ...friendDoc.data() });
+            if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || auth.currentUser?.uid !== user.uid) return;
+            const friendDoc = await getDoc(doc(db, directoryCollection(), friendId));
+            if (friendDoc.exists()) {
+                try {
+                    const publicFriend = projectDirectoryProfile(friendId, friendDoc.data());
+                    friendsData.push({ id: publicFriend.uid, nickname: publicFriend.nickname });
+                } catch (error) {
+                    console.warn('Некорректный публичный профиль друга:', friendId, error);
+                }
+            }
         }
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];
-        if (lifecycle !== chatLifecycle || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
-        list.innerHTML = friendsData.map((friend, index) => `
+        if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
+        list.innerHTML = friendsData.length ? friendsData.map((friend, index) => `
             <button type="button" class="chat-friend-item" data-chat-index="${index}" data-friend-id="${escapeHtml(friend.id)}">
                 <span class="avatar-circle small"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
                 <span class="chat-friend-info"><span class="fw-semibold">${escapeHtml(friend.nickname || 'Игрок')}</span><span class="online-dot offline" id="online-${escapeHtml(friend.id)}"></span></span>
             </button>
-        `).join('');
+        `).join('') : '<div class="text-center py-3 text-secondary">Нет доступных друзей для чата</div>';
         list.onclick = event => {
             const button = event.target.closest('[data-chat-index]');
             if (!button || !list.contains(button)) return;
@@ -115,12 +158,18 @@ export async function loadChatFriends() {
             if (friend) window.openChat(friend.id, friend.nickname || 'Игрок');
         };
         friendsData.forEach(friend => watchOnlineStatus(friend.id));
-    } catch (error) { console.error('Ошибка загрузки друзей:', error); }
+    } catch (error) {
+        console.error('Ошибка загрузки друзей:', error);
+        if (lifecycle === chatLifecycle && revision === friendsLoadRevision && auth.currentUser?.uid === user.uid) showChatFriendsError();
+    }
 }
 
 function watchOnlineStatus(friendId) {
+    const lifecycle = chatLifecycle;
+    const viewerUid = auth.currentUser?.uid;
     const onlineRef = doc(db, 'online', friendId);
     const unsubscribe = onSnapshot(onlineRef, (snap) => {
+        if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== viewerUid) return;
         const dot = document.getElementById(`online-${friendId}`);
         if (!dot) return;
         dot.className = snap.exists() && snap.data().online ? 'online-dot online' : 'online-dot offline';
@@ -139,7 +188,13 @@ window.openChat = async (friendId, friendName) => {
     const user = auth.currentUser;
     if (!user) return;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
-    currentChatId = [user.uid, friendId].sort().join('_');
+    formSubmitPending = false;
+    formSubmitVersion++;
+    setChatSendStatus('');
+    replyMessageId = null;
+    selectedMessageId = null;
+    document.getElementById('reply-preview')?.style.setProperty('display', 'none');
+    currentChatId = chatIdForUsers(user.uid, friendId);
     chatFriend = { id: friendId, name: friendName };
     document.getElementById('chat-empty').style.display = 'none';
     document.getElementById('chat-active').style.display = 'flex';
@@ -152,25 +207,148 @@ window.openChat = async (friendId, friendName) => {
 };
 
 window.closeChatWindow = () => {
+    formSubmitPending = false;
+    formSubmitVersion++;
+    setChatSendStatus('');
+    replyMessageId = null;
+    selectedMessageId = null;
+    document.getElementById('reply-preview')?.style.setProperty('display', 'none');
     document.getElementById('chat-empty').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
+    messageSession++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    const oldMessagesContainer = document.getElementById('chat-messages');
+    if (oldMessagesContainer && messagesScrollHandler) oldMessagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    messagesScrollHandler = null;
+    olderMessagesCursor = null; hasOlderMessages = false; loadingOlderMessages = false; chatMessageCache = new Map(); realtimeMessageIds = new Set(); historicalMessageIds = new Set();
     currentChatId = null; chatFriend = null;
     document.querySelectorAll('.chat-friend-item').forEach(el => el.classList.remove('active'));
 };
 
+function messageTimestampMillis(value) {
+    if (value?.toMillis) return value.toMillis();
+    if (value instanceof Date) return value.getTime();
+    if (typeof value?.seconds === 'number') return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1e6);
+    return 0;
+}
+
+function renderCachedMessages(container, { preserveViewport = false, stickToBottom = false } = {}) {
+    const previousTop = container.scrollTop;
+    const wasNearBottom = container.scrollHeight - container.clientHeight - previousTop < 72;
+    const anchor = preserveViewport
+        ? Array.from(container.querySelectorAll('.message-wrapper')).find(element => element.getBoundingClientRect().bottom > container.getBoundingClientRect().top)
+        : null;
+    const anchorId = anchor?.dataset.messageId || null;
+    const anchorOffset = anchor ? anchor.getBoundingClientRect().top - container.getBoundingClientRect().top : 0;
+
+    container.innerHTML = '';
+    const messages = Array.from(chatMessageCache.values()).sort((left, right) => {
+        const leftTime = messageTimestampMillis(left.createdAt);
+        const rightTime = messageTimestampMillis(right.createdAt);
+        return leftTime - rightTime || left.id.localeCompare(right.id);
+    });
+    messages.forEach(message => renderMessage(message, container));
+
+    if (stickToBottom || wasNearBottom) {
+        container.scrollTop = container.scrollHeight;
+    } else if (anchorId) {
+        const nextAnchor = container.querySelector(`.message-wrapper[data-message-id="${CSS.escape(anchorId)}"]`);
+        if (nextAnchor) container.scrollTop += nextAnchor.getBoundingClientRect().top - container.getBoundingClientRect().top - anchorOffset;
+        else container.scrollTop = previousTop;
+    } else {
+        container.scrollTop = previousTop;
+    }
+}
+
+async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, container }) {
+    if (!hasOlderMessages || loadingOlderMessages || !olderMessagesCursor) return;
+    loadingOlderMessages = true;
+    try {
+        const olderQuery = query(
+            collection(db, 'chats', chatId, 'messages'),
+            orderBy('createdAt', 'desc'),
+            startAfter(olderMessagesCursor),
+            limit(50)
+        );
+        const snapshot = await getDocs(olderQuery);
+        if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !container.isConnected) return;
+        snapshot.docs.forEach(messageDoc => {
+            historicalMessageIds.add(messageDoc.id);
+            chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() });
+        });
+        if (snapshot.docs.length > 0) olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
+        hasOlderMessages = snapshot.docs.length === 50;
+        // Pagination is triggered at the top edge: keep scrollTop at the top so
+        // the newly fetched older messages become visible immediately.
+        renderCachedMessages(container);
+    } catch (error) {
+        console.error('Не удалось загрузить старые сообщения:', error);
+        if (lifecycle === chatLifecycle && session === messageSession && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
+    } finally {
+        // An older request may settle after another chat session has started.
+        // It must not release that newer session's in-flight pagination lock.
+        if (session === messageSession) loadingOlderMessages = false;
+    }
+}
+
 function loadMessages() {
     if (!currentChatId) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const session = ++messageSession;
+    const viewerUid = auth.currentUser?.uid;
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
-    const messagesRef = collection(db, 'chats', currentChatId, 'messages');
-    const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
+    chatMessageCache = new Map();
+    realtimeMessageIds = new Set();
+    historicalMessageIds = new Set();
+    olderMessagesCursor = null;
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
+
+    if (messagesScrollHandler) messagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    messagesScrollHandler = () => {
+        if (messagesContainer.scrollTop <= 80) {
+            loadOlderMessages({ chatId, lifecycle, session, viewerUid, container: messagesContainer });
+        }
+    };
+    messagesContainer.addEventListener('scroll', messagesScrollHandler, { passive: true });
+
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
-        messagesContainer.innerHTML = '';
-        if (snapshot.empty) { messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>'; return; }
-        snapshot.forEach(doc => renderMessage({ id: doc.id, ...doc.data() }, messagesContainer));
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
+        const firstSnapshot = chatMessageCache.size === 0;
+        const nextRealtimeIds = new Set(snapshot.docs.map(messageDoc => messageDoc.id));
+        realtimeMessageIds.forEach(messageId => {
+            if (!nextRealtimeIds.has(messageId) && !historicalMessageIds.has(messageId)) {
+                chatMessageCache.delete(messageId);
+            }
+        });
+        snapshot.docs.forEach(messageDoc => chatMessageCache.set(messageDoc.id, { id: messageDoc.id, ...messageDoc.data() }));
+        realtimeMessageIds = nextRealtimeIds;
+        // The first realtime snapshot can be partial while messages are
+        // still arriving. Keep the pagination boundary aligned with the latest
+        // live page until the first historical page is actually requested.
+        if (historicalMessageIds.size === 0 && !loadingOlderMessages && snapshot.docs.length > 0) {
+            olderMessagesCursor = snapshot.docs[snapshot.docs.length - 1];
+            hasOlderMessages = snapshot.docs.length === 100;
+        }
+        if (snapshot.empty && chatMessageCache.size === 0) {
+            messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>';
+            return;
+        }
+        renderCachedMessages(messagesContainer, { preserveViewport: !firstSnapshot, stickToBottom: firstSnapshot });
+    }, (error) => {
+        console.error('Ошибка подписки на историю сообщений:', error);
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
+        messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary" role="alert">Не удалось загрузить сообщения.<br><button type="button" class="btn-premium btn-sm mt-2" id="retry-chat-messages">Повторить</button></div>';
+        messagesContainer.querySelector('#retry-chat-messages').addEventListener('click', () => {
+            if (lifecycle !== chatLifecycle || session !== messageSession || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid) return;
+            if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+            loadMessages();
+        });
     });
 }
 
@@ -186,19 +364,20 @@ function renderMessage(msg, container) {
     let reactionsHTML = msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '';
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
-        <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
+        <div class="message-bubble" ${msg.deleted ? '' : `oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})"`}>
             ${replyHTML}
             <div class="message-text">${msg.edited ? '<span class="edited-label">(изм.)</span> ' : ''}${escapeHtml(displayText)}</div>
             <div class="message-time">${timeStr}</div>
             ${reactionsHTML}
         </div>
-        <div class="message-actions">
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
-        </div>
+        ${msg.deleted ? '' : `<div class="message-actions">
+            <button type="button" class="reaction-btn" aria-label="Нравится" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
+            <button type="button" class="reaction-btn" aria-label="Сердце" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
+            <button type="button" class="reaction-btn" aria-label="Смешно" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
+            <button type="button" class="reaction-btn" aria-label="Удивление" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
+            <button type="button" class="reaction-btn" aria-label="Грусть" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
+            <button type="button" class="message-more-btn" aria-label="Действия с сообщением" onclick="window.showContextMenu(event, '${msg.id}', ${isMine})">⋯</button>
+        </div>`}
     `;
     container.appendChild(msgEl);
 }
@@ -208,19 +387,33 @@ window.sendMessage = async (text, replyTo = null) => {
     if (!currentChatId || !text.trim()) return;
     const user = auth.currentUser;
     if (!user) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    setChatSendStatus('');
     try {
-        await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
+        await addDoc(collection(db, 'chats', chatId, 'messages'), {
             senderId: user.uid, senderName: currentUserProfile?.nickname || 'User',
             text: text.trim(), createdAt: serverTimestamp(), edited: false, replyTo, reactions: {}
         });
-        document.getElementById('chat-input').value = '';
-        window.cancelReply();
-    } catch (error) { console.error('Ошибка отправки:', error); }
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== user.uid) return;
+        const input = document.getElementById('chat-input');
+        // A slow send must not erase a newer draft typed while it was pending.
+        if (input?.value === text) {
+            input.value = '';
+            window.cancelReply();
+        }
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) {
+            setChatSendStatus('Не удалось отправить сообщение. Текст сохранён — попробуйте ещё раз.');
+        }
+    }
 };
 
 // ========== КОНТЕКСТНОЕ МЕНЮ ==========
 window.showContextMenu = (e, messageId, isMine) => {
     e.preventDefault();
+    e.stopPropagation();
     selectedMessageId = messageId;
     const menu = document.getElementById('context-menu');
     menu.style.display = 'block';
@@ -229,19 +422,63 @@ window.showContextMenu = (e, messageId, isMine) => {
     const buttons = menu.querySelectorAll('button');
     buttons[0].style.display = isMine ? 'block' : 'none';
     buttons[1].style.display = isMine ? 'block' : 'none';
+    Array.from(buttons).find(button => button.style.display !== 'none')?.focus();
 };
 document.addEventListener('click', () => { const menu = document.getElementById('context-menu'); if (menu) menu.style.display = 'none'; });
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const menu = document.getElementById('context-menu');
+    if (menu) menu.style.display = 'none';
+});
 
-window.editMessage = () => {
+window.editMessage = async () => {
     if (!selectedMessageId || !currentChatId) return;
     const newText = prompt('Редактировать сообщение:');
     if (!newText || !newText.trim()) return;
-    updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: newText.trim(), edited: true });
+    if (newText.trim().length > 2000) {
+        setChatSendStatus('Сообщение не может быть длиннее 2000 символов.');
+        return;
+    }
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const userUid = auth.currentUser?.uid;
+    const messageId = selectedMessageId;
+    try {
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const snapshot = await transaction.get(msgRef);
+            const change = prepareChatMessageEdit(snapshot.exists() ? snapshot.data() : null, userUid, newText);
+            transaction.update(msgRef, change);
+        });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка редактирования сообщения:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) {
+            setChatSendStatus('Не удалось изменить сообщение. Попробуйте ещё раз.');
+        }
+    }
 };
-window.deleteMessage = () => {
+window.deleteMessage = async () => {
     if (!selectedMessageId || !currentChatId) return;
     if (!confirm('Удалить сообщение?')) return;
-    updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: '🗑️ Сообщение удалено', deleted: true });
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const userUid = auth.currentUser?.uid;
+    const messageId = selectedMessageId;
+    try {
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const snapshot = await transaction.get(msgRef);
+            const change = prepareChatMessageDelete(snapshot.exists() ? snapshot.data() : null, userUid);
+            transaction.update(msgRef, change);
+        });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка удаления сообщения:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) {
+            setChatSendStatus('Не удалось удалить сообщение. Попробуйте ещё раз.');
+        }
+    }
 };
 window.replyMessage = () => {
     replyMessageId = selectedMessageId;
@@ -260,20 +497,44 @@ window.cancelReply = () => {
 window.addReaction = async (messageId, reaction) => {
     const user = auth.currentUser;
     if (!user || !currentChatId) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
     try {
-        const msgRef = doc(db, 'chats', currentChatId, 'messages', messageId);
-        const msgSnap = await getDoc(msgRef);
-        const reactions = msgSnap.data()?.reactions || {};
-        reactions[user.uid] = reactions[user.uid] === reaction ? null : reaction;
-        if (!reactions[user.uid]) delete reactions[user.uid];
-        await updateDoc(msgRef, { reactions });
-    } catch (error) { console.error('Ошибка реакции:', error); }
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const msgSnap = await transaction.get(msgRef);
+            if (!msgSnap.exists() || msgSnap.data().deleted) throw new Error('MESSAGE_UNAVAILABLE');
+            const reactions = toggleChatReaction(msgSnap.data().reactions, user.uid, reaction);
+            transaction.update(msgRef, { reactions });
+        });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка реакции:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) {
+            setChatSendStatus('Не удалось изменить реакцию. Попробуйте ещё раз.');
+        }
+    }
 };
 
 // ========== ОБРАБОТЧИКИ ==========
 export function cleanupChatListeners() {
     chatLifecycle++;
+    friendsLoadRevision++;
+    formSubmitPending = false;
+    formSubmitVersion++;
+    messageSession++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer && messagesScrollHandler) {
+        messagesContainer.removeEventListener('scroll', messagesScrollHandler);
+    }
+    messagesScrollHandler = null;
+    olderMessagesCursor = null;
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
+    chatMessageCache = new Map();
+    realtimeMessageIds = new Set();
+    historicalMessageIds = new Set();
     onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
     onlineUnsubscribes = [];
     currentChatId = null;
@@ -291,13 +552,20 @@ export function attachChatListeners() {
     if (form) {
         form.onsubmit = (e) => {
             e.preventDefault();
+            if (formSubmitPending) return;
             const text = document.getElementById('chat-input').value;
+            if (!text.trim()) return;
             let replyTo = null;
             if (replyMessageId) {
                 const replyEl = document.querySelector(`[data-message-id="${replyMessageId}"] .message-text`);
                 replyTo = { id: replyMessageId, text: replyEl ? replyEl.textContent : '' };
             }
-            window.sendMessage(text, replyTo);
+            formSubmitPending = true;
+            const lifecycle = chatLifecycle;
+            const submitVersion = ++formSubmitVersion;
+            Promise.resolve(window.sendMessage(text, replyTo)).finally(() => {
+                if (lifecycle === chatLifecycle && submitVersion === formSubmitVersion) formSubmitPending = false;
+            });
         };
     }
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); };

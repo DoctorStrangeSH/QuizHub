@@ -1,0 +1,105 @@
+// USER-SUPPLIED RULES-TAB TRANSCRIPTION (2026-11-19).
+// AUDIT EVIDENCE ONLY. DO NOT DEPLOY; NOT AN AUTHENTICATED RULESET EXPORT.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Пользователи
+    match /users/{uid} {
+      allow read: if isAuth();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if false;
+
+      // Подколлекция уведомлений
+      match /notifications/{notifId} {
+        allow read: if isOwner(uid);
+        allow create: if isAuth();
+        allow update: if isOwner(uid);
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // Никнеймы
+    match /usernames/{username} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if false;
+      allow delete: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+
+    // Вопросы
+    match /questions/{questionId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAuth() && resource.data.authorId == request.auth.uid;
+    }
+
+    // Запросы в друзья
+    match /friendRequests/{requestId} {
+      allow read: if isAuth() &&
+        (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.to == request.auth.uid;
+      allow delete: if isAuth();
+    }
+
+    // Чаты
+    match /chats/{chatId} {
+      allow read, create: if isAuth();
+      allow update: if isAuth();
+
+      match /messages/{messageId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        allow update: if isAuth() && resource.data.senderId == request.auth.uid;
+        allow delete: if isAuth() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Достижения
+    match /achievements/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // Ежедневные награды
+    match /dailyRewards/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // Магазин
+    match /shopItems/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // События
+    match /events/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // Транзакции
+    match /transactions/{id} {
+      allow read: if isAuth() && resource.data.userId == request.auth.uid;
+      allow create: if isAuth();
+    }
+
+    // Настройки
+    match /settings/{id} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import {
     getFirestore,
     doc,
@@ -11,6 +12,7 @@ import {
     where,
     orderBy,
     limit,
+    startAfter,
     getDocs,
     addDoc,
     serverTimestamp,
@@ -43,10 +45,21 @@ const selectedConfig = useLocalEmulators
 const app = initializeApp(selectedConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+const functions = getFunctions(app, 'europe-west1');
 
 if (useLocalEmulators) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+}
+
+// Only isolated localhost tests use the trusted social preview. Live users
+// remain on the legacy path until server deployment and rules are reviewed.
+export const friendPreviewEnabled = useLocalEmulators;
+export async function callFriendOperationPreview(operation, targetUid) {
+    if (!useLocalEmulators) throw new Error('FRIEND_PREVIEW_DISABLED');
+    const response = await httpsCallable(functions, 'friendOperationPreview')({ operation, targetUid });
+    return response.data;
 }
 
 export {
@@ -59,6 +72,7 @@ export {
     where,
     orderBy,
     limit,
+    startAfter,
     getDocs,
     addDoc,
     serverTimestamp,

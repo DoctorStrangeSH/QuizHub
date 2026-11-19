@@ -1,7 +1,6 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, collection, query, orderBy, limit, getDocs } from '../../firebase-config.js';
-import { buildPublicProfile } from '../profile/public-profile-data.js';
-import { directoryCollection } from '../profile/profile-read-source.js';
+import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
 
 function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, char => ({
@@ -58,7 +57,7 @@ export async function loadLeaderboard(type = 'global') {
         const leaders = [];
         snapshot.forEach(userDoc => {
             try {
-                const profile = buildPublicProfile(userDoc.id, userDoc.data());
+                const profile = projectDirectoryProfile(userDoc.id, userDoc.data());
                 leaders.push({ id: profile.uid, ...profile });
             } catch (error) {
                 console.warn('Пропускаем повреждённый публичный профиль:', userDoc.id);
