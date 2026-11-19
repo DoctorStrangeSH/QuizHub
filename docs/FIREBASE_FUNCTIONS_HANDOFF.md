@@ -7,7 +7,7 @@ Status: **prepared, compiled in CI, NOT deployed**.
 - Project: `quizhub-e65f5`
 - Firestore: `(default)`, STANDARD, `eur3`
 - HTTPS callable: `dailyChallenge`, configured for `europe-west1`
-- Branch: `refactor/foundation-stability` (PR #1)
+- Source status: Functions code and emulator integration are present in `main`; deployment status remains **NOT DEPLOYED**.
 - Browser Daily Challenge remains **practice-only** with no rewards or rank.
 
 The callable accepts `{ operation, payload }`, with operations `start`, `resume`, `answer`, `complete`. The authenticated UID is read from Firebase Auth context and the time is generated on the server. Do not supply those fields from clients. No prize/leaderboard sealing or award API is exposed yet.
@@ -34,7 +34,7 @@ npx -y firebase-tools@latest emulators:start --only auth,firestore,functions --p
 
 Use the Auth emulator to sign in test users and call `dailyChallenge` with a Firebase Functions client connected to the Functions emulator. The Firestore and Auth emulators must run at the same time; without them the Admin SDK could connect to real resources.
 
-The **Firebase emulator integration** GitHub Actions workflow now boots Auth, Firestore Standard and Functions emulators under `demo-quizhub`, creates two anonymous test identities, invokes the callable over HTTP, and verifies authentication, forged identity rejection, independent attempts, persisted answers, retries and error mapping. Run #4 passed on 2026-11-15. This verifies the network boundary, but is **not** production sign-in or a complete release test.
+The **Firebase emulator integration** GitHub Actions workflow boots Auth, Firestore Standard and Functions emulators under `demo-quizhub`, creates test identities, invokes the callable over HTTP, and verifies authentication, forged identity rejection, independent attempts, persisted answers, retries and error mapping. Emulator success is not evidence of a production deployment. This verifies the network boundary, but is **not** production sign-in or a complete release test.
 
 ## Security and migration gates
 
