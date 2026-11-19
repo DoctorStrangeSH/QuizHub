@@ -71,6 +71,8 @@ jobs:
         run: node --test tests/chat-transport-gate.test.mjs
       - name: Verify atomic legacy chat reactions
         run: node --test tests/chat-reactions.test.mjs
+      - name: Verify sender-only transactional message edits and deletion
+        run: node --test tests/chat-message-edits.test.mjs
       - name: Verify legacy chat history migration preflight
         run: node --test tests/chat-migration-preflight.test.mjs
       - name: Test complete backup integrity manifests and checksums

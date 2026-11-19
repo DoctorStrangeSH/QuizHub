@@ -2,10 +2,11 @@ import { getState } from '../../store/state.js';
 import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
 import { chatIdForUsers } from './chat-transport-gate.js';
 import { toggleChatReaction } from './chat-reactions.js';
+import { prepareChatMessageEdit, prepareChatMessageDelete } from './chat-message-edits.js';
 import {
-    auth, db, doc, getDoc, setDoc, updateDoc,
-    collection, query, orderBy, limit, getDocs,
-    addDoc, serverTimestamp, onSnapshot, arrayUnion, arrayRemove, runTransaction
+    auth, db, doc, getDoc, setDoc,
+    collection, query, orderBy, limit,
+    addDoc, serverTimestamp, onSnapshot, runTransaction
 } from '../../firebase-config.js';
 
 let currentChatId = null;
@@ -251,20 +252,20 @@ function renderMessage(msg, container) {
     let reactionsHTML = msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '';
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
-        <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
+        <div class="message-bubble" ${msg.deleted ? '' : `oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})"`}>
             ${replyHTML}
             <div class="message-text">${msg.edited ? '<span class="edited-label">(изм.)</span> ' : ''}${escapeHtml(displayText)}</div>
             <div class="message-time">${timeStr}</div>
             ${reactionsHTML}
         </div>
-        <div class="message-actions">
+        ${msg.deleted ? '' : `<div class="message-actions">
             <button type="button" class="reaction-btn" aria-label="Нравится" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
             <button type="button" class="reaction-btn" aria-label="Сердце" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
             <button type="button" class="reaction-btn" aria-label="Смешно" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
             <button type="button" class="reaction-btn" aria-label="Удивление" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
             <button type="button" class="reaction-btn" aria-label="Грусть" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
             <button type="button" class="message-more-btn" aria-label="Действия с сообщением" onclick="window.showContextMenu(event, '${msg.id}', ${isMine})">⋯</button>
-        </div>
+        </div>`}
     `;
     container.appendChild(msgEl);
 }
@@ -329,8 +330,14 @@ window.editMessage = async () => {
     const chatId = currentChatId;
     const lifecycle = chatLifecycle;
     const userUid = auth.currentUser?.uid;
+    const messageId = selectedMessageId;
     try {
-        await updateDoc(doc(db, 'chats', chatId, 'messages', selectedMessageId), { text: newText.trim(), edited: true });
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const snapshot = await transaction.get(msgRef);
+            const change = prepareChatMessageEdit(snapshot.exists() ? snapshot.data() : null, userUid, newText);
+            transaction.update(msgRef, change);
+        });
         if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
     } catch (error) {
         console.error('Ошибка редактирования сообщения:', error);
@@ -345,8 +352,14 @@ window.deleteMessage = async () => {
     const chatId = currentChatId;
     const lifecycle = chatLifecycle;
     const userUid = auth.currentUser?.uid;
+    const messageId = selectedMessageId;
     try {
-        await updateDoc(doc(db, 'chats', chatId, 'messages', selectedMessageId), { text: '🗑️ Сообщение удалено', deleted: true });
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const snapshot = await transaction.get(msgRef);
+            const change = prepareChatMessageDelete(snapshot.exists() ? snapshot.data() : null, userUid);
+            transaction.update(msgRef, change);
+        });
         if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
     } catch (error) {
         console.error('Ошибка удаления сообщения:', error);

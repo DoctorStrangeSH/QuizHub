@@ -19,7 +19,9 @@ test('chat transport cutover stays disabled until the protected server path is r
 test('legacy chat editing and deletion failures are visible and scoped to active conversation', () => {
     assert.match(chat, /window\.editMessage = async/);
     assert.match(chat, /window\.deleteMessage = async/);
-    assert.match(chat, /await updateDoc\(doc\(db, 'chats', chatId, 'messages', selectedMessageId\)/);
+    assert.match(chat, /prepareChatMessageEdit\(snapshot\.exists\(\) \? snapshot\.data\(\) : null, userUid, newText\)/);
+    assert.match(chat, /prepareChatMessageDelete\(snapshot\.exists\(\) \? snapshot\.data\(\) : null, userUid\)/);
+    assert.match(chat, /await runTransaction\(db, async transaction =>/);
     assert.match(chat, /Не удалось изменить сообщение/);
     assert.match(chat, /Не удалось удалить сообщение/);
     assert.match(chat, /lifecycle === chatLifecycle && currentChatId === chatId && auth\.currentUser\?\.uid === userUid/);
