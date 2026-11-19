@@ -1,4 +1,5 @@
 import { getState } from '../../store/state.js';
+import { projectDirectoryProfile } from '../profile/profile-read-source.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -88,16 +89,25 @@ export async function loadChatFriends() {
     if (!user) return;
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== user.uid) return;
         if (!userDoc.exists()) return;
-        currentUserProfile = { id: user.uid, ...userDoc.data() };
+        currentUserProfile = { nickname: userDoc.data().nickname };
         const friends = userDoc.data().friends || [];
         const list = document.getElementById('chat-friends-list');
         if (!list || lifecycle !== chatLifecycle) return;
         if (friends.length === 0) { list.innerHTML = '<div class="text-center py-3 text-secondary">Нет друзей для чата</div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
+            if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== user.uid) return;
             const friendDoc = await getDoc(doc(db, 'users', friendId));
-            if (friendDoc.exists()) friendsData.push({ id: friendId, ...friendDoc.data() });
+            if (friendDoc.exists()) {
+                try {
+                    const publicFriend = projectDirectoryProfile(friendId, friendDoc.data());
+                    friendsData.push({ id: publicFriend.uid, nickname: publicFriend.nickname });
+                } catch (error) {
+                    console.warn('Некорректный публичный профиль друга:', friendId, error);
+                }
+            }
         }
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];

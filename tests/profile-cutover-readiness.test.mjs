@@ -31,3 +31,12 @@ test('public player card delegates friend requests to the single guarded friends
     assert.match(friends, /window\.sendFriendRequest = async/);
     assert.match(friends, /runFriendActionOnce\(user, 'send', friendId/);
 });
+
+test('chat friend list retains only projected public identity fields', () => {
+    const chat = source('app/modules/chat/chat.js');
+    assert.match(chat, /projectDirectoryProfile\(friendId, friendDoc\.data\(\)\)/);
+    assert.match(chat, /friendsData\.push\(\{ id: publicFriend\.uid, nickname: publicFriend\.nickname \}\)/);
+    assert.doesNotMatch(chat, /\.\.\.friendDoc\.data\(\)/);
+    assert.doesNotMatch(chat, /\.\.\.userDoc\.data\(\)/);
+    assert.match(chat, /lifecycle !== chatLifecycle \|\| auth\.currentUser\?\.uid !== user\.uid/);
+});
