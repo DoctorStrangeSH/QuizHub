@@ -64,3 +64,11 @@ test('old realtime callbacks and slow sends cannot overwrite a newer chat or dra
   assert.match(chat, /currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== user\.uid/);
   assert.match(chat, /if \(input\?\.value === text\)/);
 });
+
+test('chat switching clears reply context and pending submissions are scoped to a chat', () => {
+  assert.match(chat, /window\.openChat = async[\s\S]*?replyMessageId = null;[\s\S]*?selectedMessageId = null;/);
+  assert.match(chat, /window\.closeChatWindow = \(\) => \{[\s\S]*?replyMessageId = null;[\s\S]*?selectedMessageId = null;/);
+  assert.match(chat, /if \(formSubmitPending\) return;/);
+  assert.match(chat, /const submitVersion = \+\+formSubmitVersion/);
+  assert.match(chat, /submitVersion === formSubmitVersion\) formSubmitPending = false/);
+});

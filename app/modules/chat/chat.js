@@ -12,6 +12,8 @@ let chatFriend = null;
 let currentUserProfile = null;
 let replyMessageId = null;
 let selectedMessageId = null;
+let formSubmitPending = false;
+let formSubmitVersion = 0;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -152,6 +154,11 @@ window.openChat = async (friendId, friendName) => {
     const user = auth.currentUser;
     if (!user) return;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    formSubmitPending = false;
+    formSubmitVersion++;
+    replyMessageId = null;
+    selectedMessageId = null;
+    document.getElementById('reply-preview')?.style.setProperty('display', 'none');
     currentChatId = [user.uid, friendId].sort().join('_');
     chatFriend = { id: friendId, name: friendName };
     document.getElementById('chat-empty').style.display = 'none';
@@ -165,6 +172,11 @@ window.openChat = async (friendId, friendName) => {
 };
 
 window.closeChatWindow = () => {
+    formSubmitPending = false;
+    formSubmitVersion++;
+    replyMessageId = null;
+    selectedMessageId = null;
+    document.getElementById('reply-preview')?.style.setProperty('display', 'none');
     document.getElementById('chat-empty').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
@@ -297,6 +309,8 @@ window.addReaction = async (messageId, reaction) => {
 // ========== ОБРАБОТЧИКИ ==========
 export function cleanupChatListeners() {
     chatLifecycle++;
+    formSubmitPending = false;
+    formSubmitVersion++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
     onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
     onlineUnsubscribes = [];
@@ -315,13 +329,20 @@ export function attachChatListeners() {
     if (form) {
         form.onsubmit = (e) => {
             e.preventDefault();
+            if (formSubmitPending) return;
             const text = document.getElementById('chat-input').value;
+            if (!text.trim()) return;
             let replyTo = null;
             if (replyMessageId) {
                 const replyEl = document.querySelector(`[data-message-id="${replyMessageId}"] .message-text`);
                 replyTo = { id: replyMessageId, text: replyEl ? replyEl.textContent : '' };
             }
-            window.sendMessage(text, replyTo);
+            formSubmitPending = true;
+            const lifecycle = chatLifecycle;
+            const submitVersion = ++formSubmitVersion;
+            Promise.resolve(window.sendMessage(text, replyTo)).finally(() => {
+                if (lifecycle === chatLifecycle && submitVersion === formSubmitVersion) formSubmitPending = false;
+            });
         };
     }
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); };
