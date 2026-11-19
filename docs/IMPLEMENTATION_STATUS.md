@@ -239,10 +239,16 @@ Collector возвращает только шаблоны путей колле
 2. Выполнить gcloud auth application-default login под учётной записью с read-only доступом к Firestore.
 3. В PowerShell задать явное подтверждение и project ID:
 
+   ```powershell
    $env:QUIZHUB_CONFIRM_READ_ONLY_INVENTORY = "YES"
    $env:QUIZHUB_PROJECT_ID = "quizhub-e65f5"
+   ```
 
-4. Запустить: node functions/scripts/firestore-live-inventory.mjs > quizhub-firestore-inventory.json
+4. Запустить:
+
+   ```powershell
+   node functions/scripts/firestore-live-inventory.mjs > quizhub-firestore-inventory.json
+   ```
 5. Передать полученный JSON для сверки с repository-derived inventory.
 
 Скрипт не содержит write-операций и не выполняется автоматически CI. Его запуск против production должен делать владелец/уполномоченный оператор после проверки IAM и предполагаемого объёма чтений. Не помещать service-account keys или ADC credentials в репозиторий.
