@@ -56,3 +56,11 @@ test('stale friend data cannot reattach listeners after chat route closes', () =
   assert.match(chat, /!list\.isConnected/);
   assert.match(chat, /auth\.currentUser\?\.uid !== user\.uid/);
 });
+
+test('old realtime callbacks and slow sends cannot overwrite a newer chat or draft', () => {
+  assert.match(chat, /lifecycle !== chatLifecycle \|\| currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== viewerUid \|\| !messagesContainer\.isConnected/);
+  assert.match(chat, /lifecycle !== chatLifecycle \|\| auth\.currentUser\?\.uid !== viewerUid/);
+  assert.match(chat, /await addDoc\(collection\(db, 'chats', chatId, 'messages'\)/);
+  assert.match(chat, /currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== user\.uid/);
+  assert.match(chat, /if \(input\?\.value === text\)/);
+});

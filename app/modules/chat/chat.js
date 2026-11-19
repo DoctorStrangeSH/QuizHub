@@ -129,8 +129,11 @@ export async function loadChatFriends() {
 }
 
 function watchOnlineStatus(friendId) {
+    const lifecycle = chatLifecycle;
+    const viewerUid = auth.currentUser?.uid;
     const onlineRef = doc(db, 'online', friendId);
     const unsubscribe = onSnapshot(onlineRef, (snap) => {
+        if (lifecycle !== chatLifecycle || auth.currentUser?.uid !== viewerUid) return;
         const dot = document.getElementById(`online-${friendId}`);
         if (!dot) return;
         dot.className = snap.exists() && snap.data().online ? 'online-dot online' : 'online-dot offline';
@@ -172,11 +175,15 @@ window.closeChatWindow = () => {
 
 function loadMessages() {
     if (!currentChatId) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const viewerUid = auth.currentUser?.uid;
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
     const messagesRef = collection(db, 'chats', currentChatId, 'messages');
     const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
         messagesContainer.innerHTML = '';
         if (snapshot.empty) { messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>'; return; }
         snapshot.forEach(doc => renderMessage({ id: doc.id, ...doc.data() }, messagesContainer));
@@ -218,13 +225,20 @@ window.sendMessage = async (text, replyTo = null) => {
     if (!currentChatId || !text.trim()) return;
     const user = auth.currentUser;
     if (!user) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
     try {
-        await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
+        await addDoc(collection(db, 'chats', chatId, 'messages'), {
             senderId: user.uid, senderName: currentUserProfile?.nickname || 'User',
             text: text.trim(), createdAt: serverTimestamp(), edited: false, replyTo, reactions: {}
         });
-        document.getElementById('chat-input').value = '';
-        window.cancelReply();
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== user.uid) return;
+        const input = document.getElementById('chat-input');
+        // A slow send must not erase a newer draft typed while it was pending.
+        if (input?.value === text) {
+            input.value = '';
+            window.cancelReply();
+        }
     } catch (error) { console.error('Ошибка отправки:', error); }
 };
 
