@@ -69,6 +69,8 @@ jobs:
         run: node --test tests/server-chat-message-actions.test.mjs
       - name: Keep chat transport gated and expose legacy action errors
         run: node --test tests/chat-transport-gate.test.mjs
+      - name: Verify atomic legacy chat reactions
+        run: node --test tests/chat-reactions.test.mjs
       - name: Verify legacy chat history migration preflight
         run: node --test tests/chat-migration-preflight.test.mjs
       - name: Test complete backup integrity manifests and checksums

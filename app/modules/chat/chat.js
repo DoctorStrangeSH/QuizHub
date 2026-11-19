@@ -1,10 +1,11 @@
 import { getState } from '../../store/state.js';
 import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
 import { chatIdForUsers } from './chat-transport-gate.js';
+import { toggleChatReaction } from './chat-reactions.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
-    addDoc, serverTimestamp, onSnapshot, arrayUnion, arrayRemove
+    addDoc, serverTimestamp, onSnapshot, arrayUnion, arrayRemove, runTransaction
 } from '../../firebase-config.js';
 
 let currentChatId = null;
@@ -371,14 +372,23 @@ window.cancelReply = () => {
 window.addReaction = async (messageId, reaction) => {
     const user = auth.currentUser;
     if (!user || !currentChatId) return;
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
     try {
-        const msgRef = doc(db, 'chats', currentChatId, 'messages', messageId);
-        const msgSnap = await getDoc(msgRef);
-        const reactions = msgSnap.data()?.reactions || {};
-        reactions[user.uid] = reactions[user.uid] === reaction ? null : reaction;
-        if (!reactions[user.uid]) delete reactions[user.uid];
-        await updateDoc(msgRef, { reactions });
-    } catch (error) { console.error('Ошибка реакции:', error); }
+        const msgRef = doc(db, 'chats', chatId, 'messages', messageId);
+        await runTransaction(db, async transaction => {
+            const msgSnap = await transaction.get(msgRef);
+            if (!msgSnap.exists() || msgSnap.data().deleted) throw new Error('MESSAGE_UNAVAILABLE');
+            const reactions = toggleChatReaction(msgSnap.data().reactions, user.uid, reaction);
+            transaction.update(msgRef, { reactions });
+        });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка реакции:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) {
+            setChatSendStatus('Не удалось изменить реакцию. Попробуйте ещё раз.');
+        }
+    }
 };
 
 // ========== ОБРАБОТЧИКИ ==========
