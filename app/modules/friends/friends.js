@@ -138,7 +138,7 @@ async function loadSentRequests(user) {
         tabContent.innerHTML = sentData.map(s => `
             <div class="friend-item glass-card">
                 <div class="d-flex align-items-center gap-3"><div class="avatar-circle"><i class="bi bi-person-fill" aria-hidden="true"></i></div><div><span class="fw-semibold">${escapeHtml(s.nickname || 'Игрок')}</span><span class="text-secondary small ms-2">Ур. ${Number.isFinite(Number(s.level)) ? Math.max(1, Math.trunc(Number(s.level))) : 1}</span></div></div>
-                <span class="text-secondary small">Ожидает</span>
+                <div class="d-flex align-items-center gap-2"><span class="text-secondary small">Ожидает</span><button class="btn-decline" type="button" onclick="window.cancelFriendRequest('${s.id}')">Отменить</button></div>
             </div>
         `).join('');
     } catch (error) { console.error('Ошибка загрузки отправленных:', error); }
@@ -227,6 +227,19 @@ window.declineRequest = async (friendId) => {
         await updateDoc(doc(db, 'users', user.uid), { friendRequests: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { sentRequests: arrayRemove(user.uid) });
         loadFriendRequests(user);
+    } catch (error) { alert('Ошибка: ' + error.message); }
+};
+window.cancelFriendRequest = async (friendId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        if (friendPreviewEnabled) {
+            await callFriendOperationPreview('cancel', friendId);
+        } else {
+            await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayRemove(friendId) });
+            await updateDoc(doc(db, 'users', friendId), { friendRequests: arrayRemove(user.uid) });
+        }
+        loadSentRequests(user);
     } catch (error) { alert('Ошибка: ' + error.message); }
 };
 window.removeFriend = async (friendId) => {

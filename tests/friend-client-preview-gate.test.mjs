@@ -14,9 +14,11 @@ test('friend callable is connected only to the explicit localhost emulator sessi
 });
 
 test('friend actions use the callable preview in emulator mode only', () => {
-    for (const action of ['send', 'accept', 'decline', 'remove']) {
+    for (const action of ['send', 'accept', 'decline', 'cancel', 'remove']) {
         assert.ok(friends.includes(`callFriendOperationPreview('${action}', friendId)`));
     }
-    assert.equal((friends.match(/if \(friendPreviewEnabled\)/g) || []).length, 4);
+    assert.equal((friends.match(/if \(friendPreviewEnabled\)/g) || []).length, 5);
+    assert.match(friends, /window\.cancelFriendRequest\('\$\{s\.id\}'\)/);
+    assert.match(friends, /sentRequests: arrayRemove\(friendId\)/);
     assert.match(friends, /await updateDoc\(doc\(db, 'users', friendId\)/);
 });
