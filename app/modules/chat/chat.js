@@ -1,5 +1,6 @@
 import { getState } from '../../store/state.js';
 import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
+import { chatIdForUsers } from './chat-transport-gate.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -183,7 +184,7 @@ window.openChat = async (friendId, friendName) => {
     replyMessageId = null;
     selectedMessageId = null;
     document.getElementById('reply-preview')?.style.setProperty('display', 'none');
-    currentChatId = [user.uid, friendId].sort().join('_');
+    currentChatId = chatIdForUsers(user.uid, friendId);
     chatFriend = { id: friendId, name: friendName };
     document.getElementById('chat-empty').style.display = 'none';
     document.getElementById('chat-active').style.display = 'flex';
@@ -316,16 +317,42 @@ document.addEventListener('keydown', event => {
     if (menu) menu.style.display = 'none';
 });
 
-window.editMessage = () => {
+window.editMessage = async () => {
     if (!selectedMessageId || !currentChatId) return;
     const newText = prompt('Редактировать сообщение:');
     if (!newText || !newText.trim()) return;
-    updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: newText.trim(), edited: true });
+    if (newText.trim().length > 2000) {
+        setChatSendStatus('Сообщение не может быть длиннее 2000 символов.');
+        return;
+    }
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const userUid = auth.currentUser?.uid;
+    try {
+        await updateDoc(doc(db, 'chats', chatId, 'messages', selectedMessageId), { text: newText.trim(), edited: true });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка редактирования сообщения:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) {
+            setChatSendStatus('Не удалось изменить сообщение. Попробуйте ещё раз.');
+        }
+    }
 };
-window.deleteMessage = () => {
+window.deleteMessage = async () => {
     if (!selectedMessageId || !currentChatId) return;
     if (!confirm('Удалить сообщение?')) return;
-    updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: '🗑️ Сообщение удалено', deleted: true });
+    const chatId = currentChatId;
+    const lifecycle = chatLifecycle;
+    const userUid = auth.currentUser?.uid;
+    try {
+        await updateDoc(doc(db, 'chats', chatId, 'messages', selectedMessageId), { text: '🗑️ Сообщение удалено', deleted: true });
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) setChatSendStatus('');
+    } catch (error) {
+        console.error('Ошибка удаления сообщения:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === userUid) {
+            setChatSendStatus('Не удалось удалить сообщение. Попробуйте ещё раз.');
+        }
+    }
 };
 window.replyMessage = () => {
     replyMessageId = selectedMessageId;

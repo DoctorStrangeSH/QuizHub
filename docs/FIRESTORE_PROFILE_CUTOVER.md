@@ -44,6 +44,12 @@ deployed security rules and recoverability have not been verified.
   messages cannot be edited or reacted to, and legacy malformed reaction maps
   require explicit review. The browser still uses legacy direct Firestore
   writes; do not expose these callables before production rules migration.
+- The browser now routes chat ID construction through `chat-transport-gate.js`.
+  `CHAT_SERVER_TRANSPORT_ENABLED` is hardcoded `false`; legacy IDs and direct
+  Firestore writes remain intact. Editing/deleting failures are reported in
+  the active chat instead of producing unhandled promises. Switching this gate
+  is **not approved** until migrated history, server read/write contracts,
+  dual-device behavior and verified restrictive rules pass end-to-end checks.
 - `planLegacyChatMigration` is a **read-only, snapshot-driven** preflight. It
   maps existing `uids.join('_')` conversation IDs to collision-free `dm_...`
   destinations and rejects ambiguous IDs, nonreciprocal friendships, unknown
