@@ -37,7 +37,9 @@ const later = new Date('2030-01-01T10:01:00.000Z');
 const seed = {
     [`chats/${chatId}`]: { memberUids: [alice, bob] },
     [`chats/${chatId}/messages/m_earlier`]: { senderId: bob, createdAt: earlier },
-    [`chats/${chatId}/messages/m_later`]: { senderId: alice, createdAt: later }
+    [`chats/${chatId}/messages/m_later`]: { senderId: alice, createdAt: later },
+    [`chats/${chatId}/messages/tie_a`]: { senderId: bob, createdAt: later },
+    [`chats/${chatId}/messages/tie_b`]: { senderId: alice, createdAt: later }
 };
 const auth = data => ({ auth: { uid: alice, token: { firebase: { sign_in_provider: 'password' } } }, data });
 
@@ -63,6 +65,14 @@ test('read cursor refuses to move backwards and is idempotent', async () => {
     assert.equal((await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'm_earlier' })).status, 'stale');
     assert.equal(docs.get(`chats/${chatId}/members/alice`).lastReadMessageId, 'm_later');
     assert.equal((await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'm_later' })).status, 'unchanged');
+});
+
+test('read cursor uses message ID as deterministic tie-breaker for equal timestamps', async () => {
+    const { db, docs } = database(seed);
+    await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie_b' });
+    const stale = await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie_a' });
+    assert.equal(stale.status, 'stale');
+    assert.equal(docs.get(`chats/${chatId}/members/alice`).lastReadMessageId, 'tie_b');
 });
 
 test('outsiders and forged chat/message targets are rejected', async () => {
