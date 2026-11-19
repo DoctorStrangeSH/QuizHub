@@ -12,12 +12,13 @@ function database(initial = {}) {
             const pending = [];
             const tx = {
                 get: async r => ({ exists: docs.has(r.path), data: () => structuredClone(docs.get(r.path)) }),
-                create(r, data) { pending.push([r.path, structuredClone(data)]); }
+                create(r, data) { pending.push([r.path, structuredClone(data), false]); },
+                set(r, data, options) { pending.push([r.path, structuredClone(data), Boolean(options?.merge)]); }
             };
             const result = await operation(tx);
-            for (const [path, data] of pending) {
-                if (docs.has(path)) throw new Error('already-exists');
-                docs.set(path, data);
+            for (const [path, data, merge] of pending) {
+                if (!merge && docs.has(path)) throw new Error('already-exists');
+                docs.set(path, merge ? { ...docs.get(path), ...data } : data);
             }
             return result;
         }
@@ -59,6 +60,36 @@ test('trusted send requires mutual friendship, sets immutable members, and is re
     await assert.rejects(handler(authenticated({ ...valid, text: 'Other message' })), e =>
         e.code === 'already-exists');
     assert.equal(docs.size, 4);
+});
+
+test('message creation increments only recipient unread count and retries do not increment twice', async () => {
+    const { db, docs } = database({
+        'users/alice': { friends: ['bob'] },
+        'users/bob': { friends: ['alice'] }
+    });
+    const handler = createChatSendCallableAdapter({ db, HttpsError });
+    const sent = await handler(authenticated(valid));
+    assert.equal(sent.status, 'sent');
+    const recipientState = docs.get(`chats/${sent.chatId}/members/bob`);
+    assert.equal(recipientState.uid, 'bob');
+    assert.equal(recipientState.unreadCount, 1);
+    assert.equal(docs.has(`chats/${sent.chatId}/members/alice`), false);
+
+    assert.equal((await handler(authenticated(valid))).status, 'unchanged');
+    assert.equal(docs.get(`chats/${sent.chatId}/members/bob`).unreadCount, 1);
+});
+
+test('malformed unread state blocks message creation rather than silently resetting the counter', async () => {
+    const chatId = directChatId(alice, bob);
+    const { db, docs } = database({
+        'users/alice': { friends: ['bob'] },
+        'users/bob': { friends: ['alice'] },
+        [`chats/${chatId}`]: { memberUids: [alice, bob].sort() },
+        [`chats/${chatId}/members/bob`]: { uid: bob, unreadCount: -1 }
+    });
+    await assert.rejects(sendDirectMessage(db, { senderUid: alice, ...valid }), /CHAT_UNREAD_STATE_INVALID/);
+    assert.equal(docs.has(`chats/${chatId}/messages/5_alice_client_12345`), false);
+    assert.equal(docs.get(`chats/${chatId}/members/bob`).unreadCount, -1);
 });
 
 test('unilateral friendship and missing accounts cannot send or create chats', async () => {
