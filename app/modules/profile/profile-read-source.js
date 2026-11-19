@@ -23,7 +23,8 @@ export function projectProfileForViewer(viewerUid, targetUid, rawProfile) {
         throw new TypeError('INVALID_PROFILE_DATA');
     }
     if (viewerUid && viewerUid === targetUid) {
-        return { uid: targetUid, ...rawProfile };
+        // The Firestore document path, not an editable payload field, owns identity.
+        return { ...rawProfile, uid: targetUid };
     }
     return buildPublicProfile(targetUid, rawProfile);
 }

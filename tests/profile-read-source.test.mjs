@@ -56,7 +56,7 @@ test('foreign profile readers receive only the public allowlist even during lega
     const own = projectProfileForViewer('player', 'player', privateData);
     assert.equal(own.email, privateData.email);
     assert.equal(own.coins, 500);
-    assert.equal(own.uid, 'spoofed'); // legacy own profile payload is preserved as before
+    assert.equal(own.uid, 'player'); // never let a stored spoofed UID override the document identity
     assert.throws(() => projectProfileForViewer(null, 'player', { nickname: '<script>' }), /nickname/);
     assert.throws(() => projectProfileForViewer('viewer', 'player', null), /INVALID_PROFILE_DATA/);
 });

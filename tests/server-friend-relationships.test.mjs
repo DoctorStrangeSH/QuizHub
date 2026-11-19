@@ -76,7 +76,7 @@ test('trusted adapter reads both accounts and stages only social fields', async 
         { status: 'updated' });
     assert.deepEqual(writes.map(w => w.uid), ['alice', 'bob']);
     for (const write of writes) {
-        assert.deepEqual(Object.keys(write.patch).sort(), ['friends', 'friendRequests', 'sentRequests']);
+        assert.deepEqual(Object.keys(write.patch).sort(), ['friendRequests', 'friends', 'sentRequests']);
         assert.ok(!JSON.stringify(write.patch).includes('secret@example.test'));
     }
     assert.equal(records.get('alice').coins, 500);
