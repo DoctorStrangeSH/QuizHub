@@ -43,6 +43,13 @@ test('chat read cursor is authenticated, member-scoped and monotonic in emulator
         await chat.collection('messages').doc('message_later').set({
             senderId: alice.uid, text: 'Later', createdAt: new Date('2030-01-01T10:01:00.000Z')
         });
+        await chat.collection('messages').doc('message_tie_a').set({
+            senderId: bob.uid, text: 'Tie A', createdAt: new Date('2030-01-01T10:02:00.000Z')
+        });
+        await chat.collection('messages').doc('message_tie_b').set({
+            senderId: alice.uid, text: 'Tie B', createdAt: new Date('2030-01-01T10:02:00.000Z')
+        });
+        await chat.collection('members').doc(alice.uid).set({ uid: alice.uid, unreadCount: 4 });
 
         const unauthenticated = await invoke(null, { chatId, lastReadMessageId: 'message_later' });
         assert.equal(unauthenticated.body.error?.status, 'UNAUTHENTICATED');
@@ -55,9 +62,14 @@ test('chat read cursor is authenticated, member-scoped and monotonic in emulator
         assert.equal(second.body.result?.status, 'updated', JSON.stringify(second));
         const stale = await invoke(alice, { chatId, lastReadMessageId: 'message_earlier' });
         assert.equal(stale.body.result?.status, 'stale', JSON.stringify(stale));
+        const tieAdvance = await invoke(alice, { chatId, lastReadMessageId: 'message_tie_b' });
+        assert.equal(tieAdvance.body.result?.status, 'updated', JSON.stringify(tieAdvance));
+        const tieStale = await invoke(alice, { chatId, lastReadMessageId: 'message_tie_a' });
+        assert.equal(tieStale.body.result?.status, 'stale', JSON.stringify(tieStale));
 
         const aliceState = (await chat.collection('members').doc(alice.uid).get()).data();
-        assert.equal(aliceState.lastReadMessageId, 'message_later');
+        assert.equal(aliceState.lastReadMessageId, 'message_tie_b');
+        assert.equal(aliceState.unreadCount, 4, 'partial read cursor must not clear unread count');
         assert.equal((await chat.collection('members').doc(bob.uid).get()).exists, false);
         const forged = await invoke(alice, { chatId, lastReadMessageId: 'message_later', uid: bob.uid });
         assert.equal(forged.body.error?.status, 'INVALID_ARGUMENT');
