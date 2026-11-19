@@ -17,6 +17,7 @@ import { createProfileCallableAdapter } from '../server/profile-create-callable-
 import { updateFriendship } from '../server/friend-relationships.mjs';
 import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
 import { createChatSendCallableAdapter } from '../server/chat-send-callable-adapter.mjs';
+import { createChatActionsCallableAdapter } from '../server/chat-message-actions-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -111,4 +112,19 @@ export const chatSendPreview = onCall({
         throw new HttpsError('failed-precondition', 'CHAT_SEND_PREVIEW_DISABLED');
     }
     return chatSendPreviewHandler(request);
+});
+
+const chatActionsPreviewHandler = createChatActionsCallableAdapter({
+    db: getFirestore(), HttpsError
+});
+export const chatActionsPreview = onCall({
+    region: 'europe-west1', memory: '256MiB', timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_ACTIONS_PREVIEW_DISABLED');
+    }
+    return chatActionsPreviewHandler(request);
 });

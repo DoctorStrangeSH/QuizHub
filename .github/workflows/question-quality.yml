@@ -65,6 +65,8 @@ jobs:
         run: node --test tests/firestore-rules-inventory.test.mjs
       - name: Check isolated chat send service and callable authorization
         run: node --test tests/server-chat-send.test.mjs
+      - name: Check message edit, delete and reaction authorization
+        run: node --test tests/server-chat-message-actions.test.mjs
       - name: Verify legacy chat history migration preflight
         run: node --test tests/chat-migration-preflight.test.mjs
       - name: Test complete backup integrity manifests and checksums

@@ -38,6 +38,12 @@ deployed security rules and recoverability have not been verified.
   the browser**: migrating existing conversations and enforcing the deployed
   message-write policy are prerequisites. A local mock transaction is not a
   substitute for Auth + Functions + Firestore emulator integration.
+- `chatActionsPreview` extends the emulator-only path to `edit`, `delete` and
+  `react`. Only a sender can edit/delete their own message; any verified chat
+  participant may toggle only their own reaction in a transaction. Deleted
+  messages cannot be edited or reacted to, and legacy malformed reaction maps
+  require explicit review. The browser still uses legacy direct Firestore
+  writes; do not expose these callables before production rules migration.
 - `planLegacyChatMigration` is a **read-only, snapshot-driven** preflight. It
   maps existing `uids.join('_')` conversation IDs to collision-free `dm_...`
   destinations and rejects ambiguous IDs, nonreciprocal friendships, unknown

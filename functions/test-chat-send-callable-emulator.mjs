@@ -6,6 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const project = 'demo-quizhub';
 const endpoint = `http://127.0.0.1:5001/${project}/europe-west1/chatSendPreview`;
+const actionEndpoint = `http://127.0.0.1:5001/${project}/europe-west1/chatActionsPreview`;
 
 async function register() {
     const response = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=emulator-key', {
@@ -29,10 +30,10 @@ async function registerGuest() {
     return { uid: data.localId, token: data.idToken };
 }
 
-async function invoke(user, data) {
+async function invoke(user, data, url = endpoint) {
     const headers = { 'content-type': 'application/json' };
     if (user) headers.authorization = `Bearer ${user.token}`;
-    const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ data }) });
+    const response = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ data }) });
     return { status: response.status, body: await response.json() };
 }
 
@@ -78,6 +79,21 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         assert.equal(messages.size, 1);
         assert.equal(messages.docs[0].data().text, 'Привет!');
         assert.equal((await refs[0].get()).data().coins, 12);
+        const base = { chatId, messageId };
+        const outsiderReaction = await invoke(charlie, { ...base, action: 'react', reaction: '👍' }, actionEndpoint);
+        assert.equal(outsiderReaction.body.error?.status, 'PERMISSION_DENIED');
+        const forgedEdit = await invoke(bob, { ...base, action: 'edit', text: 'Подмена' }, actionEndpoint);
+        assert.equal(forgedEdit.body.error?.status, 'PERMISSION_DENIED');
+        const reacted = await invoke(bob, { ...base, action: 'react', reaction: '❤️' }, actionEndpoint);
+        assert.equal(reacted.body.result?.status, 'updated', JSON.stringify(reacted));
+        const edited = await invoke(alice, { ...base, action: 'edit', text: 'Привет ещё раз!' }, actionEndpoint);
+        assert.equal(edited.body.result?.status, 'updated', JSON.stringify(edited));
+        const updated = (await chatRef.collection('messages').doc(messageId).get()).data();
+        assert.equal(updated.text, 'Привет ещё раз!');
+        assert.deepEqual(updated.reactions, { [bob.uid]: '❤️' });
+        const deleted = await invoke(alice, { ...base, action: 'delete' }, actionEndpoint);
+        assert.equal(deleted.body.result?.status, 'updated', JSON.stringify(deleted));
+        assert.equal((await chatRef.collection('messages').doc(messageId).get()).data().deleted, true);
     } finally {
         if (chatRef) {
             const messages = await chatRef.collection('messages').get();
