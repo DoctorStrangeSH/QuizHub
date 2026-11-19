@@ -9,6 +9,19 @@ const endpoint = `http://127.0.0.1:5001/${project}/europe-west1/chatSendPreview`
 
 async function register() {
     const response = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=emulator-key', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+            email: `chat-${randomUUID()}@example.test`,
+            password: 'TestPassword!123', returnSecureToken: true
+        })
+    });
+    const data = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(data));
+    return { uid: data.localId, token: data.idToken };
+}
+
+async function registerGuest() {
+    const response = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=emulator-key', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}'
     });
     const data = await response.json();
@@ -32,6 +45,7 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
     const alice = await register();
     const bob = await register();
     const charlie = await register();
+    const guest = await registerGuest();
     const refs = [alice, bob, charlie].map(user => db.collection('users').doc(user.uid));
     let chatRef;
     try {
@@ -43,6 +57,8 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         const message = { recipientUid: bob.uid, text: 'Привет!', clientMessageId: 'emulator_' + randomUUID().slice(0, 12) };
         const unauthorized = await invoke(null, message);
         assert.equal(unauthorized.body.error?.status, 'UNAUTHENTICATED');
+        const anonymous = await invoke(guest, message);
+        assert.equal(anonymous.body.error?.status, 'UNAUTHENTICATED');
         const forged = await invoke(alice, { ...message, senderUid: charlie.uid });
         assert.equal(forged.body.error?.status, 'INVALID_ARGUMENT');
         const stranger = await invoke(charlie, message);
