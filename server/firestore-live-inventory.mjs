@@ -42,7 +42,20 @@ function collectFieldTypes(value, prefix, fields) {
             fields.set(path, entry);
         }
         entry.set(type, (entry.get(type) ?? 0) + 1);
-        if (type === 'map') collectFieldTypes(child, path, fields);
+        if (type === 'map') {
+            collectFieldTypes(child, path, fields);
+        } else if (type === 'array') {
+            for (const item of child) {
+                const itemType = firestoreType(item);
+                let itemEntry = fields.get(path + '[]');
+                if (!itemEntry) {
+                    itemEntry = new Map();
+                    fields.set(path + '[]', itemEntry);
+                }
+                itemEntry.set(itemType, (itemEntry.get(itemType) ?? 0) + 1);
+                if (itemType === 'map') collectFieldTypes(item, path + '[]', fields);
+            }
+        }
     }
 }
 
