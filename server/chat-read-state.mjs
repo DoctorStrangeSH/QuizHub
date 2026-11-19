@@ -48,10 +48,15 @@ export async function markDirectChatRead(db, { actorUid, chatId, lastReadMessage
 
         const previous = memberSnap.exists ? memberSnap.data() : {};
         const previousTime = toMillis(previous.lastReadAt);
-        if (Number.isFinite(previousTime) && messageTime <= previousTime) {
+        const previousId = typeof previous.lastReadMessageId === 'string'
+            ? previous.lastReadMessageId : '';
+        const isBehind = Number.isFinite(previousTime) &&
+            (messageTime < previousTime ||
+                (messageTime === previousTime && lastReadMessageId.localeCompare(previousId) <= 0));
+        if (isBehind) {
             return {
-                status: previous.lastReadMessageId === lastReadMessageId ? 'unchanged' : 'stale',
-                chatId, lastReadMessageId: previous.lastReadMessageId
+                status: previousId === lastReadMessageId ? 'unchanged' : 'stale',
+                chatId, lastReadMessageId: previousId
             };
         }
 
