@@ -67,6 +67,8 @@ jobs:
         run: node --test tests/server-chat-send.test.mjs
       - name: Check message edit, delete and reaction authorization
         run: node --test tests/server-chat-message-actions.test.mjs
+      - name: Check per-member chat read cursor authorization and monotonicity
+        run: node --test tests/server-chat-read-state.test.mjs
       - name: Keep chat transport gated and expose legacy action errors
         run: node --test tests/chat-transport-gate.test.mjs
       - name: Verify atomic legacy chat reactions
