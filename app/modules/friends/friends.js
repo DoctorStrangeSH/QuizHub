@@ -3,6 +3,22 @@ import { directoryCollection, profileCollectionForViewer, projectDirectoryProfil
 import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove, friendPreviewEnabled, callFriendOperationPreview } from '../../firebase-config.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+let friendsLoadVersion = 0;
+const pendingFriendActions = new Set();
+
+async function runFriendActionOnce(user, operation, friendId, action) {
+    const key = `${user.uid}:${operation}:${friendId}`;
+    if (pendingFriendActions.has(key)) return;
+    pendingFriendActions.add(key);
+    try { await action(); }
+    finally { pendingFriendActions.delete(key); }
+}
+
+function renderLatestFriends(version, user, container, html) {
+    if (version === friendsLoadVersion && container.isConnected && auth.currentUser?.uid === user.uid) {
+        container.innerHTML = html;
+    }
+}
 
 export function renderFriends() {
     const t = getState().translations.friends || {};
@@ -70,13 +86,14 @@ export function attachFriendsListeners() {
 }
 
 async function loadFriendsList(user) {
+    const version = ++friendsLoadVersion;
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (!userDoc.exists()) return;
         const friends = userDoc.data().friends || [];
-        if (friends.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-people" aria-hidden="true"></i></span><p class="text-secondary mt-2">У вас пока нет друзей</p></div>'; return; }
+        if (friends.length === 0) { renderLatestFriends(version, user, tabContent, '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-people" aria-hidden="true"></i></span><p class="text-secondary mt-2">У вас пока нет друзей</p></div>'); return; }
         const friendsData = [];
         for (const friendId of friends) {
             const friendDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, friendId), friendId));
@@ -85,23 +102,24 @@ async function loadFriendsList(user) {
                 catch { console.warn('Пропускаем повреждённый профиль игрока'); }
             }
         }
-        tabContent.innerHTML = friendsData.map(f => `
+        renderLatestFriends(version, user, tabContent, friendsData.map(f => `
             <div class="friend-item glass-card">
                 <div class="d-flex align-items-center gap-3"><div class="avatar-circle"><i class="bi bi-person-fill" aria-hidden="true"></i></div><div><span class="fw-semibold">${escapeHtml(f.nickname || 'Игрок')}</span><span class="text-secondary small ms-2">Ур. ${Number.isFinite(Number(f.level)) ? Math.max(1, Math.trunc(Number(f.level))) : 1}</span></div></div>
                 <button class="btn-remove" onclick="window.removeFriend('${f.id}')">Удалить</button>
             </div>
-        `).join('');
+        `).join(''));
     } catch (error) { console.error('Ошибка загрузки друзей:', error); }
 }
 
 async function loadFriendRequests(user) {
+    const version = ++friendsLoadVersion;
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (!userDoc.exists()) return;
         const requests = userDoc.data().friendRequests || [];
-        if (requests.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-envelope-paper" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет входящих заявок</p></div>'; return; }
+        if (requests.length === 0) { renderLatestFriends(version, user, tabContent, '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-envelope-paper" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет входящих заявок</p></div>'); return; }
         const requestsData = [];
         for (const reqId of requests) {
             const reqDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, reqId), reqId));
@@ -110,23 +128,24 @@ async function loadFriendRequests(user) {
                 catch { console.warn('Пропускаем повреждённый профиль игрока'); }
             }
         }
-        tabContent.innerHTML = requestsData.map(r => `
+        renderLatestFriends(version, user, tabContent, requestsData.map(r => `
             <div class="friend-item glass-card">
                 <div class="d-flex align-items-center gap-3"><div class="avatar-circle"><i class="bi bi-person-fill" aria-hidden="true"></i></div><div><span class="fw-semibold">${escapeHtml(r.nickname || 'Игрок')}</span><span class="text-secondary small ms-2">Ур. ${Number.isFinite(Number(r.level)) ? Math.max(1, Math.trunc(Number(r.level))) : 1}</span></div></div>
                 <div class="d-flex gap-2"><button class="btn-accept" onclick="window.acceptRequest('${r.id}')">Принять</button><button class="btn-decline" onclick="window.declineRequest('${r.id}')">Отклонить</button></div>
             </div>
-        `).join('');
+        `).join(''));
     } catch (error) { console.error('Ошибка загрузки заявок:', error); }
 }
 
 async function loadSentRequests(user) {
+    const version = ++friendsLoadVersion;
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (!userDoc.exists()) return;
         const sent = userDoc.data().sentRequests || [];
-        if (sent.length === 0) { tabContent.innerHTML = '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-send" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет отправленных заявок</p></div>'; return; }
+        if (sent.length === 0) { renderLatestFriends(version, user, tabContent, '<div class="text-center py-4"><span class="empty-icon"><i class="bi bi-send" aria-hidden="true"></i></span><p class="text-secondary mt-2">Нет отправленных заявок</p></div>'); return; }
         const sentData = [];
         for (const sentId of sent) {
             const sentDoc = await getDoc(doc(db, profileCollectionForViewer(user.uid, sentId), sentId));
@@ -135,12 +154,12 @@ async function loadSentRequests(user) {
                 catch { console.warn('Пропускаем повреждённый профиль игрока'); }
             }
         }
-        tabContent.innerHTML = sentData.map(s => `
+        renderLatestFriends(version, user, tabContent, sentData.map(s => `
             <div class="friend-item glass-card">
                 <div class="d-flex align-items-center gap-3"><div class="avatar-circle"><i class="bi bi-person-fill" aria-hidden="true"></i></div><div><span class="fw-semibold">${escapeHtml(s.nickname || 'Игрок')}</span><span class="text-secondary small ms-2">Ур. ${Number.isFinite(Number(s.level)) ? Math.max(1, Math.trunc(Number(s.level))) : 1}</span></div></div>
                 <div class="d-flex align-items-center gap-2"><span class="text-secondary small">Ожидает</span><button class="btn-decline" type="button" onclick="window.cancelFriendRequest('${s.id}')">Отменить</button></div>
             </div>
-        `).join('');
+        `).join(''));
     } catch (error) { console.error('Ошибка загрузки отправленных:', error); }
 }
 
@@ -190,7 +209,7 @@ function setupTabs(user) {
 window.sendFriendRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
-    try {
+    return runFriendActionOnce(user, 'send', friendId, async () => { try {
         if (friendPreviewEnabled) {
             await callFriendOperationPreview('send', friendId);
             alert('Заявка отправлена!');
@@ -199,12 +218,12 @@ window.sendFriendRequest = async (friendId) => {
         await updateDoc(doc(db, 'users', friendId), { friendRequests: arrayUnion(user.uid) });
         await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayUnion(friendId) });
         alert('Заявка отправлена!');
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Ошибка: ' + error.message); } });
 };
 window.acceptRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
-    try {
+    return runFriendActionOnce(user, 'accept', friendId, async () => { try {
         if (friendPreviewEnabled) {
             await callFriendOperationPreview('accept', friendId);
             loadFriendRequests(user);
@@ -213,12 +232,12 @@ window.acceptRequest = async (friendId) => {
         await updateDoc(doc(db, 'users', user.uid), { friends: arrayUnion(friendId), friendRequests: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { friends: arrayUnion(user.uid), sentRequests: arrayRemove(user.uid) });
         loadFriendRequests(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Ошибка: ' + error.message); } });
 };
 window.declineRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
-    try {
+    return runFriendActionOnce(user, 'decline', friendId, async () => { try {
         if (friendPreviewEnabled) {
             await callFriendOperationPreview('decline', friendId);
             loadFriendRequests(user);
@@ -227,12 +246,12 @@ window.declineRequest = async (friendId) => {
         await updateDoc(doc(db, 'users', user.uid), { friendRequests: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { sentRequests: arrayRemove(user.uid) });
         loadFriendRequests(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Ошибка: ' + error.message); } });
 };
 window.cancelFriendRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
-    try {
+    return runFriendActionOnce(user, 'cancel', friendId, async () => { try {
         if (friendPreviewEnabled) {
             await callFriendOperationPreview('cancel', friendId);
         } else {
@@ -240,12 +259,12 @@ window.cancelFriendRequest = async (friendId) => {
             await updateDoc(doc(db, 'users', friendId), { friendRequests: arrayRemove(user.uid) });
         }
         loadSentRequests(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Ошибка: ' + error.message); } });
 };
 window.removeFriend = async (friendId) => {
     const user = auth.currentUser;
     if (!user || !confirm('Удалить из друзей?')) return;
-    try {
+    return runFriendActionOnce(user, 'remove', friendId, async () => { try {
         if (friendPreviewEnabled) {
             await callFriendOperationPreview('remove', friendId);
             loadFriendsList(user);
@@ -254,5 +273,5 @@ window.removeFriend = async (friendId) => {
         await updateDoc(doc(db, 'users', user.uid), { friends: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { friends: arrayRemove(user.uid) });
         loadFriendsList(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Ошибка: ' + error.message); } });
 };
