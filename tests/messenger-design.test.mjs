@@ -98,3 +98,12 @@ test('message actions are keyboard accessible and have understandable labels', (
   for (const label of ['Нравится', 'Сердце', 'Смешно', 'Удивление', 'Грусть']) assert.ok(chat.includes(`aria-label="${label}"`));
   assert.match(css, /\.message-more-btn:focus-visible/);
 });
+
+test('failed realtime message subscriptions present a retry button for the active chat', () => {
+  assert.match(chat, /onSnapshot\(q, \(snapshot\) => \{/);
+  assert.match(chat, /\}, \(error\) => \{\s*console\.error\('Ошибка подписки на историю сообщений:'/);
+  assert.match(chat, /id="retry-chat-messages"/);
+  assert.match(chat, /querySelector\('#retry-chat-messages'\)\.addEventListener\('click'/);
+  assert.match(chat, /currentChatId !== chatId \|\| auth\.currentUser\?\.uid !== viewerUid/);
+  assert.match(chat, /if \(messagesUnsubscribe\) \{ messagesUnsubscribe\(\); messagesUnsubscribe = null; \}\s*loadMessages\(\)/);
+});

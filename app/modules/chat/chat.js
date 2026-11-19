@@ -1,5 +1,5 @@
 import { getState } from '../../store/state.js';
-import { projectDirectoryProfile } from '../profile/profile-read-source.js';
+import { directoryCollection, projectDirectoryProfile } from '../profile/profile-read-source.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -121,7 +121,7 @@ export async function loadChatFriends() {
         const friendsData = [];
         for (const friendId of friends) {
             if (lifecycle !== chatLifecycle || revision !== friendsLoadRevision || auth.currentUser?.uid !== user.uid) return;
-            const friendDoc = await getDoc(doc(db, 'users', friendId));
+            const friendDoc = await getDoc(doc(db, directoryCollection(), friendId));
             if (friendDoc.exists()) {
                 try {
                     const publicFriend = projectDirectoryProfile(friendId, friendDoc.data());
@@ -217,7 +217,7 @@ function loadMessages() {
     const viewerUid = auth.currentUser?.uid;
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
-    const messagesRef = collection(db, 'chats', currentChatId, 'messages');
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
@@ -225,6 +225,15 @@ function loadMessages() {
         if (snapshot.empty) { messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>'; return; }
         snapshot.forEach(doc => renderMessage({ id: doc.id, ...doc.data() }, messagesContainer));
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, (error) => {
+        console.error('Ошибка подписки на историю сообщений:', error);
+        if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
+        messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary" role="alert">Не удалось загрузить сообщения.<br><button type="button" class="btn-premium btn-sm mt-2" id="retry-chat-messages">Повторить</button></div>';
+        messagesContainer.querySelector('#retry-chat-messages').addEventListener('click', () => {
+            if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid) return;
+            if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+            loadMessages();
+        });
     });
 }
 

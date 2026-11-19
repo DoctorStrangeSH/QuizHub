@@ -5,12 +5,17 @@ Firestore rules or real user records. `PUBLIC_PROFILE_READS_ENABLED` must remain
 `false` until all checks below are verified against an isolated snapshot and
 reviewed production configuration.
 
+The Firebase Console screenshot supplied on 2026-11-19 identifies the database
+as `(default)`, **Standard** edition, **Native** mode, region `eur3`.
+Scheduled backups appear disabled. This confirms instance selection only;
+deployed security rules and recoverability have not been verified.
+
 | Consumer | Current behavior | Required before cutover |
 | --- | --- | --- |
 | `friends/friends.js` | Friends/search/requests/leaderboard-style directory reads are routed through the migration gate, but legacy mode still downloads private `users` documents. | Verify `publicProfiles` backfill, all friend lookup paths and queries. |
 | `leaderboard/leaderboard.js` | Directory query is gated and public fields are projected after fetching. | Verify public ranking fields and required indexes. |
 | `profile/public-profile.js` | Foreign card read is gated; friend requests now delegate to the shared friends handler, whose published path still performs cross-user writes. | Switch the shared handler to audited authenticated server operations and test both profile and friends navigation. |
-| `chat/chat.js` | Legacy mode downloads full `users/{friendId}` documents, but now retains only projected public identity fields in the chat UI. | Switch the network read to verified `publicProfiles/{friendId}` before owner-only rules can be enabled. |
+| `chat/chat.js` | Chat directory reads now use the shared migration gate, projecting only public identity fields. With the gate disabled, it still downloads full `users/{friendId}` documents. | Backfill and verify `publicProfiles/{friendId}` before enabling the gate and owner-only rules. |
 | `profile/profile.js` | Registration checks nickname uniqueness through a directory query on `users` while the gate is disabled. | Switch to verified `nicknameClaims` reservations and server-only registration. |
 | `reset-weekly.js` | Exported client routine reads and writes every account. | Remove from client authority; move reset to a trusted, idempotent scheduled server job. |
 | `app.js` | Authenticated user reads/writes own profile; also resets own weekly XP based on browser local storage. | Move weekly reset decision to trusted server time and ensure it cannot be triggered per device. |

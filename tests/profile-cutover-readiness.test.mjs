@@ -34,6 +34,8 @@ test('public player card delegates friend requests to the single guarded friends
 
 test('chat friend list retains only projected public identity fields', () => {
     const chat = source('app/modules/chat/chat.js');
+    assert.match(chat, /getDoc\(doc\(db, directoryCollection\(\), friendId\)\)/);
+    assert.doesNotMatch(chat, /getDoc\(doc\(db, 'users', friendId\)\)/);
     assert.match(chat, /projectDirectoryProfile\(friendId, friendDoc\.data\(\)\)/);
     assert.match(chat, /friendsData\.push\(\{ id: publicFriend\.uid, nickname: publicFriend\.nickname \}\)/);
     assert.doesNotMatch(chat, /\.\.\.friendDoc\.data\(\)/);
