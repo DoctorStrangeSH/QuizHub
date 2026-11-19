@@ -14,6 +14,8 @@ function fail(message) {
 
 if (process.env.QUIZHUB_CONFIRM_READ_ONLY_INVENTORY !== 'YES') {
     fail('Set QUIZHUB_CONFIRM_READ_ONLY_INVENTORY=YES to explicitly confirm read-only production reads.');
+} else if (process.env.FIRESTORE_EMULATOR_HOST) {
+    fail('FIRESTORE_EMULATOR_HOST is set. Unset emulator variables before collecting the live project inventory.');
 } else {
     const projectId = process.env.QUIZHUB_PROJECT_ID;
     if (projectId !== EXPECTED_PROJECT_ID) {
