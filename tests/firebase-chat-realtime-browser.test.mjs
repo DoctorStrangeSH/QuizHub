@@ -1,0 +1,145 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { chromium } from 'playwright';
+
+const url = 'http://127.0.0.1:8765/?firebaseEmulator=1';
+const project = 'demo-quizhub';
+
+async function createClient(browser, label) {
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(url);
+  await page.locator('#auth-form').waitFor({ timeout: 25000 });
+  const email = `chat-${label}-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`;
+  await page.evaluate(() => window.switchAuthMode());
+  await page.locator('#auth-password[autocomplete="new-password"]').waitFor();
+  await page.locator('#auth-email').fill(email);
+  await page.locator('#auth-password').fill('Chat-emulator-5830');
+  await page.locator('#auth-form button[type="submit"]').click();
+  await page.waitForFunction(async () => {
+    const { auth } = await import('./app/firebase-config.js');
+    return Boolean(auth.currentUser);
+  }, null, { timeout: 25000 });
+  const uid = await page.evaluate(async () => {
+    const { auth } = await import('./app/firebase-config.js');
+    return auth.currentUser.uid;
+  });
+  return { context, page, uid, errors };
+}
+
+async function seedProfile(client, friendUid, nickname) {
+  await client.page.evaluate(async ({ friendUid, nickname }) => {
+    const { auth, db, doc, setDoc } = await import('./app/firebase-config.js');
+    await setDoc(doc(db, 'users', auth.currentUser.uid), {
+      nickname, friends: [friendUid], coins: 100, level: 1
+    }, { merge: true });
+  }, { friendUid, nickname });
+}
+
+async function openFriendChat(client, friendUid) {
+  await client.page.evaluate(() => window.navigateTo('chat'));
+  const friend = client.page.locator(`.chat-friend-item[data-friend-id="${friendUid}"]`);
+  await friend.waitFor({ timeout: 20000 });
+  await friend.click();
+  await client.page.locator('#chat-active').waitFor({ state: 'visible', timeout: 10000 });
+  await client.page.locator('#chat-messages').waitFor();
+}
+
+async function waitForMessage(page, text) {
+  await page.locator('.message-wrapper .message-text').filter({ hasText: text }).waitFor({ timeout: 20000 });
+}
+
+test('two authenticated browser clients receive live chat updates and recover their listener after reconnect', { timeout: 150000 }, async () => {
+  assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Requires local Auth emulator');
+  assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Requires local Firestore emulator');
+  assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project,
+    'Never run chat browser tests against production');
+
+  const browser = await chromium.launch({ headless: true });
+  let alice, bob;
+  try {
+    alice = await createClient(browser, 'alice');
+    bob = await createClient(browser, 'bob');
+    await Promise.all([
+      seedProfile(alice, bob.uid, 'Alice'),
+      seedProfile(bob, alice.uid, 'Bob')
+    ]);
+
+    await Promise.all([
+      openFriendChat(alice, bob.uid),
+      openFriendChat(bob, alice.uid)
+    ]);
+
+    // Real browser A writes through the Firebase Web SDK. Browser B must
+    // receive the new document through its active onSnapshot subscription.
+    const messageId = await alice.page.evaluate(async () => {
+      const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
+      const ids = [auth.currentUser.uid, window.__chatPeerUid].filter(Boolean);
+      return ids.length;
+    });
+    assert.equal(messageId, 0, 'No test-only peer globals should be required');
+
+    const chatId = [alice.uid, bob.uid].sort().join('_');
+    const sent = await alice.page.evaluate(async ({ chatId }) => {
+      const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
+      const result = await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: auth.currentUser.uid, senderName: 'Alice',
+        text: 'Live message from Alice', createdAt: serverTimestamp(),
+        edited: false, replyTo: null, reactions: {}
+      });
+      return result.id;
+    }, { chatId });
+    await waitForMessage(bob.page, 'Live message from Alice');
+
+    // Editing and reaction changes are also independent Firestore writes;
+    // each must replace the rendered message state in the other browser.
+    await alice.page.evaluate(async ({ chatId, messageId }) => {
+      const { db, doc, updateDoc } = await import('./app/firebase-config.js');
+      await updateDoc(doc(db, 'chats', chatId, 'messages', messageId), {
+        text: 'Edited live message', edited: true
+      });
+    }, { chatId, messageId: sent });
+    await waitForMessage(bob.page, 'Edited live message');
+
+    await bob.page.evaluate(async ({ chatId, messageId }) => {
+      const { auth, db, doc, runTransaction } = await import('./app/firebase-config.js');
+      const ref = doc(db, 'chats', chatId, 'messages', messageId);
+      await runTransaction(db, async tx => {
+        const snapshot = await tx.get(ref);
+        tx.update(ref, { reactions: { ...(snapshot.data().reactions || {}), [auth.currentUser.uid]: '❤️' } });
+      });
+    }, { chatId, messageId: sent });
+    await bob.page.locator('.message-wrapper .message-reactions').filter({ hasText: '❤️' }).waitFor({ timeout: 15000 });
+    await alice.page.locator('.message-wrapper .message-reactions').filter({ hasText: '❤️' }).waitFor({ timeout: 15000 });
+
+    // Simulate an actual network interruption in browser B. After connectivity
+    // returns, Firestore's existing listener should catch up with a later write.
+    await bob.context.setOffline(true);
+    await bob.page.waitForTimeout(1200);
+    await bob.context.setOffline(false);
+    await alice.page.evaluate(async ({ chatId }) => {
+      const { auth, db, collection, addDoc, serverTimestamp } = await import('./app/firebase-config.js');
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
+        senderId: auth.currentUser.uid, senderName: 'Alice',
+        text: 'Message after reconnect', createdAt: serverTimestamp(),
+        edited: false, replyTo: null, reactions: {}
+      });
+    }, { chatId });
+    await waitForMessage(bob.page, 'Message after reconnect');
+
+    // Leaving and reopening a conversation must replace (not stack) listeners.
+    await bob.page.evaluate(() => window.closeChatWindow());
+    await bob.page.waitForTimeout(150);
+    await openFriendChat(bob, alice.uid);
+    await waitForMessage(bob.page, 'Message after reconnect');
+
+    assert.deepEqual(alice.errors, [], `Alice browser errors: ${alice.errors.join(' | ')}`);
+    assert.deepEqual(bob.errors, [], `Bob browser errors: ${bob.errors.join(' | ')}`);
+  } finally {
+    if (alice) await alice.context.close();
+    if (bob) await bob.context.close();
+    await browser.close();
+  }
+});
