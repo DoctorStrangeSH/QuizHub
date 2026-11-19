@@ -19,7 +19,10 @@ deployed security rules and recoverability have not been verified.
   `quizSessions` preview scenario in isolated emulators; it does **not** prove
   that production `users`, `publicProfiles`, chats or social writes are safe.
 - The effective rules published to the `(default)` production database remain
-  **UNKNOWN**. Do not infer that they are permissive or secure from the repo.
+  **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
+  that text appears broadly permissive and is audited in
+  `docs/FIRESTORE_RULES_REVIEW_2026-11-19.md`. Do not equate the pasted text
+  with an authenticated export of the active release.
 - Before owner-only migration, obtain an authorized read-only export of the
   active ruleset and indexes, review it separately, and capture a verifiable
   backup. Do not copy preview-only rules into production.
