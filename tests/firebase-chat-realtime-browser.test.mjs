@@ -154,7 +154,9 @@ test('two authenticated browser clients receive live chat updates and recover th
         senderId: auth.currentUser.uid,
         senderName: 'Alice',
         text: 'Page boundary message ' + String(index).padStart(3, '0'),
-        createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)),
+        // Keep this deterministic batch newer than the earlier live-chat
+        // fixtures so the newest-100 boundary contains exactly messages 005..104.
+        createdAt: new Date(Date.UTC(2030, 0, 1, 0, 0, index)),
         edited: false,
         replyTo: null,
         reactions: {}
@@ -165,9 +167,12 @@ test('two authenticated browser clients receive live chat updates and recover th
     }, { chatId });
     await waitForMessage(bob.page, 'Page boundary message 104');
     await bob.page.waitForFunction(() => {
-      const texts = Array.from(document.querySelectorAll('.message-wrapper .message-text'));
-      return !texts.some(element => element.textContent.includes('Page boundary message 000'));
-    }, null, { timeout: 10000 });
+      const rows = Array.from(document.querySelectorAll('.message-wrapper'));
+      const texts = rows.map(row => row.querySelector('.message-text')?.textContent || '');
+      return rows.length === 100
+        && texts.some(text => text.includes('Page boundary message 104'))
+        && !texts.some(text => text.includes('Page boundary message 000'));
+    }, null, { timeout: 15000 });
     assert.equal(
       await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 000' }).count(),
       0,
