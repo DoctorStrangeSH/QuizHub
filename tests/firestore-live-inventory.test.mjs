@@ -24,7 +24,7 @@ test('inventory recursively finds nested collections under missing parent docume
         fakeDocument('users/alice-private-id', {
             email: 'private@example.test',
             nickname: 'Alice',
-            stats: { wins: 4, totalGames: 7 }
+            stats: { wins: 4, totalGames: 7 }, tags: ['one', 'two'], inventory: [{ sku: 'secret-sku', quantity: 2 }]
         })
     ]);
     const messages = fakeCollection('chats/orphan-chat-id/messages', [
@@ -53,14 +53,20 @@ test('inventory recursively finds nested collections under missing parent docume
     const userSchema = report.collections.find(x => x.path === 'users');
     assert.deepEqual(userSchema.fields, [
         { field: 'email', types: { string: 1 } },
+        { field: 'inventory', types: { array: 1 } },
+        { field: 'inventory[]', types: { map: 1 } },
+        { field: 'inventory[].quantity', types: { integer: 1 } },
+        { field: 'inventory[].sku', types: { string: 1 } },
         { field: 'nickname', types: { string: 1 } },
+        { field: 'tags', types: { array: 1 } },
+        { field: 'tags[]', types: { string: 2 } },
         { field: 'stats', types: { map: 1 } },
         { field: 'stats.totalGames', types: { integer: 1 } },
         { field: 'stats.wins', types: { integer: 1 } }
     ]);
     const serialized = JSON.stringify(report);
     for (const secret of ['alice-private-id', 'orphan-chat-id', 'message-secret-id',
-        'private@example.test', 'private message body']) {
+        'private@example.test', 'private message body', 'secret-sku']) {
         assert.equal(serialized.includes(secret), false);
     }
 });
