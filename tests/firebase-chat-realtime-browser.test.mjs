@@ -164,10 +164,14 @@ test('two authenticated browser clients receive live chat updates and recover th
       ));
     }, { chatId });
     await waitForMessage(bob.page, 'Page boundary message 104');
+    await bob.page.waitForFunction(() => {
+      const texts = Array.from(document.querySelectorAll('.message-wrapper .message-text'));
+      return !texts.some(element => element.textContent.includes('Page boundary message 000'));
+    }, null, { timeout: 10000 });
     assert.equal(
       await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 000' }).count(),
       0,
-      'The oldest message must fall outside the newest-100 window'
+      'The oldest message must fall outside the newest-100 window after the live query settles'
     );
     assert.equal(
       await bob.page.locator('.message-wrapper .message-text').filter({ hasText: 'Page boundary message 104' }).count(),
