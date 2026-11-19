@@ -49,6 +49,12 @@ deployed security rules and recoverability have not been verified.
   check attachment/reaction formats, verify a restorable backup and test a
   resumable dual-read cutover in isolated emulators. Incomplete snapshot input
   can produce a misleadingly green preflight and must never authorize release.
+- `inspectLegacyChatsInEmulator` reads `users` and every `chats` document ref,
+  including **missing chat parents** with surviving `messages` subcollections.
+  It records only IDs and senders, enforces small inventory limits, and invokes
+  the migration preflight without copying message text. CI runs it in a fresh,
+  disposable Firestore emulator, never against the `(default)` production DB.
+  It is still a non-transactional rehearsal, not a certified complete backup.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in
