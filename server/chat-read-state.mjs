@@ -11,8 +11,9 @@ function toMillis(value) {
     return NaN;
 }
 
-// Persist a per-member read cursor. This deliberately does not calculate
-// unread counts yet; message creation must update those atomically first.
+// Persist a per-member read cursor. Do not blindly zero unreadCount here:
+// the cursor may point to a partially viewed history page. Unread reconciliation
+// must count incoming messages through this exact cursor before decrementing.
 export async function markDirectChatRead(db, { actorUid, chatId, lastReadMessageId }) {
     if (!db || typeof db.runTransaction !== 'function' || typeof db.collection !== 'function') {
         throw new TypeError('TRUSTED_DATABASE_REQUIRED');
