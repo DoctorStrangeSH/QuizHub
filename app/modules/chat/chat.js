@@ -284,7 +284,9 @@ async function loadOlderMessages({ chatId, lifecycle, session, viewerUid, contai
         console.error('Не удалось загрузить старые сообщения:', error);
         if (lifecycle === chatLifecycle && session === messageSession && currentChatId === chatId && container.isConnected) setChatSendStatus('Не удалось загрузить старые сообщения. Прокрутите вверх, чтобы повторить.');
     } finally {
-        loadingOlderMessages = false;
+        // An older request may settle after another chat session has started.
+        // It must not release that newer session's in-flight pagination lock.
+        if (session === messageSession) loadingOlderMessages = false;
     }
 }
 
