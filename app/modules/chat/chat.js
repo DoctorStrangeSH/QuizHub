@@ -222,6 +222,13 @@ window.closeChatWindow = () => {
     document.querySelectorAll('.chat-friend-item').forEach(el => el.classList.remove('active'));
 };
 
+function messageTimestampMillis(value) {
+    if (value?.toMillis) return value.toMillis();
+    if (value instanceof Date) return value.getTime();
+    if (typeof value?.seconds === 'number') return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1e6);
+    return 0;
+}
+
 function renderCachedMessages(container, { preserveViewport = false, stickToBottom = false } = {}) {
     const previousTop = container.scrollTop;
     const wasNearBottom = container.scrollHeight - container.clientHeight - previousTop < 72;
@@ -233,8 +240,8 @@ function renderCachedMessages(container, { preserveViewport = false, stickToBott
 
     container.innerHTML = '';
     const messages = Array.from(chatMessageCache.values()).sort((left, right) => {
-        const leftTime = left.createdAt?.toMillis ? left.createdAt.toMillis() : 0;
-        const rightTime = right.createdAt?.toMillis ? right.createdAt.toMillis() : 0;
+        const leftTime = messageTimestampMillis(left.createdAt);
+        const rightTime = messageTimestampMillis(right.createdAt);
         return leftTime - rightTime || left.id.localeCompare(right.id);
     });
     messages.forEach(message => renderMessage(message, container));
