@@ -67,6 +67,19 @@ test('read cursor refuses to move backwards and is idempotent', async () => {
     assert.equal((await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'm_later' })).status, 'unchanged');
 });
 
+test('advancing a partial read cursor never clears the independent unread counter', async () => {
+    const { db, docs } = database({
+        ...seed,
+        [`chats/${chatId}/members/alice`]: {
+            uid: alice, unreadCount: 4
+        }
+    });
+    await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'm_earlier' });
+    const state = docs.get(`chats/${chatId}/members/alice`);
+    assert.equal(state.lastReadMessageId, 'm_earlier');
+    assert.equal(state.unreadCount, 4);
+});
+
 test('read cursor uses message ID as deterministic tie-breaker for equal timestamps', async () => {
     const { db, docs } = database(seed);
     await markDirectChatRead(db, { actorUid: alice, chatId, lastReadMessageId: 'tie_b' });
