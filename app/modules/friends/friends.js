@@ -1,21 +1,18 @@
 import { getState } from '../../store/state.js';
 import { directoryCollection, profileCollectionForViewer, projectDirectoryProfile } from '../profile/profile-read-source.js';
+import { createFriendsAsyncGuard } from './friends-async-guards.js';
 import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove, friendPreviewEnabled, callFriendOperationPreview } from '../../firebase-config.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-let friendsLoadVersion = 0;
-const pendingFriendActions = new Set();
+const friendsAsyncGuard = createFriendsAsyncGuard();
 
 async function runFriendActionOnce(user, operation, friendId, action) {
     const key = `${user.uid}:${operation}:${friendId}`;
-    if (pendingFriendActions.has(key)) return;
-    pendingFriendActions.add(key);
-    try { await action(); }
-    finally { pendingFriendActions.delete(key); }
+    return friendsAsyncGuard.runOnce(key, action);
 }
 
 function renderLatestFriends(version, user, container, html) {
-    if (version === friendsLoadVersion && container.isConnected && auth.currentUser?.uid === user.uid) {
+    if (friendsAsyncGuard.isCurrent(version) && container.isConnected && auth.currentUser?.uid === user.uid) {
         container.innerHTML = html;
     }
 }
@@ -86,7 +83,7 @@ export function attachFriendsListeners() {
 }
 
 async function loadFriendsList(user) {
-    const version = ++friendsLoadVersion;
+    const version = friendsAsyncGuard.nextLoad();
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {
@@ -112,7 +109,7 @@ async function loadFriendsList(user) {
 }
 
 async function loadFriendRequests(user) {
-    const version = ++friendsLoadVersion;
+    const version = friendsAsyncGuard.nextLoad();
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {
@@ -138,7 +135,7 @@ async function loadFriendRequests(user) {
 }
 
 async function loadSentRequests(user) {
-    const version = ++friendsLoadVersion;
+    const version = friendsAsyncGuard.nextLoad();
     const tabContent = document.getElementById('tab-content');
     if (!tabContent) return;
     try {

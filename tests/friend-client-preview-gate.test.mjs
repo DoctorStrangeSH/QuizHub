@@ -24,13 +24,12 @@ test('friend actions use the callable preview in emulator mode only', () => {
 });
 
 test('out-of-order friend tab responses cannot overwrite the current tab', () => {
-    assert.equal((friends.match(/const version = \+\+friendsLoadVersion/g) || []).length, 3);
+    assert.equal((friends.match(/const version = friendsAsyncGuard\.nextLoad\(\)/g) || []).length, 3);
     assert.equal((friends.match(/renderLatestFriends\(version, user, tabContent,/g) || []).length, 6);
-    assert.match(friends, /version === friendsLoadVersion && container\.isConnected && auth\.currentUser\?\.uid === user\.uid/);
+    assert.match(friends, /friendsAsyncGuard\.isCurrent\(version\) && container\.isConnected && auth\.currentUser\?\.uid === user\.uid/);
 });
 
 test('rapid repeated social clicks are coalesced per user, target and operation', () => {
-    assert.match(friends, /if \(pendingFriendActions\.has\(key\)\) return/);
-    assert.match(friends, /finally \{ pendingFriendActions\.delete\(key\); \}/);
+    assert.match(friends, /friendsAsyncGuard\.runOnce\(key, action\)/);
     assert.equal((friends.match(/return runFriendActionOnce\(user, '/g) || []).length, 5);
 });
