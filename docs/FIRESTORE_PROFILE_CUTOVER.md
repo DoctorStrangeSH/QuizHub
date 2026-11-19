@@ -18,6 +18,14 @@ deployed security rules and recoverability have not been verified.
   `tests/fixtures/quiz-sessions.rules`. The CI job using it protects the
   `quizSessions` preview scenario in isolated emulators; it does **not** prove
   that production `users`, `publicProfiles`, chats or social writes are safe.
+- `firebase.profile-privacy-preview.json` separately points to
+  `tests/fixtures/profile-privacy-preview.rules`, an intentionally restrictive
+  emulator-only prototype: owner-only reads of private `users`, authenticated
+  reads of server-projected `publicProfiles`, and zero client writes. The CI
+  two-user test rejects private reads, bulk `users` queries, impersonation and
+  privileged writes. **This is not production-ready**: it deliberately breaks
+  existing client-side profile creation, friends/chat, economy and gameplay
+  writes until the server flows and UI are migrated and tested.
 - The effective rules published to the `(default)` production database remain
   **UNVERIFIED**. The owner has supplied the current Rules-tab text in chat;
   that text appears broadly permissive and is audited in

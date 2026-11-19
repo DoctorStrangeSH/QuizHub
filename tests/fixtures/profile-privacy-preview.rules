@@ -1,0 +1,59 @@
+// ISOLATED EMULATOR PRIVACY PROTOTYPE — NEVER DEPLOY AS APPLICATION RULES.
+// Assumed models:
+// users/{uid}: private account with email (string|null), coins/XP (numbers),
+// friends/request arrays and other privileged fields. Only owner reads.
+// publicProfiles/{uid}: trusted server projection containing uid, nickname,
+// nicknameLower, equippedFrame (strings) and level, experience,
+// weeklyExperience, wins (nonnegative numbers). All authenticated readers.
+// nicknameClaims/{name}: server-only {uid: string} reservation.
+// quizSessions, chats/messages, and all other paths: server-only in this
+// preview, regardless of legacy client capabilities.
+// No client writes are permitted until field-level validators, callable flows,
+// and the entire existing UI are tested. Admin SDK bypasses these rules.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    function uidUnchanged(data) {
+      return !('uid' in data) || (isAuthenticated() && data.uid == request.auth.uid);
+    }
+    function uidNotModified(before, after) {
+      return !('uid' in after) || ('uid' in before && after.uid == before.uid);
+    }
+    function isValidPublicProfile(data) {
+      return data.keys().hasOnly(['uid', 'nickname', 'nicknameLower', 'level',
+        'experience', 'weeklyExperience', 'wins', 'equippedFrame']) &&
+        data.keys().hasAll(['uid', 'nickname', 'nicknameLower', 'level',
+        'experience', 'weeklyExperience', 'wins', 'equippedFrame']) &&
+        data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        data.nickname is string && data.nickname.size() >= 3 && data.nickname.size() <= 20 &&
+        data.nicknameLower is string && data.nicknameLower.size() >= 3 && data.nicknameLower.size() <= 20 &&
+        data.equippedFrame is string && data.equippedFrame.size() <= 50 &&
+        data.level is int && data.level >= 1 &&
+        data.experience is int && data.experience >= 0 &&
+        data.weeklyExperience is int && data.weeklyExperience >= 0 &&
+        data.wins is int && data.wins >= 0;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      // In this fixture the trusted backend owns the entire account schema.
+      allow create, update, delete: if false;
+    }
+
+    match /publicProfiles/{uid} {
+      // Backfill/projection must be server-authored; do not let clients forge ranks.
+      allow read: if isAuthenticated();
+      allow create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

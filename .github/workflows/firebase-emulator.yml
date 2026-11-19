@@ -53,3 +53,9 @@ jobs:
           GOOGLE_CLOUD_PROJECT: demo-quizhub
           CI: 'true'
         run: npx --yes firebase-tools@latest emulators:exec --config firebase.rules-preview.json --project demo-quizhub --only auth,firestore "node --test functions/test-quiz-session-rules-emulator.mjs"
+      - name: Verify owner-only private profiles and server-owned writes
+        env:
+          GCLOUD_PROJECT: demo-quizhub
+          GOOGLE_CLOUD_PROJECT: demo-quizhub
+          CI: 'true'
+        run: npx --yes firebase-tools@latest emulators:exec --config firebase.profile-privacy-preview.json --project demo-quizhub --only auth,firestore "node --test functions/test-profile-privacy-rules-emulator.mjs"
