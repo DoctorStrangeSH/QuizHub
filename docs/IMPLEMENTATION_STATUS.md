@@ -127,6 +127,22 @@ Functions используют Node.js 22. functions/package.json содержи
 
 Документ FIREBASE_FUNCTIONS_HANDOFF.md указывает Firebase project ID quizhub-e65f5, database (default), Standard edition и region eur3. Это зафиксированная документация проекта, а не свежая независимая проверка консоли на дату данного аудита.
 
+
+
+### 4.3. Ранее предоставленные владельцем сведения из Firebase Console
+
+В предыдущем обсуждении QuizHub владелец предоставил скриншоты и текстовый снимок конфигурации:
+
+- Firebase project ID: quizhub-e65f5; project number: 144587612719.
+- Firestore: (default), Standard edition, Native mode, region eur3; база отмечена как активная.
+- В сведениях от 2026-11-15 указано, что PITR и delete protection выключены.
+- На скриншоте от 2026-11-19 scheduled backups выглядели выключенными.
+- Предоставленный владельцем текст Rules snapshot содержал широкие authenticated read/write разрешения для users, chats, achievements, dailyRewards, shopItems, events и settings; проверки владельца присутствовали только для отдельных путей.
+
+**Уровень достоверности:** это ранее предоставленные владельцем сведения и снимок, но не независимо полученный и криптографически/операционно подтверждённый экспорт активного release ruleset. Поэтому нельзя утверждать, что именно эти правила сейчас развернуты. Тем не менее снимок указывает на потенциально чрезмерно широкие права и должен рассматриваться как security warning до получения актуального экспорта.
+
+Скриншоты подтверждают выбор базы и отдельные настройки, но не доказывают наличие полного backup или возможность восстановления. До отдельной restore rehearsal production data recovery остаётся неподтверждённым.
+
 ## 5. Открытый PR #3
 
 PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
