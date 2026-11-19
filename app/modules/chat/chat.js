@@ -221,12 +221,15 @@ function loadMessages() {
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
     const messagesRef = collection(db, 'chats', chatId, 'messages');
-    const q = query(messagesRef, orderBy('createdAt', 'asc'), limit(100));
+    // Fetch the newest page, then render it oldest-to-newest for chat chronology.
+    const q = query(messagesRef, orderBy('createdAt', 'desc'), limit(100));
     messagesUnsubscribe = onSnapshot(q, (snapshot) => {
         if (lifecycle !== chatLifecycle || currentChatId !== chatId || auth.currentUser?.uid !== viewerUid || !messagesContainer.isConnected) return;
         messagesContainer.innerHTML = '';
         if (snapshot.empty) { messagesContainer.innerHTML = '<div class="text-center py-4 text-secondary">Нет сообщений. Напишите первым! 👋</div>'; return; }
-        snapshot.forEach(doc => renderMessage({ id: doc.id, ...doc.data() }, messagesContainer));
+        snapshot.docs.slice().reverse().forEach(messageDoc => {
+            renderMessage({ id: messageDoc.id, ...messageDoc.data() }, messagesContainer);
+        });
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }, (error) => {
         console.error('Ошибка подписки на историю сообщений:', error);
