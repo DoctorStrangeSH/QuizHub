@@ -1,6 +1,6 @@
 import { getState } from '../../store/state.js';
 import { directoryCollection, profileCollectionForViewer, projectDirectoryProfile } from '../profile/profile-read-source.js';
-import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from '../../firebase-config.js';
+import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove, friendPreviewEnabled, callFriendOperationPreview } from '../../firebase-config.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
@@ -191,6 +191,11 @@ window.sendFriendRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (friendPreviewEnabled) {
+            await callFriendOperationPreview('send', friendId);
+            alert('Заявка отправлена!');
+            return;
+        }
         await updateDoc(doc(db, 'users', friendId), { friendRequests: arrayUnion(user.uid) });
         await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayUnion(friendId) });
         alert('Заявка отправлена!');
@@ -200,6 +205,11 @@ window.acceptRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (friendPreviewEnabled) {
+            await callFriendOperationPreview('accept', friendId);
+            loadFriendRequests(user);
+            return;
+        }
         await updateDoc(doc(db, 'users', user.uid), { friends: arrayUnion(friendId), friendRequests: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { friends: arrayUnion(user.uid), sentRequests: arrayRemove(user.uid) });
         loadFriendRequests(user);
@@ -209,6 +219,11 @@ window.declineRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (friendPreviewEnabled) {
+            await callFriendOperationPreview('decline', friendId);
+            loadFriendRequests(user);
+            return;
+        }
         await updateDoc(doc(db, 'users', user.uid), { friendRequests: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { sentRequests: arrayRemove(user.uid) });
         loadFriendRequests(user);
@@ -218,6 +233,11 @@ window.removeFriend = async (friendId) => {
     const user = auth.currentUser;
     if (!user || !confirm('Удалить из друзей?')) return;
     try {
+        if (friendPreviewEnabled) {
+            await callFriendOperationPreview('remove', friendId);
+            loadFriendsList(user);
+            return;
+        }
         await updateDoc(doc(db, 'users', user.uid), { friends: arrayRemove(friendId) });
         await updateDoc(doc(db, 'users', friendId), { friends: arrayRemove(user.uid) });
         loadFriendsList(user);
