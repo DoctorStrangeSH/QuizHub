@@ -10,6 +10,20 @@ as `(default)`, **Standard** edition, **Native** mode, region `eur3`.
 Scheduled backups appear disabled. This confirms instance selection only;
 deployed security rules and recoverability have not been verified.
 
+### Security-rules audit (source only, 2026-11-19)
+
+- `firebase.json` configures Functions and emulators, but has **no** Firestore
+  rules deployment entry. There is no root `firestore.rules` in this checkout.
+- `firebase.rules-preview.json` points exclusively at
+  `tests/fixtures/quiz-sessions.rules`. The CI job using it protects the
+  `quizSessions` preview scenario in isolated emulators; it does **not** prove
+  that production `users`, `publicProfiles`, chats or social writes are safe.
+- The effective rules published to the `(default)` production database remain
+  **UNKNOWN**. Do not infer that they are permissive or secure from the repo.
+- Before owner-only migration, obtain an authorized read-only export of the
+  active ruleset and indexes, review it separately, and capture a verifiable
+  backup. Do not copy preview-only rules into production.
+
 | Consumer | Current behavior | Required before cutover |
 | --- | --- | --- |
 | `friends/friends.js` | Friends/search/requests/leaderboard-style directory reads are routed through the migration gate, but legacy mode still downloads private `users` documents. | Verify `publicProfiles` backfill, all friend lookup paths and queries. |
@@ -23,9 +37,9 @@ deployed security rules and recoverability have not been verified.
 
 ## Mandatory release gates
 
-1. Confirm actual Firebase project and database **edition**, then inspect the deployed
-   Firestore rules, indexes and Auth provider configuration. No database migration
-   is authorized by this inventory.
+1. ✅ Confirm the `(default)` **Standard** instance in `eur3` from the Console;
+   **still required:** inspect the deployed Firestore rules, indexes and Auth
+   provider configuration. No database migration is authorized by this inventory.
 2. Capture and verify a complete, restorable snapshot of protected user/game data.
 3. Reconcile every `users/{uid}` against `publicProfiles/{uid}` and
    `nicknameClaims/{normalized}`; quarantine collisions and malformed records.
