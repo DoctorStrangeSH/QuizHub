@@ -66,3 +66,25 @@ test('preflight refuses duplicate paths, orphaned conversations and invalid snap
     assert.throws(() => planLegacyChatMigration({ users: [{ uid: 'alice', friends: 'bob' }], messages: [] }),
         /INVALID_MIGRATION_ACCOUNT/);
 });
+
+test('preflight quarantines malformed, foreign and stale deleted-message reactions without leaking values', () => {
+    const cases = [
+        [{ alice: '🔥' }, false, 'INVALID_LEGACY_REACTIONS'],
+        [['👍'], false, 'INVALID_LEGACY_REACTIONS'],
+        [{ charlie: '❤️' }, false, 'NONMEMBER_LEGACY_REACTION'],
+        [{ bob: '👍' }, true, 'DELETED_MESSAGE_REACTIONS_REMAIN']
+    ];
+    for (const [reactions, deleted, expected] of cases) {
+        const result = planLegacyChatMigration({
+            users, messages: [{ chatId: 'alice_bob', messageId: 'm1', senderId: 'alice',
+                reactions, deleted, text: 'private secret' }]
+        });
+        assert.equal(result.ready, false);
+        assert.equal(result.blockers[0].code, expected);
+        assert.equal(result.mappedMessages, 0);
+        assert.equal(JSON.stringify(result).includes('private secret'), false);
+        assert.equal(JSON.stringify(result).includes('🔥'), false);
+    }
+    assert.equal(planLegacyChatMigration({ users, messages: [{ ...messages[0],
+        reactions: { bob: '👍' } }] }).ready, true);
+});

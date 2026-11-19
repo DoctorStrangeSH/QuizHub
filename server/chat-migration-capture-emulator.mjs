@@ -37,7 +37,9 @@ export async function inspectLegacyChatsInEmulator(db, { maxAccounts = 200, maxC
         for (const messageRef of messageRefs) {
             const snapshot = await messageRef.get();
             if (!snapshot.exists) continue;
-            messages.push({ chatId: ref.id, messageId: messageRef.id, senderId: snapshot.data().senderId });
+            const data = snapshot.data();
+            messages.push({ chatId: ref.id, messageId: messageRef.id,
+                senderId: data.senderId, reactions: data.reactions, deleted: data.deleted });
         }
     }
 

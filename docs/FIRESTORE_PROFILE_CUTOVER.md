@@ -67,6 +67,13 @@ deployed security rules and recoverability have not been verified.
   the migration preflight without copying message text. CI runs it in a fresh,
   disposable Firestore emulator, never against the `(default)` production DB.
   It is still a non-transactional rehearsal, not a certified complete backup.
+- The chat inventory now also checks migrated reaction maps: invalid emojis,
+  malformed maps, nonmember reaction keys and reactions left on deleted
+  messages block a copy plan for explicit reconciliation. Only blocker codes
+  and document identifiers enter the report; private bodies and reaction
+  values are never returned. The disposable-emulator copy rechecks these
+  invariants inside its transaction so a stale green plan cannot silently
+  copy newly invalid data. This remains an emulator-only source audit.
 - `copyOrphanChatInEmulator` now performs an **explicitly confirmed, small**
   copy rehearsal in that disposable emulator only. It refuses non-mutual
   friendships, changed message IDs, an existing destination, and legacy chat

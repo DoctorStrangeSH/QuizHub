@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import { assertIsolatedQuizHubEmulator } from './backup-restore-emulator.mjs';
 import { directChatId } from './chat-send.mjs';
+import { planLegacyChatMigration } from './chat-migration-preflight.mjs';
 
 // Explicitly disposable-emulator-only experiment, not a production migrator.
 // Only handles legacy chats whose parent is missing but messages survive.
@@ -47,6 +48,20 @@ export async function copyOrphanChatInEmulator(db, plan, { confirmation } = {}) 
         }
         if (sourceMessages.docs.some(doc => ![first, second].includes(doc.data().senderId))) {
             throw new Error('CHAT_COPY_UNKNOWN_SENDER');
+        }
+        // Revalidate current data in the same transaction as the copy. A
+        // once-green inventory must not authorize changed or corrupt records.
+        const currentPlan = planLegacyChatMigration({
+            users: [
+                { uid: first, friends: a.data().friends },
+                { uid: second, friends: b.data().friends }
+            ],
+            messages: sourceMessages.docs.map(doc => ({ chatId: legacyId, messageId: doc.id,
+                senderId: doc.data().senderId, reactions: doc.data().reactions,
+                deleted: doc.data().deleted }))
+        });
+        if (!currentPlan.ready || currentPlan.mappedMessages !== plan.messageIds.length) {
+            throw new Error('CHAT_COPY_SOURCE_VALIDATION_FAILED');
         }
         tx.create(destination, { memberUids: [first, second], createdAt: new Date() });
         for (const doc of sourceMessages.docs) {

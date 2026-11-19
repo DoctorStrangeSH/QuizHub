@@ -4,6 +4,7 @@ import { directChatId } from './chat-send.mjs';
 // private message bodies into logs or return them from this report.
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
 const DOC_ID = /^[^/\u0000-\u001F]{1,1500}$/;
+const REACTIONS = new Set(['👍', '❤️', '😂', '😮', '😢']);
 
 export function planLegacyChatMigration({ users, messages, destinationChatIds = [] }) {
     if (!Array.isArray(users) || !Array.isArray(messages) || !Array.isArray(destinationChatIds)) {
@@ -40,7 +41,7 @@ export function planLegacyChatMigration({ users, messages, destinationChatIds = 
 
     const seen = new Set();
     for (const entry of messages) {
-        const { chatId, messageId, senderId } = entry ?? {};
+        const { chatId, messageId, senderId, reactions, deleted } = entry ?? {};
         if (typeof chatId !== 'string' || !DOC_ID.test(chatId) ||
             typeof messageId !== 'string' || !DOC_ID.test(messageId)) {
             blockers.push({ code: 'INVALID_MESSAGE_PATH' });
@@ -60,6 +61,22 @@ export function planLegacyChatMigration({ users, messages, destinationChatIds = 
         if (!candidate.memberUids.includes(senderId)) {
             blockers.push({ code: 'FORGED_OR_UNKNOWN_SENDER', chatId, messageId });
             continue;
+        }
+        if (reactions != null) {
+            if (typeof reactions !== 'object' || Array.isArray(reactions) ||
+                Object.keys(reactions).length > 50 ||
+                Object.entries(reactions).some(([uid, emoji]) => !UID.test(uid) || !REACTIONS.has(emoji))) {
+                blockers.push({ code: 'INVALID_LEGACY_REACTIONS', chatId, messageId });
+                continue;
+            }
+            if (Object.keys(reactions).some(uid => !candidate.memberUids.includes(uid))) {
+                blockers.push({ code: 'NONMEMBER_LEGACY_REACTION', chatId, messageId });
+                continue;
+            }
+            if (deleted === true && Object.keys(reactions).length) {
+                blockers.push({ code: 'DELETED_MESSAGE_REACTIONS_REMAIN', chatId, messageId });
+                continue;
+            }
         }
         candidate.messageIds.push(messageId);
     }

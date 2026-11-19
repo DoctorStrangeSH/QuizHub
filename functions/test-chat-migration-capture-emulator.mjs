@@ -37,6 +37,16 @@ test('read-only chat migration inventory detects orphan parents without touching
         assert.equal(JSON.stringify(first).includes('secret body'), false);
         assert.equal(JSON.stringify(first).includes('private@example.test'), false);
         assert.equal((await msgRef.get()).data().text, 'secret body');
+        await msgRef.update({ reactions: { outsider: '👍' } });
+        const invalidReactionPlan = await inspectLegacyChatsInEmulator(db);
+        assert.equal(invalidReactionPlan.ready, false);
+        assert.ok(invalidReactionPlan.blockers.some(x => x.code === 'NONMEMBER_LEGACY_REACTION'));
+        assert.equal(JSON.stringify(invalidReactionPlan).includes('secret body'), false);
+        await assert.rejects(copyOrphanChatInEmulator(db, first.chats[0], {
+            confirmation: 'COPY_ORPHAN_CHAT_IN_DISPOSABLE_EMULATOR'
+        }), /CHAT_COPY_SOURCE_VALIDATION_FAILED/);
+        assert.equal((await newRef.get()).exists, false);
+        await msgRef.update({ reactions: { [bob]: '❤️' } });
         await assert.rejects(inspectLegacyChatsInEmulator(db, { maxMessages: 0 }), /INVALID_CHAT_INSPECTION_CONFIG/);
         await assert.rejects(copyOrphanChatInEmulator(db, first.chats[0]),
             /EXPLICIT_EMULATOR_CHAT_COPY_CONFIRMATION_REQUIRED/);
