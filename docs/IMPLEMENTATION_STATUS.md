@@ -222,3 +222,27 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 ### Решение по PR #3
 
 **Не объединять сейчас.** Зелёный CI подтверждает только описанные тестовые сценарии; он не снимает перечисленные архитектурные и release blockers. Сначала разделить изменения по Requirement IDs, добавить недостающий members inventory, довести unread reconciliation до acceptance criteria и провести повторное ревью. Любое production cutover остаётся запрещённым до закрытия DATA-01, SEC-02 и DATA-02.
+
+
+## 11. Подготовлен безопасный сбор live inventory
+
+Добавлен read-only collector:
+- server/firestore-live-inventory.mjs — рекурсивно обходит root и nested collections, включая subcollections под отсутствующими parent documents;
+- functions/scripts/firestore-live-inventory.mjs — CLI, жёстко привязанный к Firebase project quizhub-e65f5 и database (default);
+- tests/firestore-live-inventory.test.mjs — проверяет nested/orphan paths, схему полей без значений и abort при превышении лимита.
+
+Collector возвращает только шаблоны путей коллекций, counts, имена полей и типы. Он не включает document IDs и значения полей. Он читает snapshots документов для определения существования и схемы, поэтому чтение может тарифицироваться. Максимум по умолчанию — 5 000 document references; абсолютный предел конфигурации — 20 000. При превышении лимита или глубины он прерывает выполнение и не выдаёт неполный отчёт.
+
+### Запуск владельцем проекта
+
+1. Установить зависимости Functions: npm install --prefix functions.
+2. Выполнить gcloud auth application-default login под учётной записью с read-only доступом к Firestore.
+3. В PowerShell задать явное подтверждение и project ID:
+
+   $env:QUIZHUB_CONFIRM_READ_ONLY_INVENTORY = "YES"
+   $env:QUIZHUB_PROJECT_ID = "quizhub-e65f5"
+
+4. Запустить: node functions/scripts/firestore-live-inventory.mjs > quizhub-firestore-inventory.json
+5. Передать полученный JSON для сверки с repository-derived inventory.
+
+Скрипт не содержит write-операций и не выполняется автоматически CI. Его запуск против production должен делать владелец/уполномоченный оператор после проверки IAM и предполагаемого объёма чтений. Не помещать service-account keys или ADC credentials в репозиторий.
