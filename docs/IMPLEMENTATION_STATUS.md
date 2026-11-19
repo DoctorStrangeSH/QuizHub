@@ -175,7 +175,7 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 | AUTH-01 | Проверка Auth providers и authorized domains | Blocked | Исходники не подтверждают текущие настройки Firebase Console |
 | DATA-02 | Production backup/restore rehearsal | Blocked | Emulator backup tests не подтверждают полный и восстанавливаемый production backup |
 | DATA-03 | Инвентарь legacy данных и orphan subcollections | Blocked | Нет подтверждённого live snapshot и рекурсивной сверки |
-| REL-01 | Разбор PR #3 | In progress | CI зелёный, но PR крупный, diverged и не имеет review |
+| REL-01 | Разбор PR #3 | Done (not merged) | Security-sensitive review выполнен; PR оставлен вне main до разделения и закрытия найденных требований |
 
 ## 8. Решение по этапу 0
 
@@ -187,13 +187,13 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 2. Экспорт фактически развёрнутых Firestore Security Rules и indexes.
 3. Подтверждение Auth providers и authorized domains.
 4. Production backup с доказанной возможностью восстановления в отдельном безопасном окружении.
-5. Решение по PR #3 после ревью и приведения его изменений к этапам ТЗ.
+5. Ревью PR #3 завершено: не объединять целиком; будущие изменения разнести по этапам 2–3 и исправить найденные несоответствия.
 
 **Запрещено до снятия блокеров:** менять production Rules, включать profile/chat cutover, запускать миграции реальных пользователей, развёртывать новые привилегированные Functions или удалять legacy данные.
 
 ## 9. Следующий разрешённый шаг
 
-Продолжить аудит PR #3 без merge: разделить его изменения по Requirement IDs, проверить критичные security-sensitive файлы и определить, какие части должны попасть в этап 2 (profiles), а какие — в этап 3 (friends/chats). Параллельно запросить у владельца необходимые read-only production evidence для завершения этапа 0.
+Попросить владельца запустить подготовленный read-only inventory collector с учётной записью Firestore Viewer и передать JSON. Отдельно получить актуальный опубликованный Firestore Rules export и indexes export, подтвердить Auth providers/domains и согласовать production backup/restore rehearsal. PR #3 не объединять целиком: его изменения остаются кандидатами для этапов 2–3 после разделения по Requirement IDs и устранения CHAT-03/DATA-01 gaps.
 
 Новые продуктовые функции не добавлять.
 
