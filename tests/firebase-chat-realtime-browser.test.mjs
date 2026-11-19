@@ -178,11 +178,22 @@ test('two authenticated browser clients receive live chat updates and recover th
       1,
       'The newest message must be visible'
     );
-    await bob.page.locator('#chat-messages').evaluate(element => {
-      element.scrollTop = 0;
-      // Force the same scroll notification used by a user gesture; assigning
-      // scrollTop can be a no-op in headless Chromium when already at the top.
+    const messageScroller = bob.page.locator('#chat-messages');
+    const scrollMetrics = await messageScroller.evaluate(element => ({
+      scrollHeight: element.scrollHeight,
+      clientHeight: element.clientHeight
+    }));
+    assert.ok(
+      scrollMetrics.scrollHeight > scrollMetrics.clientHeight,
+      'The message list must be a genuinely scrollable flex child before testing history pagination'
+    );
+    await messageScroller.evaluate(element => {
+      element.scrollTo({ top: 0, behavior: 'instant' });
       element.dispatchEvent(new Event('scroll'));
+    });
+    await bob.page.waitForFunction(() => {
+      const element = document.querySelector('#chat-messages');
+      return element && element.scrollTop <= 80;
     });
     await waitForMessage(bob.page, 'Page boundary message 000');
     const renderedTexts = await bob.page.locator('.message-wrapper .message-text').allTextContents();
