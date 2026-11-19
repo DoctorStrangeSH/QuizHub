@@ -55,9 +55,26 @@ test('only sender edits or deletes; a member can react only under their own UID'
         error => error.code === 'permission-denied');
     await handler(call('alice', { ...input, action: 'delete' }));
     assert.equal(data.get(path).deleted, true);
+    assert.deepEqual(data.get(path).reactions, {});
     assert.equal((await handler(call('alice', { ...input, action: 'delete' }))).status, 'unchanged');
     await assert.rejects(handler(call('alice', { ...input, action: 'edit', text: 'after delete' })),
         error => error.code === 'failed-precondition');
+    await assert.rejects(handler(call('bob', { ...input, action: 'react', reaction: '👍' })),
+        error => error.code === 'failed-precondition');
+});
+
+test('deletion scrubs existing reactions and rejected operations leave messages unchanged', async () => {
+    const { db, data } = fakeDb();
+    const handler = createChatActionsCallableAdapter({ db, HttpsError });
+    data.set(path, { ...data.get(path), reactions: { alice: '👍', bob: '❤️' } });
+    await assert.rejects(handler(call('bob', { ...input, action: 'delete' })),
+        error => error.code === 'permission-denied');
+    assert.deepEqual(data.get(path).reactions, { alice: '👍', bob: '❤️' });
+    await handler(call('alice', { ...input, action: 'delete' }));
+    assert.deepEqual(data.get(path), {
+        senderId: 'alice', text: '🗑️ Сообщение удалено', edited: false,
+        deleted: true, reactions: {}
+    });
 });
 
 test('action callable refuses forged fields, guests, invalid reactions and corrupt membership', async () => {

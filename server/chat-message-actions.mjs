@@ -42,7 +42,9 @@ export async function modifyDirectMessage(db, { actorUid, chatId, messageId, act
                 if (message.text === text.trim() && message.edited === true) return { status: 'unchanged' };
                 tx.update(messageRef, { text: text.trim(), edited: true });
             } else {
-                tx.update(messageRef, { text: '🗑️ Сообщение удалено', deleted: true });
+                // Erase visible reaction state as well as message content.
+                // This matches the legacy browser flow until transport cutover.
+                tx.update(messageRef, { text: '🗑️ Сообщение удалено', deleted: true, reactions: {} });
             }
         } else {
             const reactions = message.reactions ?? {};

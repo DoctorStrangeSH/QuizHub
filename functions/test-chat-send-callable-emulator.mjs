@@ -93,7 +93,11 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         assert.deepEqual(updated.reactions, { [bob.uid]: '❤️' });
         const deleted = await invoke(alice, { ...base, action: 'delete' }, actionEndpoint);
         assert.equal(deleted.body.result?.status, 'updated', JSON.stringify(deleted));
-        assert.equal((await chatRef.collection('messages').doc(messageId).get()).data().deleted, true);
+        const deletedMessage = (await chatRef.collection('messages').doc(messageId).get()).data();
+        assert.equal(deletedMessage.deleted, true);
+        assert.deepEqual(deletedMessage.reactions, {});
+        const reactAfterDelete = await invoke(bob, { ...base, action: 'react', reaction: '👍' }, actionEndpoint);
+        assert.equal(reactAfterDelete.body.error?.status, 'FAILED_PRECONDITION');
     } finally {
         if (chatRef) {
             const messages = await chatRef.collection('messages').get();
