@@ -79,6 +79,48 @@ test('emulator chat callable permits mutual friends and rejects forgery, strange
         assert.equal(messages.size, 1);
         assert.equal(messages.docs[0].data().text, 'Привет!');
         assert.equal((await refs[0].get()).data().coins, 12);
+
+        // Two independently authenticated clients send into the same chat at
+        // nearly the same time. Both writes must survive the transaction race.
+        const aliceMessage = {
+            recipientUid: bob.uid, text: 'Сообщение от Alice',
+            clientMessageId: 'alice_race_' + randomUUID().slice(0, 10)
+        };
+        const bobMessage = {
+            recipientUid: alice.uid, text: 'Сообщение от Bob',
+            clientMessageId: 'bob_race_' + randomUUID().slice(0, 10)
+        };
+        const [aliceSent, bobSent] = await Promise.all([
+            invoke(alice, aliceMessage), invoke(bob, bobMessage)
+        ]);
+        assert.equal(aliceSent.body.result?.status, 'sent', JSON.stringify(aliceSent));
+        assert.equal(bobSent.body.result?.status, 'sent', JSON.stringify(bobSent));
+        assert.equal(aliceSent.body.result.chatId, chatId);
+        assert.equal(bobSent.body.result.chatId, chatId);
+
+        // Simultaneous retries of one client id must converge to one document:
+        // one request creates it, the other observes the idempotent replay.
+        const racedRetry = {
+            recipientUid: bob.uid, text: 'Одна доставка',
+            clientMessageId: 'retry_race_' + randomUUID().slice(0, 10)
+        };
+        const retryResults = await Promise.all([
+            invoke(alice, racedRetry), invoke(alice, racedRetry)
+        ]);
+        assert.deepEqual(
+            retryResults.map(result => result.body.result?.status).sort(),
+            ['sent', 'unchanged'],
+            JSON.stringify(retryResults)
+        );
+
+        // A fresh server-side read after both clients' writes sees the complete
+        // conversation; this is state convergence, not a realtime listener test.
+        const converged = await chatRef.collection('messages').get();
+        assert.equal(converged.size, 4);
+        assert.deepEqual(
+            converged.docs.map(doc => doc.data().text).sort(),
+            ['Привет!', 'Сообщение от Alice', 'Сообщение от Bob', 'Одна доставка'].sort()
+        );
         const base = { chatId, messageId };
         const outsiderReaction = await invoke(charlie, { ...base, action: 'react', reaction: '👍' }, actionEndpoint);
         assert.equal(outsiderReaction.body.error?.status, 'PERMISSION_DENIED');
