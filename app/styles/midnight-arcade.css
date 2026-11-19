@@ -1091,6 +1091,8 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 .reaction-btn:hover { border-color: var(--border); background: var(--bg-card); }
 .chat-input-area { padding: 15px; border-top: 1px solid var(--border); background: var(--bg-glass); }
 .chat-input-form { display: flex; align-items: stretch; gap: 10px; }
+.chat-send-status { margin: 6px 2px 0; color: var(--text-secondary); font-size: .85rem; }
+.chat-send-status:empty { display: none; }
 .chat-input { min-width: 0; flex: 1; min-height: 51px; padding: 12px 17px; border: 1px solid var(--border); border-radius: 14px; outline: none; background: var(--bg-card); color: var(--text-primary); }
 .chat-input:focus { border-color: var(--accent-secondary); box-shadow: 0 0 0 3px rgba(168,155,255,.13); }
 .chat-send-btn { flex: 0 0 52px; display: grid; place-items: center; border: 0; border-radius: 14px; background: var(--accent); color: #10200b; font-size: 1.2rem; }

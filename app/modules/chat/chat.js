@@ -26,6 +26,11 @@ function showChatFriendsError() {
     list.querySelector('#retry-chat-friends').addEventListener('click', () => loadChatFriends());
 }
 
+function setChatSendStatus(message) {
+    const status = document.getElementById('chat-send-status');
+    if (status) status.textContent = message;
+}
+
 // ========== ОТРИСОВКА ==========
 export function renderChat() {
     return `
@@ -78,6 +83,7 @@ export function renderChat() {
                                     <input type="text" id="chat-input" class="chat-input" placeholder="Написать сообщение..." aria-label="Текст сообщения" maxlength="2000" autocomplete="off" />
                                     <button type="submit" class="chat-send-btn" aria-label="Отправить сообщение"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
                                 </form>
+                                <p class="chat-send-status" id="chat-send-status" role="status" aria-live="polite"></p>
                             </div>
                         </div>
                     </div>
@@ -173,6 +179,7 @@ window.openChat = async (friendId, friendName) => {
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
     formSubmitPending = false;
     formSubmitVersion++;
+    setChatSendStatus('');
     replyMessageId = null;
     selectedMessageId = null;
     document.getElementById('reply-preview')?.style.setProperty('display', 'none');
@@ -191,6 +198,7 @@ window.openChat = async (friendId, friendName) => {
 window.closeChatWindow = () => {
     formSubmitPending = false;
     formSubmitVersion++;
+    setChatSendStatus('');
     replyMessageId = null;
     selectedMessageId = null;
     document.getElementById('reply-preview')?.style.setProperty('display', 'none');
@@ -256,6 +264,7 @@ window.sendMessage = async (text, replyTo = null) => {
     if (!user) return;
     const chatId = currentChatId;
     const lifecycle = chatLifecycle;
+    setChatSendStatus('');
     try {
         await addDoc(collection(db, 'chats', chatId, 'messages'), {
             senderId: user.uid, senderName: currentUserProfile?.nickname || 'User',
@@ -268,7 +277,12 @@ window.sendMessage = async (text, replyTo = null) => {
             input.value = '';
             window.cancelReply();
         }
-    } catch (error) { console.error('Ошибка отправки:', error); }
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        if (lifecycle === chatLifecycle && currentChatId === chatId && auth.currentUser?.uid === user.uid) {
+            setChatSendStatus('Не удалось отправить сообщение. Текст сохранён — попробуйте ещё раз.');
+        }
+    }
 };
 
 // ========== КОНТЕКСТНОЕ МЕНЮ ==========

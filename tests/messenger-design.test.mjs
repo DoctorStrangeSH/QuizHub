@@ -81,3 +81,11 @@ test('failed friend loading exposes a retry control without reviving obsolete re
   assert.match(chat, /revision === friendsLoadRevision && auth\.currentUser\?\.uid === user\.uid\) showChatFriendsError/);
   assert.match(chat, /friendsLoadRevision\+\+;/);
 });
+
+test('send errors are visible and never replace the next chat status', () => {
+  assert.match(chat, /id="chat-send-status" role="status" aria-live="polite"/);
+  assert.match(chat, /function setChatSendStatus\(message\)/);
+  assert.match(chat, /Не удалось отправить сообщение\. Текст сохранён/);
+  assert.match(chat, /lifecycle === chatLifecycle && currentChatId === chatId && auth\.currentUser\?\.uid === user\.uid/);
+  assert.match(css, /\.chat-send-status:empty \{ display: none; \}/);
+});
