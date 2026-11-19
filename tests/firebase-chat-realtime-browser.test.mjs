@@ -178,7 +178,12 @@ test('two authenticated browser clients receive live chat updates and recover th
       1,
       'The newest message must be visible'
     );
-    await bob.page.locator('#chat-messages').evaluate(element => { element.scrollTop = 0; });
+    await bob.page.locator('#chat-messages').evaluate(element => {
+      element.scrollTop = 0;
+      // Force the same scroll notification used by a user gesture; assigning
+      // scrollTop can be a no-op in headless Chromium when already at the top.
+      element.dispatchEvent(new Event('scroll'));
+    });
     await waitForMessage(bob.page, 'Page boundary message 000');
     const renderedTexts = await bob.page.locator('.message-wrapper .message-text').allTextContents();
     const oldestIndex = renderedTexts.findIndex(text => text.includes('Page boundary message 000'));
