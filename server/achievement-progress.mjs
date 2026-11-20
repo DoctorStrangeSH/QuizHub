@@ -19,6 +19,7 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
         totalGames: totalGames + 1,
         experience: experience + experienceDelta
     };
+    if (current.unlockedIds !== undefined && !Array.isArray(current.unlockedIds)) throw new Error('INVALID_ACHIEVEMENT_FACTS');
     const serverUnlocked = Array.isArray(current.unlockedIds) ? current.unlockedIds : [];
     if (serverUnlocked.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
         throw new Error('INVALID_ACHIEVEMENT_FACTS');
