@@ -94,3 +94,28 @@ test('controller claims only a ready session and stores the server receipt', asy
     assert.equal(complete.status, 'completed');
     assert.equal(complete.receipt.xp, 5);
 });
+
+
+test('controller allows claiming a session that resume marks ready_to_complete', async () => {
+    let claimCalls = 0;
+    const controller = createModeSessionController({
+        client: {
+            start: async () => ({}), answer: async () => ({}),
+            resume: async () => ({
+                status: 'ready_to_complete', sessionId: 's-expired',
+                mode: 'time', answeredQuestions: 4, totalQuestions: 10,
+                deadlineAt: 1000, question: null
+            }),
+            claim: async ({ sessionId }) => {
+                claimCalls++;
+                return { sessionId, xp: 4, coins: 2 };
+            }
+        }
+    });
+    const resumed = await controller.resume({ sessionId: 's-expired' });
+    assert.equal(resumed.status, 'ready_to_complete');
+    const completed = await controller.claim();
+    assert.equal(claimCalls, 1);
+    assert.equal(completed.status, 'completed');
+    assert.equal(completed.receipt.sessionId, 's-expired');
+});
