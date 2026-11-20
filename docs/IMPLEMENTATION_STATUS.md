@@ -37,6 +37,8 @@
 | dailyRankings/{date} | Дневной рейтинг | Серверный Firestore adapter |
 | quizSessions/{sessionId} | Серверные игровые сессии | Adapter и emulator tests есть; production rules и deployed path не подтверждены |
 | publicProfiles/{uid} | Публичная проекция профиля | Backfill/sync code есть; read cutover выключен |
+| achievementFacts/{uid} | Доверенные серверные факты прогресса достижений | Запись только через Admin SDK в транзакциях серверных наград; production Rules/cutover отдельно не включены |
+| achievementUnlockReceipts/{uid}/unlocks/{achievementId} | Неизменяемые квитанции выдачи достижений | Создаются серверными транзакциями; клиентский доступ не включён |
 | nicknameClaims/{normalized} | Уникальность нормализованного никнейма | Серверная подготовка и emulator tests есть |
 
 **Ограничение полноты:** этот список подтверждён только анализом репозитория. Он не доказывает отсутствие других root collections, orphan subcollections, старых или вручную созданных документов в живой базе. Перед закрытием этапа 0 нужна авторизованная read-only инвентаризация реального (default) database с рекурсивным обходом nested collections.
@@ -561,9 +563,9 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Next implementation slice: populate achievement facts atomically from trusted quiz reward finalization, and verify the fact-to-unlock path in emulator tests. Do not source facts from browser profile fields or enable production cutover as part of that slice.
 
 
-## 33. Trusted achievement facts from server-owned quiz claims (PR in progress)
+## 33. PR #42 merged — trusted achievement facts from server-owned quiz claims
 
-- Branch: `feat/trusted-achievement-facts`.
+- PR #42 merged into `main` as `322f6d7ad70b8189a9e85a045daebeb05e7fb2dd` after Question quality, Firebase Emulator integration and QuizHub visual preview all passed on the final head.
 - Classic and server-owned Duel, Survival and Time Trial reward claims now derive achievement facts from the server-calculated reward inside the same Firestore transaction as the reward/session receipt.
 - Facts are stored separately at `achievementFacts/{uid}`: `totalGames`, `experience`, and a server-owned `unlockedIds` ledger. New unlock receipts are created at `achievementUnlockReceipts/{uid}/unlocks/{achievementId}`.
 - The profile's existing `achievements` array is preserved and unioned with server-earned IDs for compatibility, but it is **not** trusted as the source of truth for deciding whether a new achievement has already been earned. A forged legacy profile ID cannot suppress the server unlock receipt.
@@ -571,4 +573,5 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Active server catalog currently covers first/10/50/100 completed quizzes and 1000 XP. Level 5/10, wins, perfect score, social and collector achievements remain deferred until their authoritative evidence/calculation is implemented. The existing profile level is not trusted and no level formula was established in the current code audit.
 - The achievement preview evaluator now uses the server-owned `unlockedIds` ledger and persists it with immutable receipts.
 - Tests added/extended for classic and mode reward claims, concurrent retries, legacy profile ID spoofing, and trusted fact baselines. CI now runs these claim suites alongside achievement service/callable tests.
-- Production remains unchanged: no Functions deployment, Rules migration, browser cutover or live-data migration is part of this PR.
+- Production remains unchanged: no Functions deployment, Rules migration, browser cutover or live-data migration was part of this PR.
+- Next slice: add further achievement facts only where the server already has authoritative evidence (for example verified wins and perfect runs), with catalog-driven thresholds and emulator coverage. Keep existing-user baseline and production client cutover as separate reviewed milestones.
