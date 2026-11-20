@@ -167,7 +167,10 @@ export function createModeSessionService({
                         progress: publicProgress(stored.modeState),
                         finished: nextIndex >= stored.questions.length ||
                             (stored.domainMode === 'survival' && stored.modeState.lives <= 0),
-                        nextQuestion: publicNext(catalog, stored.questions[nextIndex], language)
+                        nextQuestion: nextIndex >= stored.questions.length ||
+                            (stored.domainMode === 'survival' && stored.modeState.lives <= 0)
+                            ? null
+                            : publicNext(catalog, stored.questions[nextIndex], language)
                     };
                 }
                 const index = currentIndex(stored.modeState);
