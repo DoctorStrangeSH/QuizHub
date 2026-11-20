@@ -2,19 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDailyLoginRewardService, DAILY_LOGIN_REWARDS } from '../server/daily-login-reward-service.mjs';
 
+function clone(value) {
+    if (value && typeof value.toMillis === 'function') return { toMillis: () => value.toMillis() };
+    return structuredClone(value);
+}
+
 function makeStore(users) {
     const claims = new Map();
     let queue = Promise.resolve();
     const store = {
-        users: structuredClone(users), claims,
+        users: Object.fromEntries(Object.entries(users).map(([uid, user]) => [uid, clone(user)])), claims,
         runTransaction(callback) {
             const task = queue.then(async () => {
                 const userWrites = new Map(), claimWrites = new Map();
                 const tx = {
-                    async getDailyLoginClaim(key) { return structuredClone(claimWrites.get(key) ?? claims.get(key) ?? null); },
-                    async getUser(uid) { return structuredClone(userWrites.get(uid) ?? store.users[uid] ?? null); },
-                    async setUserPatch(uid, patch) { userWrites.set(uid, { ...store.users[uid], ...structuredClone(patch) }); },
-                    async setDailyLoginClaim(key, receipt) { claimWrites.set(key, structuredClone(receipt)); }
+                    async getDailyLoginClaim(key) { return clone(claimWrites.get(key) ?? claims.get(key) ?? null); },
+                    async getUser(uid) { return clone(userWrites.get(uid) ?? store.users[uid] ?? null); },
+                    async setUserPatch(uid, patch) { userWrites.set(uid, { ...store.users[uid], ...clone(patch) }); },
+                    async setDailyLoginClaim(key, receipt) { claimWrites.set(key, clone(receipt)); }
                 };
                 const result = await callback(tx);
                 for (const [uid, value] of userWrites) store.users[uid] = value;
