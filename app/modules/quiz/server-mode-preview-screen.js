@@ -199,7 +199,11 @@ export async function renderServerModePreview(settings) {
     settingsSnapshot = { ...settings, language };
     const isClassic = mode === 'classic';
     const invoke = isClassic ? createLocalFirebaseClassicInvoker() : createLocalFirebaseModeInvoker();
-    const client = createServerModeClient({ invoke, claimOperation: isClassic ? 'complete' : 'claim' });
+    const client = createServerModeClient({
+        invoke,
+        claimOperation: isClassic ? 'complete' : 'claim',
+        supportedModes: isClassic ? ['classic'] : ['duel', 'survival', 'time']
+    });
     controller = createModeSessionController({ client });
     try {
         sessionStorageAdapter = createModeSessionStorage(window.sessionStorage);
