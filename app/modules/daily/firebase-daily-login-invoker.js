@@ -43,3 +43,25 @@ export function createFirebaseDailyLoginInvoker({
         return callable(payload);
     };
 }
+
+/**
+ * Validates and adapts the trusted receipt to the legacy popup's reward shape.
+ * This helper deliberately does not calculate or grant a reward.
+ */
+export async function claimDailyLoginPreview(invoke, rewards) {
+    if (typeof invoke !== 'function' || !Array.isArray(rewards) || rewards.length !== 7) {
+        throw new Error('INVALID_DAILY_LOGIN_PREVIEW');
+    }
+    const response = await invoke();
+    const receipt = response?.data;
+    if (!receipt || receipt.alreadyClaimed) return false;
+    if (!Number.isSafeInteger(receipt.streak) || receipt.streak < 1) {
+        throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
+    }
+    const reward = rewards[Math.min(receipt.streak - 1, rewards.length - 1)];
+    if (!reward || receipt.coins !== reward.coins ||
+        !Number.isSafeInteger(receipt.balance) || receipt.balance < receipt.coins) {
+        throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
+    }
+    return { ...reward, day: receipt.streak, balance: receipt.balance };
+}
