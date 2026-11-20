@@ -50,11 +50,37 @@ export async function checkDailyReward() {
     }
 }
 
+function isDailyLoginPreviewRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        params.get('firebaseEmulator') === '1' &&
+        params.get('dailyLoginPreview') === '1';
+}
+
 export async function claimDailyReward() {
     const user = auth.currentUser;
     if (!user) return false;
     
     try {
+        // Local preview only: server decides eligibility, streak and balance.
+        // Never fall back to direct client writes if preview transport fails.
+        if (isDailyLoginPreviewRequested()) {
+            const { createLocalFirebaseDailyLoginInvoker } = await import('./firebase-daily-login-preview.js');
+            const invoke = createLocalFirebaseDailyLoginInvoker();
+            const response = await invoke();
+            const receipt = response?.data;
+            if (!receipt || receipt.alreadyClaimed) return false;
+            if (!Number.isSafeInteger(receipt.streak) || receipt.streak < 1) {
+                throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
+            }
+            const reward = DAILY_REWARDS[Math.min(receipt.streak - 1, DAILY_REWARDS.length - 1)];
+            if (!reward || receipt.coins !== reward.coins ||
+                !Number.isSafeInteger(receipt.balance) || receipt.balance < receipt.coins) {
+                throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
+            }
+            return { ...reward, day: receipt.streak, balance: receipt.balance };
+        }
+
         const check = await checkDailyReward();
         if (!check.canClaim) return false;
         
