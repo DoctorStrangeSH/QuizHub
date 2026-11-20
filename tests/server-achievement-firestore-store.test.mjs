@@ -16,6 +16,7 @@ function fakeDb() {
                 const native = {
                     async get(target) { return { exists: docs.has(target.path), data: () => structuredClone(docs.get(target.path)) }; },
                     update(target, patch) { writes.set(target.path, { ...docs.get(target.path), ...structuredClone(patch) }); },
+                    set(target, value) { writes.set(target.path, structuredClone(value)); },
                     create(target, value) { assert.equal(docs.has(target.path), false); writes.set(target.path, structuredClone(value)); }
                 };
                 const result = await callback(native);
