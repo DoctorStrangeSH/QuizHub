@@ -17,6 +17,35 @@ function currentIndex(state) {
     return state.mode === 'duel' ? state.roundsPlayed : state.answeredQuestions;
 }
 
+function publicProgress(state) {
+    if (state.mode === 'survival') {
+        return {
+            answeredQuestions: state.answeredQuestions,
+            totalQuestions: state.totalQuestions,
+            score: state.score,
+            lives: state.lives,
+            currentStreak: state.currentStreak,
+            bestStreak: state.bestStreak
+        };
+    }
+    if (state.mode === 'duel') {
+        return {
+            answeredQuestions: state.roundsPlayed,
+            totalQuestions: state.totalQuestions,
+            playerScore: state.playerScore,
+            aiScore: state.aiScore,
+            playerCorrect: state.playerCorrect,
+            aiCorrect: state.aiCorrect
+        };
+    }
+    return {
+        answeredQuestions: state.answeredQuestions,
+        totalQuestions: state.totalQuestions,
+        score: state.score,
+        correctAnswers: state.correctAnswers
+    };
+}
+
 function questionDeadline(state, now, sessionDeadlineAt) {
     return state.mode === 'timetrial' ? Math.min(now + QUESTION_TIME_MS, sessionDeadlineAt) : null;
 }
@@ -76,6 +105,7 @@ export function createModeSessionService({
                 deadlineAt,
                 questionDeadlineAt: session.questionDeadlineAt,
                 totalQuestions: selected.length,
+                progress: publicProgress(modeState),
                 question: publicQuestion(selected[0], language)
             };
         },
@@ -107,6 +137,7 @@ export function createModeSessionService({
                     mode: session.mode,
                     answeredQuestions: index,
                     totalQuestions: session.questions.length,
+                    progress: publicProgress(session.modeState),
                     deadlineAt: session.deadlineAt,
                     questionDeadlineAt: session.questionDeadlineAt,
                     question
@@ -133,6 +164,7 @@ export function createModeSessionService({
                     return {
                         ...prior.result,
                         replayed: true,
+                        progress: publicProgress(stored.modeState),
                         finished: nextIndex >= stored.questions.length ||
                             (stored.domainMode === 'survival' && stored.modeState.lives <= 0),
                         nextQuestion: publicNext(catalog, stored.questions[nextIndex], language)
@@ -169,6 +201,7 @@ export function createModeSessionService({
                     ...applied.result,
                     finished,
                     replayed: false,
+                    progress: publicProgress(session.modeState),
                     questionDeadlineAt: session.questionDeadlineAt,
                     nextQuestion: finished ? null : publicNext(catalog, session.questions[nextIndex], language)
                 };
