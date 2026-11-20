@@ -11,6 +11,8 @@ export const QUIZHUB_FIRESTORE_INVENTORY = Object.freeze([
     { key: 'dailyReceipts', path: 'dailyReceipts/{date}/users/{uid}', category: 'server', preserve: true, source: 'server/daily-firestore-store.mjs' },
     { key: 'dailyRankings', path: 'dailyRankings/{date}', category: 'server', preserve: true, source: 'server/daily-firestore-store.mjs' },
     { key: 'quizSessions', path: 'quizSessions/{sessionId}', category: 'server', preserve: true, source: 'server/quiz-firestore-store.mjs' },
+    { key: 'achievementFacts', path: 'achievementFacts/{uid}', category: 'server', preserve: true, source: 'server/quiz-firestore-store.mjs' },
+    { key: 'achievementUnlockReceipts', path: 'achievementUnlockReceipts/{uid}/unlocks/{achievementId}', category: 'server', preserve: true, source: 'server/quiz-firestore-store.mjs' },
     { key: 'publicProfiles', path: 'publicProfiles/{uid}', category: 'projection', preserve: false, source: 'server/profile-create.mjs' },
     { key: 'nicknameClaims', path: 'nicknameClaims/{normalized}', category: 'reservation', preserve: false, source: 'server/profile-create.mjs' }
 ]);
