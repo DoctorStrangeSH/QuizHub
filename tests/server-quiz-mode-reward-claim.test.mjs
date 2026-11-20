@@ -24,6 +24,11 @@ function fakeFirestore() {
                             data: () => structuredClone(records.get(document.path))
                         };
                     },
+                    create(document, value) {
+                        wrote = true;
+                        assert.equal(records.has(document.path), false, 'receipt must be immutable');
+                        pending.push({ path: document.path, value: structuredClone(value) });
+                    },
                     set(document, value) {
                         wrote = true;
                         pending.push({ path: document.path, value: structuredClone(value) });
@@ -119,6 +124,9 @@ test('Duel reward is atomic, increments wins only for a player victory, and repl
     assert.equal(user.stats.totalWins, 3);
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.correctAnswers, 1);
+    assert.deepEqual(user.achievements, ['first_quiz']);
+    assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp });
+    assert.equal(db.records.get('achievementUnlockReceipts/player/unlocks/first_quiz').achievementId, 'first_quiz');
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['friend']);
 });
