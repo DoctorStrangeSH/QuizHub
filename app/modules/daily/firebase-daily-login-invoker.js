@@ -54,7 +54,10 @@ export async function claimDailyLoginPreview(invoke, rewards) {
     }
     const response = await invoke();
     const receipt = response?.data;
-    if (!receipt || receipt.alreadyClaimed) return false;
+    if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) {
+        throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
+    }
+    if (receipt.alreadyClaimed) return false;
     if (!Number.isSafeInteger(receipt.streak) || receipt.streak < 1) {
         throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
     }
