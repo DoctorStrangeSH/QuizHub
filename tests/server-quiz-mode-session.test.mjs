@@ -40,6 +40,8 @@ test('Survival stops at zero lives and preserves the best streak', () => {
     assert.equal(state.lives, 0);
     assert.equal(result.bestStreak, 1);
     assert.equal(result.answeredQuestions, 4);
+    assert.equal(result.correctAnswers, 1);
+    assert.throws(() => applyModeAnswer(state, { correct: true, points: 10 }), /MODE_FINISHED/);
 });
 
 test('Time Trial applies the strict server-time speed threshold and ten-question cap', () => {
@@ -56,6 +58,7 @@ test('Time Trial applies the strict server-time speed threshold and ten-question
     });
     assert.equal(boundary.round.points, 10);
     assert.equal(getModeResult(boundary.state).score, 25);
+    assert.equal(getModeResult(boundary.state).correctAnswers, 2);
 });
 
 test('invalid mode, exhausted state and invalid timer values are rejected', () => {
