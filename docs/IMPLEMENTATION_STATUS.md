@@ -530,3 +530,20 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Adds an authenticated callable boundary and `dailyLoginRewardPreview`, guarded to isolated Firebase emulators only.
 - Tests cover reward schedule, streak progression/reset, concurrent retries, legacy timestamp compatibility, auth/field validation, callable error mapping and Firestore field preservation.
 - Existing browser `app/modules/daily/daily.js` is not yet switched to the callable. No production deployment or live data changes. Production release remains blocked pending client migration, rules review and authenticated acceptance.
+
+
+## 30. PR #40 merged; emulator-only daily login reward foundation
+
+- PR #40 merged to `main` as `d3a7784daee06a456b9f8104f78f38157dd400e0` after the corrected Question quality, Firebase Emulator and visual preview workflows all passed.
+- The server-owned daily claim preserves the existing seven-day reward schedule, computes UTC streak progression, and records immutable per-user/per-day receipts for idempotency.
+- The browser daily claim remains unchanged; production Functions/Rules and live user data were not modified.
+
+## 31. Server achievement unlock foundation
+
+- Current PR #41 adds a data-driven achievement catalog and transaction-backed unlock evaluator.
+- The first supported definitions use only server-maintained facts: quiz completions, experience and level. Existing definitions that depend on wins, best streak, friends or coin balance are deliberately deferred until their evidence is generated and maintained by trusted server flows.
+- Callable requests accept no progress, achievement IDs or user identity from the browser. UID comes from verified Firebase Auth context.
+- Firestore reads a separate `achievementFacts/{uid}` document and writes only the profile `achievements` field plus immutable per-achievement unlock receipts.
+- The preview is guarded to the isolated Auth + Firestore + Functions emulator. The existing achievement UI and client-side unlock code are not switched in this PR.
+- Important integration gap: trusted quiz finalization does not yet populate `achievementFacts`. Therefore the preview is a secure evaluation foundation, not an active unlock pipeline. Do not copy client-maintained profile statistics into this collection or claim the economy is server-authoritative.
+- No production deployment, Rules changes, live data migration or browser behavior changes.
