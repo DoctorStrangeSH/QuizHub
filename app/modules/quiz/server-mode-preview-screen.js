@@ -25,7 +25,7 @@ function labels(language) {
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
             lives: 'Lives', streak: 'Streak', score: 'Score',
-            answered: 'Questions answered'
+            answered: 'Questions answered', lives: 'Lives', streak: 'Streak', bestStreak: 'Best streak', aiScore: 'Opponent',
         }
         : {
             title: 'Предпросмотр серверного режима', loading: 'Загружаем вопрос…',
@@ -34,7 +34,7 @@ function labels(language) {
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
             lives: 'Жизни', streak: 'Серия', score: 'Счёт',
-            answered: 'Отвечено вопросов'
+            answered: 'Отвечено вопросов', lives: 'Жизни', streak: 'Серия', bestStreak: 'Лучшая серия', aiScore: 'Соперник',
         };
 }
 
@@ -57,6 +57,20 @@ function questionMarkup(state, language) {
     `;
 }
 
+function progressMarkup(language) {
+    const progress = controller?.getState().progress;
+    if (!progress) return '';
+    const l = labels(language);
+    const items = [];
+    if (Number.isFinite(progress.lives)) items.push(\`<span>\${l.lives}: <strong>\${progress.lives}</strong></span>\`);
+    if (Number.isFinite(progress.currentStreak)) items.push(\`<span>\${l.streak}: <strong>\${progress.currentStreak}</strong></span>\`);
+    if (Number.isFinite(progress.bestStreak)) items.push(\`<span>\${l.bestStreak}: <strong>\${progress.bestStreak}</strong></span>\`);
+    if (Number.isFinite(progress.score)) items.push(\`<span>\${l.score}: <strong>\${progress.score}</strong></span>\`);
+    if (Number.isFinite(progress.aiScore)) items.push(\`<span>\${l.aiScore}: <strong>\${progress.aiScore}</strong></span>\`);
+    if (!items.length) return '';
+    return \`<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">\${items.join('')}</div>\`;
+}
+
 function shell(body, language) {
     const l = labels(language);
     return `
@@ -67,6 +81,7 @@ function shell(body, language) {
                     <span>${l.answered}: ${controller?.getState().answeredQuestions ?? 0}/${controller?.getState().totalQuestions ?? 0}</span>
                 </div>
             </div>
+            ${progressMarkup(language)}
             ${body}
             <div class="text-center mt-3">
                 <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
@@ -175,6 +190,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                 const state = result.state;
                 const l = labels(settingsSnapshot.language);
                 const feedback = lastResponse.correct ? l.correct : l.wrong;
+                const progress = progressMarkup(settingsSnapshot.language);
                 const detail = Number.isFinite(lastResponse.points) ? ` · +${lastResponse.points} ${l.points}` : '';
                 const next = state.status === 'ready_to_claim'
                     ? `<button type="button" class="btn-gold" data-server-claim>${l.claim}</button>`
@@ -183,6 +199,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                     <div class="quiz-progress glass-card"><strong>${l.title}</strong>
                         <span class="float-end">${l.answered}: ${state.answeredQuestions}/${state.totalQuestions}</span>
                     </div>
+                    ${progress}
                     <div class="quiz-result glass-card text-center">
                         <div class="result-icon">${lastResponse.correct ? '✓' : '↗'}</div>
                         <h2>${feedback}</h2><p>${text(detail)}</p>
