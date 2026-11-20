@@ -352,3 +352,28 @@ Added docs/PHASE_0_OWNER_EVIDENCE_RUNBOOK.md with the exact owner/operator steps
 - PR #3: all three CI checks passed on its head at last review, but the branch is behind/conflicted with current main; it is not merged. Its own description correctly states that profile projection is UI/data-flow redaction, not network-level privacy. Do not enable public-profile cutover from this PR alone.
 
 No production resources or user data were accessed or changed during this update.
+
+
+## 17. PR #27–#28 merged; isolated browser preview for server-owned modes
+
+- PR #27 merged: the browser mode-session controller can claim a session restored in `ready_to_complete`, fixing the resume/claim state mismatch.
+- PR #28 merged as `b1e686cbe7eca394516622a00a860398fa2bc40b`: added the Firebase Functions SDK invoker for `quizModePreview`, restricted to localhost + explicit `firebaseEmulator=1` + the `demo-quizhub` project. All three CI checks passed.
+- The callable remains guarded by the backend against non-emulator execution. No production Functions, Firestore Rules, indexes or user data were changed.
+
+### Current browser integration work
+
+PR #29 introduces a separate browser screen for the server-owned Survival, Duel and Time Trial preview. It is reachable only when all of these are true:
+- browser host is localhost or 127.0.0.1;
+- `firebaseEmulator=1` is present;
+- `serverModePreview=1` is present;
+- selected mode is Survival, Duel or Time Trial.
+
+The screen uses the Firebase callable transport and existing server-mode session controller. The existing production game flow remains unchanged. This is an emulator integration surface, not a production rollout and not evidence that Stage 1 is complete.
+
+### Remaining acceptance work
+
+- Exercise the preview in a real browser against Auth, Firestore and Functions emulators with an authenticated test account.
+- Verify Survival end-to-end first: start, server question, answer, lives/streak, finish, atomic receipt, refresh/retry.
+- Add browser-level assertions for the preview screen and its error/retry states.
+- Then validate Duel and Time Trial, including server AI outcome and server-enforced per-question deadlines.
+- Continue Phase 0 owner evidence gates. No production cutover or Rules deployment is authorized.
