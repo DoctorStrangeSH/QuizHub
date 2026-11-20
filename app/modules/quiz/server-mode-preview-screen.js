@@ -265,6 +265,10 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                 const l = labels(settingsSnapshot.language);
                 root.insertAdjacentHTML('afterbegin', `<p class="answer-feedback" role="alert">${text(l.error)}: ${text(error.message)}</p>`);
                 root.querySelectorAll('[data-server-answer]').forEach(button => { button.disabled = false; });
+                if (settingsSnapshot?.mode === 'time') {
+                    updateTimer(root, settingsSnapshot.language);
+                    timerInterval = setInterval(() => updateTimer(root, settingsSnapshot.language), 200);
+                }
             } finally {
                 busy = false;
             }
