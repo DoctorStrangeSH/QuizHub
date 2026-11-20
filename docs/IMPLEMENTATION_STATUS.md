@@ -304,3 +304,25 @@ PR #7 объединён после успешного завершения Ques
 
 ### Что остаётся единственным безопасным следующим шагом разработки
 Не создавать и не публиковать новые production Rules на основании неполного inventory. Сначала получить live inventory JSON от owner-run collector, активный Rules/indexes export и backup/restore evidence. Затем подготовить отдельный emulator-only Rules candidate и полную матрицу регрессии против текущих клиентских сценариев. Production rollout — только после серверной миграции всех зависимых client write paths.
+
+
+## 14. PR #8 merged and extension-readiness decision (2026-11-20)
+
+PR #8 merged to main as commit `f60a8a8ba799a14b047a7dc2fda5bd5d67ad6af9` after all three checks passed: visual preview, question quality and Firebase emulator integration. The change documents the repository's Firebase deployment boundary; it did not deploy or change production Firebase resources.
+
+### Architecture decision: finish V1 without blocking future versions
+
+The owner explicitly requires that, after V1, new ideas can be added without repeatedly rebuilding the foundation. The V1 specification now contains section **10.2.1 — Готовность к расширению после V1**. It establishes:
+- modular domain boundaries and explicit contracts;
+- trusted backend as the sole authority for game results, rewards, purchases and permissions;
+- versioned API/document schemas and backward-compatible additive data evolution;
+- content/catalog-driven additions where appropriate;
+- controlled feature flags for rollout, never as a replacement for authorization;
+- separate CRs and migration plans for breaking changes;
+- no speculative plugin framework or unnecessary abstractions.
+
+This is an architecture quality requirement, not scope expansion. It does not add new V1 features or postpone V1 acceptance. V1 remains frozen to the approved feature list; future ideas enter V1.1 backlog and require owner-approved CRs after release.
+
+### Current execution focus
+
+Continue closing Phase 0 evidence gates. PR #8 is merged, but DATA-01 live inventory, independently exported production Rules/indexes, AUTH-01 Console verification and DATA-02 production backup/restore rehearsal remain blocked pending owner/operator evidence. Do not deploy Rules or migrate production data while these gates are open.
