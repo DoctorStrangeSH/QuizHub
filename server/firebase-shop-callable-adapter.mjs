@@ -1,6 +1,6 @@
 const INVALID = new Set(['INVALID_SHOP_REQUEST', 'UNEXPECTED_SHOP_FIELD', 'UNKNOWN_SHOP_OPERATION', 'INVALID_ITEM', 'INVALID_OPERATION_ID', 'SHOP_ITEM_NOT_FOUND', 'INVALID_SERVER_TIME']);
 const NOT_FOUND = new Set(['USER_NOT_FOUND']);
-const PRECONDITION = new Set(['INSUFFICIENT_COINS', 'ITEM_ALREADY_OWNED', 'BONUS_ALREADY_ACTIVE', 'IDEMPOTENCY_KEY_REUSED', 'INVALID_USER_BALANCE', 'INVALID_BONUS_EXPIRY']);
+const PRECONDITION = new Set(['INSUFFICIENT_COINS', 'ITEM_ALREADY_OWNED', 'ITEM_NOT_OWNED', 'BONUS_ALREADY_ACTIVE', 'IDEMPOTENCY_KEY_REUSED', 'INVALID_USER_BALANCE', 'INVALID_BONUS_EXPIRY', 'UNSUPPORTED_SHOP_ITEM']);
 
 export function createShopCallableAdapter({ handle, HttpsError, clock = Date.now }) {
     if (typeof handle !== 'function' || typeof HttpsError !== 'function' || typeof clock !== 'function') {
@@ -19,6 +19,10 @@ export function createShopCallableAdapter({ handle, HttpsError, clock = Date.now
         try {
             return await handle(data.operation, data.payload, { auth: { uid }, now: clock() });
         } catch (error) {
+            // Keep emulator diagnostics actionable without exposing internals to clients.
+            if (process.env.FUNCTIONS_EMULATOR) {
+                console.error('[shop callable preview]', error instanceof Error ? error.message : 'UNKNOWN_ERROR');
+            }
             const code = error instanceof Error ? error.message : '';
             if (code === 'AUTH_REQUIRED') throw new HttpsError('unauthenticated', code);
             if (INVALID.has(code)) throw new HttpsError('invalid-argument', code);
