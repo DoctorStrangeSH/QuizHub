@@ -107,7 +107,7 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.special, 17);
     assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
-    assert.deepEqual(db.records.get('achievementFacts/alice'), { totalGames: 1, experience: 20, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
+    assert.deepEqual(db.records.get('achievementFacts/alice'), { totalGames: 1, experience: 20, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
     assert.equal(db.records.get('achievementUnlockReceipts/alice/unlocks/first_quiz').achievementId, 'first_quiz');
     assert.equal(db.records.get('achievementUnlockReceipts/alice/unlocks/first_win').achievementId, 'first_win');
     assert.equal(user.email, 'private@example.test');

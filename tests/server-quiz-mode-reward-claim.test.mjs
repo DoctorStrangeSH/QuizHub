@@ -125,7 +125,7 @@ test('Duel reward is atomic, increments wins only for a player victory, and repl
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.correctAnswers, 1);
     assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
-    assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
+    assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
     assert.equal(db.records.get('achievementUnlockReceipts/player/unlocks/first_quiz').achievementId, 'first_quiz');
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['friend']);

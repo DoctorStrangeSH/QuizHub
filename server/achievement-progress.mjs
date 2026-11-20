@@ -34,9 +34,9 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
         throw new Error('ACHIEVEMENT_FACTS_OVERFLOW');
     }
 
-    // Level is deliberately carried forward only if a trusted source has
-    // already written it. Legacy users.level is client-editable and is not used.
-    if (Number.isSafeInteger(current.level) && current.level > 0) nextFacts.level = current.level;
+    // Match the existing V1 progression formula. Derive level only from the
+    // server-owned XP ledger; never import legacy users.level or client stats.
+    nextFacts.level = Math.floor(nextFacts.experience / 100) + 1;
 
     const legacyAchievements = Array.isArray(previousAchievements) ? previousAchievements : [];
     if (legacyAchievements.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');

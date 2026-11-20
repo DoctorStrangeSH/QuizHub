@@ -69,7 +69,7 @@ test('first claim credits the server-scored result exactly once', async () => {
     assert.equal(user.wins, 1);
     assert.equal(user.stats.totalWins, 1);
     assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
-    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
+    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
     assert.ok(unlockReceipts.has('player:first_quiz'));
 });
 
@@ -89,7 +89,7 @@ test('legacy client-maintained profile totals are not imported as trusted achiev
     fixture.users.get('player').experience = 999999;
     const receipt = await claim(fixture.store);
     assert.deepEqual(receipt.newlyUnlocked, ['first_quiz', 'first_win']);
-    assert.deepEqual(fixture.facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
+    assert.deepEqual(fixture.facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
 });
 
 test('server unlock ledger ignores legacy profile IDs when deciding new unlocks', async () => {

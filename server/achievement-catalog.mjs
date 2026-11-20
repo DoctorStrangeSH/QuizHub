@@ -7,9 +7,11 @@ export const ACHIEVEMENT_CATALOG = Object.freeze([
     { id: 'fast_learner', fact: 'experience', threshold: 1000 },
     { id: 'first_win', fact: 'totalWins', threshold: 1 },
     { id: 'ten_wins', fact: 'totalWins', threshold: 10 },
-    { id: 'perfect_score', fact: 'perfectGames', threshold: 1 }
+    { id: 'perfect_score', fact: 'perfectGames', threshold: 1 },
+    { id: 'level_five', fact: 'level', threshold: 5 },
+    { id: 'level_ten', fact: 'level', threshold: 10 }
 ]);
 
 export const DEFERRED_ACHIEVEMENT_IDS = Object.freeze([
-    'level_five', 'level_ten', 'social', 'collector'
+    'social', 'collector'
 ]);
