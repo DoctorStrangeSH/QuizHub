@@ -90,10 +90,48 @@ export async function loadShopItems(tab = 'themes') {
 
 window.switchShopTab = (tab, el) => { document.querySelectorAll('.shop-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); }); el.classList.add('active'); el.setAttribute('aria-selected', 'true'); loadShopItems(tab); };
 
+function isShopPreviewRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        params.get('firebaseEmulator') === '1' &&
+        params.get('shopPreview') === '1';
+}
+
+function createShopOperationId() {
+    if (!window.crypto?.randomUUID) throw new Error('SECURE_OPERATION_ID_UNAVAILABLE');
+    return `shop_${window.crypto.randomUUID()}`;
+}
+
+async function invokeLocalShop(operation, payload) {
+    const { createLocalFirebaseShopInvoker } = await import('./firebase-shop-preview.js');
+    const invoke = createLocalFirebaseShopInvoker();
+    return invoke(operation, payload);
+}
+
 window.buyItem = async (itemId, price, type) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (isShopPreviewRequested()) {
+            const response = await invokeLocalShop('purchase', {
+                itemId,
+                operationId: createShopOperationId()
+            });
+            const receipt = response?.data;
+            if (!receipt || receipt.alreadyPurchased === true) {
+                alert('Покупка уже обработана.');
+                await loadShopItems(type);
+                return;
+            }
+            if (!Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
+                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
+                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
+            }
+            if (type === 'themes') applyTheme(itemId);
+            else if (type === 'particles') applyParticles(itemId);
+            await loadShopItems(type);
+            return;
+        }
         const userRef = doc(db, 'users', user.uid);
         const profile = (await getDoc(userRef)).data();
         if (price > 0 && (profile.coins || 0) < price) { alert('Недостаточно монет!'); return; }
@@ -115,6 +153,25 @@ window.buyBonus = async (itemId, price, effect, duration) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (isShopPreviewRequested()) {
+            const response = await invokeLocalShop('purchase', {
+                itemId,
+                operationId: createShopOperationId()
+            });
+            const receipt = response?.data;
+            if (!receipt || receipt.alreadyPurchased === true) {
+                alert('Покупка уже обработана.');
+                await loadShopItems('bonuses');
+                return;
+            }
+            if (!Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
+                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
+                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
+            }
+            alert('Бонус активирован! 🎁');
+            await loadShopItems('bonuses');
+            return;
+        }
         const userRef = doc(db, 'users', user.uid);
         const profile = (await getDoc(userRef)).data();
         if ((profile.coins || 0) < price) { alert('Недостаточно монет!'); return; }
@@ -130,6 +187,13 @@ window.equipItem = async (itemId, type) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (isShopPreviewRequested()) {
+            await invokeLocalShop('equip', { itemId });
+            if (type === 'themes') applyTheme(itemId);
+            else if (type === 'particles') applyParticles(itemId);
+            await loadShopItems(type);
+            return;
+        }
         const userRef = doc(db, 'users', user.uid);
         let ef;
         if (type === 'themes') ef = 'equippedTheme';
