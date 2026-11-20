@@ -30,7 +30,7 @@ export function createAchievementUnlockService({ store, catalog = ACHIEVEMENT_CA
                 ).map(item => item.id);
                 if (newlyUnlocked.length) {
                     await tx.setUserPatch(uid, { achievements: [...new Set([...unlocked, ...newlyUnlocked])] });
-                    await tx.createUnlockReceipt(uid, newlyUnlocked);
+                    await tx.createUnlockReceipts(uid, newlyUnlocked);
                 }
                 return { unlocked: [...unlocked], newlyUnlocked, alreadyUnlocked: newlyUnlocked.length === 0 };
             });
