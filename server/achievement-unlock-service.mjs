@@ -21,18 +21,26 @@ export function createAchievementUnlockService({ store, catalog = ACHIEVEMENT_CA
                     tx.getUser(uid)
                 ]);
                 if (!user) throw new Error('USER_NOT_FOUND');
-                const unlocked = Array.isArray(user.achievements) ? user.achievements : [];
-                if (unlocked.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');
+                const legacyAchievements = Array.isArray(user.achievements) ? user.achievements : [];
+                if (legacyAchievements.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');
+                const serverUnlocked = Array.isArray(facts?.unlockedIds) ? facts.unlockedIds : [];
+                if (serverUnlocked.some(id => typeof id !== 'string' || !ID.test(id))) throw new Error('INVALID_ACHIEVEMENT_FACTS');
                 const newlyUnlocked = catalog.filter(item =>
-                    !unlocked.includes(item.id) &&
+                    !serverUnlocked.includes(item.id) &&
                     Number.isSafeInteger(facts?.[item.fact]) &&
                     facts[item.fact] >= item.threshold
                 ).map(item => item.id);
+                const nextServerUnlocked = [...new Set([...serverUnlocked, ...newlyUnlocked])];
                 if (newlyUnlocked.length) {
-                    await tx.setUserPatch(uid, { achievements: [...new Set([...unlocked, ...newlyUnlocked])] });
+                    await tx.setAchievementFacts(uid, { ...facts, unlockedIds: nextServerUnlocked });
+                    await tx.setUserPatch(uid, { achievements: [...new Set([...legacyAchievements, ...nextServerUnlocked])] });
                     await tx.createUnlockReceipts(uid, newlyUnlocked);
                 }
-                return { unlocked: [...unlocked], newlyUnlocked, alreadyUnlocked: newlyUnlocked.length === 0 };
+                return {
+                    unlocked: [...new Set([...legacyAchievements, ...nextServerUnlocked])],
+                    newlyUnlocked,
+                    alreadyUnlocked: newlyUnlocked.length === 0
+                };
             });
         }
     };
