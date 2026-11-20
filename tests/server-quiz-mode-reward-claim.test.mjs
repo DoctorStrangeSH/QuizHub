@@ -73,7 +73,7 @@ const catalog = buildQuestionCatalog({
     }
 });
 
-function setup() {
+function setup(random = () => 0.99) {
     const db = fakeFirestore();
     db.records.set('users/player', {
         experience: 5, weeklyExperience: 5, coins: 7, wins: 2,
@@ -83,7 +83,7 @@ function setup() {
         friends: ['friend']
     });
     const store = createQuizFirestoreStore(db);
-    const service = createModeSessionService({ catalog, store, random: () => 0.99 });
+    const service = createModeSessionService({ catalog, store, random });
     return { db, store, service };
 }
 
@@ -181,4 +181,82 @@ test('foreign owner, incomplete run and corrupted mode log cannot claim rewards'
     }), /INVALID_MODE_RESULT/);
     assert.equal(db.records.get('users/player').coins, 7);
     assert.equal(db.records.get(`quizSessions/${started.sessionId}`).finalized, false);
+});
+
+
+test('Duel draw and loss never increment the player win counters', async () => {
+    for (const scenario of [
+        { name: 'draw', random: () => 0.99, expected: 'draw' },
+        { name: 'loss', random: () => 0.1, expected: 'loss' }
+    ]) {
+        const { db, store, service } = setup(scenario.random);
+        const started = await service.start({
+            uid: 'player', mode: 'duel', category: 'science',
+            difficulty: 'easy', count: 1, now: 1000
+        });
+        await service.answer({
+            uid: 'player', sessionId: started.sessionId,
+            questionId: started.question.id, answerIndex: 0, now: 2000
+        });
+        const receipt = await claimModeSessionReward({
+            store, uid: 'player', sessionId: started.sessionId, at: 3000
+        });
+        assert.equal(receipt.outcome, scenario.expected, scenario.name);
+        assert.equal(receipt.won, false);
+        assert.equal(db.records.get('users/player').wins, 2);
+        assert.equal(db.records.get('users/player').stats.totalWins, 2);
+    }
+});
+
+test('Survival can claim after losing all three lives and preserves the previous best streak', async () => {
+    const { db, store, service } = setup();
+    const started = await service.start({
+        uid: 'player', mode: 'survival', category: 'science',
+        difficulty: 'easy', count: 8, now: 1000
+    });
+    let question = started.question;
+    for (const now of [2000, 3000, 4000]) {
+        const answer = await service.answer({
+            uid: 'player', sessionId: started.sessionId,
+            questionId: question.id, answerIndex: 0, now
+        });
+        question = answer.nextQuestion;
+    }
+    assert.equal(question, null);
+    const receipt = await claimModeSessionReward({
+        store, uid: 'player', sessionId: started.sessionId, at: 5000
+    });
+    assert.equal(receipt.livesRemaining, 0);
+    assert.equal(receipt.answeredQuestions, 3);
+    assert.equal(receipt.bestStreak, 0);
+    const user = db.records.get('users/player');
+    assert.equal(user.stats.bestStreak, 1);
+    assert.equal(user.stats.totalGames, 1);
+    assert.equal(user.stats.correctAnswers, 0);
+});
+
+test('Time Trial win threshold is exactly seven correct answers out of ten', async () => {
+    for (const correctCount of [6, 7]) {
+        const { db, store, service } = setup();
+        const started = await service.start({
+            uid: 'player', mode: 'time', category: 'science',
+            difficulty: 'easy', count: 10, now: 1000
+        });
+        let question = started.question;
+        for (let i = 0; i < 10; i++) {
+            const answer = await service.answer({
+                uid: 'player', sessionId: started.sessionId,
+                questionId: question.id,
+                answerIndex: i < correctCount ? 1 : 0,
+                now: 1100 + i
+            });
+            question = answer.nextQuestion;
+        }
+        const receipt = await claimModeSessionReward({
+            store, uid: 'player', sessionId: started.sessionId, at: 2000
+        });
+        assert.equal(receipt.correctAnswers, correctCount);
+        assert.equal(receipt.won, correctCount === 7);
+        assert.equal(db.records.get('users/player').wins, correctCount === 7 ? 3 : 2);
+    }
 });
