@@ -1,5 +1,6 @@
 import { finalizeSession } from './quiz-session-core.mjs';
 import { calculateQuizRewards } from '../app/modules/quiz/rewards.js';
+import { advanceAchievementFacts } from './achievement-progress.mjs';
 
 // Storage-independent transaction coordinator. The production adapter MUST
 // implement one atomic, retryable transaction across session and user records:
@@ -40,8 +41,14 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
             if (!Number.isSafeInteger(updated)) throw new Error('BALANCE_OVERFLOW');
             return updated;
         };
+        const achievementProgress = advanceAchievementFacts({
+            previousFacts: await transaction.getAchievementFacts(uid),
+            previousAchievements: user.achievements,
+            experienceDelta: xp
+        });
         const nextUser = {
             ...user,
+            achievements: achievementProgress.achievements,
             experience: add(user.experience, xp),
             weeklyExperience: add(user.weeklyExperience, xp),
             coins: add(user.coins, coins),
@@ -54,8 +61,10 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
             }
         };
 
-        const receipt = { sessionId, uid, ...result, xp, coins };
+        const receipt = { sessionId, uid, ...result, xp, coins, newlyUnlocked: achievementProgress.newlyUnlocked };
         session.receipt = receipt;
+        await transaction.setAchievementFacts(uid, achievementProgress.facts);
+        await transaction.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
         await transaction.setUser(uid, nextUser);
         await transaction.setSession(sessionId, session);
         return { ...receipt, alreadyClaimed: false };
