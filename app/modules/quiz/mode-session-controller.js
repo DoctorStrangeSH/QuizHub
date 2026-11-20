@@ -168,7 +168,7 @@ export function createModeSessionController({ client, invoke, random = Math.rand
         },
 
         async claim() {
-            if (!state.sessionId || !['ready_to_claim', 'expired', 'completed'].includes(state.status)) {
+            if (!state.sessionId || !['ready_to_claim', 'ready_to_complete', 'expired', 'completed'].includes(state.status)) {
                 throw new Error('SESSION_NOT_READY');
             }
             state.status = 'claiming';
