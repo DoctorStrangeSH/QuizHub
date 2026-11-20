@@ -615,12 +615,22 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - This replaces the earlier carry-forward-only approach, which could leave level facts absent and therefore never unlock level milestones for new trusted progress.
 - Production migration remains blocked until Phase 0 evidence and an approved baseline strategy for existing users are complete.
 
-## 40. Shop browser integration — emulator acceptance passed
+## 40. PR #49 merged — shop browser integration and emulator acceptance
 
-- The browser shop now has an explicitly guarded local transport for `shopPurchasePreview`: localhost/127.0.0.1, both `firebaseEmulator=1&shopPreview=1` flags, and Firebase project `demo-quizhub` are required.
+- PR #49 merged into `main` as `5fde120e082185d66f9145187d2a8f21ba858b84` after Question Quality, QuizHub visual preview and Firebase Emulator integration all passed.
+- The browser shop has an explicitly guarded local transport for `shopPurchasePreview`: localhost/127.0.0.1, both `firebaseEmulator=1&shopPreview=1` flags, and Firebase project `demo-quizhub` are required.
 - Cosmetic purchases, bonus purchases and equip actions use the authenticated callable only in that local preview. The client does not submit prices, UID, bonus duration or trusted balance values.
 - The server derives the catalog price, checks ownership and balance, computes bonus expiry from server time, applies changes transactionally, and persists idempotent purchase receipts.
 - Fixed the Firestore UID validator to accept standard Firebase Auth UIDs. The prior escaped control-character pattern rejected ordinary UIDs and caused the end-to-end purchase request to fail.
-- Firebase Auth + Functions + Firestore Emulator integration now passes, including purchase, duplicate retry, equip, ownership rejection, insufficient balance, forged fields and idempotency-key reuse. Browser transport and syntax tests are included in Question Quality CI.
+- Firebase Auth + Functions + Firestore Emulator integration passes purchase, duplicate retry, equip, ownership rejection, insufficient balance, forged fields and idempotency-key reuse. Browser transport and syntax tests run in Question Quality CI.
 - Production shop behavior remains unchanged. Legacy direct Firestore writes are still a release blocker; no production Functions/Rules deployment, migration or live-data access occurred.
-- Next acceptance: merge only after all three required CI checks pass on this branch, then proceed with the remaining economy migration in the V1 specification.
+
+## 41. Local browser preview for trusted achievements
+
+- Added an explicit emulator-only browser path for `achievementUnlockPreview`, guarded by localhost/127.0.0.1, `firebaseEmulator=1&achievementPreview=1`, and Firebase project `demo-quizhub`.
+- In preview mode, the browser submits an empty evaluation request. It cannot submit UID, progress, achievement IDs, levels or unlock state; the callable derives UID from verified Firebase Auth and the service reads only server-maintained `achievementFacts`.
+- The browser validates the server receipt against the known achievement catalog and displays only newly unlocked achievements. It does not write the profile achievement array in this preview path.
+- Preview transport failure does not fall back to client-side evaluation or writes. The legacy production path is unchanged pending the V1 economy cutover and existing-user baseline strategy.
+- Added client transport/receipt tests and a Firebase Auth + Functions + Firestore Emulator integration test covering unauthenticated access, forged progress, unlock receipts, repeat evaluation, and preservation of private profile fields.
+- CI now includes the browser preview checks and the trusted achievement emulator integration.
+- Production Functions/Rules, live data and existing account baselines remain untouched. This is emulator acceptance coverage, not production release approval.
