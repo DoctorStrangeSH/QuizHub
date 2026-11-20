@@ -634,11 +634,13 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Added transport tests for emulator gating, anonymous/production rejection, nickname validation, minimal request payload and forged receipt rejection. The existing Firebase emulator workflow already exercises the authenticated profile callable, concurrent nickname reservation, duplicate handling, initial balance and public/private field separation.
 - Production registration remains unchanged. Existing-user migration, nickname-claim backfill, Rules review and owner acceptance are still required before production cutover.
 
-## 43. Local browser preview for trusted Classic quiz sessions
+## 43. Classic server-session preview merged; browser acceptance expanded
 
+- PR #53 merged into `main` as `3ebc948081cb8aa81a1621a30b1a9a4bb0bffaed` after Question Quality, Firebase Emulator and Visual Preview passed.
 - Added a dedicated emulator-only browser transport for `quizSessionPreview`, guarded by localhost/127.0.0.1, `firebaseEmulator=1&serverModePreview=1`, and Firebase project `demo-quizhub`.
 - The existing server-mode session controller and preview screen now support Classic (10 questions) as well as Duel, Survival and Time Trial. Classic uses the trusted quiz callable's `start`, `answer`, `resume` and `complete` operations; the client adapter maps the shared UI's claim action to `complete`.
 - Canonical questions and answer keys remain server-side. The browser submits only session/question identifiers, selected option index and language; it does not submit score, correctness, UID, XP or coins.
 - Trusted reward calculation, win/perfect facts, achievement progress and reward receipts remain inside the server's atomic claim transaction.
-- Added isolated transport/client tests and CI syntax checks. The existing Auth + Firestore + Functions emulator callable suite continues to cover Classic session ownership, answer validation, retries and reward persistence.
+- Added isolated transport/client tests and CI syntax checks. The existing Auth + Firestore + Functions emulator callable suite covers Classic session ownership, answer validation, retries and reward persistence.
+- Added an authenticated Playwright browser acceptance test that creates a test profile, completes ten questions through the real callable transport, claims the result and verifies an idempotent retry against Firestore.
 - The production Classic UI still uses its legacy client-computed reward writer. This PR enables local acceptance only; production cutover, existing-user baselines and restrictive Rules remain separate blocked milestones.
