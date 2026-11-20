@@ -1432,3 +1432,57 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 .time-trial-clock .timer-bar-fill.urgent {
     background: var(--danger);
 }
+
+
+/* Survival lives: readable at a glance on desktop and narrow screens. */
+.survival-lives {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 105, 125, .2);
+  border-radius: 999px;
+  background: rgba(255, 105, 125, .055);
+}
+.survival-stat-label { color: var(--text-secondary); font-weight: 700; }
+.survival-hearts { display: inline-flex; gap: 3px; font-size: 1.25rem; line-height: 1; }
+.survival-heart.is-alive { color: #ff657d; text-shadow: 0 0 10px rgba(255, 101, 125, .3); }
+.survival-heart.is-lost { color: var(--text-secondary); opacity: .45; }
+.survival-life-count { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.survival-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 210, 122, .24);
+  border-radius: 999px;
+  background: rgba(255, 210, 122, .07);
+  color: var(--gold);
+}
+.survival-life-feedback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px auto 14px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 101, 125, .28);
+  border-radius: 999px;
+  background: rgba(255, 101, 125, .09);
+  color: #ff8798;
+  font-weight: 800;
+  animation: survival-life-loss .35s ease-out both;
+}
+@keyframes survival-life-loss {
+  0% { opacity: 0; transform: translateY(5px) scale(.96); }
+  65% { opacity: 1; transform: translateY(-1px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 520px) {
+  .survival-lives { gap: 6px; padding-inline: 9px; }
+  .survival-hearts { font-size: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .survival-life-feedback { animation: none; }
+}
