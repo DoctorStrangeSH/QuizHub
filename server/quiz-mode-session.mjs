@@ -22,7 +22,8 @@ export function createModeState(mode, { difficulty = 'easy', totalQuestions } = 
             playerScore: 0,
             aiScore: 0,
             playerCorrect: 0,
-            aiCorrect: 0
+            aiCorrect: 0,
+            roundLog: []
         };
     }
     if (mode === 'survival') {
@@ -34,7 +35,8 @@ export function createModeState(mode, { difficulty = 'easy', totalQuestions } = 
             lives: 3,
             currentStreak: 0,
             bestStreak: 0,
-            score: 0
+            score: 0,
+            answerLog: []
         };
     }
     return {
@@ -42,7 +44,8 @@ export function createModeState(mode, { difficulty = 'easy', totalQuestions } = 
         totalQuestions: Math.min(totalQuestions, 10),
         answeredQuestions: 0,
         correctAnswers: 0,
-        score: 0
+        score: 0,
+        answerLog: []
     };
 }
 
@@ -66,7 +69,14 @@ export function applyModeAnswer(state, { correct, points, remainingMs, aiRandomV
             playerScore: state.playerScore + (correct ? points : 0),
             aiScore: state.aiScore + (aiCorrect ? points : 0),
             playerCorrect: state.playerCorrect + (correct ? 1 : 0),
-            aiCorrect: state.aiCorrect + (aiCorrect ? 1 : 0)
+            aiCorrect: state.aiCorrect + (aiCorrect ? 1 : 0),
+            roundLog: [...state.roundLog, {
+                round: state.roundsPlayed + 1,
+                playerCorrect: correct,
+                aiCorrect,
+                points: correct ? points : 0,
+                aiPoints: aiCorrect ? points : 0
+            }]
         };
         return {
             state: next,
@@ -80,7 +90,9 @@ export function applyModeAnswer(state, { correct, points, remainingMs, aiRandomV
     if (state.mode === 'survival') {
         const next = applySurvivalAnswer(state, { correct, points });
         const updated = { ...state, ...next, answeredQuestions: state.answeredQuestions + 1,
-            correctAnswers: state.correctAnswers + (correct ? 1 : 0) };
+            correctAnswers: state.correctAnswers + (correct ? 1 : 0),
+            answerLog: [...state.answerLog, { question: state.answeredQuestions + 1,
+                correct, points: correct ? points : 0 }] };
         return {
             state: updated,
             round: { correct, points: correct ? points : 0 },
@@ -96,7 +108,9 @@ export function applyModeAnswer(state, { correct, points, remainingMs, aiRandomV
         ...state,
         answeredQuestions: state.answeredQuestions + 1,
         correctAnswers: state.correctAnswers + (correct ? 1 : 0),
-        score: state.score + awarded
+        score: state.score + awarded,
+        answerLog: [...state.answerLog, { question: state.answeredQuestions + 1,
+            correct, points: awarded, remainingMs, speedBonus: awarded - (correct ? points : 0) }]
     };
     return {
         state: updated,
