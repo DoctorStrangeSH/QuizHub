@@ -433,3 +433,20 @@ The clock calculation is a pure helper with unit tests for formatting, urgency, 
 - Confirm a timely answer and a late answer are resolved by server time, not the browser countdown.
 - Confirm refresh resumes the same deadline rather than resetting the 15-second question timer.
 - Continue full Survival and Duel browser acceptance, then the broader Stage 1 gates. Production Functions/Rules remain untouched.
+
+
+## 20. PR #31 merged; Survival feedback follow-up
+
+- PR #31 merged to `main` as `9a665dc45a8eb7c2ce8b0d44c201e934e9bfbfc4` after Question quality, visual preview and Firebase Emulator integration all passed.
+- Time Trial preview now displays a localized countdown and progress bar based on the server-owned question deadline. The browser does not make timeout or scoring decisions.
+
+### Current follow-up: Survival lives and feedback
+
+PR #32 presents the existing server-owned Survival rules more clearly:
+- Three lives are rendered as filled/empty hearts with an accessible count.
+- Current streak and best streak remain visible as server-provided progress.
+- When a wrong answer reduces the life count, the feedback screen explicitly communicates the lost life; the final-life warning is localized in Russian and English.
+- Visual motion respects `prefers-reduced-motion`.
+- Server lifecycle coverage verifies that the third lost life ends the run immediately, returns zero lives and no next question, and permits result finalization.
+
+This is a presentation and acceptance-coverage improvement; it does not change Survival scoring, life count, reward rules or production Firebase behavior.
