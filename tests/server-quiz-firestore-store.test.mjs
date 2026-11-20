@@ -117,7 +117,7 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(writes[0].operation, 'update');
     assert.deepEqual(Object.keys(writes[0].value).sort(), [
         'coins', 'experience', 'quizzesCompleted', 'stats.correctAnswers',
-        'stats.totalGames', 'stats.totalQuestions', 'weeklyExperience', 'achievements'
+        'stats.totalGames', 'stats.totalQuestions', 'stats.totalWins', 'weeklyExperience', 'wins', 'achievements'
     ].sort());
 });
 
