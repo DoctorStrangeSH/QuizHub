@@ -52,6 +52,16 @@ test('retries and concurrent evaluations do not issue duplicate unlocks', async 
     assert.equal(new Set(store.users.get('alice').achievements).size, 5);
 });
 
+test('trusted win and perfect-run facts unlock the matching catalog milestones', async () => {
+    const facts = { alice: { totalGames: 1, experience: 0, totalWins: 10, perfectGames: 1, unlockedIds: [] } };
+    const store = setup(facts);
+    const service = createAchievementUnlockService({ store });
+    const result = await service.evaluate({ uid: 'alice' });
+    assert.deepEqual(result.newlyUnlocked, ['first_quiz', 'first_win', 'ten_wins', 'perfect_score']);
+    assert.deepEqual(facts.alice.unlockedIds, result.newlyUnlocked);
+    assert.equal(store.receipts.size, 4);
+});
+
 test('preserves existing achievement IDs and never accepts caller-supplied progress', async () => {
     const store = setup({ alice: { totalGames: 0, experience: 0, level: 1 } }, ['legacy_custom']);
     const service = createAchievementUnlockService({ store });
