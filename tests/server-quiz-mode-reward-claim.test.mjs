@@ -219,6 +219,8 @@ test('Duel draw and loss never increment the player win counters', async () => {
         assert.equal(receipt.won, false);
         assert.equal(db.records.get('users/player').wins, 2);
         assert.equal(db.records.get('users/player').stats.totalWins, 2);
+        assert.equal(db.records.get('achievementFacts/player').totalWins, 0);
+        assert.equal(db.records.get('users/player').achievements.includes('first_win'), false);
     }
 });
 
