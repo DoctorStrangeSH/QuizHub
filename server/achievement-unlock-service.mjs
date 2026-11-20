@@ -23,6 +23,7 @@ export function createAchievementUnlockService({ store, catalog = ACHIEVEMENT_CA
                 if (!user) throw new Error('USER_NOT_FOUND');
                 const legacyAchievements = Array.isArray(user.achievements) ? user.achievements : [];
                 if (legacyAchievements.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');
+                if (facts?.unlockedIds !== undefined && !Array.isArray(facts.unlockedIds)) throw new Error('INVALID_ACHIEVEMENT_FACTS');
                 const serverUnlocked = Array.isArray(facts?.unlockedIds) ? facts.unlockedIds : [];
                 if (serverUnlocked.some(id => typeof id !== 'string' || !ID.test(id))) throw new Error('INVALID_ACHIEVEMENT_FACTS');
                 const newlyUnlocked = catalog.filter(item =>
