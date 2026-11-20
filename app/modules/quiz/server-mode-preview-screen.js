@@ -68,16 +68,16 @@ function progressMarkup(language) {
         const totalLives = 3;
         const lives = Math.max(0, Math.min(totalLives, progress.lives));
         const hearts = Array.from({ length: totalLives }, (_, index) =>
-            \`<span class="survival-heart\${index < lives ? ' is-alive' : ' is-lost'}" aria-hidden="true">\${index < lives ? '♥' : '♡'}</span>\`).join('');
-        items.push(\`<div class="survival-lives" role="img" aria-label="\${l.lives}: \${lives} / \${totalLives}"><span class="survival-stat-label">\${l.lives}</span><span class="survival-hearts">\${hearts}</span><strong class="survival-life-count">\${lives}/\${totalLives}</strong></div>\`);
+            `<span class="survival-heart${index < lives ? ' is-alive' : ' is-lost'}" aria-hidden="true">${index < lives ? '♥' : '♡'}</span>`).join('');
+        items.push(`<div class="survival-lives" role="img" aria-label="${l.lives}: ${lives} / ${totalLives}"><span class="survival-stat-label">${l.lives}</span><span class="survival-hearts">${hearts}</span><strong class="survival-life-count">${lives}/${totalLives}</strong></div>`);
     }
-    if (Number.isFinite(progress.currentStreak)) items.push(\`<span class="survival-streak">\${l.streak}: <strong>\${progress.currentStreak}</strong></span>\`);
-    if (Number.isFinite(progress.bestStreak)) items.push(\`<span>\${l.bestStreak}: <strong>\${progress.bestStreak}</strong></span>\`);
-    if (Number.isFinite(progress.score)) items.push(\`<span>\${l.score}: <strong>\${progress.score}</strong></span>\`);
-    if (Number.isFinite(progress.playerScore)) items.push(\`<span>\${l.playerScore}: <strong>\${progress.playerScore}</strong></span>\`);
-    if (Number.isFinite(progress.aiScore)) items.push(\`<span>\${l.aiScore}: <strong>\${progress.aiScore}</strong></span>\`);
+    if (Number.isFinite(progress.currentStreak)) items.push(`<span class="survival-streak">${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
+    if (Number.isFinite(progress.bestStreak)) items.push(`<span>${l.bestStreak}: <strong>${progress.bestStreak}</strong></span>`);
+    if (Number.isFinite(progress.score)) items.push(`<span>${l.score}: <strong>${progress.score}</strong></span>`);
+    if (Number.isFinite(progress.playerScore)) items.push(`<span>${l.playerScore}: <strong>${progress.playerScore}</strong></span>`);
+    if (Number.isFinite(progress.aiScore)) items.push(`<span>${l.aiScore}: <strong>${progress.aiScore}</strong></span>`);
     if (!items.length) return '';
-    return \`<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">\${items.join('')}</div>\`;
+    return `<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">${items.join('')}</div>`;
 }
 
 function timerMarkup(language) {
@@ -258,7 +258,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                     Number.isFinite(state.progress?.lives) &&
                     state.progress.lives < previousProgress.lives;
                 const survivalFeedback = lifeLost
-                    ? \`<p class="survival-life-feedback" role="status">\${state.progress.lives === 1 ? l.lastLife : l.lifeLost}</p>\`
+                    ? `<p class="survival-life-feedback" role="status">${state.progress.lives === 1 ? l.lastLife : l.lifeLost}</p>`
                     : '';
                 const detail = Number.isFinite(lastResponse.points) ? ` · +${lastResponse.points} ${l.points}` : '';
                 const next = state.status === 'ready_to_claim'
