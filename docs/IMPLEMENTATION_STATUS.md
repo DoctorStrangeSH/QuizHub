@@ -281,3 +281,26 @@ The owner-provided Rules snapshot increases the priority of SEC-02, but does not
 ### 12.1. Статус инструмента live inventory после PR #6
 
 Read-only collector и guarded CLI объединены в main через PR #6 (squash commit `4ee10fdeaf70acbabe56ae4930ac6d94acd9f513`). Все три PR checks прошли: Question quality, visual preview и Firebase emulator integration. Collector пока не запускался против production; DATA-01 остаётся открытым до получения отчёта от владельца/уполномоченного оператора.
+
+
+## 13. Обновление после PR #5–#7 и повторная проверка Firebase deployment boundary (2026-11-20)
+
+### Объединённые изменения
+- PR #5 — source inventory, ТЗ V1 и синхронизация документации: merged.
+- PR #6 — guarded read-only live Firestore inventory collector + tests: merged; commit `4ee10fdeaf70acbabe56ae4930ac6d94acd9f513`. Три проверки PR прошли.
+- PR #7 — точный owner-provided Rules snapshot, rule-by-rule security assessment и уточнение критериев этапа 0: merged; commit `2a1ca51d59bdee5545afd65fc21e576ef0e496e7`. Все три проверки PR прошли.
+
+### Повторно проверенные Firebase config файлы в main
+- `firebase.json` содержит только Functions source/codebase/runtime и emulator ports. В нём нет `firestore.rules` и `firestore.indexes` deployment mapping.
+- Root `.firebaserc` отсутствует.
+- Root `firestore.rules` и проверенный production indexes export отсутствуют.
+- Firebase emulator workflow запускает локальные Auth/Firestore/Functions emulators. Отдельный Rules preview workflow использует `firebase.rules-preview.json` и fixture для server-owned quiz sessions; это не production Rules deployment.
+- В `.github/workflows/` обнаружены только firebase-emulator, question-quality, verify-gcp-oidc и visual-preview workflows; отдельного Firebase production deploy workflow в этом каталоге нет.
+
+**Вывод:** repository evidence не подтверждает автоматический deploy Firestore Rules/indexes из main. Нельзя считать, что изменения локальных preview rules влияют на production. Активный production Ruleset и indexes необходимо получить из Firebase Console/CLI независимо.
+
+### Обновлённый статус PR #7
+PR #7 объединён после успешного завершения Question quality, Firebase emulator integration и Visual preview. Изменение документационное; никаких production Firebase ресурсов не меняло.
+
+### Что остаётся единственным безопасным следующим шагом разработки
+Не создавать и не публиковать новые production Rules на основании неполного inventory. Сначала получить live inventory JSON от owner-run collector, активный Rules/indexes export и backup/restore evidence. Затем подготовить отдельный emulator-only Rules candidate и полную матрицу регрессии против текущих клиентских сценариев. Production rollout — только после серверной миграции всех зависимых client write paths.
