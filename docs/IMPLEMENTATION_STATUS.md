@@ -276,3 +276,8 @@ This is a source-text review of the owner-provided snapshot, **not an independen
 **Do not deploy restrictive Rules as a standalone change.** Current client code still writes profile/economy, daily rewards, shop state, achievements, friend arrays, chat messages and presence directly. A premature lock-down would break live product flows. The migration sequence and exact findings are documented in the audit file.
 
 The owner-provided Rules snapshot increases the priority of SEC-02, but does not close Phase 0: DATA-01 live inventory, active Rules/indexes export, AUTH-01 console verification and DATA-02 backup/restore rehearsal remain open.
+
+
+### 12.1. Статус инструмента live inventory после PR #6
+
+Read-only collector и guarded CLI объединены в main через PR #6 (squash commit `4ee10fdeaf70acbabe56ae4930ac6d94acd9f513`). Все три PR checks прошли: Question quality, visual preview и Firebase emulator integration. Collector пока не запускался против production; DATA-01 остаётся открытым до получения отчёта от владельца/уполномоченного оператора.
