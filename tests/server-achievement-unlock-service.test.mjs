@@ -64,5 +64,5 @@ test('missing facts do not unlock anything; missing profile and invalid catalog 
     const service = createAchievementUnlockService({ store });
     assert.deepEqual((await service.evaluate({ uid: 'alice' })).newlyUnlocked, []);
     await assert.rejects(service.evaluate({ uid: '../alice' }), /AUTH_REQUIRED/);
-    await assert.rejects(createAchievementUnlockService({ store, catalog: [{ id: 'bad', fact: 'coins', threshold: 1 }] }), /INVALID_ACHIEVEMENT_CATALOG/);
+    assert.throws(() => createAchievementUnlockService({ store, catalog: [{ id: 'bad', fact: 'coins', threshold: 1 }] }), /INVALID_ACHIEVEMENT_CATALOG/);
 });
