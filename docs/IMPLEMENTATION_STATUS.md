@@ -175,7 +175,7 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 | AUTH-01 | Проверка Auth providers и authorized domains | Blocked | Исходники не подтверждают текущие настройки Firebase Console |
 | DATA-02 | Production backup/restore rehearsal | Blocked | Emulator backup tests не подтверждают полный и восстанавливаемый production backup |
 | DATA-03 | Инвентарь legacy данных и orphan subcollections | Blocked | Нет подтверждённого live snapshot и рекурсивной сверки |
-| REL-01 | Разбор PR #3 | In progress | CI зелёный, но PR крупный, diverged и не имеет review |
+| REL-01 | Разбор PR #3 | Done (not merged) | Security-sensitive review выполнен; PR оставлен вне main до разделения и закрытия найденных требований |
 
 ## 8. Решение по этапу 0
 
@@ -187,13 +187,13 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 2. Экспорт фактически развёрнутых Firestore Security Rules и indexes.
 3. Подтверждение Auth providers и authorized domains.
 4. Production backup с доказанной возможностью восстановления в отдельном безопасном окружении.
-5. Решение по PR #3 после ревью и приведения его изменений к этапам ТЗ.
+5. Ревью PR #3 завершено: не объединять целиком; будущие изменения разнести по этапам 2–3 и исправить найденные несоответствия.
 
 **Запрещено до снятия блокеров:** менять production Rules, включать profile/chat cutover, запускать миграции реальных пользователей, развёртывать новые привилегированные Functions или удалять legacy данные.
 
 ## 9. Следующий разрешённый шаг
 
-Продолжить аудит PR #3 без merge: разделить его изменения по Requirement IDs, проверить критичные security-sensitive файлы и определить, какие части должны попасть в этап 2 (profiles), а какие — в этап 3 (friends/chats). Параллельно запросить у владельца необходимые read-only production evidence для завершения этапа 0.
+Попросить владельца запустить подготовленный read-only inventory collector с учётной записью Firestore Viewer и передать JSON. Отдельно получить актуальный опубликованный Firestore Rules export и indexes export, подтвердить Auth providers/domains и согласовать production backup/restore rehearsal. PR #3 не объединять целиком: его изменения остаются кандидатами для этапов 2–3 после разделения по Requirement IDs и устранения CHAT-03/DATA-01 gaps.
 
 Новые продуктовые функции не добавлять.
 
@@ -222,3 +222,33 @@ PR #3 — https://github.com/DoctorStrangeSH/QuizHub/pull/3
 ### Решение по PR #3
 
 **Не объединять сейчас.** Зелёный CI подтверждает только описанные тестовые сценарии; он не снимает перечисленные архитектурные и release blockers. Сначала разделить изменения по Requirement IDs, добавить недостающий members inventory, довести unread reconciliation до acceptance criteria и провести повторное ревью. Любое production cutover остаётся запрещённым до закрытия DATA-01, SEC-02 и DATA-02.
+
+
+## 11. Подготовлен безопасный сбор live inventory
+
+Добавлен read-only collector:
+- server/firestore-live-inventory.mjs — рекурсивно обходит root и nested collections, включая subcollections под отсутствующими parent documents;
+- functions/scripts/firestore-live-inventory.mjs — CLI, жёстко привязанный к Firebase project quizhub-e65f5 и database (default);
+- tests/firestore-live-inventory.test.mjs — проверяет nested/orphan paths, схему полей без значений и abort при превышении лимита.
+
+Collector возвращает только шаблоны путей коллекций, counts, имена полей и типы. Он не включает document IDs и значения полей. Он читает snapshots документов для определения существования и схемы, поэтому чтение может тарифицироваться. Максимум по умолчанию — 5 000 document references; абсолютный предел конфигурации — 20 000. При превышении лимита или глубины он прерывает выполнение и не выдаёт неполный отчёт.
+
+### Запуск владельцем проекта
+
+1. Установить зависимости Functions: npm install --prefix functions.
+2. Выполнить gcloud auth application-default login под учётной записью с read-only доступом к Firestore.
+3. В PowerShell задать явное подтверждение и project ID:
+
+   ```powershell
+   $env:QUIZHUB_CONFIRM_READ_ONLY_INVENTORY = "YES"
+   $env:QUIZHUB_PROJECT_ID = "quizhub-e65f5"
+   ```
+
+4. Запустить:
+
+   ```powershell
+   node functions/scripts/firestore-live-inventory.mjs > quizhub-firestore-inventory.json
+   ```
+5. Передать полученный JSON для сверки с repository-derived inventory.
+
+Скрипт не содержит write-операций и не выполняется автоматически CI. Его запуск против production должен делать владелец/уполномоченный оператор после проверки IAM и предполагаемого объёма чтений. Не помещать service-account keys или ADC credentials в репозиторий.
