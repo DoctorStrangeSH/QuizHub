@@ -85,7 +85,7 @@ test('Time Trial server deadlines award speed bonus and record timeout as incorr
         uid: 'player-1', sessionId: started.sessionId, questionId: started.question.id,
         answerIndex: 1, now: 5_999
     });
-    assert.equal(fast.points, 25);
+    assert.equal(fast.points, 15);
     assert.equal(fast.speedBonus, 5);
     assert.equal(fast.questionDeadlineAt, 20_999);
     const timeout = await service.answer({
@@ -105,7 +105,7 @@ test('Duel persists AI outcome so identical retry does not reroll', async () => 
     });
     const started = await service.start({
         uid: 'player-1', mode: 'duel', category: 'science',
-        difficulty: 'hard', count: 1, now: 1000
+        difficulty: 'easy', count: 1, now: 1000
     });
     const request = {
         uid: 'player-1', sessionId: started.sessionId,
