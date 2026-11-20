@@ -588,3 +588,11 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Facts are derived only from validated server session results and persisted atomically with reward/session receipts. Existing client-maintained totals are not imported.
 - The existing browser `checkAchievements()` path and achievement UI are intentionally not cut over here. Production Functions, Firestore Rules and browser behavior remain unchanged; the emulator-only boundary is preserved.
 - CI and Firestore Emulator integration passed on the final PR head.
+
+
+## 35. Migration preservation inventory includes trusted achievements
+
+- Updated `server/firestore-migration-inventory.mjs` to include `achievementFacts/{uid}` and nested `achievementUnlockReceipts/{uid}/unlocks/{achievementId}`.
+- Both paths are marked `preserve: true`; a future migration snapshot must include them and recursively enumerate the nested unlock receipts.
+- Extended `tests/firestore-migration-inventory.test.mjs` to assert both paths exist in the source-derived inventory.
+- This is a repository manifest update only. It does not enumerate the live database, change deployed Rules, or migrate production documents.
