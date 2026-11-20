@@ -1,4 +1,4 @@
-const UID = /^[^/\\x00-\\x1f]{1,256}$/;
+const UID = /^[^/\x00-\x1f]{1,256}$/;
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
 function requireUid(uid) {
     if (typeof uid !== 'string' || !UID.test(uid) || uid === '.' || uid === '..') throw new Error('INVALID_ACHIEVEMENT_UID');
