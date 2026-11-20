@@ -58,9 +58,12 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
                             weeklyExperience: value.weeklyExperience,
                             coins: value.coins,
                             quizzesCompleted: value.quizzesCompleted,
+                            wins: value.wins,
                             'stats.totalGames': value.stats.totalGames,
                             'stats.totalQuestions': value.stats.totalQuestions,
-                            'stats.correctAnswers': value.stats.correctAnswers
+                            'stats.correctAnswers': value.stats.correctAnswers,
+                            'stats.totalWins': value.stats.totalWins,
+                            'stats.bestStreak': value.stats.bestStreak
                         });
                         if (syncPublicProfiles && typeof value.nickname === 'string' &&
                             /^[A-Za-z0-9_]{3,20}$/.test(value.nickname)) {
