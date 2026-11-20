@@ -56,7 +56,7 @@ export function createServerModeClient({ invoke }) {
         async answer({ sessionId, questionId, answerIndex, language = 'ru' }) {
             requireString(sessionId, 'INVALID_SESSION_ID');
             requireString(questionId, 'INVALID_QUESTION_ID');
-            if (!Number.isSafeInteger(answerIndex) || answerIndex < 0 || answerIndex > 3) {
+            if (!Number.isSafeInteger(answerIndex) || answerIndex < 0) {
                 throw new Error('INVALID_ANSWER');
             }
             if (!LANGUAGES.has(language)) throw new Error('INVALID_LANGUAGE');
