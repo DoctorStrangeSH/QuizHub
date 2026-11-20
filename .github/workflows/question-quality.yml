@@ -47,6 +47,10 @@ jobs:
         run: node --test tests/pwa-visual-refresh.test.mjs
       - name: Verify QuizHub branded PWA and launch screen
         run: node --test tests/brand-identity.test.mjs
+      - name: Test local trusted profile creation transport
+        run: node --experimental-default-type=module --test tests/client-profile-create-invoker.test.mjs
+      - name: Syntax-check profile creation browser module
+        run: node --check app/modules/profile/profile.js
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Verify centralized profile read migration gate
