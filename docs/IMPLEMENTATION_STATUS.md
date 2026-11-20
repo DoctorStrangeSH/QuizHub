@@ -547,3 +547,15 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - The preview is guarded to the isolated Auth + Firestore + Functions emulator. The existing achievement UI and client-side unlock code are not switched in this PR.
 - Important integration gap: trusted quiz finalization does not yet populate `achievementFacts`. Therefore the preview is a secure evaluation foundation, not an active unlock pipeline. Do not copy client-maintained profile statistics into this collection or claim the economy is server-authoritative.
 - No production deployment, Rules changes, live data migration or browser behavior changes.
+
+
+## 32. PR #41 merged — achievement unlock foundation
+
+- PR #41 merged into `main` as `8c6773cd73f77aea32bba5fbd3b7b208d6ac8186`.
+- All three required checks passed on the final PR head: Question quality, QuizHub visual preview, and Firebase emulator integration.
+- Added a data-driven achievement catalog and transaction-backed unlock evaluator.
+- The evaluator reads only `achievementFacts/{uid}`; callable input cannot supply identity, progress, or achievement IDs.
+- Profile writes are restricted to the `achievements` field. Each new unlock receives an immutable receipt under `achievementUnlockReceipts/{uid}/unlocks/{achievementId}`.
+- `achievementUnlockPreview` is restricted to the isolated Auth + Firestore + Functions emulator.
+- **Not yet integrated:** trusted quiz finalization does not populate `achievementFacts`. The existing browser achievement logic remains unchanged. No production deployment, live migration, Rules change, or production unlock behavior is implied.
+- Next implementation slice: populate achievement facts atomically from trusted quiz reward finalization, and verify the fact-to-unlock path in emulator tests. Do not source facts from browser profile fields or enable production cutover as part of that slice.
