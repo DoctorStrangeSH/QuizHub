@@ -251,3 +251,37 @@ test('replaying the third lost Survival life stays terminal and never returns an
     assert.equal(resumed.status, 'ready_to_complete');
     assert.equal(resumed.question, null);
 });
+
+
+test('concurrent identical Duel answer requests commit one round and reuse one opponent roll', async () => {
+    const store = makeStore();
+    let rolls = 0;
+    const service = createModeSessionService({
+        catalog, store, random: () => { rolls++; return 0.9; }
+    });
+    const started = await service.start({
+        uid: 'player-1', mode: 'duel', category: 'science',
+        difficulty: 'easy', count: 2, now: 1000
+    });
+    const request = {
+        uid: 'player-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 1, now: 2000
+    };
+    const [first, concurrentRetry] = await Promise.all([
+        service.answer(request),
+        service.answer(request)
+    ]);
+    assert.deepEqual(
+        [first.correct, first.aiCorrect, first.points, first.progress],
+        [concurrentRetry.correct, concurrentRetry.aiCorrect, concurrentRetry.points, concurrentRetry.progress]
+    );
+    assert.equal([first.replayed, concurrentRetry.replayed].filter(Boolean).length, 1);
+    assert.equal(first.progress.answeredQuestions, 1);
+    assert.equal(first.progress.playerScore, 10);
+    assert.equal(rolls, 1);
+    const resumed = await service.resume({
+        uid: 'player-1', sessionId: started.sessionId, now: 2100
+    });
+    assert.equal(resumed.answeredQuestions, 1);
+    assert.equal(resumed.progress.playerScore, 10);
+});
