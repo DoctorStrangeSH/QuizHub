@@ -146,8 +146,9 @@ test('opt-in reward claim atomically refreshes a privacy-safe public ranking pro
     const before = db.mutations.length;
     assert.equal((await claimSessionReward({ store, uid: 'alice', sessionId: 'session_pub', at: 3000 })).alreadyClaimed, true);
     assert.equal(db.mutations.length, before, 'replayed claims must not republish the profile');
-    assert.deepEqual(db.mutations.slice(0, 3).map(item => item.path).sort(), [
-        'users/alice', 'quizSessions/session_pub', 'publicProfiles/alice'
+    assert.deepEqual(db.mutations.map(item => item.path).sort(), [
+        'users/alice', 'quizSessions/session_pub', 'publicProfiles/alice',
+        'achievementFacts/alice', 'achievementUnlockReceipts/alice/unlocks/first_quiz'
     ].sort());
 });
 
