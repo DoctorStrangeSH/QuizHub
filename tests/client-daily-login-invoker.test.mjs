@@ -84,7 +84,8 @@ test('rejects malformed or inconsistent server receipts', async () => {
         { streak: 0, coins: 10, balance: 10 },
         { streak: 1, coins: 20, balance: 20 },
         { streak: 1, coins: 10, balance: -1 },
-        { streak: 1, coins: 10, balance: 10.5 }
+        { streak: 1, coins: 10, balance: 10.5 },
+        { streak: 1, coins: 10, balance: 10 }
     ]) {
         await assert.rejects(
             claimDailyLoginPreview(async () => ({ data }), rewards),
