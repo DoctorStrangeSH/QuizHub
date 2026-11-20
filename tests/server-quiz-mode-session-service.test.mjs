@@ -221,3 +221,33 @@ test('Survival ends immediately when the third life is lost', async () => {
     assert.equal(result.livesRemaining, 0);
     assert.equal(result.answeredQuestions, 3);
 });
+
+
+test('replaying the third lost Survival life stays terminal and never returns another question', async () => {
+    const store = makeStore();
+    const service = createModeSessionService({ catalog, store, sessionDurationMs: 60_000 });
+    const started = await service.start({
+        uid: 'player-1', mode: 'survival', category: 'science',
+        difficulty: 'easy', count: 8, now: 1000
+    });
+    let question = started.question;
+    let terminalRequest;
+    for (const now of [2000, 3000, 4000]) {
+        terminalRequest = {
+            uid: 'player-1', sessionId: started.sessionId,
+            questionId: question.id, answerIndex: 0, now
+        };
+        const answer = await service.answer(terminalRequest);
+        question = answer.nextQuestion;
+    }
+    const retry = await service.answer(terminalRequest);
+    assert.equal(retry.replayed, true);
+    assert.equal(retry.finished, true);
+    assert.equal(retry.progress.lives, 0);
+    assert.equal(retry.nextQuestion, null);
+    const resumed = await service.resume({
+        uid: 'player-1', sessionId: started.sessionId, now: 4100
+    });
+    assert.equal(resumed.status, 'ready_to_complete');
+    assert.equal(resumed.question, null);
+});
