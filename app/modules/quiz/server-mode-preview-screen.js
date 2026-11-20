@@ -80,17 +80,17 @@ function timerMarkup(language) {
     if (!Number.isSafeInteger(deadlineAt)) return '';
     const clock = getTimeTrialClock(deadlineAt, Date.now());
     const l = labels(language);
-    return \`
+    return `
         <div class="time-trial-clock glass-card" data-time-trial-timer role="timer" aria-live="off">
             <div class="d-flex justify-content-between align-items-center gap-2">
-                <span>\${l.timeLeft}</span>
-                <strong data-time-trial-value>\${clock.display}</strong>
+                <span>${l.timeLeft}</span>
+                <strong data-time-trial-value>${clock.display}</strong>
             </div>
             <div class="timer-bar-wrapper mt-2">
-                <div class="timer-bar-fill\${clock.expired ? ' urgent' : ''}" data-time-trial-fill style="width:\${clock.percent}%"></div>
+                <div class="timer-bar-fill${clock.expired ? ' urgent' : ''}" data-time-trial-fill style="width:${clock.percent}%"></div>
             </div>
-            <p class="small text-secondary mt-2 mb-0" data-time-trial-status>\${clock.expired ? l.timeExpired : ''}</p>
-        </div>\`;
+            <p class="small text-secondary mt-2 mb-0" data-time-trial-status>${clock.expired ? l.timeExpired : ''}</p>
+        </div>`;
 }
 
 function stopTimer() {
@@ -111,7 +111,7 @@ function updateTimer(root, language) {
     const status = timer.querySelector('[data-time-trial-status]');
     if (value) value.textContent = clock.display;
     if (fill) {
-        fill.style.width = \`\${clock.percent}%\`;
+        fill.style.width = `${clock.percent}%`;
         fill.classList.toggle('urgent', clock.urgent || clock.expired);
     }
     if (value) value.classList.toggle('urgent', clock.urgent || clock.expired);
