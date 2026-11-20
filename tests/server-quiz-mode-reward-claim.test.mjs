@@ -177,7 +177,7 @@ test('foreign owner, incomplete run and corrupted mode log cannot claim rewards'
     const stored = db.records.get(`quizSessions/${started.sessionId}`);
     stored.modeState.score = 999999;
     await assert.rejects(claimModeSessionReward({
-        store, uid: 'player', sessionId: started.sessionId, at: 2000
+        store, uid: 'player', sessionId: started.sessionId, at: 901_000
     }), /INVALID_MODE_RESULT/);
     assert.equal(db.records.get('users/player').coins, 7);
     assert.equal(db.records.get(`quizSessions/${started.sessionId}`).finalized, false);
