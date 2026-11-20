@@ -3,8 +3,16 @@ import assert from 'node:assert/strict';
 import { createDailyLoginRewardService, DAILY_LOGIN_REWARDS } from '../server/daily-login-reward-service.mjs';
 
 function clone(value) {
-    if (value && typeof value.toMillis === 'function') return { toMillis: () => value.toMillis() };
-    return structuredClone(value);
+    if (value instanceof Date) return new Date(value.getTime());
+    if (value && typeof value.toMillis === 'function') {
+        const millis = value.toMillis();
+        return { toMillis: () => millis };
+    }
+    if (Array.isArray(value)) return value.map(clone);
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, clone(item)]));
+    }
+    return value;
 }
 
 function makeStore(users) {
