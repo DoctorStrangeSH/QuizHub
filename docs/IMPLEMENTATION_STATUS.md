@@ -377,3 +377,28 @@ The screen uses the Firebase callable transport and existing server-mode session
 - Add browser-level assertions for the preview screen and its error/retry states.
 - Then validate Duel and Time Trial, including server AI outcome and server-enforced per-question deadlines.
 - Continue Phase 0 owner evidence gates. No production cutover or Rules deployment is authorized.
+
+
+## 18. PR #29 merged; browser session resume follow-up
+
+- PR #29 merged to main as `a2078468f63db2fcb1ef4b84d4e2ee7dc4ee7b17` after Question quality, visual preview and Firebase emulator integration all passed.
+- The emulator-only browser preview now has an explicit local integration route for Survival, Duel and Time Trial. It is not a production mode switch and does not complete Stage 1 acceptance by itself.
+
+### Follow-up implementation
+
+PR #30 adds browser-side persistence of only the opaque server session ID in `sessionStorage`, partitioned by mode. On re-entry/refresh the preview asks the authenticated server to resume that session rather than silently starting a fresh run. Missing sessions are cleared and restarted; network/auth failures are not silently discarded. Sessions are cleared from browser storage only after a successful reward claim.
+
+The preview now renders resumable states explicitly:
+- `in_progress`: continue with the server-delivered question;
+- `ready_to_complete` / `expired`: offer the server claim operation;
+- `completed`: show the server receipt/result.
+
+Only the session identifier is stored in browser session storage; scores, correctness, answer keys and reward values remain server-owned.
+
+### Acceptance still required
+
+- Run an authenticated browser session against the local Auth, Firestore and Functions emulators.
+- Confirm refresh in the middle of Survival restores the same session and current question.
+- Confirm refresh after completion allows one idempotent claim and does not duplicate rewards.
+- Verify Duel and Time Trial resume behavior, including server deadlines.
+- Do not deploy production Functions/Rules or switch production gameplay until the Phase 0 owner evidence gates and full Stage 1 acceptance are complete.
