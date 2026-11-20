@@ -140,6 +140,10 @@ jobs:
         run: node --check app/modules/daily/daily.js
       - name: Test trusted XP level progression and achievement thresholds
         run: node --experimental-default-type=module --test tests/server-achievement-progress.test.mjs
+      - name: Test local browser achievement preview transport
+        run: node --experimental-default-type=module --test tests/client-achievement-invoker.test.mjs
+      - name: Syntax-check achievements browser module
+        run: node --check app/modules/achievements/achievements.js
       - name: Test achievement unlock service and callable
         run: node --experimental-default-type=module --test tests/server-achievement-unlock-service.test.mjs tests/server-achievement-firestore-store.test.mjs tests/server-achievement-callable.test.mjs tests/server-quiz-reward-claim.test.mjs tests/server-quiz-mode-reward-claim.test.mjs
       - name: Test server mode Firestore persistence and retries

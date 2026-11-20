@@ -95,10 +95,32 @@ export async function loadAchievements() {
     } catch (error) { console.error('Ошибка загрузки достижений:', error); }
 }
 
+function isAchievementPreviewRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        params.get('firebaseEmulator') === '1' &&
+        params.get('achievementPreview') === '1';
+}
+
 export async function checkAchievements() {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        // Emulator preview uses only trusted server-maintained achievementFacts.
+        // Fail closed: never fall back to client-authored achievement writes.
+        if (isAchievementPreviewRequested()) {
+            const [{ createLocalFirebaseAchievementInvoker }, { evaluateAchievementsPreview }] = await Promise.all([
+                import('./firebase-achievement-preview.js'),
+                import('./firebase-achievement-invoker.js')
+            ]);
+            const newlyUnlockedIds = await evaluateAchievementsPreview(
+                createLocalFirebaseAchievementInvoker(),
+                ALL_ACHIEVEMENTS
+            );
+            const newlyUnlocked = newlyUnlockedIds.map(id => ALL_ACHIEVEMENTS.find(item => item.id === id));
+            if (newlyUnlocked.length) showPopup(newlyUnlocked);
+            return;
+        }
         const userRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userRef);
         if (!userDoc.exists()) return;
