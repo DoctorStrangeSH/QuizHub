@@ -124,8 +124,8 @@ test('Duel reward is atomic, increments wins only for a player victory, and repl
     assert.equal(user.stats.totalWins, 3);
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.correctAnswers, 1);
-    assert.deepEqual(user.achievements, ['first_quiz']);
-    assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp, unlockedIds: ['first_quiz'] });
+    assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
+    assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
     assert.equal(db.records.get('achievementUnlockReceipts/player/unlocks/first_quiz').achievementId, 'first_quiz');
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['friend']);
@@ -144,6 +144,8 @@ test('Survival updates best streak using max semantics and does not increment wi
     assert.equal(receipt.bestStreak, 3);
     const user = db.records.get('users/player');
     assert.equal(user.stats.bestStreak, 3);
+    assert.equal(db.records.get('achievementFacts/player').totalWins, 0);
+    assert.equal(db.records.get('achievementFacts/player').perfectGames, 0);
     assert.equal(user.wins, 2);
     assert.equal(user.stats.totalWins, 2);
 });
@@ -167,6 +169,10 @@ test('Time Trial applies strict 70 percent win threshold and server-scored rewar
     });
     assert.equal(receipt.correctAnswers, 10);
     assert.equal(receipt.won, true);
+    assert.equal(receipt.perfect, true);
+    assert.ok(db.records.get('users/player').achievements.includes('perfect_score'));
+    assert.equal(db.records.get('achievementFacts/player').totalWins, 1);
+    assert.equal(db.records.get('achievementFacts/player').perfectGames, 1);
     assert.equal(db.records.get('users/player').wins, 3);
 });
 
