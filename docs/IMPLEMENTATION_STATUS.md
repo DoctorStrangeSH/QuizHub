@@ -626,3 +626,11 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Next acceptance: merge only after all three required CI checks pass on this branch, then proceed with the remaining economy migration in the V1 specification.
 
 }
+
+## 42. Local browser preview for trusted profile creation
+
+- Added an emulator-only browser transport for `profileCreatePreview`, requiring localhost/127.0.0.1, `firebaseEmulator=1&profileCreatePreview=1`, Firebase project `demo-quizhub`, and a non-anonymous authenticated account.
+- In preview mode the browser submits only the nickname. The callable derives UID and email from verified Firebase Auth and the server transaction creates the private user profile, privacy-safe public profile and unique nickname claim together.
+- The browser validates the callable receipt against the signed-in UID and requested nickname. Preview transport errors never fall back to client-side `setDoc`.
+- Added transport tests for emulator gating, anonymous/production rejection, nickname validation, minimal request payload and forged receipt rejection. The existing Firebase emulator workflow already exercises the authenticated profile callable, concurrent nickname reservation, duplicate handling, initial balance and public/private field separation.
+- Production registration remains unchanged. Existing-user migration, nickname-claim backfill, Rules review and owner acceptance are still required before production cutover.
