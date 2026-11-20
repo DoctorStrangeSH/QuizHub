@@ -11,7 +11,7 @@ export function createAchievementFirestoreStore(db) {
     }
     const userRef = uid => db.collection('users').doc(requireUid(uid));
     const factsRef = uid => db.collection('achievementFacts').doc(requireUid(uid));
-    const receiptRef = uid => db.collection('achievementUnlockReceipts').doc(requireUid(uid));
+    const receiptRef = (uid, id) => db.collection('achievementUnlockReceipts').doc(requireUid(uid)).collection('unlocks').doc(id);
     return {
         runTransaction(callback) {
             if (typeof callback !== 'function') throw new Error('INVALID_TRANSACTION_CALLBACK');
@@ -24,9 +24,9 @@ export function createAchievementFirestoreStore(db) {
                         !Array.isArray(patch.achievements)) throw new Error('FORBIDDEN_ACHIEVEMENT_PATCH');
                     native.update(userRef(uid), patch);
                 },
-                createUnlockReceipt: async (uid, ids) => {
+                createUnlockReceipts: async (uid, ids) => {
                     if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_RECEIPT');
-                    native.set(receiptRef(uid), { unlockedIds: ids, updatedAt: new Date() }, { merge: true });
+                    for (const id of ids) native.create(receiptRef(uid, id), { achievementId: id, unlockedAt: new Date() });
                 }
             }));
         }
