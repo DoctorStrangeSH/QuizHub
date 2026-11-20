@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createFirebaseDailyLoginInvoker } from '../app/modules/daily/firebase-daily-login-invoker.js';
+import { createFirebaseDailyLoginInvoker, claimDailyLoginPreview } from '../app/modules/daily/firebase-daily-login-invoker.js';
 
 function setup({ hostname = 'localhost', search = '?firebaseEmulator=1&dailyLoginPreview=1', projectId = 'demo-quizhub' } = {}) {
     const calls = [];
@@ -50,4 +50,45 @@ test('rejects malformed or client-authored callable envelopes', async () => {
         await assert.rejects(invoke(payload), /INVALID_DAILY_LOGIN_REQUEST/);
     }
     assert.equal(calls.length, 3, 'invalid payloads never reach the callable');
+});
+
+const rewards = [10, 20, 30, 50, 75, 100, 200].map((coins, index) => ({ day: index + 1, coins }));
+
+test('adapts the server receipt to the daily popup without recalculating its award', async () => {
+    const result = await claimDailyLoginPreview(
+        async () => ({ data: { streak: 2, coins: 20, balance: 120, alreadyClaimed: false } }),
+        rewards
+    );
+    assert.deepEqual(result, { day: 2, coins: 20, balance: 120 });
+});
+
+test('caps streak display at the final reward tier while retaining actual streak', async () => {
+    const result = await claimDailyLoginPreview(
+        async () => ({ data: { streak: 12, coins: 200, balance: 500, alreadyClaimed: false } }),
+        rewards
+    );
+    assert.deepEqual(result, { day: 12, coins: 200, balance: 500 });
+});
+
+test('does not show a reward for an already-claimed receipt', async () => {
+    const result = await claimDailyLoginPreview(
+        async () => ({ data: { streak: 2, coins: 20, balance: 120, alreadyClaimed: true } }),
+        rewards
+    );
+    assert.equal(result, false);
+});
+
+test('rejects malformed or inconsistent server receipts', async () => {
+    for (const data of [
+        null,
+        { streak: 0, coins: 10, balance: 10 },
+        { streak: 1, coins: 20, balance: 20 },
+        { streak: 1, coins: 10, balance: -1 },
+        { streak: 1, coins: 10, balance: 10.5 }
+    ]) {
+        await assert.rejects(
+            claimDailyLoginPreview(async () => ({ data }), rewards),
+            /INVALID_DAILY_LOGIN_RECEIPT/
+        );
+    }
 });
