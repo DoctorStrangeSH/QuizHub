@@ -1,18 +1,19 @@
 const UID = /^[^/\\x00-\\x1f]{1,256}$/;
 const OPERATION_ID = /^[A-Za-z0-9_-]{8,128}$/;
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
+const requireUid = uid => {
+    if (typeof uid !== 'string' || !UID.test(uid) || uid === '.' || uid === '..') throw new Error('INVALID_STORAGE_UID');
+    return uid;
+};
 
 export function createShopFirestoreStore(db) {
     if (!db || typeof db.runTransaction !== 'function' || typeof db.collection !== 'function') {
         throw new Error('INVALID_SHOP_FIRESTORE_ADAPTER');
     }
-    const userRef = uid => {
-        if (typeof uid !== 'string' || !UID.test(uid) || uid === '.' || uid === '..') throw new Error('INVALID_STORAGE_UID');
-        return db.collection('users').doc(uid);
-    };
+    const userRef = uid => db.collection('users').doc(requireUid(uid));
     const purchaseRef = (uid, operationId) => {
         if (typeof operationId !== 'string' || !OPERATION_ID.test(operationId)) throw new Error('INVALID_STORAGE_OPERATION_ID');
-        return db.collection('shopPurchaseRequests').doc(uid).collection('requests').doc(operationId);
+        return db.collection('shopPurchaseRequests').doc(requireUid(uid)).collection('requests').doc(operationId);
     };
 
     return {
