@@ -1,4 +1,4 @@
-const MODE_NAMES = new Set(['classic', 'duel', 'survival', 'time']);
+const DEFAULT_MODE_NAMES = ['duel', 'survival', 'time'];
 const LANGUAGES = new Set(['ru', 'en']);
 
 function requireString(value, code) {
@@ -17,8 +17,12 @@ function unwrap(response) {
  * It deliberately has no Firestore writes and never sends uid, score,
  * correctness, answer keys, reward values or client timestamps.
  */
-export function createServerModeClient({ invoke, claimOperation = 'claim' }) {
-    if (typeof invoke !== 'function') throw new Error('INVALID_MODE_TRANSPORT');
+export function createServerModeClient({ invoke, claimOperation = 'claim', supportedModes = DEFAULT_MODE_NAMES } = {}) {
+    if (typeof invoke !== 'function' || !Array.isArray(supportedModes) ||
+        supportedModes.some(mode => typeof mode !== 'string' || !['classic', 'duel', 'survival', 'time'].includes(mode))) {
+        throw new Error('INVALID_MODE_TRANSPORT');
+    }
+    const modeNames = new Set(supportedModes);
 
     async function request(operation, payload) {
         try {
@@ -46,7 +50,7 @@ export function createServerModeClient({ invoke, claimOperation = 'claim' }) {
 
     return Object.freeze({
         async start({ mode, category = 'all', difficulty = 'easy', count, language = 'ru' }) {
-            if (!MODE_NAMES.has(mode)) throw new Error('UNSUPPORTED_QUIZ_MODE');
+            if (!modeNames.has(mode)) throw new Error('UNSUPPORTED_QUIZ_MODE');
             if (!['easy', 'medium', 'hard'].includes(difficulty)) throw new Error('INVALID_DIFFICULTY');
             if (!Number.isSafeInteger(count) || count < 1 || count > 100) throw new Error('INVALID_COUNT');
             if (!LANGUAGES.has(language)) throw new Error('INVALID_LANGUAGE');
