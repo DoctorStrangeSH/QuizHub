@@ -1,6 +1,7 @@
 import { createModeSessionController } from './mode-session-controller.js';
 import { createServerModeClient } from './server-mode-client.js';
 import { createLocalFirebaseModeInvoker } from './firebase-mode-preview.js';
+import { createLocalFirebaseClassicInvoker } from './firebase-classic-preview.js';
 import { escapeHTML } from './escape-html.js';
 import { createModeSessionStorage } from './mode-session-storage.js';
 import { getTimeTrialClock } from './time-trial-clock.js';
@@ -12,7 +13,7 @@ let lastResponse = null;
 let sessionStorageAdapter = null;
 let timerInterval = null;
 
-const QUESTION_COUNTS = Object.freeze({ survival: 100, duel: 7, time: 10 });
+const QUESTION_COUNTS = Object.freeze({ classic: 10, survival: 100, duel: 7, time: 10 });
 
 function text(value) {
     return escapeHTML(String(value ?? ''));
@@ -196,8 +197,13 @@ export async function renderServerModePreview(settings) {
     lastResponse = null;
     busy = true;
     settingsSnapshot = { ...settings, language };
-    const invoke = createLocalFirebaseModeInvoker();
-    const client = createServerModeClient({ invoke });
+    const isClassic = mode === 'classic';
+    const invoke = isClassic ? createLocalFirebaseClassicInvoker() : createLocalFirebaseModeInvoker();
+    const client = createServerModeClient({
+        invoke,
+        claimOperation: isClassic ? 'complete' : 'claim',
+        supportedModes: isClassic ? ['classic'] : ['duel', 'survival', 'time']
+    });
     controller = createModeSessionController({ client });
     try {
         sessionStorageAdapter = createModeSessionStorage(window.sessionStorage);
