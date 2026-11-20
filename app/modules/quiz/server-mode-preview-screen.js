@@ -131,7 +131,7 @@ export async function renderServerModePreview(settings) {
             try {
                 state = await controller.resume({ sessionId: previousSessionId, language });
             } catch (error) {
-                if (error.message !== 'SESSION_NOT_FOUND') throw error;
+                if (!['SESSION_NOT_FOUND', 'NOT_SESSION_OWNER'].includes(error.message)) throw error;
                 sessionStorageAdapter.clear(mode);
             }
         }
