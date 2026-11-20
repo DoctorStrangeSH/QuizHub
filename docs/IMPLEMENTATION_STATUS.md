@@ -605,3 +605,12 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Added automated tests for host/project/flag gating, callable envelope validation, receipt mapping, duplicate-claim response and malformed receipts. Added the test and syntax check to Question Quality CI.
 - No production callable was enabled, no Functions/Rules deployment occurred, and no live data was accessed or changed.
 - Next acceptance: run the browser against Auth, Firestore and Functions emulators with a test account; verify first claim, same-day retry, next-day streak continuation/reset and concurrent claims. Keep production cutover blocked pending Phase 0 evidence and full browser acceptance.
+
+## 39. Trusted level milestones — corrected XP derivation
+
+- Level achievements are derived from the same V1 formula used by the existing client progression: `floor(totalTrustedXP / 100) + 1`.
+- The level is computed only from `achievementFacts.experience`, which is advanced inside the trusted quiz reward transaction. The client-maintained `users.level` and legacy `users.experience` fields are not imported.
+- Threshold tests cover level 5 at 400 XP, level 10 at 900 XP, and rejection of a forged legacy level.
+- Updated emulator and reward fixtures to assert the persisted server-owned level.
+- This replaces the earlier carry-forward-only approach, which could leave level facts absent and therefore never unlock level milestones for new trusted progress.
+- Production migration remains blocked until Phase 0 evidence and an approved baseline strategy for existing users are complete.
