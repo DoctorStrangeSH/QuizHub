@@ -150,6 +150,10 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-server-mode-transport.test.mjs
       - name: Test browser server mode session controller
         run: node --experimental-default-type=module --test tests/client-mode-session-controller.test.mjs
+      - name: Test Time Trial countdown clock
+        run: node --experimental-default-type=module --test tests/time-trial-clock.test.mjs
+      - name: Syntax-check server mode preview screen
+        run: node --check app/modules/quiz/server-mode-preview-screen.js
       - name: Test browser server mode session storage
         run: node --experimental-default-type=module --test tests/client-mode-session-storage.test.mjs
       - name: Syntax-check isolated server mode preview screen
