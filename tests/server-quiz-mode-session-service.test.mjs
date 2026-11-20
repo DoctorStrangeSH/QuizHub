@@ -164,3 +164,30 @@ test('mode completion is idempotent and does not accept an early finish', async 
     assert.equal(first.score, 10);
     assert.equal(retry.alreadyFinalized, true);
 });
+
+
+test('server responses expose safe mode progress without canonical answer data', async () => {
+    const store = makeStore();
+    const service = createModeSessionService({ catalog, store, sessionDurationMs: 60_000 });
+    const started = await service.start({
+        uid: 'player-1', mode: 'survival', category: 'science',
+        difficulty: 'easy', count: 2, now: 1000
+    });
+    assert.deepEqual(started.progress, {
+        answeredQuestions: 0, totalQuestions: 2, score: 0,
+        lives: 3, currentStreak: 0, bestStreak: 0
+    });
+    const answered = await service.answer({
+        uid: 'player-1', sessionId: started.sessionId,
+        questionId: started.question.id, answerIndex: 1, now: 2000
+    });
+    assert.deepEqual(answered.progress, {
+        answeredQuestions: 1, totalQuestions: 2, score: 10,
+        lives: 3, currentStreak: 1, bestStreak: 1
+    });
+    const resumed = await service.resume({
+        uid: 'player-1', sessionId: started.sessionId, now: 2100
+    });
+    assert.deepEqual(resumed.progress, answered.progress);
+    assert.equal('correctIndex' in answered.nextQuestion, false);
+});
