@@ -167,8 +167,9 @@ export const dailyLoginRewardPreview = onCall({
 
 
 // Achievement evaluation is a preview only. It consumes server-maintained
-// achievementFacts, never progress supplied by the browser. Facts are not yet
-// populated by trusted quiz finalization, so this does not unlock legacy stats.
+// achievementFacts populated atomically by trusted quiz reward claims; it never
+// imports browser-maintained legacy stats. Keep this callable emulator-only
+// until Rules, client cutover and existing-user baseline migration are reviewed.
 const achievementPreview = createAchievementCallableAdapter({
     handle: createAuthenticatedAchievementHandler({
         service: createAchievementUnlockService({
