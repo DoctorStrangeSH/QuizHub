@@ -2,11 +2,13 @@ import { createModeSessionController } from './mode-session-controller.js';
 import { createServerModeClient } from './server-mode-client.js';
 import { createLocalFirebaseModeInvoker } from './firebase-mode-preview.js';
 import { escapeHTML } from './escape-html.js';
+import { createModeSessionStorage } from './mode-session-storage.js';
 
 let controller = null;
 let settingsSnapshot = null;
 let busy = false;
 let lastResponse = null;
+let sessionStorageAdapter = null;
 
 const QUESTION_COUNTS = Object.freeze({ survival: 100, duel: 7, time: 10 });
 
@@ -77,6 +79,39 @@ function renderActive(language) {
     return shell(questionMarkup(state, language), language);
 }
 
+function renderReadyToClaim(state, language) {
+    const l = labels(language);
+    return shell(\`
+        <div class="quiz-result glass-card text-center">
+            <div class="result-icon">🏁</div>
+            <h2>\${l.complete}</h2>
+            <p>\${l.answered}: \${state.answeredQuestions}/\${state.totalQuestions}</p>
+            <button type="button" class="btn-gold" data-server-claim>\${l.claim}</button>
+        </div>\`, language);
+}
+
+function renderCompleted(state, language) {
+    const l = labels(language);
+    const receipt = state.receipt || state.result || {};
+    return shell(\`
+        <div class="quiz-result glass-card text-center">
+            <div class="result-icon">🏆</div>
+            <h2>\${l.complete}</h2>
+            <p>\${l.score}: \${text(receipt.score ?? '—')}</p>
+            <p class="text-secondary small">\${text(receipt.status || 'Server receipt confirmed')}</p>
+            <button type="button" class="btn-premium" data-server-menu>\${l.menu}</button>
+        </div>\`, language);
+}
+
+function renderSessionState(state, language) {
+    if (state.status === 'in_progress') return renderActive(language);
+    if (state.status === 'ready_to_complete' || state.status === 'ready_to_claim' || state.status === 'expired') {
+        return renderReadyToClaim(state, language);
+    }
+    if (state.status === 'completed') return renderCompleted(state, language);
+    throw new Error('UNSUPPORTED_SESSION_STATE');
+}
+
 export async function renderServerModePreview(settings) {
     const language = settings.language || 'ru';
     const mode = settings.mode;
@@ -88,21 +123,34 @@ export async function renderServerModePreview(settings) {
     const invoke = createLocalFirebaseModeInvoker();
     const client = createServerModeClient({ invoke });
     controller = createModeSessionController({ client });
-    const root = shell(`<div class="quiz-question-card glass-card">${labels(language).loading}</div>`, language);
     try {
-        await controller.start({
-            mode,
-            category: settings.category || 'all',
-            difficulty: settings.difficulty || 'easy',
-            count: QUESTION_COUNTS[mode],
-            language
-        });
+        sessionStorageAdapter = createModeSessionStorage(window.sessionStorage);
+        const previousSessionId = sessionStorageAdapter.read(mode);
+        let state = null;
+        if (previousSessionId) {
+            try {
+                state = await controller.resume({ sessionId: previousSessionId, language });
+            } catch (error) {
+                if (error.message !== 'SESSION_NOT_FOUND') throw error;
+                sessionStorageAdapter.clear(mode);
+            }
+        }
+        if (!state) {
+            state = await controller.start({
+                mode,
+                category: settings.category || 'all',
+                difficulty: settings.difficulty || 'easy',
+                count: QUESTION_COUNTS[mode],
+                language
+            });
+            sessionStorageAdapter.write(mode, state.sessionId);
+        }
         busy = false;
-        return renderActive(language);
+        return renderSessionState(state, language);
     } catch (error) {
         controller = null;
         busy = false;
-        return shell(`<div class="quiz-result glass-card" role="alert"><p>${text(labels(language).error)}</p><p class="text-secondary small">${text(error.message)}</p></div>`, language);
+        return shell(\`<div class="quiz-result glass-card" role="alert"><p>\${text(labels(language).error)}</p><p class="text-secondary small">\${text(error.message)}</p></div>\`, language);
     }
 }
 
@@ -162,6 +210,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
             try {
                 const completed = await controller.claim();
                 const receipt = completed.receipt || {};
+                sessionStorageAdapter?.clear(settingsSnapshot.mode);
                 root.innerHTML = `
                     <div class="quiz-result glass-card text-center animate-in">
                         <div class="result-icon">🏆</div><h2>${l.complete}</h2>
@@ -182,5 +231,6 @@ export function resetServerModePreview() {
     controller = null;
     settingsSnapshot = null;
     lastResponse = null;
+    sessionStorageAdapter = null;
     busy = false;
 }
