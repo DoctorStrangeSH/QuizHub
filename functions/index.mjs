@@ -17,6 +17,10 @@ import { createProfileCallableAdapter } from '../server/profile-create-callable-
 import { createModeSessionService } from '../server/quiz-mode-session-service.mjs';
 import { createAuthenticatedModeHandler } from '../server/authenticated-mode-handler.mjs';
 import { createModeCallableAdapter } from '../server/firebase-mode-callable-adapter.mjs';
+import { createShopPurchaseService } from '../server/shop-purchase-service.mjs';
+import { createShopFirestoreStore } from '../server/shop-firestore-store.mjs';
+import { createAuthenticatedShopHandler } from '../server/authenticated-shop-handler.mjs';
+import { createShopCallableAdapter } from '../server/firebase-shop-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -102,4 +106,28 @@ export const quizModePreview = onCall({
         throw new HttpsError('failed-precondition', 'QUIZ_MODE_PREVIEW_DISABLED');
     }
     return modePreview(request);
+});
+
+
+// Shop purchase preview is isolated to the local Auth + Firestore + Functions
+// emulators. Production remains disabled until the browser shop and Rules are
+// migrated and owner acceptance is complete.
+const shopPreview = createShopCallableAdapter({
+    handle: createAuthenticatedShopHandler({
+        service: createShopPurchaseService({ store: createShopFirestoreStore(getFirestore()) })
+    }),
+    HttpsError
+});
+export const shopPurchasePreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'SHOP_PURCHASE_PREVIEW_DISABLED');
+    }
+    return shopPreview(request);
 });
