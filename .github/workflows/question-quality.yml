@@ -150,6 +150,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-server-mode-transport.test.mjs
       - name: Test browser server mode session controller
         run: node --experimental-default-type=module --test tests/client-mode-session-controller.test.mjs
+      - name: Test emulator-only Firebase mode invoker
+        run: node --experimental-default-type=module --test tests/firebase-mode-invoker.test.mjs
 
       - name: Test authenticated full quiz flow across users
         run: node --experimental-default-type=module --test tests/server-authenticated-quiz-flow.test.mjs
