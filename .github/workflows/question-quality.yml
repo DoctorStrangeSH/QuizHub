@@ -112,6 +112,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/quiz-economy-boundary.test.mjs
       - name: Test server-side quiz session rules
         run: node --experimental-default-type=module --test tests/server-quiz-session.test.mjs
+      - name: Test V1 server mode scoring primitives
+        run: node --experimental-default-type=module --test tests/server-quiz-mode-rules.test.mjs
       - name: Test Firestore quiz session and reward adapter
         run: node --experimental-default-type=module --test tests/server-quiz-firestore-store.test.mjs
 
