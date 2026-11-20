@@ -1,5 +1,5 @@
-const UID = /^[^/\\x00-\\x1f]{1,256}$/;
-const DATE = /^\\d{4}-\\d{2}-\\d{2}$/;
+const UID = /^[^/\x00-\x1f]{1,256}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 function parseKey(key) {
     let parts;
     try { parts = JSON.parse(key); } catch { throw new Error('INVALID_DAILY_LOGIN_KEY'); }
