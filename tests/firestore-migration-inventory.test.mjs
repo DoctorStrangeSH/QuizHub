@@ -21,6 +21,9 @@ test('inventory matches repository-backed Firestore sources and has unique manif
         'chats/{chatId}/messages/{messageId}');
     assert.equal(keys.includes('friendships'), false, 'friends live in users documents, not a separate collection');
     assert.equal(keys.includes('quizResults'), false, 'no separate quizResults collection appears in app sources');
+    assert.equal(QUIZHUB_FIRESTORE_INVENTORY.find(x => x.key === 'achievementFacts').path, 'achievementFacts/{uid}');
+    assert.equal(QUIZHUB_FIRESTORE_INVENTORY.find(x => x.key === 'achievementUnlockReceipts').path,
+        'achievementUnlockReceipts/{uid}/unlocks/{achievementId}');
 });
 
 test('real inventory requires nested messages and all game snapshots before data-preservation pass', () => {
