@@ -137,7 +137,7 @@ export function getModeResult(state) {
     return {
         mode: state.mode,
         score: state.score,
-        correctAnswers: null,
+        correctAnswers: state.correctAnswers,
         totalQuestions: state.totalQuestions,
         answeredQuestions: state.answeredQuestions
     };
