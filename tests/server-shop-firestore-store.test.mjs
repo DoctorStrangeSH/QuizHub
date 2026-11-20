@@ -84,5 +84,5 @@ test('Firestore adapter validates owner and operation document paths', async () 
     const store = createShopFirestoreStore(db);
     await assert.rejects(store.runTransaction(tx => tx.getPurchase('../other', 'purchase_req_0001')), /INVALID_STORAGE_UID/);
     await assert.rejects(store.runTransaction(tx => tx.getPurchase('alice', '../other')), /INVALID_STORAGE_OPERATION_ID/);
-    await assert.rejects(store.runTransaction(tx => tx.setPurchase('alice', 'purchase_req_0001', {})), /native\.create is not a function/);
+    await assert.rejects(store.runTransaction(tx => tx.setPurchase('alice', '../other', {})), /INVALID_STORAGE_OPERATION_ID/);
 });
