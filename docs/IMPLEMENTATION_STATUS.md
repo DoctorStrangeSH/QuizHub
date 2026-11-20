@@ -452,9 +452,9 @@ PR #32 presents the existing server-owned Survival rules more clearly:
 This is a presentation and acceptance-coverage improvement; it does not change Survival scoring, life count, reward rules or production Firebase behavior.
 
 
-## 21. PR #32 merged; Duel round presentation follow-up
+## 21. PR #33 merged; Duel round presentation follow-up
 
-- PR #32 merged to `main` as `48005531f473ded1ad725ee3003652c22667d9c0` after Question quality, visual preview and Firebase Emulator integration passed.
+- PR #33 merged to `main` as `54322e18c62577800e366a426d5b2412bf4d1d82` after Question quality, visual preview and Firebase Emulator integration passed.
 - Survival now displays the three server-owned lives as accessible hearts, with localized life-loss and final-life feedback. The third lost life is covered by a server lifecycle test.
 
 ### Current follow-up: Duel round and final result UI
@@ -464,3 +464,14 @@ PR #33 adds a compact head-to-head scoreboard with both server-owned scores and 
 The UI does not simulate the opponent, calculate points, or determine the winner. It only displays `aiCorrect`, score totals and `outcome` returned by the trusted session service. The existing V1 Duel rules and difficulty probabilities are unchanged.
 
 Automated UI contract tests cover the scoreboard, round feedback, localized labels and final result presentation. Authenticated browser acceptance for all server-owned modes remains outstanding; production Functions/Rules remain untouched.
+
+
+## 22. Mode reward claim edge-case coverage
+
+- PR #33 is merged. Duel now shows both server-owned scores, per-round outcomes and the final win/loss/draw result.
+- Added focused regression coverage for reward finalization:
+  - Duel draws and losses never increment player win counters.
+  - Survival can claim immediately after the third lost life and preserves the profile's previous best streak with max semantics.
+  - Time Trial's win boundary is exactly 7 correct answers out of 10; 6/10 is not a win.
+- These tests exercise the existing atomic mode reward claim transaction. No reward formula, mode rule, production callable or Firestore Rules behavior is changed.
+- Next release work remains gated by authenticated browser acceptance and the Phase 0 operator evidence in `V1_SERVER_MODE_INTEGRATION_CONTRACT.md`. Do not enable production mode callables or deploy production Functions/Rules as part of this test-only follow-up.
