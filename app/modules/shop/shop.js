@@ -118,7 +118,10 @@ window.buyItem = async (itemId, price, type) => {
                 operationId: createShopOperationId()
             });
             const receipt = response?.data;
-            if (!receipt || receipt.alreadyPurchased === true) {
+            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean') {
+                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
+            }
+            if (receipt.alreadyPurchased) {
                 alert('Покупка уже обработана.');
                 await loadShopItems(type);
                 return;
@@ -159,7 +162,10 @@ window.buyBonus = async (itemId, price, effect, duration) => {
                 operationId: createShopOperationId()
             });
             const receipt = response?.data;
-            if (!receipt || receipt.alreadyPurchased === true) {
+            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean') {
+                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
+            }
+            if (receipt.alreadyPurchased) {
                 alert('Покупка уже обработана.');
                 await loadShopItems('bonuses');
                 return;
