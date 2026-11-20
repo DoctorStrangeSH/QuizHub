@@ -605,3 +605,13 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Added automated tests for host/project/flag gating, callable envelope validation, receipt mapping, duplicate-claim response and malformed receipts. Added the test and syntax check to Question Quality CI.
 - No production callable was enabled, no Functions/Rules deployment occurred, and no live data was accessed or changed.
 - Next acceptance: run the browser against Auth, Firestore and Functions emulators with a test account; verify first claim, same-day retry, next-day streak continuation/reset and concurrent claims. Keep production cutover blocked pending Phase 0 evidence and full browser acceptance.
+
+## 38. Shop browser integration — local emulator preview
+
+- Added a browser transport for `shopPurchasePreview`, guarded by localhost/127.0.0.1, explicit `firebaseEmulator=1&shopPreview=1` flags and Firebase project `demo-quizhub`.
+- In the guarded local preview path, cosmetic purchases, bonus purchases and cosmetic equip operations are sent to the authenticated callable. Client-supplied price, UID, bonus duration and other unapproved fields are rejected.
+- Added server-side equip handling. It verifies ownership from the user's Firestore profile and updates only the relevant equipped field; it does not change the coin balance.
+- Purchase pricing, active bonus expiry, ownership, balance debit and idempotency remain server-derived from the catalog and server clock.
+- Production shop behavior remains unchanged. The existing legacy direct Firestore writes are still a release blocker; no production Functions/Rules deployment or live-data access occurred.
+- Added browser transport tests, service/handler/callable equip tests and a Firebase Auth + Functions + Firestore emulator integration test for forged fields, purchase retry, ownership, equip, insufficient balance and idempotency-key reuse.
+- Next acceptance: confirm CI passes on this branch; manually test the local browser flow with emulator flags, then complete the Phase 0 production evidence and migration plan before any production cutover.
