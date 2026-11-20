@@ -119,3 +119,40 @@ test('controller allows claiming a session that resume marks ready_to_complete',
     assert.equal(completed.status, 'completed');
     assert.equal(completed.receipt.sessionId, 's-expired');
 });
+
+
+test('controller carries server-owned progress through start, answer and resume', async () => {
+    const initialProgress = {
+        answeredQuestions: 0, totalQuestions: 2, score: 0,
+        lives: 3, currentStreak: 0, bestStreak: 0
+    };
+    const updatedProgress = {
+        answeredQuestions: 1, totalQuestions: 2, score: 10,
+        lives: 3, currentStreak: 1, bestStreak: 1
+    };
+    let resumed = false;
+    const controller = createModeSessionController({
+        client: {
+            start: async () => ({
+                sessionId: 'progress-session', mode: 'survival',
+                deadlineAt: 9000, totalQuestions: 2, progress: initialProgress,
+                question: { id: 'q1', question: 'Question?', options: ['A', 'B'] }
+            }),
+            answer: async () => ({
+                correct: true, finished: false, progress: updatedProgress,
+                nextQuestion: { id: 'q2', question: 'Next?', options: ['C', 'D'] }
+            }),
+            resume: async () => ({
+                status: 'in_progress', sessionId: 'progress-session', mode: 'survival',
+                answeredQuestions: 1, totalQuestions: 2, deadlineAt: 9000,
+                progress: updatedProgress,
+                question: { id: 'q2', question: 'Next?', options: ['C', 'D'] }
+            }),
+            claim: async () => ({})
+        }
+    });
+    assert.deepEqual((await controller.start({ mode: 'survival', count: 2 })).progress, initialProgress);
+    assert.deepEqual((await controller.answerDisplayed(0)).state.progress, updatedProgress);
+    resumed = await controller.resume({ sessionId: 'progress-session' });
+    assert.deepEqual(resumed.progress, updatedProgress);
+});

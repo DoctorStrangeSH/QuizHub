@@ -2,11 +2,13 @@ import { createModeSessionController } from './mode-session-controller.js';
 import { createServerModeClient } from './server-mode-client.js';
 import { createLocalFirebaseModeInvoker } from './firebase-mode-preview.js';
 import { escapeHTML } from './escape-html.js';
+import { createModeSessionStorage } from './mode-session-storage.js';
 
 let controller = null;
 let settingsSnapshot = null;
 let busy = false;
 let lastResponse = null;
+let sessionStorageAdapter = null;
 
 const QUESTION_COUNTS = Object.freeze({ survival: 100, duel: 7, time: 10 });
 
@@ -23,7 +25,7 @@ function labels(language) {
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
             lives: 'Lives', streak: 'Streak', score: 'Score',
-            answered: 'Questions answered'
+            answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent',
         }
         : {
             title: 'Предпросмотр серверного режима', loading: 'Загружаем вопрос…',
@@ -32,7 +34,7 @@ function labels(language) {
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
             lives: 'Жизни', streak: 'Серия', score: 'Счёт',
-            answered: 'Отвечено вопросов'
+            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник',
         };
 }
 
@@ -55,6 +57,21 @@ function questionMarkup(state, language) {
     `;
 }
 
+function progressMarkup(language) {
+    const progress = controller?.getState().progress;
+    if (!progress) return '';
+    const l = labels(language);
+    const items = [];
+    if (Number.isFinite(progress.lives)) items.push(`<span>${l.lives}: <strong>${progress.lives}</strong></span>`);
+    if (Number.isFinite(progress.currentStreak)) items.push(`<span>${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
+    if (Number.isFinite(progress.bestStreak)) items.push(`<span>${l.bestStreak}: <strong>${progress.bestStreak}</strong></span>`);
+    if (Number.isFinite(progress.score)) items.push(`<span>${l.score}: <strong>${progress.score}</strong></span>`);
+    if (Number.isFinite(progress.playerScore)) items.push(`<span>${l.playerScore}: <strong>${progress.playerScore}</strong></span>`);
+    if (Number.isFinite(progress.aiScore)) items.push(`<span>${l.aiScore}: <strong>${progress.aiScore}</strong></span>`);
+    if (!items.length) return '';
+    return `<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">${items.join('')}</div>`;
+}
+
 function shell(body, language) {
     const l = labels(language);
     return `
@@ -65,6 +82,7 @@ function shell(body, language) {
                     <span>${l.answered}: ${controller?.getState().answeredQuestions ?? 0}/${controller?.getState().totalQuestions ?? 0}</span>
                 </div>
             </div>
+            ${progressMarkup(language)}
             ${body}
             <div class="text-center mt-3">
                 <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
@@ -75,6 +93,39 @@ function shell(body, language) {
 function renderActive(language) {
     const state = controller.getState();
     return shell(questionMarkup(state, language), language);
+}
+
+function renderReadyToClaim(state, language) {
+    const l = labels(language);
+    return shell(`
+        <div class="quiz-result glass-card text-center">
+            <div class="result-icon">🏁</div>
+            <h2>${l.complete}</h2>
+            <p>${l.answered}: ${state.answeredQuestions}/${state.totalQuestions}</p>
+            <button type="button" class="btn-gold" data-server-claim>${l.claim}</button>
+        </div>`, language);
+}
+
+function renderCompleted(state, language) {
+    const l = labels(language);
+    const receipt = state.receipt || state.result || {};
+    return shell(`
+        <div class="quiz-result glass-card text-center">
+            <div class="result-icon">🏆</div>
+            <h2>${l.complete}</h2>
+            <p>${l.score}: ${text(receipt.score ?? '—')}</p>
+            <p class="text-secondary small">${text(receipt.status || 'Server receipt confirmed')}</p>
+            <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
+        </div>`, language);
+}
+
+function renderSessionState(state, language) {
+    if (state.status === 'in_progress') return renderActive(language);
+    if (state.status === 'ready_to_complete' || state.status === 'ready_to_claim' || state.status === 'expired') {
+        return renderReadyToClaim(state, language);
+    }
+    if (state.status === 'completed') return renderCompleted(state, language);
+    throw new Error('UNSUPPORTED_SESSION_STATE');
 }
 
 export async function renderServerModePreview(settings) {
@@ -88,17 +139,30 @@ export async function renderServerModePreview(settings) {
     const invoke = createLocalFirebaseModeInvoker();
     const client = createServerModeClient({ invoke });
     controller = createModeSessionController({ client });
-    const root = shell(`<div class="quiz-question-card glass-card">${labels(language).loading}</div>`, language);
     try {
-        await controller.start({
-            mode,
-            category: settings.category || 'all',
-            difficulty: settings.difficulty || 'easy',
-            count: QUESTION_COUNTS[mode],
-            language
-        });
+        sessionStorageAdapter = createModeSessionStorage(window.sessionStorage);
+        const previousSessionId = sessionStorageAdapter.read(mode);
+        let state = null;
+        if (previousSessionId) {
+            try {
+                state = await controller.resume({ sessionId: previousSessionId, language });
+            } catch (error) {
+                if (!['SESSION_NOT_FOUND', 'NOT_SESSION_OWNER'].includes(error.message)) throw error;
+                sessionStorageAdapter.clear(mode);
+            }
+        }
+        if (!state) {
+            state = await controller.start({
+                mode,
+                category: settings.category || 'all',
+                difficulty: settings.difficulty || 'easy',
+                count: QUESTION_COUNTS[mode],
+                language
+            });
+            sessionStorageAdapter.write(mode, state.sessionId);
+        }
         busy = false;
-        return renderActive(language);
+        return renderSessionState(state, language);
     } catch (error) {
         controller = null;
         busy = false;
@@ -127,6 +191,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                 const state = result.state;
                 const l = labels(settingsSnapshot.language);
                 const feedback = lastResponse.correct ? l.correct : l.wrong;
+                const progress = progressMarkup(settingsSnapshot.language);
                 const detail = Number.isFinite(lastResponse.points) ? ` · +${lastResponse.points} ${l.points}` : '';
                 const next = state.status === 'ready_to_claim'
                     ? `<button type="button" class="btn-gold" data-server-claim>${l.claim}</button>`
@@ -135,6 +200,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                     <div class="quiz-progress glass-card"><strong>${l.title}</strong>
                         <span class="float-end">${l.answered}: ${state.answeredQuestions}/${state.totalQuestions}</span>
                     </div>
+                    ${progress}
                     <div class="quiz-result glass-card text-center">
                         <div class="result-icon">${lastResponse.correct ? '✓' : '↗'}</div>
                         <h2>${feedback}</h2><p>${text(detail)}</p>
@@ -162,6 +228,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
             try {
                 const completed = await controller.claim();
                 const receipt = completed.receipt || {};
+                sessionStorageAdapter?.clear(settingsSnapshot.mode);
                 root.innerHTML = `
                     <div class="quiz-result glass-card text-center animate-in">
                         <div class="result-icon">🏆</div><h2>${l.complete}</h2>
@@ -182,5 +249,6 @@ export function resetServerModePreview() {
     controller = null;
     settingsSnapshot = null;
     lastResponse = null;
+    sessionStorageAdapter = null;
     busy = false;
 }

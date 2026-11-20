@@ -42,7 +42,8 @@ export function createModeSessionController({ client, invoke, random = Math.rand
         questionDeadlineAt: null,
         question: null,
         result: null,
-        receipt: null
+        receipt: null,
+        progress: null
     };
     let canonicalIndexes = [];
 
@@ -98,7 +99,8 @@ export function createModeSessionController({ client, invoke, random = Math.rand
                     questionDeadlineAt: started.questionDeadlineAt ?? null,
                     question: null,
                     result: null,
-                    receipt: null
+                    receipt: null,
+                    progress: started.progress ?? null
                 };
                 acceptQuestion(started.question);
                 return snapshot();
@@ -126,6 +128,7 @@ export function createModeSessionController({ client, invoke, random = Math.rand
                 state.answeredQuestions = Math.min(state.totalQuestions,
                     state.answeredQuestions + (response.replayed ? 0 : 1));
                 state.result = response;
+                state.progress = response.progress ?? state.progress;
                 state.questionDeadlineAt = response.questionDeadlineAt ?? null;
                 if (response.finished) {
                     state.status = 'ready_to_claim';
@@ -156,7 +159,8 @@ export function createModeSessionController({ client, invoke, random = Math.rand
                     questionDeadlineAt: resumed.questionDeadlineAt ?? null,
                     question: null,
                     result: resumed.result ?? null,
-                    receipt: resumed.receipt ?? null
+                    receipt: resumed.receipt ?? null,
+                    progress: resumed.progress ?? null
                 };
                 if (resumed.status === 'in_progress') acceptQuestion(resumed.question);
                 else canonicalIndexes = [];
