@@ -596,3 +596,12 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Both paths are marked `preserve: true`; a future migration snapshot must include them and recursively enumerate the nested unlock receipts.
 - Extended `tests/firestore-migration-inventory.test.mjs` to assert both paths exist in the source-derived inventory.
 - This is a repository manifest update only. It does not enumerate the live database, change deployed Rules, or migrate production documents.
+
+## 36. Trusted level achievement milestones
+
+- Server achievement progress now derives the existing V1 level formula from trusted XP: `floor(experience / 100) + 1`.
+- `level_five` and `level_ten` are enabled in the server catalog at 400 XP and 900 XP respectively. The thresholds preserve the existing browser formula; no progression balance or XP reward formula is changed.
+- Legacy `users/{uid}.level` is never imported into `achievementFacts`, because it was client-writable. Existing profile achievement IDs remain preserved, while new level unlocks require trusted XP evidence.
+- Added boundary tests for 400 XP, 899/900 XP and rejection of legacy client-maintained level as evidence.
+- Social and collector achievements remain deferred until trusted friend-count and currency evidence is available.
+- This is server/emulator groundwork only. Existing browser achievement checks, production Functions/Rules, live data and account baselines are unchanged. Production rollout remains blocked by Phase 0 evidence and authenticated browser acceptance.
