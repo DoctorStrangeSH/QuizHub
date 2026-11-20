@@ -14,6 +14,7 @@ function setup(facts, achievements = []) {
                 const tx = {
                     async getAchievementFacts(uid) { return structuredClone(facts[uid] ?? null); },
                     async getUser(uid) { return structuredClone(users.get(uid) ?? null); },
+                    async setAchievementFacts(uid, value) { facts[uid] = structuredClone(value); },
                     async setUserPatch(uid, value) { patch = structuredClone(value); },
                     async createUnlockReceipts(uid, ids) { pending = ids.map(id => uid + ':' + id); }
                 };
