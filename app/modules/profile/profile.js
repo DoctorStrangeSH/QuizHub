@@ -114,7 +114,19 @@ export function attachProfileListeners() {
         saveBtnLoading.style.display = 'inline';
         try {
             const nickname = nicknameInput.value.trim();
-            await setDoc(doc(db, 'users', user.uid), {
+            const params = new URLSearchParams(window.location.search);
+            const profileCreatePreview = ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+                params.get('firebaseEmulator') === '1' &&
+                params.get('profileCreatePreview') === '1';
+
+            if (profileCreatePreview) {
+                // Trusted local preview: server derives UID/email and atomically
+                // creates private/public profile plus nickname claim.
+                // Fail closed; never fall back to client setDoc on transport errors.
+                const { createLocalFirebaseProfileCreateInvoker } = await import('./firebase-profile-create-preview.js');
+                await createLocalFirebaseProfileCreateInvoker()(nickname);
+            } else {
+                await setDoc(doc(db, 'users', user.uid), {
                 nickname, nicknameLower: nickname.toLowerCase(), email: user.email,
                 createdAt: serverTimestamp(), level: 1, experience: 0, coins: 100,
                 quizzesCompleted: 0, wins: 0, friends: [], friendRequests: [], sentRequests: [],
@@ -123,7 +135,8 @@ export function attachProfileListeners() {
                 ownedThemes: ['theme_default', 'theme_light'], ownedFrames: ['frame_default'], ownedParticles: ['particles_default'],
                 activeBonuses: {},
                 stats: { totalGames: 0, totalWins: 0, totalQuestions: 0, correctAnswers: 0, bestStreak: 0 }
-            });
+                });
+            }
             setState('profile', { nickname, level: 1, experience: 0, coins: 100 });
             document.querySelector('.profile-create-card')?.classList.add('fade-out');
             setTimeout(() => window.navigateTo('home'), 400);
