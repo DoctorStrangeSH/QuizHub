@@ -106,9 +106,10 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(user.experience, 22);
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.special, 17);
-    assert.deepEqual(user.achievements, ['first_quiz']);
-    assert.deepEqual(db.records.get('achievementFacts/alice'), { totalGames: 1, experience: 20, unlockedIds: ['first_quiz'] });
+    assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
+    assert.deepEqual(db.records.get('achievementFacts/alice'), { totalGames: 1, experience: 20, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
     assert.equal(db.records.get('achievementUnlockReceipts/alice/unlocks/first_quiz').achievementId, 'first_quiz');
+    assert.equal(db.records.get('achievementUnlockReceipts/alice/unlocks/first_win').achievementId, 'first_win');
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['bob']);
     const writes = db.mutations.filter(mutation => mutation.path === 'users/alice');
@@ -148,7 +149,8 @@ test('opt-in reward claim atomically refreshes a privacy-safe public ranking pro
     assert.equal(db.mutations.length, before, 'replayed claims must not republish the profile');
     assert.deepEqual(db.mutations.map(item => item.path).sort(), [
         'users/alice', 'quizSessions/session_pub', 'publicProfiles/alice',
-        'achievementFacts/alice', 'achievementUnlockReceipts/alice/unlocks/first_quiz'
+        'achievementFacts/alice', 'achievementUnlockReceipts/alice/unlocks/first_quiz',
+        'achievementUnlockReceipts/alice/unlocks/first_win'
     ].sort());
 });
 
