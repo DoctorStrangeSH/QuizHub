@@ -42,7 +42,7 @@ export async function renderQuiz() {
         ['localhost', '127.0.0.1'].includes(browserLocation.hostname) &&
         previewParams.get('firebaseEmulator') === '1' &&
         previewParams.get('serverModePreview') === '1' &&
-        ['survival', 'duel', 'time'].includes(settings.mode));
+        ['classic', 'survival', 'duel', 'time'].includes(settings.mode));
     if (serverModePreviewActive) {
         const preview = await import('./server-mode-preview-screen.js');
         return preview.renderServerModePreview({ ...settings, language: getState().language });
