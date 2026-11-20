@@ -1,4 +1,4 @@
-const MODE_NAMES = new Set(['duel', 'survival', 'time']);
+const MODE_NAMES = new Set(['classic', 'duel', 'survival', 'time']);
 const LANGUAGES = new Set(['ru', 'en']);
 
 function requireString(value, code) {
@@ -17,7 +17,7 @@ function unwrap(response) {
  * It deliberately has no Firestore writes and never sends uid, score,
  * correctness, answer keys, reward values or client timestamps.
  */
-export function createServerModeClient({ invoke }) {
+export function createServerModeClient({ invoke, claimOperation = 'claim' }) {
     if (typeof invoke !== 'function') throw new Error('INVALID_MODE_TRANSPORT');
 
     async function request(operation, payload) {
@@ -71,7 +71,7 @@ export function createServerModeClient({ invoke }) {
 
         async claim({ sessionId }) {
             requireString(sessionId, 'INVALID_SESSION_ID');
-            return request('claim', { sessionId });
+            return request(claimOperation, { sessionId });
         }
     });
 }
