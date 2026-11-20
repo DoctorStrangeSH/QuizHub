@@ -10,6 +10,7 @@ import { createDailyChallenge, getUtcDateKey } from './daily-challenge.js';
 // Текущий активный режим
 let currentMode = null;
 let attachedMode = null;
+let serverModePreviewActive = false;
 
 // ========== ФАБРИКА РЕЖИМОВ ==========
 function createMode(modeType) {
@@ -33,6 +34,20 @@ export async function renderQuiz() {
     
     // Останавливаем таймер предыдущей игры перед повторным запуском.
     resetQuiz();
+
+    // Explicit local-only opt-in: production UI remains on its existing path.
+    const browserLocation = typeof window !== 'undefined' ? window.location : null;
+    const previewParams = new URLSearchParams(browserLocation?.search || '');
+    serverModePreviewActive = Boolean(browserLocation &&
+        ['localhost', '127.0.0.1'].includes(browserLocation.hostname) &&
+        previewParams.get('firebaseEmulator') === '1' &&
+        previewParams.get('serverModePreview') === '1' &&
+        ['survival', 'duel', 'time'].includes(settings.mode));
+    if (serverModePreviewActive) {
+        const preview = await import('./server-mode-preview-screen.js');
+        return preview.renderServerModePreview({ ...settings, language: getState().language });
+    }
+
 
     
     // Daily Challenge uses a UTC date key so every player receives the same set.
@@ -98,6 +113,10 @@ window.duelAnswer = (el) => {
 export function resetQuiz() {
     // Завершаем режим и отменяем все его таймеры и отложенные действия.
     currentMode?.dispose?.();
+    if (serverModePreviewActive) {
+        serverModePreviewActive = false;
+        import('./server-mode-preview-screen.js').then(module => module.resetServerModePreview());
+    }
     currentMode = null;
     attachedMode = null;
 }
@@ -105,7 +124,13 @@ export function resetQuiz() {
 // ========== ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ==========
 export function attachQuizListeners() {
     // Start first-question effects only after the markup is mounted.
-    if (!currentMode || attachedMode === currentMode) return;
+    if (!currentMode) {
+        if (serverModePreviewActive) {
+            import('./server-mode-preview-screen.js').then(module => module.attachServerModePreviewListeners());
+        }
+        return;
+    }
+    if (attachedMode === currentMode) return;
     attachedMode = currentMode;
     currentMode.afterQuestionRendered?.();
 }
