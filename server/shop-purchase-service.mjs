@@ -74,6 +74,26 @@ export function createShopPurchaseService({ store, catalog = getAllItems(), now 
                 await tx.setPurchase(uid, operationId, receipt);
                 return { ...receipt, alreadyPurchased: false };
             });
+        },
+
+        async equip({ uid, itemId }) {
+            if (typeof uid !== 'string' || !uid.trim()) throw new Error('AUTH_REQUIRED');
+            if (typeof itemId !== 'string' || !itemId) throw new Error('INVALID_ITEM');
+            const item = items.get(itemId);
+            if (!item) throw new Error('SHOP_ITEM_NOT_FOUND');
+            const fields = COSMETIC_FIELDS[item.type];
+            if (!fields) throw new Error('UNSUPPORTED_SHOP_ITEM');
+            const [ownedField, equippedField] = fields;
+            return store.runTransaction(async tx => {
+                const user = await tx.getUser(uid);
+                if (!user) throw new Error('USER_NOT_FOUND');
+                const owned = Array.isArray(user[ownedField]) ? user[ownedField] : [];
+                if (!owned.includes(item.id) && item.owned !== true) {
+                    throw new Error('ITEM_NOT_OWNED');
+                }
+                await tx.setUserPatch(uid, { [equippedField]: item.id });
+                return { itemId: item.id, type: item.type, equipped: true };
+            });
         }
     };
 }
