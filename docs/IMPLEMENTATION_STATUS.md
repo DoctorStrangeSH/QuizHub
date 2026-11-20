@@ -559,3 +559,16 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - `achievementUnlockPreview` is restricted to the isolated Auth + Firestore + Functions emulator.
 - **Not yet integrated:** trusted quiz finalization does not populate `achievementFacts`. The existing browser achievement logic remains unchanged. No production deployment, live migration, Rules change, or production unlock behavior is implied.
 - Next implementation slice: populate achievement facts atomically from trusted quiz reward finalization, and verify the fact-to-unlock path in emulator tests. Do not source facts from browser profile fields or enable production cutover as part of that slice.
+
+
+## 33. Trusted achievement facts from server-owned quiz claims (PR in progress)
+
+- Branch: `feat/trusted-achievement-facts`.
+- Classic and server-owned Duel, Survival and Time Trial reward claims now derive achievement facts from the server-calculated reward inside the same Firestore transaction as the reward/session receipt.
+- Facts are stored separately at `achievementFacts/{uid}`: `totalGames`, `experience`, and a server-owned `unlockedIds` ledger. New unlock receipts are created at `achievementUnlockReceipts/{uid}/unlocks/{achievementId}`.
+- The profile's existing `achievements` array is preserved and unioned with server-earned IDs for compatibility, but it is **not** trusted as the source of truth for deciding whether a new achievement has already been earned. A forged legacy profile ID cannot suppress the server unlock receipt.
+- A first trusted claim starts the server fact baseline at zero. Existing `users/{uid}.stats`, `experience`, and `level` are not copied into the trusted ledger because those fields have historically been writable by the browser. Existing users need a separately reviewed migration/baseline strategy.
+- Active server catalog currently covers first/10/50/100 completed quizzes and 1000 XP. Level 5/10, wins, perfect score, social and collector achievements remain deferred until their authoritative evidence/calculation is implemented. The existing profile level is not trusted and no level formula was established in the current code audit.
+- The achievement preview evaluator now uses the server-owned `unlockedIds` ledger and persists it with immutable receipts.
+- Tests added/extended for classic and mode reward claims, concurrent retries, legacy profile ID spoofing, and trusted fact baselines. CI now runs these claim suites alongside achievement service/callable tests.
+- Production remains unchanged: no Functions deployment, Rules migration, browser cutover or live-data migration is part of this PR.
