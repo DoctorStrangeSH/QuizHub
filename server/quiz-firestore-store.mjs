@@ -30,6 +30,11 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
     const sessionRef = id => db.collection('quizSessions').doc(requireSessionId(id));
     const userRef = uid => db.collection('users').doc(requireUid(uid));
     const publicRef = uid => db.collection('publicProfiles').doc(requireUid(uid));
+    const achievementFactsRef = uid => db.collection('achievementFacts').doc(requireUid(uid));
+    const achievementReceiptRef = (uid, id) => {
+        if (typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id)) throw new Error('INVALID_ACHIEVEMENT_ID');
+        return db.collection('achievementUnlockReceipts').doc(requireUid(uid)).collection('unlocks').doc(id);
+    };
 
     return {
         runTransaction(callback) {
@@ -40,6 +45,27 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
                     setSession: async (id, value) => {
                         // Server-generated canonical session, receipt and claim marker.
                         native.set(sessionRef(id), value);
+                    },
+                    getAchievementFacts: async uid => data(await native.get(achievementFactsRef(uid))),
+                    setAchievementFacts: async (uid, facts) => {
+                        if (!facts || typeof facts !== 'object' || Array.isArray(facts) ||
+                            Object.keys(facts).some(key => !['totalGames', 'experience', 'level', 'unlockedIds'].includes(key)) ||
+                            !Number.isSafeInteger(facts.totalGames) || facts.totalGames < 0 ||
+                            !Number.isSafeInteger(facts.experience) || facts.experience < 0 ||
+                            (facts.level !== undefined && (!Number.isSafeInteger(facts.level) || facts.level < 1)) ||
+                            !Array.isArray(facts.unlockedIds) || facts.unlockedIds.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
+                            throw new Error('INVALID_ACHIEVEMENT_FACTS');
+                        }
+                        native.set(achievementFactsRef(uid), facts);
+                    },
+                    createAchievementReceipts: async (uid, ids) => {
+                        if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
+                            throw new Error('INVALID_ACHIEVEMENT_RECEIPT');
+                        }
+                        for (const id of ids) native.create(achievementReceiptRef(uid, id), {
+                            achievementId: id,
+                            unlockedAt: new Date()
+                        });
                     },
                     getUser: async uid => {
                         const user = data(await native.get(userRef(uid)));
@@ -60,7 +86,8 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
                             quizzesCompleted: value.quizzesCompleted,
                             'stats.totalGames': value.stats.totalGames,
                             'stats.totalQuestions': value.stats.totalQuestions,
-                            'stats.correctAnswers': value.stats.correctAnswers
+                            'stats.correctAnswers': value.stats.correctAnswers,
+                            achievements: Array.isArray(value.achievements) ? value.achievements : []
                         };
                         // Optional mode-specific counters are written only when
                         // present; Classic reward claims must not send undefined

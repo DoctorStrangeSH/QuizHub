@@ -1,6 +1,7 @@
 import { getModeResult } from './quiz-mode-session.mjs';
 import { hasModeWin } from './quiz-mode-rules.mjs';
 import { calculateQuizRewards } from '../app/modules/quiz/rewards.js';
+import { advanceAchievementFacts } from './achievement-progress.mjs';
 
 function nonNegative(value, code) {
     if (!Number.isSafeInteger(value) || value < 0) throw new Error(code);
@@ -139,8 +140,14 @@ export async function claimModeSessionReward({ store, sessionId, uid, at }) {
             : state.mode === 'timetrial'
                 ? hasModeWin({ correctAnswers: result.correctAnswers, totalQuestions: result.totalQuestions })
                 : false;
+        const achievementProgress = advanceAchievementFacts({
+            previousFacts: await tx.getAchievementFacts(uid),
+            previousAchievements: user.achievements,
+            experienceDelta: xp
+        });
         const nextUser = {
             ...user,
+            achievements: achievementProgress.achievements,
             experience: add(user.experience, xp),
             weeklyExperience: add(user.weeklyExperience, xp),
             coins: add(user.coins, coins),
@@ -160,12 +167,14 @@ export async function claimModeSessionReward({ store, sessionId, uid, at }) {
                 } : {})
             }
         };
-        const receipt = { sessionId, uid, ...result, xp, coins, won };
+        const receipt = { sessionId, uid, ...result, xp, coins, won, newlyUnlocked: achievementProgress.newlyUnlocked };
         const updated = structuredClone(session);
         updated.finalized = true;
         updated.finalizedAt = at;
         updated.result = result;
         updated.receipt = receipt;
+        await tx.setAchievementFacts(uid, achievementProgress.facts);
+        await tx.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
         await tx.setUser(uid, nextUser);
         await tx.setSession(sessionId, updated);
         return { ...receipt, alreadyClaimed: false };

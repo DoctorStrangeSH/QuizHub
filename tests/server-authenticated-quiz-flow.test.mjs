@@ -6,13 +6,15 @@ import { createAuthenticatedQuizHandler } from '../server/authenticated-quiz-han
 
 function atomicMemoryStore() {
     const sessions = new Map();
+    const facts = new Map();
+    const unlockReceipts = new Set();
     const users = new Map([
         ['alice', { experience: 0, weeklyExperience: 0, coins: 0, quizzesCompleted: 0, stats: {} }],
         ['bob', { experience: 0, weeklyExperience: 0, coins: 0, quizzesCompleted: 0, stats: {} }]
     ]);
     let queue = Promise.resolve();
     return {
-        sessions, users,
+        sessions, users, facts, unlockReceipts,
         runTransaction(operation) {
             const result = queue.then(async () => {
                 const staged = new Map();
@@ -20,12 +22,17 @@ function atomicMemoryStore() {
                     getSession: async id => structuredClone(staged.get('s:' + id) ?? sessions.get(id)),
                     setSession: async (id, value) => { staged.set('s:' + id, structuredClone(value)); },
                     getUser: async id => structuredClone(staged.get('u:' + id) ?? users.get(id)),
+                    getAchievementFacts: async id => structuredClone(staged.get('f:' + id) ?? facts.get(id) ?? null),
+                    setAchievementFacts: async (id, value) => { staged.set('f:' + id, structuredClone(value)); },
+                    createAchievementReceipts: async (id, ids) => { for (const achievementId of ids) staged.set('r:' + id + ':' + achievementId, true); },
                     setUser: async (id, value) => { staged.set('u:' + id, structuredClone(value)); }
                 };
                 const answer = await operation(tx);
                 for (const [key, value] of staged) {
                     if (key.startsWith('s:')) sessions.set(key.slice(2), value);
-                    else users.set(key.slice(2), value);
+                    else if (key.startsWith('u:')) users.set(key.slice(2), value);
+                    else if (key.startsWith('f:')) facts.set(key.slice(2), value);
+                    else if (key.startsWith('r:')) unlockReceipts.add(key.slice(2));
                 }
                 return answer;
             });
