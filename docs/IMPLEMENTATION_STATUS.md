@@ -450,3 +450,17 @@ PR #32 presents the existing server-owned Survival rules more clearly:
 - Server lifecycle coverage verifies that the third lost life ends the run immediately, returns zero lives and no next question, and permits result finalization.
 
 This is a presentation and acceptance-coverage improvement; it does not change Survival scoring, life count, reward rules or production Firebase behavior.
+
+
+## 21. PR #32 merged; Duel round presentation follow-up
+
+- PR #32 merged to `main` as `48005531f473ded1ad725ee3003652c22667d9c0` after Question quality, visual preview and Firebase Emulator integration passed.
+- Survival now displays the three server-owned lives as accessible hearts, with localized life-loss and final-life feedback. The third lost life is covered by a server lifecycle test.
+
+### Current follow-up: Duel round and final result UI
+
+PR #33 adds a compact head-to-head scoreboard with both server-owned scores and round progress, a per-round comparison of the player's answer and the simulated opponent's outcome, and a final win/loss/draw presentation using the server-confirmed result.
+
+The UI does not simulate the opponent, calculate points, or determine the winner. It only displays `aiCorrect`, score totals and `outcome` returned by the trusted session service. The existing V1 Duel rules and difficulty probabilities are unchanged.
+
+Automated UI contract tests cover the scoreboard, round feedback, localized labels and final result presentation. Authenticated browser acceptance for all server-owned modes remains outstanding; production Functions/Rules remain untouched.
