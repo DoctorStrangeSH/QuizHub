@@ -31,7 +31,7 @@ test('Duel does not mutate prior state and keeps draws distinct from wins', () =
 
 test('Survival stops at zero lives and preserves the best streak', () => {
     let state = createModeState('survival', { totalQuestions: 20 });
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
         state = applyModeAnswer(state, {
             correct: i === 0, points: 10
         }).state;
@@ -39,7 +39,7 @@ test('Survival stops at zero lives and preserves the best streak', () => {
     const result = getModeResult(state);
     assert.equal(state.lives, 0);
     assert.equal(result.bestStreak, 1);
-    assert.equal(result.answeredQuestions, 3);
+    assert.equal(result.answeredQuestions, 4);
 });
 
 test('Time Trial applies the strict server-time speed threshold and ten-question cap', () => {
