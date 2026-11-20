@@ -1,7 +1,7 @@
 import { ACHIEVEMENT_CATALOG } from './achievement-catalog.mjs';
 
 const ID = /^[a-z0-9_]{1,64}$/;
-const FACTS = new Set(['totalGames', 'experience', 'level']);
+const FACTS = new Set(['totalGames', 'experience', 'totalWins', 'perfectGames', 'level']);
 
 export function createAchievementUnlockService({ store, catalog = ACHIEVEMENT_CATALOG }) {
     if (!store || typeof store.runTransaction !== 'function') throw new Error('INVALID_ACHIEVEMENT_STORE');

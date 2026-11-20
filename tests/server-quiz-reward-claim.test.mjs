@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import { createSession, submitAnswer } from '../server/quiz-session-core.mjs';
 import { claimSessionReward } from '../server/quiz-reward-claim.mjs';
 
-function setup() {
-    const session = createSession({
-        uid: 'player', mode: 'classic', startedAt: 1000, deadlineAt: 5000,
-        questions: [
-            { id: 'a', optionCount: 2, correctIndex: 1, points: 20 },
-            { id: 'b', optionCount: 2, correctIndex: 0, points: 10 }
-        ]
-    });
-    submitAnswer(session, { uid: 'player', questionId: 'a', answerIndex: 1, at: 2000 });
-    submitAnswer(session, { uid: 'player', questionId: 'b', answerIndex: 0, at: 3000 });
+function setup(questionCount = 2) {
+    const questions = Array.from({ length: questionCount }, (_, index) => ({
+        id: String.fromCharCode(97 + index), optionCount: 2,
+        correctIndex: index === 1 ? 0 : 1, points: index === 0 ? 20 : 10
+    }));
+    const session = createSession({ uid: 'player', mode: 'classic', startedAt: 1000, deadlineAt: 5000, questions });
+    for (let index = 0; index < questions.length; index++) {
+        submitAnswer(session, { uid: 'player', questionId: questions[index].id,
+            answerIndex: questions[index].correctIndex, at: 2000 + index });
+    }
     const sessions = new Map([['session-1', session]]);
     const users = new Map([['player', {
         experience: 5, weeklyExperience: 5, coins: 7,
@@ -64,9 +64,23 @@ test('first claim credits the server-scored result exactly once', async () => {
     assert.equal(user.coins, 22);
     assert.equal(user.stats.totalQuestions, 2);
     assert.equal(user.stats.correctAnswers, 2);
-    assert.deepEqual(user.achievements, ['first_quiz']);
-    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, unlockedIds: ['first_quiz'] });
+    assert.equal(receipt.won, true);
+    assert.equal(receipt.perfect, false);
+    assert.equal(user.wins, 1);
+    assert.equal(user.stats.totalWins, 1);
+    assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
+    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
     assert.ok(unlockReceipts.has('player:first_quiz'));
+});
+
+test('perfect Classic run unlocks the 10/10 achievement from server-scored answers', async () => {
+    const fixture = setup(10);
+    const receipt = await claim(fixture.store);
+    assert.equal(receipt.won, true);
+    assert.equal(receipt.perfect, true);
+    assert.ok(receipt.newlyUnlocked.includes('perfect_score'));
+    assert.equal(fixture.facts.get('player').perfectGames, 1);
+    assert.ok(fixture.unlockReceipts.has('player:perfect_score'));
 });
 
 test('legacy client-maintained profile totals are not imported as trusted achievement facts', async () => {
@@ -74,16 +88,16 @@ test('legacy client-maintained profile totals are not imported as trusted achiev
     fixture.users.get('player').stats.totalGames = 999;
     fixture.users.get('player').experience = 999999;
     const receipt = await claim(fixture.store);
-    assert.deepEqual(receipt.newlyUnlocked, ['first_quiz']);
-    assert.deepEqual(fixture.facts.get('player'), { totalGames: 1, experience: 30, unlockedIds: ['first_quiz'] });
+    assert.deepEqual(receipt.newlyUnlocked, ['first_quiz', 'first_win']);
+    assert.deepEqual(fixture.facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win'] });
 });
 
 test('server unlock ledger ignores legacy profile IDs when deciding new unlocks', async () => {
     const fixture = setup();
     fixture.users.get('player').achievements = ['first_quiz'];
     const receipt = await claim(fixture.store);
-    assert.deepEqual(receipt.newlyUnlocked, ['first_quiz']);
-    assert.deepEqual(fixture.facts.get('player').unlockedIds, ['first_quiz']);
+    assert.deepEqual(receipt.newlyUnlocked, ['first_quiz', 'first_win']);
+    assert.deepEqual(fixture.facts.get('player').unlockedIds, ['first_quiz', 'first_win']);
     assert.ok(fixture.unlockReceipts.has('player:first_quiz'));
 });
 
@@ -94,7 +108,7 @@ test('retries and concurrent completion requests return same receipt without dou
     assert.deepEqual(receipts.map(receipt => receipt.coins), [15, 15, 15]);
     assert.equal(users.get('player').coins, 22);
     assert.equal(users.get('player').quizzesCompleted, 1);
-    assert.deepEqual(users.get('player').achievements, ['first_quiz']);
+    assert.deepEqual(users.get('player').achievements, ['first_quiz', 'first_win']);
 });
 
 test('foreign users cannot claim someone else\'s session', async () => {

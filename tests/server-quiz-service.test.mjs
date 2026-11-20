@@ -95,6 +95,9 @@ test('complete backend quiz flow hides answers and grants once', async () => {
     assert.equal(two.alreadyClaimed, true);
     assert.equal(store.users.get('user-1').coins, 10);
     assert.equal(store.users.get('user-1').quizzesCompleted, 1);
+    assert.equal(store.users.get('user-1').wins, 1);
+    assert.equal(store.users.get('user-1').stats.totalWins, 1);
+    assert.deepEqual(store.users.get('user-1').achievements, ['first_quiz', 'first_win']);
 });
 
 test('foreign caller cannot answer or claim another player session', async () => {

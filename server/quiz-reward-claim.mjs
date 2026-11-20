@@ -25,6 +25,9 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
         // All points come from the server-owned answer key and answer log.
         // Event bonuses must also be resolved server-side when integrated.
         const { xp, coins } = calculateQuizRewards(result.score);
+        // Preserve the existing Classic win rule: at least 70% correct.
+        const won = result.correctAnswers >= Math.ceil(result.totalQuestions * 0.7);
+        const perfect = result.totalQuestions === 10 && result.correctAnswers === 10;
         const user = await transaction.getUser(uid);
         if (!user) throw new Error('USER_NOT_FOUND');
         const stats = user.stats ?? {};
@@ -44,7 +47,9 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
         const achievementProgress = advanceAchievementFacts({
             previousFacts: await transaction.getAchievementFacts(uid),
             previousAchievements: user.achievements,
-            experienceDelta: xp
+            experienceDelta: xp,
+            winDelta: Number(won),
+            perfectDelta: Number(perfect)
         });
         const nextUser = {
             ...user,
@@ -53,15 +58,17 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
             weeklyExperience: add(user.weeklyExperience, xp),
             coins: add(user.coins, coins),
             quizzesCompleted: add(user.quizzesCompleted, 1),
+            wins: add(user.wins, Number(won)),
             stats: {
                 ...stats,
                 totalGames: add(stats.totalGames, 1),
                 totalQuestions: add(stats.totalQuestions, result.answeredQuestions),
-                correctAnswers: add(stats.correctAnswers, result.correctAnswers)
+                correctAnswers: add(stats.correctAnswers, result.correctAnswers),
+                totalWins: add(stats.totalWins, Number(won))
             }
         };
 
-        const receipt = { sessionId, uid, ...result, xp, coins, newlyUnlocked: achievementProgress.newlyUnlocked };
+        const receipt = { sessionId, uid, ...result, xp, coins, won, perfect, newlyUnlocked: achievementProgress.newlyUnlocked };
         session.receipt = receipt;
         await transaction.setAchievementFacts(uid, achievementProgress.facts);
         await transaction.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
