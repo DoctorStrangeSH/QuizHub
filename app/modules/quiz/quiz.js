@@ -34,6 +34,18 @@ export async function renderQuiz() {
     // Останавливаем таймер предыдущей игры перед повторным запуском.
     resetQuiz();
 
+    // Explicit local-only opt-in: production UI remains on its existing path.
+    const previewParams = new URLSearchParams(window.location.search);
+    const serverModePreview = ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        previewParams.get('firebaseEmulator') === '1' &&
+        previewParams.get('serverModePreview') === '1' &&
+        ['survival', 'duel', 'time'].includes(settings.mode);
+    if (serverModePreview) {
+        const preview = await import('./server-mode-preview-screen.js');
+        return preview.renderServerModePreview({ ...settings, language: getState().language });
+    }
+
+
     
     // Daily Challenge uses a UTC date key so every player receives the same set.
     const challenge = settings.mode === 'daily'
@@ -98,6 +110,7 @@ window.duelAnswer = (el) => {
 export function resetQuiz() {
     // Завершаем режим и отменяем все его таймеры и отложенные действия.
     currentMode?.dispose?.();
+    import('./server-mode-preview-screen.js').then(module => module.resetServerModePreview());
     currentMode = null;
     attachedMode = null;
 }
@@ -105,7 +118,11 @@ export function resetQuiz() {
 // ========== ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ==========
 export function attachQuizListeners() {
     // Start first-question effects only after the markup is mounted.
-    if (!currentMode || attachedMode === currentMode) return;
+    if (!currentMode) {
+        import('./server-mode-preview-screen.js').then(module => module.attachServerModePreviewListeners());
+        return;
+    }
+    if (attachedMode === currentMode) return;
     attachedMode = currentMode;
     currentMode.afterQuestionRendered?.();
 }
