@@ -25,6 +25,10 @@ import { createDailyLoginRewardService } from '../server/daily-login-reward-serv
 import { createDailyLoginFirestoreStore } from '../server/daily-login-firestore-store.mjs';
 import { createAuthenticatedDailyLoginHandler } from '../server/authenticated-daily-login-handler.mjs';
 import { createDailyLoginCallableAdapter } from '../server/firebase-daily-login-callable-adapter.mjs';
+import { createAchievementUnlockService } from '../server/achievement-unlock-service.mjs';
+import { createAchievementFirestoreStore } from '../server/achievement-firestore-store.mjs';
+import { createAuthenticatedAchievementHandler } from '../server/authenticated-achievement-handler.mjs';
+import { createAchievementCallableAdapter } from '../server/firebase-achievement-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -159,4 +163,30 @@ export const dailyLoginRewardPreview = onCall({
         throw new HttpsError('failed-precondition', 'DAILY_LOGIN_PREVIEW_DISABLED');
     }
     return dailyLoginPreview(request);
+});
+
+
+// Achievement evaluation is a preview only. It consumes server-maintained
+// achievementFacts, never progress supplied by the browser. Facts are not yet
+// populated by trusted quiz finalization, so this does not unlock legacy stats.
+const achievementPreview = createAchievementCallableAdapter({
+    handle: createAuthenticatedAchievementHandler({
+        service: createAchievementUnlockService({
+            store: createAchievementFirestoreStore(getFirestore())
+        })
+    }),
+    HttpsError
+});
+export const achievementUnlockPreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'ACHIEVEMENT_PREVIEW_DISABLED');
+    }
+    return achievementPreview(request);
 });
