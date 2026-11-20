@@ -27,7 +27,7 @@ function labels(language) {
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
             lives: 'Lives', streak: 'Streak', score: 'Score', lifeLost: 'Life lost', lastLife: 'Final life — stay focused!',
-            answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent', timeLeft: 'Time left', timeExpired: 'Time is up — submit to let the server verify the deadline',
+            answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent', rounds: 'Rounds', round: 'Round', youWon: 'Victory!', youLost: 'Defeat', draw: 'Draw', player: 'You', opponent: 'Opponent', timeLeft: 'Time left', timeExpired: 'Time is up — submit to let the server verify the deadline',
         }
         : {
             title: 'Предпросмотр серверного режима', loading: 'Загружаем вопрос…',
@@ -36,7 +36,7 @@ function labels(language) {
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
             lives: 'Жизни', streak: 'Серия', score: 'Счёт', lifeLost: 'Потеряна жизнь', lastLife: 'Последняя жизнь — соберись!',
-            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник', timeLeft: 'Осталось времени', timeExpired: 'Время вышло — отправьте ответ для проверки сервером',
+            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник', rounds: 'Раунды', round: 'Раунд', youWon: 'Победа!', youLost: 'Поражение', draw: 'Ничья', player: 'Вы', opponent: 'Соперник', timeLeft: 'Осталось времени', timeExpired: 'Время вышло — отправьте ответ для проверки сервером',
         };
 }
 
@@ -74,8 +74,14 @@ function progressMarkup(language) {
     if (Number.isFinite(progress.currentStreak)) items.push(`<span class="survival-streak">${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
     if (Number.isFinite(progress.bestStreak)) items.push(`<span>${l.bestStreak}: <strong>${progress.bestStreak}</strong></span>`);
     if (Number.isFinite(progress.score)) items.push(`<span>${l.score}: <strong>${progress.score}</strong></span>`);
-    if (Number.isFinite(progress.playerScore)) items.push(`<span>${l.playerScore}: <strong>${progress.playerScore}</strong></span>`);
-    if (Number.isFinite(progress.aiScore)) items.push(`<span>${l.aiScore}: <strong>${progress.aiScore}</strong></span>`);
+    if (Number.isFinite(progress.playerScore) && Number.isFinite(progress.aiScore)) {
+        items.push(`<div class="duel-scoreboard" role="group" aria-label="${l.rounds}: ${progress.answeredQuestions}/${progress.totalQuestions}">
+            <span class="duel-score-side"><span class="duel-score-label">${l.playerScore}</span><strong>${progress.playerScore}</strong></span>
+            <span class="duel-score-separator" aria-hidden="true">:</span>
+            <span class="duel-score-side"><span class="duel-score-label">${l.aiScore}</span><strong>${progress.aiScore}</strong></span>
+            <span class="duel-round-count">${l.rounds}: ${progress.answeredQuestions}/${progress.totalQuestions}</span>
+        </div>`);
+    }
     if (!items.length) return '';
     return `<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">${items.join('')}</div>`;
 }
@@ -165,8 +171,9 @@ function renderCompleted(state, language) {
     return shell(`
         <div class="quiz-result glass-card text-center">
             <div class="result-icon">🏆</div>
-            <h2>${l.complete}</h2>
+<h2>${settingsSnapshot?.mode === 'duel' ? (receipt.outcome === 'win' ? l.youWon : receipt.outcome === 'loss' ? l.youLost : l.draw) : l.complete}</h2>
             <p>${l.score}: ${text(receipt.score ?? '—')}</p>
+            ${settingsSnapshot?.mode === 'duel' ? `<div class="duel-final-score" aria-label="${l.playerScore} ${text(receipt.score ?? 0)} : ${text(receipt.aiScore ?? 0)} ${l.aiScore}"><span>${l.playerScore}</span><strong>${text(receipt.score ?? 0)} : ${text(receipt.aiScore ?? 0)}</strong><span>${l.aiScore}</span></div>` : ''}
             <p class="text-secondary small">${text(receipt.status || 'Server receipt confirmed')}</p>
             <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
         </div>`, language);
@@ -260,6 +267,13 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                 const survivalFeedback = lifeLost
                     ? `<p class="survival-life-feedback" role="status">${state.progress.lives === 1 ? l.lastLife : l.lifeLost}</p>`
                     : '';
+                const duelFeedback = settingsSnapshot.mode === 'duel'
+                    ? `<div class="duel-round-feedback" role="status">
+                        <span>${l.round} ${state.progress?.answeredQuestions ?? state.answeredQuestions}</span>
+                        <span class="duel-round-player">${l.player}: <strong>${lastResponse.correct ? '✓' : '✕'}</strong></span>
+                        <span class="duel-round-opponent">${l.opponent}: <strong>${lastResponse.aiCorrect ? '✓' : '✕'}</strong></span>
+                    </div>`
+                    : '';
                 const detail = Number.isFinite(lastResponse.points) ? ` · +${lastResponse.points} ${l.points}` : '';
                 const next = state.status === 'ready_to_claim'
                     ? `<button type="button" class="btn-gold" data-server-claim>${l.claim}</button>`
@@ -273,6 +287,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                         <div class="result-icon">${lastResponse.correct ? '✓' : '↗'}</div>
                         <h2>${feedback}</h2><p>${text(detail)}</p>
                         ${survivalFeedback}
+                        ${duelFeedback}
                         ${next}
                     </div>
                     <div class="text-center mt-3"><button type="button" class="btn-premium" data-server-menu>${l.menu}</button></div>`;
@@ -307,7 +322,9 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                 root.innerHTML = `
                     <div class="quiz-result glass-card text-center animate-in">
                         <div class="result-icon">🏆</div><h2>${l.complete}</h2>
+                        <h2>${settingsSnapshot?.mode === 'duel' ? (receipt.outcome === 'win' ? l.youWon : receipt.outcome === 'loss' ? l.youLost : l.draw) : l.complete}</h2>
                         <p>${l.score}: ${text(receipt.score ?? lastResponse?.score ?? '—')}</p>
+                        ${settingsSnapshot?.mode === 'duel' ? `<div class="duel-final-score" aria-label="${l.playerScore} ${text(receipt.score ?? 0)} : ${text(receipt.aiScore ?? 0)} ${l.aiScore}"><span>${l.playerScore}</span><strong>${text(receipt.score ?? 0)} : ${text(receipt.aiScore ?? 0)}</strong><span>${l.aiScore}</span></div>` : ''}
                         <p class="text-secondary small">${text(receipt.status || 'Server receipt confirmed')}</p>
                         <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
                     </div>`;
