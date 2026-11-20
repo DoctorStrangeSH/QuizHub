@@ -66,19 +66,8 @@ export async function claimDailyReward() {
         // Never fall back to direct client writes if preview transport fails.
         if (isDailyLoginPreviewRequested()) {
             const { createLocalFirebaseDailyLoginInvoker } = await import('./firebase-daily-login-preview.js');
-            const invoke = createLocalFirebaseDailyLoginInvoker();
-            const response = await invoke();
-            const receipt = response?.data;
-            if (!receipt || receipt.alreadyClaimed) return false;
-            if (!Number.isSafeInteger(receipt.streak) || receipt.streak < 1) {
-                throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
-            }
-            const reward = DAILY_REWARDS[Math.min(receipt.streak - 1, DAILY_REWARDS.length - 1)];
-            if (!reward || receipt.coins !== reward.coins ||
-                !Number.isSafeInteger(receipt.balance) || receipt.balance < receipt.coins) {
-                throw new Error('INVALID_DAILY_LOGIN_RECEIPT');
-            }
-            return { ...reward, day: receipt.streak, balance: receipt.balance };
+            const { claimDailyLoginPreview } = await import('./firebase-daily-login-invoker.js');
+            return claimDailyLoginPreview(createLocalFirebaseDailyLoginInvoker(), DAILY_REWARDS);
         }
 
         const check = await checkDailyReward();
