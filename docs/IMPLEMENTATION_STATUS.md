@@ -625,7 +625,6 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Production shop behavior remains unchanged. Legacy direct Firestore writes are still a release blocker; no production Functions/Rules deployment, migration or live-data access occurred.
 - Next acceptance: merge only after all three required CI checks pass on this branch, then proceed with the remaining economy migration in the V1 specification.
 
-}
 
 ## 42. Local browser preview for trusted profile creation
 
