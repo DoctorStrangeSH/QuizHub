@@ -1,4 +1,4 @@
-const UID = /^[^/\\x00-\\x1f]{1,256}$/;
+const UID = /^[^/\x00-\x1f]{1,256}$/;
 const OPERATION_ID = /^[A-Za-z0-9_-]{8,128}$/;
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
 const requireUid = uid => {
