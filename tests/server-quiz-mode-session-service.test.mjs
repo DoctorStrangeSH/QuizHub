@@ -56,14 +56,20 @@ test('Survival server session starts, answers, resumes and finalizes without exp
     });
     assert.equal(resumed.answeredQuestions, 1);
     assert.equal(resumed.question.id, first.nextQuestion.id);
-    await service.answer({
-        uid: 'player-1', sessionId: started.sessionId, questionId: first.nextQuestion.id,
-        answerIndex: 1, now: 2200
+    let nextQuestion = first.nextQuestion;
+    for (const now of [2200, 2300, 2400]) {
+        const next = await service.answer({
+            uid: 'player-1', sessionId: started.sessionId, questionId: nextQuestion.id,
+            answerIndex: 1, now
+        });
+        nextQuestion = next.nextQuestion;
+    }
+    assert.equal(nextQuestion, null);
+    const completed = await service.complete({
+        uid: 'player-1', sessionId: started.sessionId, now: 2500
     });
-    await service.answer({
-        uid: 'player-1', sessionId: started.sessionId, questionId: first.nextQuestion.id,
-        answerIndex: 1, now: 2300
-    }).then(() => assert.fail('expected next question mismatch'));
+    assert.equal(completed.answeredQuestions, 4);
+    assert.equal(completed.correctAnswers, 4);
 });
 
 test('Time Trial server deadlines award speed bonus and record timeout as incorrect', async () => {
