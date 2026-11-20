@@ -19,6 +19,10 @@ export function createShopCallableAdapter({ handle, HttpsError, clock = Date.now
         try {
             return await handle(data.operation, data.payload, { auth: { uid }, now: clock() });
         } catch (error) {
+            // Keep emulator diagnostics actionable without exposing internals to clients.
+            if (process.env.FUNCTIONS_EMULATOR) {
+                console.error('[shop callable preview]', error instanceof Error ? error.message : 'UNKNOWN_ERROR');
+            }
             const code = error instanceof Error ? error.message : '';
             if (code === 'AUTH_REQUIRED') throw new HttpsError('unauthenticated', code);
             if (INVALID.has(code)) throw new HttpsError('invalid-argument', code);
