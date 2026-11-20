@@ -26,7 +26,7 @@ function labels(language) {
             menu: 'Back to menu', correct: 'Correct!', wrong: 'Not quite',
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
-            lives: 'Lives', streak: 'Streak', score: 'Score',
+            lives: 'Lives', streak: 'Streak', score: 'Score', lifeLost: 'Life lost', lastLife: 'Final life — stay focused!',
             answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent', timeLeft: 'Time left', timeExpired: 'Time is up — submit to let the server verify the deadline',
         }
         : {
@@ -35,7 +35,7 @@ function labels(language) {
             menu: 'В меню', correct: 'Верно!', wrong: 'Неверно',
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
-            lives: 'Жизни', streak: 'Серия', score: 'Счёт',
+            lives: 'Жизни', streak: 'Серия', score: 'Счёт', lifeLost: 'Потеряна жизнь', lastLife: 'Последняя жизнь — соберись!',
             answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник', timeLeft: 'Осталось времени', timeExpired: 'Время вышло — отправьте ответ для проверки сервером',
         };
 }
@@ -64,8 +64,14 @@ function progressMarkup(language) {
     if (!progress) return '';
     const l = labels(language);
     const items = [];
-    if (Number.isFinite(progress.lives)) items.push(`<span>${l.lives}: <strong>${progress.lives}</strong></span>`);
-    if (Number.isFinite(progress.currentStreak)) items.push(`<span>${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
+    if (Number.isFinite(progress.lives)) {
+        const totalLives = 3;
+        const lives = Math.max(0, Math.min(totalLives, progress.lives));
+        const hearts = Array.from({ length: totalLives }, (_, index) =>
+            `<span class="survival-heart${index < lives ? ' is-alive' : ' is-lost'}" aria-hidden="true">${index < lives ? '♥' : '♡'}</span>`).join('');
+        items.push(`<div class="survival-lives" role="img" aria-label="${l.lives}: ${lives} / ${totalLives}"><span class="survival-stat-label">${l.lives}</span><span class="survival-hearts">${hearts}</span><strong class="survival-life-count">${lives}/${totalLives}</strong></div>`);
+    }
+    if (Number.isFinite(progress.currentStreak)) items.push(`<span class="survival-streak">${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
     if (Number.isFinite(progress.bestStreak)) items.push(`<span>${l.bestStreak}: <strong>${progress.bestStreak}</strong></span>`);
     if (Number.isFinite(progress.score)) items.push(`<span>${l.score}: <strong>${progress.score}</strong></span>`);
     if (Number.isFinite(progress.playerScore)) items.push(`<span>${l.playerScore}: <strong>${progress.playerScore}</strong></span>`);
@@ -240,12 +246,20 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
             busy = true;
             root.querySelectorAll('[data-server-answer]').forEach(button => { button.disabled = true; });
             try {
+                const previousProgress = controller.getState().progress;
                 const result = await controller.answerDisplayed(index, { language: settingsSnapshot.language });
                 lastResponse = result.response;
                 const state = result.state;
                 const l = labels(settingsSnapshot.language);
                 const feedback = lastResponse.correct ? l.correct : l.wrong;
                 const progress = progressMarkup(settingsSnapshot.language);
+                const lifeLost = settingsSnapshot.mode === 'survival' &&
+                    Number.isFinite(previousProgress?.lives) &&
+                    Number.isFinite(state.progress?.lives) &&
+                    state.progress.lives < previousProgress.lives;
+                const survivalFeedback = lifeLost
+                    ? `<p class="survival-life-feedback" role="status">${state.progress.lives === 1 ? l.lastLife : l.lifeLost}</p>`
+                    : '';
                 const detail = Number.isFinite(lastResponse.points) ? ` · +${lastResponse.points} ${l.points}` : '';
                 const next = state.status === 'ready_to_claim'
                     ? `<button type="button" class="btn-gold" data-server-claim>${l.claim}</button>`
@@ -258,6 +272,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
                     <div class="quiz-result glass-card text-center">
                         <div class="result-icon">${lastResponse.correct ? '✓' : '↗'}</div>
                         <h2>${feedback}</h2><p>${text(detail)}</p>
+                        ${survivalFeedback}
                         ${next}
                     </div>
                     <div class="text-center mt-3"><button type="button" class="btn-premium" data-server-menu>${l.menu}</button></div>`;
