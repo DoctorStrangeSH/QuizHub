@@ -31,25 +31,25 @@ function setup(facts, achievements = []) {
 }
 
 test('catalog evaluates only server facts and unlocks eligible achievements', async () => {
-    const store = setup({ alice: { totalGames: 10, experience: 1200, level: 5 } });
+    const store = setup({ alice: { totalGames: 10, experience: 1200, level: 13 } });
     const service = createAchievementUnlockService({ store });
     const result = await service.evaluate({ uid: 'alice' });
-    assert.deepEqual(result.newlyUnlocked, ['first_quiz', 'ten_quizzes', 'fast_learner']);
+    assert.deepEqual(result.newlyUnlocked, ['first_quiz', 'ten_quizzes', 'fast_learner', 'level_five', 'level_ten']);
     assert.deepEqual(store.users.get('alice').achievements, result.newlyUnlocked);
     assert.equal(store.users.get('alice').coins, 50);
     assert.equal(store.receipts.size, 3);
 });
 
 test('retries and concurrent evaluations do not issue duplicate unlocks', async () => {
-    const store = setup({ alice: { totalGames: 100, experience: 1000, level: 10 } });
+    const store = setup({ alice: { totalGames: 100, experience: 1000, level: 11 } });
     const service = createAchievementUnlockService({ store });
     const results = await Promise.all([
         service.evaluate({ uid: 'alice' }),
         service.evaluate({ uid: 'alice' })
     ]);
-    assert.equal(results.reduce((n, item) => n + item.newlyUnlocked.length, 0), 5);
-    assert.equal(store.receipts.size, 5);
-    assert.equal(new Set(store.users.get('alice').achievements).size, 5);
+    assert.equal(results.reduce((n, item) => n + item.newlyUnlocked.length, 0), 7);
+    assert.equal(store.receipts.size, 7);
+    assert.equal(new Set(store.users.get('alice').achievements).size, 7);
 });
 
 test('trusted win and perfect-run facts unlock the matching catalog milestones', async () => {
