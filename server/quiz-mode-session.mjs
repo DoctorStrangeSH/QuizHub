@@ -30,6 +30,7 @@ export function createModeState(mode, { difficulty = 'easy', totalQuestions } = 
             mode,
             totalQuestions,
             answeredQuestions: 0,
+            correctAnswers: 0,
             lives: 3,
             currentStreak: 0,
             bestStreak: 0,
@@ -40,6 +41,7 @@ export function createModeState(mode, { difficulty = 'easy', totalQuestions } = 
         mode,
         totalQuestions: Math.min(totalQuestions, 10),
         answeredQuestions: 0,
+        correctAnswers: 0,
         score: 0
     };
 }
@@ -73,10 +75,12 @@ export function applyModeAnswer(state, { correct, points, remainingMs, aiRandomV
         };
     }
 
-    if (state.answeredQuestions >= state.totalQuestions) throw new Error('MODE_FINISHED');
+    if (state.answeredQuestions >= state.totalQuestions ||
+        (state.mode === 'survival' && state.lives <= 0)) throw new Error('MODE_FINISHED');
     if (state.mode === 'survival') {
         const next = applySurvivalAnswer(state, { correct, points });
-        const updated = { ...state, ...next, answeredQuestions: state.answeredQuestions + 1 };
+        const updated = { ...state, ...next, answeredQuestions: state.answeredQuestions + 1,
+            correctAnswers: state.correctAnswers + (correct ? 1 : 0) };
         return {
             state: updated,
             round: { correct, points: correct ? points : 0 },
@@ -91,6 +95,7 @@ export function applyModeAnswer(state, { correct, points, remainingMs, aiRandomV
     const updated = {
         ...state,
         answeredQuestions: state.answeredQuestions + 1,
+        correctAnswers: state.correctAnswers + (correct ? 1 : 0),
         score: state.score + awarded
     };
     return {
@@ -122,7 +127,7 @@ export function getModeResult(state) {
         return {
             mode: state.mode,
             score: state.score,
-            correctAnswers: null,
+            correctAnswers: state.correctAnswers,
             totalQuestions: state.totalQuestions,
             answeredQuestions: state.answeredQuestions,
             bestStreak: state.bestStreak,
