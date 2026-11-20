@@ -37,7 +37,7 @@ test('catalog evaluates only server facts and unlocks eligible achievements', as
     assert.deepEqual(result.newlyUnlocked, ['first_quiz', 'ten_quizzes', 'fast_learner', 'level_five', 'level_ten']);
     assert.deepEqual(store.users.get('alice').achievements, result.newlyUnlocked);
     assert.equal(store.users.get('alice').coins, 50);
-    assert.equal(store.receipts.size, 3);
+    assert.equal(store.receipts.size, 5);
 });
 
 test('retries and concurrent evaluations do not issue duplicate unlocks', async () => {
