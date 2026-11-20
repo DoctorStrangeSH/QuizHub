@@ -477,10 +477,17 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Next release work remains gated by authenticated browser acceptance and the Phase 0 operator evidence in `V1_SERVER_MODE_INTEGRATION_CONTRACT.md`. Do not enable production mode callables or deploy production Functions/Rules as part of this test-only follow-up.
 
 
-## 23. PR #34 merged; terminal Survival replay hardening
+## 23. PR #35 merged; terminal Survival replay hardening
 
-- PR #34 merged to `main` as `9d5a7535865cb0f5b524e224c0480889848b82dd` after Question quality, visual preview and Firebase Emulator integration passed.
+- PR #35 merged to `main` as `98ee636cd5f41bde1b56141c341be19779850adf` after Question quality, visual preview and Firebase Emulator integration passed.
 - Reward-claim regression coverage now includes Duel draw/loss counters, Survival zero-life claims and preserved best streak, and the exact 70% Time Trial win threshold.
 - A follow-up source review found that replaying the accepted answer which consumed Survival's final life could return the next question in the response even though the run was already terminal. The server already marked the replay as finished and did not persist another transition, but the response contradicted the terminal state.
-- Current PR #35 fixes the replay response to return `nextQuestion: null` whenever the mode is finished, and adds a regression test that retries the third lost life and verifies the session remains terminal through resume.
+- PR #35 fixes the replay response to return `nextQuestion: null` whenever the mode is finished, and adds a regression test that retries the third lost life and verifies the session remains terminal through resume.
 - This is a server response consistency fix only; no Survival rules, scoring, reward calculation, or production deployment behavior changes.
+
+
+## 24. Concurrent answer retry hardening
+
+- PR #35 is merged. The terminal Survival replay response is now consistent with the completed run state.
+- Current PR #36 adds a concurrent identical-answer regression test for Duel. Two overlapping requests for the same player/session/question must produce one committed round, one opponent random roll, identical authoritative progress, and exactly one replay response.
+- This test targets the retry behavior expected when clients resend a request after a timeout or ambiguous network response. It does not alter scoring, AI probability, mode rules, or production integration.
