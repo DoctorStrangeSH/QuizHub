@@ -10,7 +10,7 @@ test('Classic server client uses authenticated session operations and maps claim
             : { sessionId: 'session-1', mode: 'classic', deadlineAt: 999999, totalQuestions: 10,
                 question: { id: 'q1', question: 'Question', options: ['A', 'B'] } }
         }),
-        claimOperation: 'complete'
+        claimOperation: 'complete', supportedModes: ['classic']
     });
     await client.start({ mode: 'classic', count: 10, language: 'en' });
     await client.answer({ sessionId: 'session-1', questionId: 'q1', answerIndex: 0, language: 'en' });
