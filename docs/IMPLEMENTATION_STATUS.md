@@ -335,3 +335,20 @@ A source-level audit against QUIZ-01..07 and ECON-01 is recorded in [STAGE_1_SER
 **Result: Stage 1 NOT DONE.** The browser still determines answer correctness and writes XP, coins, game statistics and level directly to `users/{uid}`. Survival additionally writes bestStreak from the browser; Duel calculates the player/AI result client-side. The trusted `quizService` currently supports Classic only. Its `quizSessionPreview` callable is deliberately restricted to isolated emulators. The Daily Challenge callable is exported without that guard, but the repository cannot establish whether it is deployed; its current completion receipt does not grant competitive rewards, and no prize-claim callable is exported.
 
 The implementation order must therefore be: complete Phase 0 production evidence; verify deployed Functions inventory; implement trusted state/scoring for all approved V1 modes; prove atomic idempotent rewards; switch browser flows behind tested adapters; then prepare the separate Rules/Functions release. No production cutover is authorized by this source audit.
+
+
+## 16. PR #10 merged and Phase 0 owner evidence runbook (2026-11-20)
+
+PR #10 (Stage 1 source audit + implementation-status link) merged to main as squash commit 7a9fc27388cd34ae3dbf82bec0c7fea3a559393c. All three checks passed: Question quality, visual preview and Firebase emulator integration. The detailed source audit is docs/audits/STAGE_1_SERVER_GAME_INTEGRITY_2026-11-20.md. Stage 1 remains NOT DONE.
+
+Added docs/PHASE_0_OWNER_EVIDENCE_RUNBOOK.md with the exact owner/operator steps for the guarded read-only Firestore inventory, active Rules/indexes verification, Auth provider/domain verification and isolated production backup/restore rehearsal. The runbook does not execute production reads, write data, deploy resources or change application behavior.
+
+### Current blockers
+
+- DATA-01: live inventory has not been run against the production project by an authorized operator.
+- SEC-02: the active published Ruleset and indexes still need independent Console export and comparison with the owner-provided snapshot.
+- AUTH-01: production Auth providers and authorized domains still need Console verification.
+- DATA-02: production backup has not yet been restored into an isolated recovery environment.
+- PR #3: all three CI checks passed on its head at last review, but the branch is behind/conflicted with current main; it is not merged. Its own description correctly states that profile projection is UI/data-flow redaction, not network-level privacy. Do not enable public-profile cutover from this PR alone.
+
+No production resources or user data were accessed or changed during this update.
