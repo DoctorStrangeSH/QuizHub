@@ -122,6 +122,13 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-quiz-mode-session.test.mjs
       - name: Test canonical server mode answer core
         run: node --experimental-default-type=module --test tests/server-quiz-mode-answer-core.test.mjs
+      - name: Test Classic browser callable transport
+        run: node --experimental-default-type=module --test tests/client-classic-invoker.test.mjs tests/server-classic-mode-client.test.mjs
+      - name: Syntax-check Classic server preview integration
+        run: |
+          node --check app/modules/quiz/quiz.js
+          node --check app/modules/quiz/server-mode-preview-screen.js
+          node --check app/modules/quiz/server-mode-client.js
       - name: Test persisted server mode session lifecycle
         run: node --experimental-default-type=module --test tests/server-quiz-mode-session-service.test.mjs
       - name: Test persisted server mode session lifecycle
