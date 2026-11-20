@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { selectQuestions, canonicalQuestion, publicQuestion } from './question-delivery.mjs';
 import { createModeState, getModeResult } from './quiz-mode-session.mjs';
 import { applyCanonicalModeAnswer, resolvePublicMode } from './quiz-mode-answer-core.mjs';
