@@ -53,7 +53,7 @@ test('real Firestore emulator: session persistence, concurrent idempotent claim 
     assert.equal(saved.stats.totalGames, 1);
     assert.equal(saved.stats.totalQuestions, 1);
     assert.equal(saved.stats.correctAnswers, 1);
-    assert.deepEqual(saved.achievements, ['first_quiz']);
+    assert.deepEqual(saved.achievements, ['first_quiz', 'first_win']);
     assert.deepEqual((await db.collection('achievementFacts').doc(uid).get()).data(), {
         totalGames: 1, experience: 20, totalWins: 1, perfectGames: 0, unlockedIds: ['first_quiz', 'first_win']
     });
