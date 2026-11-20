@@ -326,3 +326,12 @@ This is an architecture quality requirement, not scope expansion. It does not ad
 ### Current execution focus
 
 Continue closing Phase 0 evidence gates. PR #8 is merged, but DATA-01 live inventory, independently exported production Rules/indexes, AUTH-01 Console verification and DATA-02 production backup/restore rehearsal remain blocked pending owner/operator evidence. Do not deploy Rules or migrate production data while these gates are open.
+
+
+## 15. Stage 1 server game integrity source audit (2026-11-20)
+
+A source-level audit against QUIZ-01..07 and ECON-01 is recorded in [STAGE_1_SERVER_GAME_INTEGRITY_2026-11-20.md](audits/STAGE_1_SERVER_GAME_INTEGRITY_2026-11-20.md).
+
+**Result: Stage 1 NOT DONE.** The browser still determines answer correctness and writes XP, coins, game statistics and level directly to `users/{uid}`. Survival additionally writes bestStreak from the browser; Duel calculates the player/AI result client-side. The trusted `quizService` currently supports Classic only. Its `quizSessionPreview` callable is deliberately restricted to isolated emulators. The Daily Challenge callable is exported without that guard, but the repository cannot establish whether it is deployed; its current completion receipt does not grant competitive rewards, and no prize-claim callable is exported.
+
+The implementation order must therefore be: complete Phase 0 production evidence; verify deployed Functions inventory; implement trusted state/scoring for all approved V1 modes; prove atomic idempotent rewards; switch browser flows behind tested adapters; then prepare the separate Rules/Functions release. No production cutover is authorized by this source audit.
