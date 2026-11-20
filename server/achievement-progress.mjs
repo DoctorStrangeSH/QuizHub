@@ -19,6 +19,10 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
         totalGames: totalGames + 1,
         experience: experience + experienceDelta
     };
+    const serverUnlocked = Array.isArray(current.unlockedIds) ? current.unlockedIds : [];
+    if (serverUnlocked.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
+        throw new Error('INVALID_ACHIEVEMENT_FACTS');
+    }
     if (!Number.isSafeInteger(nextFacts.totalGames) || !Number.isSafeInteger(nextFacts.experience)) {
         throw new Error('ACHIEVEMENT_FACTS_OVERFLOW');
     }
@@ -27,17 +31,18 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
     // already written it. Legacy users.level is client-editable and is not used.
     if (Number.isSafeInteger(current.level) && current.level > 0) nextFacts.level = current.level;
 
-    const unlocked = Array.isArray(previousAchievements) ? previousAchievements : [];
-    if (unlocked.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');
+    const legacyAchievements = Array.isArray(previousAchievements) ? previousAchievements : [];
+    if (legacyAchievements.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_STATE');
     const newlyUnlocked = catalog.filter(item =>
-        !unlocked.includes(item.id) &&
+        !serverUnlocked.includes(item.id) &&
         Number.isSafeInteger(nextFacts[item.fact]) &&
         nextFacts[item.fact] >= item.threshold
     ).map(item => item.id);
 
+    nextFacts.unlockedIds = [...new Set([...serverUnlocked, ...newlyUnlocked])];
     return {
         facts: nextFacts,
-        achievements: [...new Set([...unlocked, ...newlyUnlocked])],
+        achievements: [...new Set([...legacyAchievements, ...nextFacts.unlockedIds])],
         newlyUnlocked
     };
 }
