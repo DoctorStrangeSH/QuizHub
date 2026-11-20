@@ -86,7 +86,7 @@ test('callable adapter maps authentication, ownership and precondition errors sa
     assert.deepEqual(await callable({
         auth: { uid: 'verified-player' }, data: { operation: 'ok', payload: { language: 'ru' } }
     }), { ok: true, payload: { language: 'ru' } });
-    assert.equal(now, 4);
+    assert.equal(now, 3, 'unauthenticated requests are rejected before reading server time');
 });
 
 test('callable adapter rejects extra envelope fields and hides internal errors', async () => {
