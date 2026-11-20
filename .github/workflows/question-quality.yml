@@ -129,6 +129,8 @@ jobs:
 
       - name: Test atomic reward claim contract
         run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
+      - name: Test atomic Duel Survival and Time Trial reward claims
+        run: node --experimental-default-type=module --test tests/server-quiz-mode-reward-claim.test.mjs
       - name: Test private question delivery contract
         run: node --experimental-default-type=module --test tests/server-question-delivery.test.mjs
       - name: Test complete server quiz lifecycle

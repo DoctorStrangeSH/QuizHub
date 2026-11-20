@@ -53,7 +53,7 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
                         if (!value || !value.stats) throw new Error('INVALID_USER_STATS');
                         // Update only authoritative reward fields. Do not replace
                         // private profile, friends, settings or unrecognized fields.
-                        native.update(userRef(uid), {
+                        const fields = {
                             experience: value.experience,
                             weeklyExperience: value.weeklyExperience,
                             coins: value.coins,
@@ -61,7 +61,18 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
                             'stats.totalGames': value.stats.totalGames,
                             'stats.totalQuestions': value.stats.totalQuestions,
                             'stats.correctAnswers': value.stats.correctAnswers
-                        });
+                        };
+                        // Optional mode-specific counters are written only when
+                        // present; Classic reward claims must not send undefined
+                        // values to Firestore update().
+                        if (Number.isSafeInteger(value.wins)) fields.wins = value.wins;
+                        if (Number.isSafeInteger(value.stats.totalWins)) {
+                            fields['stats.totalWins'] = value.stats.totalWins;
+                        }
+                        if (Number.isSafeInteger(value.stats.bestStreak)) {
+                            fields['stats.bestStreak'] = value.stats.bestStreak;
+                        }
+                        native.update(userRef(uid), fields);
                         if (syncPublicProfiles && typeof value.nickname === 'string' &&
                             /^[A-Za-z0-9_]{3,20}$/.test(value.nickname)) {
                             // Same native transaction as the credit and claim marker.
