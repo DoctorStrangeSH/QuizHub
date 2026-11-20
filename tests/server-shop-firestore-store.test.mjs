@@ -24,6 +24,13 @@ function fakeFirestore() {
                         paths.push(document.path);
                         return { exists: records.has(document.path), data: () => structuredClone(records.get(document.path)) };
                     },
+                    create(document, value) {
+                        wrote = true;
+                        writes.push(() => {
+                            assert.equal(records.has(document.path), false, 'purchase receipt must be created once');
+                            records.set(document.path, structuredClone(value));
+                        });
+                    },
                     update(document, patch) {
                         wrote = true;
                         writes.push(() => {
