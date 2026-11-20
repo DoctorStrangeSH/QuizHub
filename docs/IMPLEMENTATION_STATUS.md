@@ -514,3 +514,19 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Adds `shopPurchasePreview`, guarded to the isolated Auth + Firestore + Functions emulator project only. Non-emulator projects fail closed; no production callable is enabled.
 - Adds handler and callable tests for authentication, rejection of client UID/extra fields, server clock, business error mapping and private internal error suppression.
 - Browser shop migration, Firestore Rules changes and production deployment remain explicitly out of scope. No live user data is changed.
+
+
+## 28. PR #39 merged; emulator-only shop purchase preview
+
+- PR #39 merged to `main` as `8c6cb249eb419e3efd1ae8cf7d264e5390d33cfe` after Question quality, visual preview and Firebase Emulator integration passed.
+- The shop callable derives UID from verified Auth context and server time, rejects client-supplied prices/identity, and is guarded to the isolated demo Auth + Firestore + Functions emulator.
+- Production shop writes and Firestore Rules remain unchanged; browser migration remains outstanding.
+
+## 29. Server daily login reward foundation
+
+- Current PR #40 adds a server-owned daily login claim using the existing seven-day reward schedule: 10, 20, 30, 50, 75, 100 and 200 coins.
+- Claim eligibility, UTC day boundary, streak continuation/reset and coin balance are computed on the server. A durable per-user/per-day receipt makes retries idempotent.
+- Firestore adapter updates only `coins`, `dailyStreak` and `lastDailyClaim`, preserving all other profile fields. It understands legacy Firestore Timestamp values and blocks a same-day repeat even if the new receipt is absent.
+- Adds an authenticated callable boundary and `dailyLoginRewardPreview`, guarded to isolated Firebase emulators only.
+- Tests cover reward schedule, streak progression/reset, concurrent retries, legacy timestamp compatibility, auth/field validation, callable error mapping and Firestore field preservation.
+- Existing browser `app/modules/daily/daily.js` is not yet switched to the callable. No production deployment or live data changes. Production release remains blocked pending client migration, rules review and authenticated acceptance.
