@@ -130,6 +130,10 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-authenticated-shop-handler.test.mjs tests/server-firebase-shop-callable.test.mjs
       - name: Test daily login reward service and callable
         run: node --experimental-default-type=module --test tests/server-daily-login-reward-service.test.mjs tests/server-daily-login-firestore-store.test.mjs tests/server-daily-login-callable.test.mjs
+      - name: Test local browser daily login preview transport and receipt mapping
+        run: node --experimental-default-type=module --test tests/client-daily-login-invoker.test.mjs
+      - name: Syntax-check daily login browser module
+        run: node --check app/modules/daily/daily.js
       - name: Test achievement unlock service and callable
         run: node --experimental-default-type=module --test tests/server-achievement-unlock-service.test.mjs tests/server-achievement-firestore-store.test.mjs tests/server-achievement-callable.test.mjs tests/server-quiz-reward-claim.test.mjs tests/server-quiz-mode-reward-claim.test.mjs
       - name: Test server mode Firestore persistence and retries

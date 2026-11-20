@@ -50,11 +50,26 @@ export async function checkDailyReward() {
     }
 }
 
+function isDailyLoginPreviewRequested() {
+    const params = new URLSearchParams(window.location.search);
+    return ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+        params.get('firebaseEmulator') === '1' &&
+        params.get('dailyLoginPreview') === '1';
+}
+
 export async function claimDailyReward() {
     const user = auth.currentUser;
     if (!user) return false;
     
     try {
+        // Local preview only: server decides eligibility, streak and balance.
+        // Never fall back to direct client writes if preview transport fails.
+        if (isDailyLoginPreviewRequested()) {
+            const { createLocalFirebaseDailyLoginInvoker } = await import('./firebase-daily-login-preview.js');
+            const { claimDailyLoginPreview } = await import('./firebase-daily-login-invoker.js');
+            return claimDailyLoginPreview(createLocalFirebaseDailyLoginInvoker(), DAILY_REWARDS);
+        }
+
         const check = await checkDailyReward();
         if (!check.canClaim) return false;
         
