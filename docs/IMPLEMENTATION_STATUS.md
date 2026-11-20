@@ -402,3 +402,15 @@ Only the session identifier is stored in browser session storage; scores, correc
 - Confirm refresh after completion allows one idempotent claim and does not duplicate rewards.
 - Verify Duel and Time Trial resume behavior, including server deadlines.
 - Do not deploy production Functions/Rules or switch production gameplay until the Phase 0 owner evidence gates and full Stage 1 acceptance are complete.
+
+
+### Server-owned progress projection (PR #30 follow-up)
+
+The server mode session service now returns a deliberately limited `progress` projection on start, resume and accepted-answer responses:
+- Survival: answered/total, score, lives, current streak and best streak;
+- Duel: answered/total, player score, opponent score and correct-answer counts;
+- Time Trial: answered/total, score and correct-answer count.
+
+The browser session controller carries this projection without deriving competitive state locally. The preview renders Survival lives/streak and mode score information from this server response. Canonical answer keys remain excluded from all public question and progress payloads.
+
+The persisted session lifecycle and progress projection are still emulator-preview work; authenticated browser acceptance and the Phase 0 production evidence gates remain outstanding.
