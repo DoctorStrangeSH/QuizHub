@@ -32,3 +32,18 @@ test('callable maps business errors and hides unexpected internal errors', async
     await assert.rejects(make('INSUFFICIENT_COINS')({ auth: { uid: 'a' }, data: { operation: 'purchase', payload: {} } }), e => e.code === 'failed-precondition' && e.message === 'INSUFFICIENT_COINS');
     await assert.rejects(make('private database detail')({ auth: { uid: 'a' }, data: { operation: 'purchase', payload: {} } }), e => e.code === 'internal' && e.message === 'SHOP_SERVER_ERROR');
 });
+
+test('callable forwards authenticated cosmetic equip operation', async () => {
+    const calls = [];
+    const callable = createShopCallableAdapter({
+        handle: async (...args) => (calls.push(args), { equipped: true }),
+        HttpsError: FakeHttpsError,
+        clock: () => 54321
+    });
+    const result = await callable({
+        auth: { uid: 'verified' },
+        data: { operation: 'equip', payload: { itemId: 'theme_neon' } }
+    });
+    assert.deepEqual(result, { equipped: true });
+    assert.deepEqual(calls, [['equip', { itemId: 'theme_neon' }, { auth: { uid: 'verified' }, now: 54321 }]]);
+});

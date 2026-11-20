@@ -614,3 +614,13 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Updated emulator and reward fixtures to assert the persisted server-owned level.
 - This replaces the earlier carry-forward-only approach, which could leave level facts absent and therefore never unlock level milestones for new trusted progress.
 - Production migration remains blocked until Phase 0 evidence and an approved baseline strategy for existing users are complete.
+
+## 40. Shop browser integration — emulator acceptance passed
+
+- The browser shop now has an explicitly guarded local transport for `shopPurchasePreview`: localhost/127.0.0.1, both `firebaseEmulator=1&shopPreview=1` flags, and Firebase project `demo-quizhub` are required.
+- Cosmetic purchases, bonus purchases and equip actions use the authenticated callable only in that local preview. The client does not submit prices, UID, bonus duration or trusted balance values.
+- The server derives the catalog price, checks ownership and balance, computes bonus expiry from server time, applies changes transactionally, and persists idempotent purchase receipts.
+- Fixed the Firestore UID validator to accept standard Firebase Auth UIDs. The prior escaped control-character pattern rejected ordinary UIDs and caused the end-to-end purchase request to fail.
+- Firebase Auth + Functions + Firestore Emulator integration now passes, including purchase, duplicate retry, equip, ownership rejection, insufficient balance, forged fields and idempotency-key reuse. Browser transport and syntax tests are included in Question Quality CI.
+- Production shop behavior remains unchanged. Legacy direct Firestore writes are still a release blocker; no production Functions/Rules deployment, migration or live-data access occurred.
+- Next acceptance: merge only after all three required CI checks pass on this branch, then proceed with the remaining economy migration in the V1 specification.
