@@ -25,7 +25,7 @@ function labels(language) {
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
             lives: 'Lives', streak: 'Streak', score: 'Score',
-            answered: 'Questions answered', lives: 'Lives', streak: 'Streak', bestStreak: 'Best streak', aiScore: 'Opponent',
+            answered: 'Questions answered', bestStreak: 'Best streak', aiScore: 'Opponent',
         }
         : {
             title: 'Предпросмотр серверного режима', loading: 'Загружаем вопрос…',
@@ -34,7 +34,7 @@ function labels(language) {
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
             lives: 'Жизни', streak: 'Серия', score: 'Счёт',
-            answered: 'Отвечено вопросов', lives: 'Жизни', streak: 'Серия', bestStreak: 'Лучшая серия', aiScore: 'Соперник',
+            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', aiScore: 'Соперник',
         };
 }
 
@@ -62,13 +62,13 @@ function progressMarkup(language) {
     if (!progress) return '';
     const l = labels(language);
     const items = [];
-    if (Number.isFinite(progress.lives)) items.push(\`<span>\${l.lives}: <strong>\${progress.lives}</strong></span>\`);
-    if (Number.isFinite(progress.currentStreak)) items.push(\`<span>\${l.streak}: <strong>\${progress.currentStreak}</strong></span>\`);
-    if (Number.isFinite(progress.bestStreak)) items.push(\`<span>\${l.bestStreak}: <strong>\${progress.bestStreak}</strong></span>\`);
-    if (Number.isFinite(progress.score)) items.push(\`<span>\${l.score}: <strong>\${progress.score}</strong></span>\`);
-    if (Number.isFinite(progress.aiScore)) items.push(\`<span>\${l.aiScore}: <strong>\${progress.aiScore}</strong></span>\`);
+    if (Number.isFinite(progress.lives)) items.push(`<span>${l.lives}: <strong>${progress.lives}</strong></span>`);
+    if (Number.isFinite(progress.currentStreak)) items.push(`<span>${l.streak}: <strong>${progress.currentStreak}</strong></span>`);
+    if (Number.isFinite(progress.bestStreak)) items.push(`<span>${l.bestStreak}: <strong>${progress.bestStreak}</strong></span>`);
+    if (Number.isFinite(progress.score)) items.push(`<span>${l.score}: <strong>${progress.score}</strong></span>`);
+    if (Number.isFinite(progress.aiScore)) items.push(`<span>${l.aiScore}: <strong>${progress.aiScore}</strong></span>`);
     if (!items.length) return '';
-    return \`<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">\${items.join('')}</div>\`;
+    return `<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">${items.join('')}</div>`;
 }
 
 function shell(body, language) {
@@ -96,26 +96,26 @@ function renderActive(language) {
 
 function renderReadyToClaim(state, language) {
     const l = labels(language);
-    return shell(\`
+    return shell(`
         <div class="quiz-result glass-card text-center">
             <div class="result-icon">🏁</div>
-            <h2>\${l.complete}</h2>
-            <p>\${l.answered}: \${state.answeredQuestions}/\${state.totalQuestions}</p>
-            <button type="button" class="btn-gold" data-server-claim>\${l.claim}</button>
-        </div>\`, language);
+            <h2>${l.complete}</h2>
+            <p>${l.answered}: ${state.answeredQuestions}/${state.totalQuestions}</p>
+            <button type="button" class="btn-gold" data-server-claim>${l.claim}</button>
+        </div>`, language);
 }
 
 function renderCompleted(state, language) {
     const l = labels(language);
     const receipt = state.receipt || state.result || {};
-    return shell(\`
+    return shell(`
         <div class="quiz-result glass-card text-center">
             <div class="result-icon">🏆</div>
-            <h2>\${l.complete}</h2>
-            <p>\${l.score}: \${text(receipt.score ?? '—')}</p>
-            <p class="text-secondary small">\${text(receipt.status || 'Server receipt confirmed')}</p>
-            <button type="button" class="btn-premium" data-server-menu>\${l.menu}</button>
-        </div>\`, language);
+            <h2>${l.complete}</h2>
+            <p>${l.score}: ${text(receipt.score ?? '—')}</p>
+            <p class="text-secondary small">${text(receipt.status || 'Server receipt confirmed')}</p>
+            <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
+        </div>`, language);
 }
 
 function renderSessionState(state, language) {
@@ -165,7 +165,7 @@ export async function renderServerModePreview(settings) {
     } catch (error) {
         controller = null;
         busy = false;
-        return shell(\`<div class="quiz-result glass-card" role="alert"><p>\${text(labels(language).error)}</p><p class="text-secondary small">\${text(error.message)}</p></div>\`, language);
+        return shell(`<div class="quiz-result glass-card" role="alert"><p>${text(labels(language).error)}</p><p class="text-secondary small">${text(error.message)}</p></div>`, language);
     }
 }
 
