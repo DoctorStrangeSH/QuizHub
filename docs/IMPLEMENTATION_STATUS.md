@@ -498,3 +498,19 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - The audit confirms the client-side economy migration is still incomplete. The server reward/session services are not yet wired into the production browser flow.
 - Release remains BLOCKED until each economic write is migrated to a trusted, idempotent transaction, production Rules/Functions/data evidence is reviewed, and authenticated browser acceptance passes.
 - No production configuration, data, Rules, Functions or browser behavior is changed by this documentation-only follow-up.
+
+
+## 26. PR #38 merged; transactional shop purchase foundation
+
+- PR #38 merged to `main` as `fea5b8014320173ae5e7e6359a2d2aca78256fb6` after Question quality, visual preview and Firebase Emulator integration passed.
+- The server purchase service reads authoritative item price/effect/duration from the shared shop catalog, validates balance and ownership, and applies cosmetic/bonus changes in one transaction.
+- Purchase receipts are immutable and keyed by a per-user idempotency key; retrying the same operation returns the original receipt without a second debit.
+- The Firestore adapter writes only the approved economy/shop fields and preserves unrelated profile data.
+- This backend foundation is not yet connected to the production browser shop. Existing client writes remain a release blocker.
+
+## 27. Emulator-only shop callable preview
+
+- Current PR #39 wires the shop purchase service through an authenticated handler and Firebase callable transport, deriving UID from verified Firebase Auth context and time on the server.
+- Adds `shopPurchasePreview`, guarded to the isolated Auth + Firestore + Functions emulator project only. Non-emulator projects fail closed; no production callable is enabled.
+- Adds handler and callable tests for authentication, rejection of client UID/extra fields, server clock, business error mapping and private internal error suppression.
+- Browser shop migration, Firestore Rules changes and production deployment remain explicitly out of scope. No live user data is changed.
