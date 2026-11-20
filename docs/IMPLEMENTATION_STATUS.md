@@ -252,3 +252,32 @@ Collector возвращает только шаблоны путей колле
 5. Передать полученный JSON для сверки с repository-derived inventory.
 
 Скрипт не содержит write-операций и не выполняется автоматически CI. Его запуск против production должен делать владелец/уполномоченный оператор после проверки IAM и предполагаемого объёма чтений. Не помещать service-account keys или ADC credentials в репозиторий.
+
+
+## 12. Owner-provided Firestore Rules snapshot and security review (2026-11-20)
+
+The owner supplied a Rules text snapshot and identified it as the current console Rules. Exact text and detailed findings are preserved in [FIRESTORE_RULES_OWNER_SNAPSHOT_2026-11-20.md](audits/FIRESTORE_RULES_OWNER_SNAPSHOT_2026-11-20.md).
+
+**Assessment: HIGH RISK.** The supplied Rules allow any authenticated user to read every `users/{uid}` document, read/create/update any chat parent, read/create any chat message, create notifications under any UID, create friend requests with unvalidated sender/recipient fields, delete any friend request, and write achievements, dailyRewards, shopItems, events and settings. Owners can update arbitrary fields in their own user document, including client-stored economy/progress fields. Question authors can change authorId during an otherwise authorized update. Transaction creation does not bind userId to the caller.
+
+This is a source-text review of the owner-provided snapshot, **not an independently verified export of the active deployed Ruleset**. Obtain the active Rules and indexes export and compare it with the snapshot before treating it as production evidence.
+
+### SEC-02 status
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Owner-provided Rules text reviewed | Done | Exact snapshot and rule-by-rule review saved in docs/audits |
+| Active deployed Ruleset independently exported and compared | Blocked | Requires Firebase Console/CLI export |
+| Production indexes export | Blocked | Requires Firebase Console/CLI export |
+| Least-privilege replacement Rules | Not started | Must follow migration of existing client write/read paths |
+| Emulator security matrix for replacement Rules | Not started | Must include owner, stranger, anonymous, forged identity, non-member chat, malformed fields |
+| Production deployment | Prohibited | No Rules deployment is authorized by this audit |
+
+**Do not deploy restrictive Rules as a standalone change.** Current client code still writes profile/economy, daily rewards, shop state, achievements, friend arrays, chat messages and presence directly. A premature lock-down would break live product flows. The migration sequence and exact findings are documented in the audit file.
+
+The owner-provided Rules snapshot increases the priority of SEC-02, but does not close Phase 0: DATA-01 live inventory, active Rules/indexes export, AUTH-01 console verification and DATA-02 backup/restore rehearsal remain open.
+
+
+### 12.1. Статус инструмента live inventory после PR #6
+
+Read-only collector и guarded CLI объединены в main через PR #6 (squash commit `4ee10fdeaf70acbabe56ae4930ac6d94acd9f513`). Все три PR checks прошли: Question quality, visual preview и Firebase emulator integration. Collector пока не запускался против production; DATA-01 остаётся открытым до получения отчёта от владельца/уполномоченного оператора.
