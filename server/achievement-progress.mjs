@@ -7,24 +7,30 @@ function nonNegative(value, code) {
 
 // Called only while the trusted quiz reward transaction is open.
 // Facts start at zero rather than importing legacy client-editable profile stats.
-export function advanceAchievementFacts({ previousFacts, previousAchievements, experienceDelta, catalog = ACHIEVEMENT_CATALOG }) {
+export function advanceAchievementFacts({ previousFacts, previousAchievements, experienceDelta, winDelta = 0, perfectDelta = 0, catalog = ACHIEVEMENT_CATALOG }) {
     nonNegative(experienceDelta, 'INVALID_ACHIEVEMENT_EXPERIENCE_DELTA');
+    if (![0, 1].includes(winDelta)) throw new Error('INVALID_ACHIEVEMENT_WIN_DELTA');
+    if (![0, 1].includes(perfectDelta)) throw new Error('INVALID_ACHIEVEMENT_PERFECT_DELTA');
     const current = previousFacts ?? {};
     if (!current || typeof current !== 'object' || Array.isArray(current)) {
         throw new Error('INVALID_ACHIEVEMENT_FACTS');
     }
     const totalGames = current.totalGames === undefined ? 0 : nonNegative(current.totalGames, 'INVALID_ACHIEVEMENT_FACTS');
     const experience = current.experience === undefined ? 0 : nonNegative(current.experience, 'INVALID_ACHIEVEMENT_FACTS');
+    const totalWins = current.totalWins === undefined ? 0 : nonNegative(current.totalWins, 'INVALID_ACHIEVEMENT_FACTS');
+    const perfectGames = current.perfectGames === undefined ? 0 : nonNegative(current.perfectGames, 'INVALID_ACHIEVEMENT_FACTS');
     const nextFacts = {
         totalGames: totalGames + 1,
-        experience: experience + experienceDelta
+        experience: experience + experienceDelta,
+        totalWins: totalWins + winDelta,
+        perfectGames: perfectGames + perfectDelta
     };
     if (current.unlockedIds !== undefined && !Array.isArray(current.unlockedIds)) throw new Error('INVALID_ACHIEVEMENT_FACTS');
     const serverUnlocked = Array.isArray(current.unlockedIds) ? current.unlockedIds : [];
     if (serverUnlocked.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
         throw new Error('INVALID_ACHIEVEMENT_FACTS');
     }
-    if (!Number.isSafeInteger(nextFacts.totalGames) || !Number.isSafeInteger(nextFacts.experience)) {
+    if (![nextFacts.totalGames, nextFacts.experience, nextFacts.totalWins, nextFacts.perfectGames].every(Number.isSafeInteger)) {
         throw new Error('ACHIEVEMENT_FACTS_OVERFLOW');
     }
 
