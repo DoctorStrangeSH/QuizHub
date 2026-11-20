@@ -577,9 +577,9 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Next slice: add further achievement facts only where the server already has authoritative evidence (for example verified wins and perfect runs), with catalog-driven thresholds and emulator coverage. Keep existing-user baseline and production client cutover as separate reviewed milestones.
 
 
-## 34. Trusted win and perfect-run achievement milestones (PR in progress)
+## 34. PR #43 merged — trusted win and perfect-run achievement milestones
 
-- Branch: `feat/trusted-achievement-milestones`.
+- PR #43 merged into `main` as `799a5863ff7e94e348070f678594732dd276ec93` after Question quality, Firebase Emulator integration and QuizHub visual preview all passed on the final head.
 - The server achievement ledger now tracks `totalWins` and `perfectGames` in addition to completed games and experience.
 - Classic win calculation now matches the existing browser V1 rule: at least 70% correct. The trusted Classic reward transaction now increments `users/{uid}.wins` and `stats.totalWins` as well as the corresponding server-owned achievement fact. This closes a gap in the previous Classic server claim path.
 - Duel and Time Trial use their already validated server-owned win result. Survival does not award a win. Draws and losses do not increment win facts.
@@ -587,4 +587,4 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Active catalog now includes `first_win`, `ten_wins`, and `perfect_score`. Level, social and collector achievements remain deferred until their trusted facts and formulas are implemented.
 - Facts are derived only from validated server session results and persisted atomically with reward/session receipts. Existing client-maintained totals are not imported.
 - The existing browser `checkAchievements()` path and achievement UI are intentionally not cut over here. Production Functions, Firestore Rules and browser behavior remain unchanged; the emulator-only boundary is preserved.
-- CI and Firestore Emulator integration are required before merge.
+- CI and Firestore Emulator integration passed on the final PR head.
