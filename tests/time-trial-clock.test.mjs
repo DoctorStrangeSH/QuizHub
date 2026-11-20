@@ -7,9 +7,9 @@ test('Time Trial clock formats remaining time and progress', () => {
         remainingMs: 15_000, seconds: 15, display: '00:15',
         percent: 100, urgent: false, expired: false
     });
-    const middle = getTimeTrialClock(9_500, 1_000);
-    assert.equal(middle.display, '00:09');
-    assert.equal(middle.percent, 56.666666666666664);
+    const middle = getTimeTrialClock(9_500, 5_000);
+    assert.equal(middle.display, '00:05');
+    assert.equal(middle.percent, 30);
     assert.equal(middle.urgent, true);
 });
 
