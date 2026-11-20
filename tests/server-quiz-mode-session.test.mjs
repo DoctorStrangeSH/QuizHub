@@ -14,6 +14,9 @@ test('Duel mode caps at seven rounds and records server-generated AI outcomes', 
     }
     assert.equal(getModeResult(state).outcome, 'win');
     assert.equal(getModeResult(state).wins, 1);
+    assert.equal(state.roundLog.length, 7);
+    assert.equal(state.roundLog[0].aiCorrect, false);
+    assert.equal(state.roundLog[0].aiPoints, 0);
     assert.throws(() => applyModeAnswer(state, {
         correct: true, points: 10, aiRandomValue: 0.1
     }), /MODE_FINISHED/);
@@ -27,6 +30,7 @@ test('Duel does not mutate prior state and keeps draws distinct from wins', () =
     assert.equal(state.roundsPlayed, 0);
     assert.equal(getModeResult(next).outcome, 'draw');
     assert.equal(getModeResult(next).wins, 0);
+    assert.deepEqual(next.roundLog, [{ round: 1, playerCorrect: true, aiCorrect: true, points: 10, aiPoints: 10 }]);
 });
 
 test('Survival stops at zero lives and preserves the best streak', () => {
@@ -41,6 +45,8 @@ test('Survival stops at zero lives and preserves the best streak', () => {
     assert.equal(result.bestStreak, 1);
     assert.equal(result.answeredQuestions, 4);
     assert.equal(result.correctAnswers, 1);
+    assert.equal(state.answerLog.length, 4);
+    assert.deepEqual(state.answerLog[0], { question: 1, correct: true, points: 10 });
     assert.throws(() => applyModeAnswer(state, { correct: true, points: 10 }), /MODE_FINISHED/);
 });
 
@@ -59,6 +65,9 @@ test('Time Trial applies the strict server-time speed threshold and ten-question
     assert.equal(boundary.round.points, 10);
     assert.equal(getModeResult(boundary.state).score, 25);
     assert.equal(getModeResult(boundary.state).correctAnswers, 2);
+    assert.deepEqual(boundary.state.answerLog[0], {
+        question: 1, correct: true, points: 15, remainingMs: 10_001, speedBonus: 5
+    });
 });
 
 test('invalid mode, exhausted state and invalid timer values are rejected', () => {
