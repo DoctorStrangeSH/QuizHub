@@ -3,12 +3,14 @@ import { createServerModeClient } from './server-mode-client.js';
 import { createLocalFirebaseModeInvoker } from './firebase-mode-preview.js';
 import { escapeHTML } from './escape-html.js';
 import { createModeSessionStorage } from './mode-session-storage.js';
+import { getTimeTrialClock } from './time-trial-clock.js';
 
 let controller = null;
 let settingsSnapshot = null;
 let busy = false;
 let lastResponse = null;
 let sessionStorageAdapter = null;
+let timerInterval = null;
 
 const QUESTION_COUNTS = Object.freeze({ survival: 100, duel: 7, time: 10 });
 
@@ -25,7 +27,7 @@ function labels(language) {
             points: 'points', error: 'Could not complete the request',
             complete: 'Run completed', saving: 'Saving verified result…',
             lives: 'Lives', streak: 'Streak', score: 'Score',
-            answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent',
+            answered: 'Questions answered', bestStreak: 'Best streak', playerScore: 'You', aiScore: 'Opponent', timeLeft: 'Time left', timeExpired: 'Time is up — submit to let the server verify the deadline',
         }
         : {
             title: 'Предпросмотр серверного режима', loading: 'Загружаем вопрос…',
@@ -34,7 +36,7 @@ function labels(language) {
             points: 'очков', error: 'Не удалось выполнить запрос',
             complete: 'Забег завершён', saving: 'Сохраняем подтверждённый результат…',
             lives: 'Жизни', streak: 'Серия', score: 'Счёт',
-            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник',
+            answered: 'Отвечено вопросов', bestStreak: 'Лучшая серия', playerScore: 'Вы', aiScore: 'Соперник', timeLeft: 'Осталось времени', timeExpired: 'Время вышло — отправьте ответ для проверки сервером',
         };
 }
 
@@ -72,6 +74,50 @@ function progressMarkup(language) {
     return `<div class="quiz-progress glass-card d-flex flex-wrap justify-content-around gap-2" aria-label="Game progress">${items.join('')}</div>`;
 }
 
+function timerMarkup(language) {
+    if (settingsSnapshot?.mode !== 'time') return '';
+    const deadlineAt = controller?.getState().questionDeadlineAt;
+    if (!Number.isSafeInteger(deadlineAt)) return '';
+    const clock = getTimeTrialClock(deadlineAt, Date.now());
+    const l = labels(language);
+    return \`
+        <div class="time-trial-clock glass-card" data-time-trial-timer role="timer" aria-live="off">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+                <span>\${l.timeLeft}</span>
+                <strong data-time-trial-value>\${clock.display}</strong>
+            </div>
+            <div class="timer-bar-wrapper mt-2">
+                <div class="timer-bar-fill\${clock.expired ? ' urgent' : ''}" data-time-trial-fill style="width:\${clock.percent}%"></div>
+            </div>
+            <p class="small text-secondary mt-2 mb-0" data-time-trial-status>\${clock.expired ? l.timeExpired : ''}</p>
+        </div>\`;
+}
+
+function stopTimer() {
+    if (timerInterval !== null) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimer(root, language) {
+    const timer = root.querySelector('[data-time-trial-timer]');
+    if (!timer) return;
+    const deadlineAt = controller?.getState().questionDeadlineAt;
+    if (!Number.isSafeInteger(deadlineAt)) return;
+    const clock = getTimeTrialClock(deadlineAt, Date.now());
+    const value = timer.querySelector('[data-time-trial-value]');
+    const fill = timer.querySelector('[data-time-trial-fill]');
+    const status = timer.querySelector('[data-time-trial-status]');
+    if (value) value.textContent = clock.display;
+    if (fill) {
+        fill.style.width = \`\${clock.percent}%\`;
+        fill.classList.toggle('urgent', clock.urgent || clock.expired);
+    }
+    if (value) value.classList.toggle('urgent', clock.urgent || clock.expired);
+    if (status) status.textContent = clock.expired ? labels(language).timeExpired : '';
+}
+
 function shell(body, language) {
     const l = labels(language);
     return `
@@ -83,6 +129,7 @@ function shell(body, language) {
                 </div>
             </div>
             ${progressMarkup(language)}
+            ${timerMarkup(language)}
             ${body}
             <div class="text-center mt-3">
                 <button type="button" class="btn-premium" data-server-menu>${l.menu}</button>
@@ -173,15 +220,22 @@ export async function renderServerModePreview(settings) {
 export function attachServerModePreviewListeners(onExit = () => window.navigateTo('home')) {
     const root = document.querySelector('.server-mode-preview');
     if (!root || !controller) return;
+    stopTimer();
+    if (settingsSnapshot?.mode === 'time') {
+        updateTimer(root, settingsSnapshot.language);
+        timerInterval = setInterval(() => updateTimer(root, settingsSnapshot.language), 200);
+    }
     root.addEventListener('click', async event => {
         const menu = event.target.closest('[data-server-menu]');
         if (menu) {
+            stopTimer();
             controller = null;
             onExit();
             return;
         }
         const answer = event.target.closest('[data-server-answer]');
         if (answer && !busy) {
+            stopTimer();
             const index = Number(answer.dataset.serverAnswer);
             busy = true;
             root.querySelectorAll('[data-server-answer]').forEach(button => { button.disabled = true; });
@@ -217,11 +271,13 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
             return;
         }
         if (event.target.closest('[data-server-next]') && !busy) {
+            stopTimer();
             root.outerHTML = renderActive(settingsSnapshot.language);
             attachServerModePreviewListeners(onExit);
             return;
         }
         if (event.target.closest('[data-server-claim]') && !busy) {
+            stopTimer();
             busy = true;
             const l = labels(settingsSnapshot.language);
             root.innerHTML = `<div class="quiz-result glass-card text-center"><p>${l.saving}</p></div>`;
@@ -246,6 +302,7 @@ export function attachServerModePreviewListeners(onExit = () => window.navigateT
 }
 
 export function resetServerModePreview() {
+    stopTimer();
     controller = null;
     settingsSnapshot = null;
     lastResponse = null;
