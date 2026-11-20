@@ -486,8 +486,15 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - This is a server response consistency fix only; no Survival rules, scoring, reward calculation, or production deployment behavior changes.
 
 
-## 24. Concurrent answer retry hardening
+## 24. PR #36 merged; concurrent answer retry hardening
 
-- PR #35 is merged. The terminal Survival replay response is now consistent with the completed run state.
-- Current PR #36 adds a concurrent identical-answer regression test for Duel. Two overlapping requests for the same player/session/question must produce one committed round, one opponent random roll, identical authoritative progress, and exactly one replay response.
-- This test targets the retry behavior expected when clients resend a request after a timeout or ambiguous network response. It does not alter scoring, AI probability, mode rules, or production integration.
+- PR #36 merged to `main` as `81b47182aa334bcc56ab483b9c991262562a0723` after Question quality, visual preview and Firebase Emulator integration passed.
+- Added a concurrent identical-answer Duel regression test: overlapping requests commit one round, use one opponent random roll, return identical authoritative progress and produce exactly one replay response.
+- This validates the server session service contract; it does not imply that the existing browser app has been switched to the server path.
+
+## 25. Client economy write audit
+
+- Current PR #37 adds a source-derived inventory of direct browser writes to quiz rewards, profile bootstrap, shop purchases/bonuses, daily claims and achievements.
+- The audit confirms the client-side economy migration is still incomplete. The server reward/session services are not yet wired into the production browser flow.
+- Release remains BLOCKED until each economic write is migrated to a trusted, idempotent transaction, production Rules/Functions/data evidence is reviewed, and authenticated browser acceptance passes.
+- No production configuration, data, Rules, Functions or browser behavior is changed by this documentation-only follow-up.
