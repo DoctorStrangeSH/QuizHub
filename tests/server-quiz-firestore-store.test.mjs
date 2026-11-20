@@ -8,7 +8,7 @@ function fakeFirestore() {
     const records = new Map();
     const mutations = [];
     let queue = Promise.resolve();
-    const ref = path => ({ path });
+    const ref = path => ({ path, collection: name => ({ doc: id => ref(path + '/' + name + '/' + id) }) });
     return {
         records, mutations,
         collection: name => ({ doc: id => ref(name + '/' + id) }),
@@ -23,6 +23,11 @@ function fakeFirestore() {
                             exists: records.has(document.path),
                             data: () => structuredClone(records.get(document.path))
                         };
+                    },
+                    create(document, value) {
+                        wrote = true;
+                        assert.equal(records.has(document.path), false, 'immutable receipt must not already exist');
+                        pending.push({ operation: 'set', path: document.path, value: structuredClone(value) });
                     },
                     set(document, value) {
                         wrote = true;
@@ -101,6 +106,9 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(user.experience, 22);
     assert.equal(user.stats.totalGames, 1);
     assert.equal(user.stats.special, 17);
+    assert.deepEqual(user.achievements, ['first_quiz']);
+    assert.deepEqual(db.records.get('achievementFacts/alice'), { totalGames: 1, experience: 20, unlockedIds: ['first_quiz'] });
+    assert.equal(db.records.get('achievementUnlockReceipts/alice/unlocks/first_quiz').achievementId, 'first_quiz');
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['bob']);
     const writes = db.mutations.filter(mutation => mutation.path === 'users/alice');
@@ -108,7 +116,7 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(writes[0].operation, 'update');
     assert.deepEqual(Object.keys(writes[0].value).sort(), [
         'coins', 'experience', 'quizzesCompleted', 'stats.correctAnswers',
-        'stats.totalGames', 'stats.totalQuestions', 'weeklyExperience'
+        'stats.totalGames', 'stats.totalQuestions', 'weeklyExperience', 'achievements'
     ].sort());
 });
 
