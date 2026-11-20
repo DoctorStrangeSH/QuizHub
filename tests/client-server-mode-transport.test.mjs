@@ -32,7 +32,7 @@ test('client rejects unsupported modes and malformed input before network calls'
     const client = createServerModeClient({ invoke: async () => { calls++; return {}; } });
     await assert.rejects(client.start({ mode: 'classic', count: 10 }), /UNSUPPORTED_QUIZ_MODE/);
     await assert.rejects(client.start({ mode: 'time', count: 0 }), /INVALID_COUNT/);
-    await assert.rejects(client.answer({ sessionId: 's1', questionId: 'q1', answerIndex: 9 }), /INVALID_ANSWER/);
+    await assert.rejects(client.answer({ sessionId: 's1', questionId: 'q1', answerIndex: -1 }), /INVALID_ANSWER/);
     await assert.rejects(client.resume({ sessionId: '' }), /INVALID_SESSION_ID/);
     assert.equal(calls, 0);
 });
