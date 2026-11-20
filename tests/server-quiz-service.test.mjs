@@ -18,6 +18,8 @@ const catalog = buildQuestionCatalog({
 
 function makeStore() {
     const sessions = new Map();
+    const facts = new Map();
+    const receipts = new Set();
     const users = new Map([['user-1', {
         experience: 0, weeklyExperience: 0, coins: 0,
         quizzesCompleted: 0, stats: {}
@@ -31,13 +33,18 @@ function makeStore() {
                 const tx = {
                     getSession: async id => structuredClone(staged.get(`s:${id}`) ?? sessions.get(id)),
                     getUser: async id => structuredClone(staged.get(`u:${id}`) ?? users.get(id)),
+                    getAchievementFacts: async id => structuredClone(staged.get(`f:${id}`) ?? facts.get(id) ?? null),
+                    setAchievementFacts: async (id, value) => { staged.set(`f:${id}`, structuredClone(value)); },
+                    createAchievementReceipts: async (id, ids) => { for (const achievementId of ids) staged.set(`r:${id}:${achievementId}`, true); },
                     setSession: async (id, value) => { staged.set(`s:${id}`, structuredClone(value)); },
                     setUser: async (id, value) => { staged.set(`u:${id}`, structuredClone(value)); }
                 };
                 const result = await callback(tx);
                 for (const [key, value] of staged) {
                     if (key.startsWith('s:')) sessions.set(key.slice(2), value);
-                    else users.set(key.slice(2), value);
+                    else if (key.startsWith('u:')) users.set(key.slice(2), value);
+                    else if (key.startsWith('f:')) facts.set(key.slice(2), value);
+                    else if (key.startsWith('r:')) receipts.add(key.slice(2));
                 }
                 return result;
             });
