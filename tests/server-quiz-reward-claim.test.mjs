@@ -18,20 +18,27 @@ function setup() {
         experience: 5, weeklyExperience: 5, coins: 7,
         quizzesCompleted: 0, stats: { totalGames: 0, totalQuestions: 0, correctAnswers: 0 }
     }]]);
+    const facts = new Map();
+    const unlockReceipts = new Set();
     let queue = Promise.resolve();
     const store = {
         // Model the serializable transaction contract for independent callers.
         runTransaction(callback) {
             const task = queue.then(async () => {
-                const staged = { session: null, user: null };
+                const staged = { session: null, user: null, facts: null, receipts: [] };
                 const tx = {
                     getSession: async id => structuredClone(sessions.get(id)),
                     getUser: async uid => structuredClone(users.get(uid)),
+                    getAchievementFacts: async uid => structuredClone(facts.get(uid) ?? null),
+                    setAchievementFacts: async (uid, value) => { staged.facts = [uid, structuredClone(value)]; },
+                    createAchievementReceipts: async (uid, ids) => { staged.receipts = ids.map(id => uid + ':' + id); },
                     setSession: async (id, value) => { staged.session = [id, structuredClone(value)]; },
                     setUser: async (uid, value) => { staged.user = [uid, structuredClone(value)]; }
                 };
                 const result = await callback(tx);
                 if (staged.user) users.set(...staged.user);
+                if (staged.facts) facts.set(...staged.facts);
+                for (const id of staged.receipts) unlockReceipts.add(id);
                 if (staged.session) sessions.set(...staged.session);
                 return result;
             });
@@ -39,7 +46,7 @@ function setup() {
             return task;
         }
     };
-    return { store, sessions, users };
+    return { store, sessions, users, facts, unlockReceipts };
 }
 
 const claim = (store, uid = 'player') =>
@@ -57,6 +64,9 @@ test('first claim credits the server-scored result exactly once', async () => {
     assert.equal(user.coins, 22);
     assert.equal(user.stats.totalQuestions, 2);
     assert.equal(user.stats.correctAnswers, 2);
+    assert.deepEqual(user.achievements, ['first_quiz']);
+    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30 });
+    assert.ok(unlockReceipts.has('player:first_quiz'));
 });
 
 test('retries and concurrent completion requests return same receipt without double credit', async () => {
@@ -66,6 +76,7 @@ test('retries and concurrent completion requests return same receipt without dou
     assert.deepEqual(receipts.map(receipt => receipt.coins), [15, 15, 15]);
     assert.equal(users.get('player').coins, 22);
     assert.equal(users.get('player').quizzesCompleted, 1);
+    assert.deepEqual(users.get('player').achievements, ['first_quiz']);
 });
 
 test('foreign users cannot claim someone else\'s session', async () => {
