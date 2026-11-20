@@ -10,6 +10,7 @@ import { createDailyChallenge, getUtcDateKey } from './daily-challenge.js';
 // Текущий активный режим
 let currentMode = null;
 let attachedMode = null;
+let serverModePreviewActive = false;
 
 // ========== ФАБРИКА РЕЖИМОВ ==========
 function createMode(modeType) {
@@ -35,12 +36,14 @@ export async function renderQuiz() {
     resetQuiz();
 
     // Explicit local-only opt-in: production UI remains on its existing path.
-    const previewParams = new URLSearchParams(window.location.search);
-    const serverModePreview = ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
+    const browserLocation = typeof window !== 'undefined' ? window.location : null;
+    const previewParams = new URLSearchParams(browserLocation?.search || '');
+    serverModePreviewActive = Boolean(browserLocation &&
+        ['localhost', '127.0.0.1'].includes(browserLocation.hostname) &&
         previewParams.get('firebaseEmulator') === '1' &&
         previewParams.get('serverModePreview') === '1' &&
-        ['survival', 'duel', 'time'].includes(settings.mode);
-    if (serverModePreview) {
+        ['survival', 'duel', 'time'].includes(settings.mode));
+    if (serverModePreviewActive) {
         const preview = await import('./server-mode-preview-screen.js');
         return preview.renderServerModePreview({ ...settings, language: getState().language });
     }
@@ -110,7 +113,10 @@ window.duelAnswer = (el) => {
 export function resetQuiz() {
     // Завершаем режим и отменяем все его таймеры и отложенные действия.
     currentMode?.dispose?.();
-    import('./server-mode-preview-screen.js').then(module => module.resetServerModePreview());
+    if (serverModePreviewActive) {
+        serverModePreviewActive = false;
+        import('./server-mode-preview-screen.js').then(module => module.resetServerModePreview());
+    }
     currentMode = null;
     attachedMode = null;
 }
@@ -119,7 +125,9 @@ export function resetQuiz() {
 export function attachQuizListeners() {
     // Start first-question effects only after the markup is mounted.
     if (!currentMode) {
-        import('./server-mode-preview-screen.js').then(module => module.attachServerModePreviewListeners());
+        if (serverModePreviewActive) {
+            import('./server-mode-preview-screen.js').then(module => module.attachServerModePreviewListeners());
+        }
         return;
     }
     if (attachedMode === currentMode) return;
