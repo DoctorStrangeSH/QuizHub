@@ -65,8 +65,17 @@ test('first claim credits the server-scored result exactly once', async () => {
     assert.equal(user.stats.totalQuestions, 2);
     assert.equal(user.stats.correctAnswers, 2);
     assert.deepEqual(user.achievements, ['first_quiz']);
-    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30 });
+    assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, unlockedIds: ['first_quiz'] });
     assert.ok(unlockReceipts.has('player:first_quiz'));
+});
+
+test('server unlock ledger ignores legacy profile IDs when deciding new unlocks', async () => {
+    const fixture = setup();
+    fixture.users.get('player').achievements = ['first_quiz'];
+    const receipt = await claim(fixture.store);
+    assert.deepEqual(receipt.newlyUnlocked, ['first_quiz']);
+    assert.deepEqual(fixture.facts.get('player').unlockedIds, ['first_quiz']);
+    assert.ok(fixture.unlockReceipts.has('player:first_quiz'));
 });
 
 test('retries and concurrent completion requests return same receipt without double credit', async () => {
