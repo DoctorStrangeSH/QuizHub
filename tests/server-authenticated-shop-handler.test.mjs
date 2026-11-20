@@ -18,3 +18,23 @@ test('shop handler rejects unauthenticated users, client identity and extra fiel
     await assert.rejects(handle('purchase', { itemId: 'theme_neon', operationId: 'purchase_req_0001', price: 1 }, { auth: { uid: 'attacker' }, now: 1 }), /UNEXPECTED_SHOP_FIELD/);
     await assert.rejects(handle('admin', {}, { auth: { uid: 'attacker' }, now: 1 }), /UNKNOWN_SHOP_OPERATION/);
 });
+
+test('shop handler routes equip using authenticated identity and rejects price or owner overrides', async () => {
+    const calls = [];
+    const handle = createAuthenticatedShopHandler({
+        service: {
+            purchase: async input => input,
+            equip: async input => (calls.push(input), { equipped: true })
+        }
+    });
+    assert.deepEqual(await handle('equip', { itemId: 'theme_neon' }, {
+        auth: { uid: 'verified-user' }, now: 1234
+    }), { equipped: true });
+    assert.deepEqual(calls, [{ uid: 'verified-user', itemId: 'theme_neon' }]);
+    await assert.rejects(handle('equip', { itemId: 'theme_neon', uid: 'victim' }, {
+        auth: { uid: 'attacker' }, now: 1234
+    }), /UNEXPECTED_SHOP_FIELD/);
+    await assert.rejects(handle('equip', { itemId: 'theme_neon', price: 0 }, {
+        auth: { uid: 'attacker' }, now: 1234
+    }), /UNEXPECTED_SHOP_FIELD/);
+});
