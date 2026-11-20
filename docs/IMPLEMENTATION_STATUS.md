@@ -624,3 +624,5 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Firebase Auth + Functions + Firestore Emulator integration now passes, including purchase, duplicate retry, equip, ownership rejection, insufficient balance, forged fields and idempotency-key reuse. Browser transport and syntax tests are included in Question Quality CI.
 - Production shop behavior remains unchanged. Legacy direct Firestore writes are still a release blocker; no production Functions/Rules deployment, migration or live-data access occurred.
 - Next acceptance: merge only after all three required CI checks pass on this branch, then proceed with the remaining economy migration in the V1 specification.
+
+}
