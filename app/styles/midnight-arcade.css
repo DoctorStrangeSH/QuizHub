@@ -1400,3 +1400,35 @@ input::placeholder,textarea::placeholder { opacity: .75; }
 @media (max-width: 520px) {
   .answer-feedback-combo { margin-left: 45px; }
 }
+
+
+/* Server-owned Time Trial countdown */
+.time-trial-clock {
+    margin: 12px 0 18px;
+    padding: 14px 18px;
+    border: 1px solid rgba(46, 213, 115, 0.24);
+    background: linear-gradient(135deg, rgba(46, 213, 115, 0.08), var(--bg-card));
+    font-variant-numeric: tabular-nums;
+}
+.time-trial-clock [data-time-trial-value] {
+    min-width: 3.5em;
+    color: var(--accent-secondary);
+    font-size: 1.45rem;
+    font-weight: 800;
+    text-align: right;
+}
+.time-trial-clock [data-time-trial-value].urgent {
+    color: var(--danger);
+    animation: pulse 0.5s infinite;
+}
+.time-trial-clock .timer-bar-wrapper {
+    height: 7px;
+    border-radius: 999px;
+}
+.time-trial-clock .timer-bar-fill {
+    width: 100%;
+    transition: width 180ms linear;
+}
+.time-trial-clock .timer-bar-fill.urgent {
+    background: var(--danger);
+}

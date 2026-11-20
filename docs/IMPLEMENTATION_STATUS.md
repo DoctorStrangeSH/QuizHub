@@ -414,3 +414,22 @@ The server mode session service now returns a deliberately limited `progress` pr
 The browser session controller carries this projection without deriving competitive state locally. The preview renders Survival lives/streak and mode score information from this server response. Canonical answer keys remain excluded from all public question and progress payloads.
 
 The persisted session lifecycle and progress projection are still emulator-preview work; authenticated browser acceptance and the Phase 0 production evidence gates remain outstanding.
+
+
+## 19. PR #30 merged; Time Trial countdown UI
+
+- PR #30 merged to `main` as `917ae48f540309e8df108e81e8f96bb3f790dbeb`. Question quality, visual preview and Firebase Emulator integration all passed for the final PR head.
+- Server-owned session IDs now survive refresh in sessionStorage; public progress is returned by the session service and carried by the browser controller.
+
+### Current follow-up: Time Trial clock
+
+PR #31 adds a localized live countdown and progress bar for the Time Trial browser preview, driven by the server-provided `questionDeadlineAt`. It updates locally for presentation only. At zero, answer choices remain available so the server can authoritatively decide whether the submission arrived before or after the deadline; the browser never awards/denies points or marks a timeout itself.
+
+The clock calculation is a pure helper with unit tests for formatting, urgency, expiry and invalid timestamps. Question quality CI runs those tests and syntax-checks the preview screen. Styling follows the existing Midnight Arcade timer components.
+
+### Acceptance still required
+
+- Validate the Time Trial clock in an authenticated browser against the local Firebase emulators.
+- Confirm a timely answer and a late answer are resolved by server time, not the browser countdown.
+- Confirm refresh resumes the same deadline rather than resetting the 15-second question timer.
+- Continue full Survival and Duel browser acceptance, then the broader Stage 1 gates. Production Functions/Rules remain untouched.
