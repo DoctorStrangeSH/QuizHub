@@ -191,3 +191,33 @@ test('server responses expose safe mode progress without canonical answer data',
     assert.deepEqual(resumed.progress, answered.progress);
     assert.equal('correctIndex' in answered.nextQuestion, false);
 });
+
+
+test('Survival ends immediately when the third life is lost', async () => {
+    const store = makeStore();
+    const service = createModeSessionService({ catalog, store, sessionDurationMs: 60_000 });
+    const started = await service.start({
+        uid: 'player-1', mode: 'survival', category: 'science',
+        difficulty: 'easy', count: 8, now: 1000
+    });
+    let question = started.question;
+    for (const now of [2000, 3000, 4000]) {
+        const answer = await service.answer({
+            uid: 'player-1', sessionId: started.sessionId,
+            questionId: question.id, answerIndex: 0, now
+        });
+        question = answer.nextQuestion;
+        if (now < 4000) assert.equal(answer.finished, false);
+        else {
+            assert.equal(answer.finished, true);
+            assert.equal(answer.progress.lives, 0);
+            assert.equal(answer.progress.currentStreak, 0);
+            assert.equal(answer.nextQuestion, null);
+        }
+    }
+    const result = await service.complete({
+        uid: 'player-1', sessionId: started.sessionId, now: 4100
+    });
+    assert.equal(result.livesRemaining, 0);
+    assert.equal(result.answeredQuestions, 3);
+});
