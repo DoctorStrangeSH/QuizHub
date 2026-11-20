@@ -596,3 +596,12 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Both paths are marked `preserve: true`; a future migration snapshot must include them and recursively enumerate the nested unlock receipts.
 - Extended `tests/firestore-migration-inventory.test.mjs` to assert both paths exist in the source-derived inventory.
 - This is a repository manifest update only. It does not enumerate the live database, change deployed Rules, or migrate production documents.
+
+## 37. Local browser integration for trusted daily login claims
+
+- Added a browser callable invoker for `dailyLoginRewardPreview`, requiring localhost/127.0.0.1, both explicit query flags (`firebaseEmulator=1&dailyLoginPreview=1`) and Firebase project `demo-quizhub`.
+- The daily reward UI now uses the trusted callable only when that exact local preview is requested. In that path the browser does not calculate eligibility, streak, reward amount or balance; it validates the returned receipt and adapts it for the existing popup.
+- Preview transport failures do not fall back to direct Firestore writes. Production behavior is unchanged for now and remains a known client-economy release blocker.
+- Added automated tests for host/project/flag gating, callable envelope validation, receipt mapping, duplicate-claim response and malformed receipts. Added the test and syntax check to Question Quality CI.
+- No production callable was enabled, no Functions/Rules deployment occurred, and no live data was accessed or changed.
+- Next acceptance: run the browser against Auth, Firestore and Functions emulators with a test account; verify first claim, same-day retry, next-day streak continuation/reset and concurrent claims. Keep production cutover blocked pending Phase 0 evidence and full browser acceptance.
