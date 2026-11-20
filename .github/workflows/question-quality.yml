@@ -152,6 +152,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-mode-session-controller.test.mjs
       - name: Test Time Trial countdown clock
         run: node --experimental-default-type=module --test tests/time-trial-clock.test.mjs
+      - name: Test Survival lives and feedback UI
+        run: node --experimental-default-type=module --test tests/survival-feedback-ui.test.mjs
       - name: Syntax-check server mode preview screen
         run: node --check app/modules/quiz/server-mode-preview-screen.js
       - name: Test browser server mode session storage
