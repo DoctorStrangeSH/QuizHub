@@ -575,3 +575,16 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Tests added/extended for classic and mode reward claims, concurrent retries, legacy profile ID spoofing, and trusted fact baselines. CI now runs these claim suites alongside achievement service/callable tests.
 - Production remains unchanged: no Functions deployment, Rules migration, browser cutover or live-data migration was part of this PR.
 - Next slice: add further achievement facts only where the server already has authoritative evidence (for example verified wins and perfect runs), with catalog-driven thresholds and emulator coverage. Keep existing-user baseline and production client cutover as separate reviewed milestones.
+
+
+## 34. Trusted win and perfect-run achievement milestones (PR in progress)
+
+- Branch: `feat/trusted-achievement-milestones`.
+- The server achievement ledger now tracks `totalWins` and `perfectGames` in addition to completed games and experience.
+- Classic win calculation now matches the existing browser V1 rule: at least 70% correct. The trusted Classic reward transaction now increments `users/{uid}.wins` and `stats.totalWins` as well as the corresponding server-owned achievement fact. This closes a gap in the previous Classic server claim path.
+- Duel and Time Trial use their already validated server-owned win result. Survival does not award a win. Draws and losses do not increment win facts.
+- `perfect_score` is now based on a server-verified 10/10 result (`totalQuestions === 10` and `correctAnswers === 10`), matching its visible achievement description rather than trusting the browser's legacy streak calculation.
+- Active catalog now includes `first_win`, `ten_wins`, and `perfect_score`. Level, social and collector achievements remain deferred until their trusted facts and formulas are implemented.
+- Facts are derived only from validated server session results and persisted atomically with reward/session receipts. Existing client-maintained totals are not imported.
+- The existing browser `checkAchievements()` path and achievement UI are intentionally not cut over here. Production Functions, Firestore Rules and browser behavior remain unchanged; the emulator-only boundary is preserved.
+- CI and Firestore Emulator integration are required before merge.
