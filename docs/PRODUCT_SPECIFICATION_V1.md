@@ -521,10 +521,14 @@ V1 принимается по сквозным пользовательским
 ### Этап 0 — Зафиксировать базу и инвентарь
 - [ ] Сверить реальные экраны и функции с этим ТЗ.
 - [ ] Составить список существующих Firestore коллекций, полей, запросов и клиентских записей.
-- [ ] Отделить production, preview и emulator конфигурации.
-- [ ] Зафиксировать текущие CI команды и известные release blockers.
+- [x] Отделить production, preview и emulator конфигурации на уровне репозитория.
+- [x] Зафиксировать текущие CI команды, известные release blockers и source-level client write paths.
+- [ ] Получить полный read-only inventory живой Firestore database, включая nested/orphan subcollections.
+- [ ] Получить актуальный экспорт deployed Firestore Rules и indexes; сверить его с owner-provided snapshot.
+- [ ] Подтвердить Firebase Auth providers и authorized domains в Console.
+- [ ] Провести production backup/restore rehearsal в отдельном безопасном окружении.
 
-**Выход:** инвентарь утверждён; нет неизвестных записей, влияющих на безопасность и сохранность данных.
+**Выход:** live inventory и конфигурация production подтверждены; все записи, влияющие на безопасность и сохранность данных, известны; backup восстановлен в отдельном окружении.
 
 ### Этап 1 — Серверная игровая целостность
 - [ ] Довести серверные сессии всех режимов V1.
@@ -658,8 +662,8 @@ V1 принимается по сквозным пользовательским
 | Друзья | Клиент читает и изменяет `users/{uid}` напрямую | Серверные переходы дружбы отсутствуют в main; cross-user writes требуют миграции |
 | Чаты | Legacy-клиент читает и пишет `chats/{chatId}/messages` напрямую | Server transport и безопасная миграция истории отсутствуют в main |
 | Достижения / магазин / события | Модули и данные есть | Проверить серверные права и сквозные сценарии |
-| Firestore production rules | Не подтверждены репозиторием | Блокер безопасного релиза |
-| Production backup/restore | Не подтверждён | Emulator backup не заменяет production backup |
+| Firestore production rules | Получен и разобран owner-provided snapshot от 2026-11-20; независимый экспорт deployed Rules/indexes ещё не получен | Высокий риск: широкие authenticated read/write; SEC-02 заблокирован |
+| Production backup/restore | Не подтверждён | Emulator backup не заменяет production backup; нужен restore rehearsal |
 | CI | Несколько workflows существуют | Все обязательные проверки должны быть зелёными на release candidate |
 
 Подробные технические ограничения остаются в профильных документах:
