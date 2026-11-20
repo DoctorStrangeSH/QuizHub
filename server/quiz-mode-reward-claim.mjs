@@ -140,10 +140,13 @@ export async function claimModeSessionReward({ store, sessionId, uid, at }) {
             : state.mode === 'timetrial'
                 ? hasModeWin({ correctAnswers: result.correctAnswers, totalQuestions: result.totalQuestions })
                 : false;
+        const perfect = result.totalQuestions === 10 && result.correctAnswers === 10;
         const achievementProgress = advanceAchievementFacts({
             previousFacts: await tx.getAchievementFacts(uid),
             previousAchievements: user.achievements,
-            experienceDelta: xp
+            experienceDelta: xp,
+            winDelta: Number(won),
+            perfectDelta: Number(perfect)
         });
         const nextUser = {
             ...user,
@@ -167,7 +170,7 @@ export async function claimModeSessionReward({ store, sessionId, uid, at }) {
                 } : {})
             }
         };
-        const receipt = { sessionId, uid, ...result, xp, coins, won, newlyUnlocked: achievementProgress.newlyUnlocked };
+        const receipt = { sessionId, uid, ...result, xp, coins, won, perfect, newlyUnlocked: achievementProgress.newlyUnlocked };
         const updated = structuredClone(session);
         updated.finalized = true;
         updated.finalizedAt = at;
