@@ -21,10 +21,17 @@ export function createFirebaseClassicInvoker({
     connectFunctionsEmulator(functions, emulatorHost, emulatorPort);
     const callable = httpsCallable(functions, 'quizSessionPreview');
     return async function invoke(payload) {
+        const allowed = {
+            start: ['mode', 'category', 'difficulty', 'count', 'language'],
+            answer: ['sessionId', 'questionId', 'answerIndex', 'language'],
+            resume: ['sessionId', 'language'],
+            complete: ['sessionId']
+        };
         if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
             Object.keys(payload).some(key => !['operation', 'payload'].includes(key)) ||
-            !['start', 'answer', 'resume', 'complete'].includes(payload.operation) ||
-            !payload.payload || typeof payload.payload !== 'object' || Array.isArray(payload.payload)) {
+            !Object.hasOwn(allowed, payload.operation) ||
+            !payload.payload || typeof payload.payload !== 'object' || Array.isArray(payload.payload) ||
+            Object.keys(payload.payload).some(key => !allowed[payload.operation].includes(key))) {
             throw new Error('INVALID_CLASSIC_REQUEST');
         }
         return callable(payload);
