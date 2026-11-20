@@ -131,8 +131,6 @@ jobs:
           node --check app/modules/quiz/server-mode-client.js
       - name: Test persisted server mode session lifecycle
         run: node --experimental-default-type=module --test tests/server-quiz-mode-session-service.test.mjs
-      - name: Test persisted server mode session lifecycle
-        run: node --experimental-default-type=module --test tests/server-quiz-mode-session-service.test.mjs
       - name: Test Firestore quiz session and reward adapter
         run: node --experimental-default-type=module --test tests/server-quiz-firestore-store.test.mjs
       - name: Test transactional shop purchase service
