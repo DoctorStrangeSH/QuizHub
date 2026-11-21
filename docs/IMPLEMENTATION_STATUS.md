@@ -932,3 +932,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The author edits the message; the recipient's attempt to edit is denied. The author then deletes it and the recipient sees a tombstone with a cleared body and no reactions.
 - The test cleans up both emulator users, profiles, chat document and message subcollection.
 - The test is added to the required Firebase Emulator Integration workflow. This is emulator acceptance only; it does not certify production Rules, deployed Functions or legacy-chat migration.
+
+## 72. CHAT-06 two-account acceptance merged; CHAT-07 reply previews opened (2026-11-21)
+
+- PR #78 merged into `main` as squash commit `8326e0ceb43b1efb23a132b337d4a10312a61ce8`. Question Quality, Firebase Emulator Integration and Visual Preview all passed.
+- CHAT-06 now has one two-account emulator acceptance flow covering mutual-friend send, reciprocal unread/read receipts, sender-side read projection, two-party reaction aggregation, author-only edit/delete and deletion tombstones.
+- CHAT-07 adds an optional reply target to the trusted send contract. The server validates that the referenced message exists in the same hashed direct conversation, belongs to one of the two participants, is not deleted, and is not the new message itself.
+- The server stores a bounded reply snapshot (message ID, sender UID and at most 160 characters of text); history validates and projects only this safe reply metadata. Browser transport and the local preview send path preserve the reply target.
+- Unit and two-account emulator acceptance tests cover reply creation, rendering payload, idempotent retry, missing/malformed target rejection, and reciprocal conversation behavior.
+- This work remains an opt-in localhost preview for the isolated `demo-quizhub` project. No production chat route, Rules, deployed Functions, live conversations or migration is changed.
+- PR #79 is opened for CHAT-07; merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
