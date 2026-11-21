@@ -84,3 +84,8 @@ Stage 1 may be marked Done only when:
 ## Out of scope for this audit
 
 No code path was switched, no new game mechanics were designed, no production Rules or Functions were deployed, and no user data was read or changed.
+## Follow-up source remediation — 2026-11-21
+
+The `dailyChallenge` export has now been wrapped in the same fail-closed emulator guard used by `quizSessionPreview`, `quizModePreview` and other preview callables. It requires project `demo-quizhub` and active Auth, Firestore and Functions emulators; otherwise it returns `DAILY_CHALLENGE_PREVIEW_DISABLED`.
+
+This corrects the repository source exposure identified above for future deployments. **It does not disable or update an already deployed Cloud Function.** The deployed Functions inventory remains an owner/operator Phase 0 requirement and must be checked before any production migration or release.
