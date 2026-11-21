@@ -917,8 +917,18 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 ## 70. CHAT-06 trusted message actions preview opened (2026-11-21)
 
 - PR #76 merged into `main` as squash commit `089fce38ce26c420199c236ab6ca0ce96cc074f8`; Question Quality, Firebase Emulator Integration and Visual Preview passed.
+- PR #77 merged into `main` as squash commit `8b2a9d1059600a453bae2e9c0a9807c1a6fc26ba`; Question Quality, Firebase Emulator Integration and Visual Preview passed.
 - PR #77 connects the existing authenticated message mutation and reaction callables to the local chat preview transport.
 - Preview message actions now use trusted edit/delete and reaction toggle endpoints. The legacy production UI continues using its existing path; no direct writes are sent to the hashed preview conversation.
 - Transport validation rejects extra identity fields, malformed message/chat IDs, unsupported reactions, blank edit text and delete requests containing text.
 - Backend mutation/reaction emulator tests already run in the Firebase integration workflow; this PR extends browser transport unit coverage and keeps all preview guards intact.
 - Production Rules, deployed Functions, live conversations and migration are unchanged.
+
+## 71. CHAT-06 two-account lifecycle acceptance (2026-11-21)
+
+- Added a single end-to-end Firebase Emulator scenario using two separately authenticated accounts.
+- The scenario creates a mutual-friend direct conversation, sends a message, verifies unread count, reads history as the recipient, advances the recipient read cursor, and verifies the sender's projected read indicator.
+- Both participants add the same reaction; history must expose only the aggregate count and the current viewer's own reaction state, never the other participant's UID.
+- The author edits the message; the recipient's attempt to edit is denied. The author then deletes it and the recipient sees a tombstone with a cleared body and no reactions.
+- The test cleans up both emulator users, profiles, chat document and message subcollection.
+- The test is added to the required Firebase Emulator Integration workflow. This is emulator acceptance only; it does not certify production Rules, deployed Functions or legacy-chat migration.
