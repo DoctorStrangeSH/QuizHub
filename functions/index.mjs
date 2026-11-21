@@ -31,6 +31,7 @@ import { createAuthenticatedAchievementHandler } from '../server/authenticated-a
 import { createAchievementCallableAdapter } from '../server/firebase-achievement-callable-adapter.mjs';
 import { updateFriendship } from '../server/friend-relationships.mjs';
 import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
+import { createFirestoreChatSendCallable } from '../server/chat-send-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -226,4 +227,23 @@ export const friendRelationshipPreview = onCall({
         throw new HttpsError('failed-precondition', 'FRIEND_RELATIONSHIP_PREVIEW_DISABLED');
     }
     return friendRelationshipPreviewHandler(request);
+});
+
+
+// CHAT-01 send preview: direct messages are accepted only for mutual friends.
+// Kept behind the isolated Auth + Firestore + Functions emulator guard until
+// chat read/membership Rules, unread state and legacy migration are complete.
+const chatSendPreview = createFirestoreChatSendCallable({ db: getFirestore(), HttpsError });
+export const chatSendPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_SEND_PREVIEW_DISABLED');
+    }
+    return chatSendPreview(request);
 });
