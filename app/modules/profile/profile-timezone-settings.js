@@ -48,7 +48,8 @@ export function renderProfileTimeZoneSettings({
     timeZone = 'UTC',
     language = 'ru',
     previewEnabled = false,
-    detectedTimeZone = 'UTC'
+    detectedTimeZone = 'UTC',
+    savedTimeZone = ''
 } = {}) {
     const isRU = language !== 'en';
     const selected = isValidIanaTimeZone(timeZone) ? timeZone :
@@ -92,6 +93,7 @@ export function renderProfileTimeZoneSettings({
             <label class="profile-timezone-label" for="profile-timezone-input">${copy.label}</label>
             <input id="profile-timezone-input" class="profile-timezone-input" type="text"
                 list="profile-timezone-options" value="${escapeHTML(selected)}"
+                data-saved-time-zone="${escapeHTML(savedTimeZone)}"
                 placeholder="${copy.placeholder}" autocomplete="off" maxlength="64"
                 aria-describedby="profile-timezone-status" />
             <datalist id="profile-timezone-options">${options}</datalist>
