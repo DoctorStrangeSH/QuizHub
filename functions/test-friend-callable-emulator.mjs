@@ -6,7 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 const project = 'demo-quizhub';
-const callable = `http://127.0.0.1:5001/${project}/europe-west1/friendRelationshipPreview';
+const callable = `http://127.0.0.1:5001/${project}/europe-west1/friendRelationshipPreview`;
 const authBase = 'http://127.0.0.1:9099';
 
 async function register(suffix, index) {
