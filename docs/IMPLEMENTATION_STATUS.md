@@ -956,10 +956,20 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 
 ## 75. Foreign friend-directory projection PR opened (2026-11-21)
 
-- PR #80 is open as a draft from a branch created directly from current `main`.
+- The first attempt, PR #80, passed all three required CI workflows but GitHub reported a merge conflict after `main` advanced. It was closed without merging.
 - The focused change applies the existing public-profile allowlist before friend lists, incoming/outgoing requests and player-search results reach UI renderers.
 - Added tests for removal of email, coins, friend lists, admin flags, stats and forged document identity, plus coverage that all four foreign-directory render paths use the projection.
 - PR diff is limited to three files; no unrelated chat, migration or workflow changes.
-- CI status for PR #80 is pending/not yet reported at the time of this update. Do not merge until Question Quality, Firebase Emulator Integration and Visual Preview pass and the diff is reviewed.
+- A clean replacement PR #81 was recreated from the latest `main`; its compare is now strictly ahead by three commits with zero commits behind. Question Quality is queued; Firebase Emulator Integration and Visual Preview are expected to run. Do not merge until all three pass and the final diff is reviewed.
 - This remains client-side data minimization only: with `PUBLIC_PROFILE_READS_ENABLED=false`, Firestore still sends legacy private user documents to the browser. It does not close the network-level privacy issue.
 - No Production Rules, Functions, read gates, or live data were changed.
+
+
+## 76. Clean-base profile projection follow-up (2026-11-21)
+
+- PR #80 was closed without merging after GitHub reported a mergeability conflict. Its three-file patch had passed Question Quality, Firebase Emulator Integration and Visual Preview.
+- Recreated the same focused patch on `fix/public-directory-projection-v1-clean`, branched from the then-current `main`, and opened PR #81.
+- PR #81 compare is cleanly ahead by 3 commits and behind by 0; diff remains exactly the three intended files.
+- Question Quality run #1262 is queued at the time of this status update. Firebase Emulator Integration and Visual Preview are not yet reported for this new head.
+- PR #81 is not merged. Wait for all required checks and verify the mergeability state before merge.
+- No production Firebase Rules, Functions, public-profile read gate, or live data changed.
