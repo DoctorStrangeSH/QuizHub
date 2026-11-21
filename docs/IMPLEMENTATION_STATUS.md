@@ -681,3 +681,5 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - It runs concurrent prize claims against Firestore transactions and verifies exactly one XP/coin credit per player, correct rank tiers, stable retry receipts, and preservation of unrelated private profile fields.
 - The test uses unique disposable emulator documents and fails closed unless both FIRESTORE_EMULATOR_HOST and project demo-quizhub are present. It is included in Firebase Emulator CI.
 - This is persistence/transaction acceptance only. It does not approve the currently proposed prize amounts, expose a production claim endpoint, enable ranked UI, or authorize a production Rules/Functions deployment.
+- PR #58 merged into main (squash commit `464b4df`). Final head passed all three required checks: Question Quality, Visual Preview, and Firebase Emulator integration.
+- The real Firestore Emulator workflow also completed its read-only backup capture and server-session Rules checks successfully. No production deployment or live database writes were performed.
