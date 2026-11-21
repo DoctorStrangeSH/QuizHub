@@ -101,7 +101,7 @@ test('authenticated browser claims daily login reward through trusted callable e
             availabilityAfterBoundary,
             expectedCanClaim,
             ...retryOutcome
-        });
+        };
 
         assert.equal(outcome.first?.coins, 10, 'First-day reward must use the server catalog');
         assert.equal(outcome.first?.day, 1);
