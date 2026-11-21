@@ -1,5 +1,3 @@
-const DAY_MS = 86_400_000;
-
 export function toValidDate(value) {
     try {
         if (value instanceof Date) {
@@ -35,12 +33,3 @@ export function canClaimOnUtcDate(lastClaim, now = new Date()) {
     if (!today) return false;
     return utcDateKey(lastClaim) !== today;
 }
-
-export function millisecondsUntilNextUtcDay(now = new Date()) {
-    const date = toValidDate(now);
-    if (!date) return 0;
-    const next = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
-    return Math.max(0, next - date.getTime());
-}
-
-export const UTC_DAY_MS = DAY_MS;
