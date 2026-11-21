@@ -6,6 +6,7 @@ const EXPECTED_PREVIEW_CALLABLES = [
     'dailyChallenge',
     'quizSessionPreview',
     'profileCreatePreview',
+    'profileTimeZonePreview',
     'quizModePreview',
     'shopPurchasePreview',
     'dailyLoginRewardPreview',
