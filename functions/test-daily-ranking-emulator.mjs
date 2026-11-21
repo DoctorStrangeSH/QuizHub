@@ -54,7 +54,7 @@ test('real Firestore emulator: seal immutable daily snapshot and pay each ranked
 
         const sealer = createDailyRankingSealService(store);
         await assert.rejects(
-            sealer.seal({ date, now: sealedAt - 1 }),
+            sealer.seal({ date, now: Date.parse(date + 'T23:59:59.999Z') }),
             /DAILY_NOT_CLOSED/
         );
         const [sealed, replay] = await Promise.all([
