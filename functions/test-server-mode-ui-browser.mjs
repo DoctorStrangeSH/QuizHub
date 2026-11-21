@@ -9,7 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 const project = 'demo-quizhub';
 const url = 'http://127.0.0.1:8765/?firebaseEmulator=1&serverModePreview=1';
 
-test('browser renders and advances Duel, Survival and Time Trial through the server preview', { timeout: 150000 }, async () => {
+test('browser renders and advances Classic, Duel, Survival and Time Trial through the server preview', { timeout: 150000 }, async () => {
     assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Auth emulator required');
     assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Firestore emulator required');
     assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project,
@@ -19,16 +19,16 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
     const db = getFirestore(app);
     const adminAuth = getAuth(app);
     const browser = await chromium.launch({ headless: true });
-    let uid = null;
     const sessionIds = [];
+    const uids = [];
     try {
         const context = await browser.newContext({ serviceWorkers: 'block' });
-        const page = await context.newPage();
         const errors = [];
-        page.on('pageerror', error => errors.push(error.message));
-        await page.goto(url);
 
-        for (const mode of ['duel', 'survival', 'time']) {
+        for (const mode of ['classic', 'duel', 'survival', 'time']) {
+            const page = await context.newPage();
+            page.on('pageerror', error => errors.push(error.message));
+            await page.goto(url);
             const identity = await page.evaluate(async modeName => {
                 const [{ auth }, { signInAnonymously }, { setState }, { renderQuiz, attachQuizListeners }] =
                     await Promise.all([
@@ -50,7 +50,7 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
                     sessionId: sessionStorage.getItem('quizhub:server-mode-session:' + modeName)
                 };
             }, mode);
-            uid = identity.uid;
+            uids.push(identity.uid);
             assert.ok(identity.sessionId, mode + ' session must be saved for resume');
             sessionIds.push(identity.sessionId);
 
@@ -65,9 +65,14 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
             } else if (mode === 'survival') {
                 await page.locator('.survival-lives').waitFor();
                 assert.ok((await page.locator('.survival-lives').innerText()).includes('3/3'));
-            } else {
+            } else if (mode === 'time') {
                 await page.locator('[data-time-trial-timer]').waitFor();
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
+            } else {
+                const badge = page.locator('.mode-badge');
+                await badge.waitFor();
+                assert.ok((await badge.innerText()).trim().length > 0,
+                    'Classic must show a non-empty mode badge in the active UI locale');
             }
 
             const initialProgressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
@@ -87,6 +92,7 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
             const advancedCount = progressText.slice(progressText.lastIndexOf('/') + 1).trim();
             assert.ok(progressText.includes('1/'), mode + ' must advance exactly one server-accepted question');
             assert.equal(advancedCount, initialCount, mode + ' question count must remain stable');
+            await page.close();
         }
 
         assert.deepEqual(errors, [], 'No uncaught browser exceptions');
@@ -95,7 +101,7 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
         for (const sessionId of sessionIds) {
             await db.collection('quizSessions').doc(sessionId).delete().catch(() => {});
         }
-        if (uid) await adminAuth.deleteUser(uid).catch(() => {});
+        for (const uid of uids) await adminAuth.deleteUser(uid).catch(() => {});
         await browser.close();
         await db.terminate();
         await deleteApp(app);
