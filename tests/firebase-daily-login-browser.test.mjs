@@ -78,6 +78,9 @@ test('authenticated browser claims daily login reward through trusted callable e
                 constructor(...args) { super(...(args.length ? args : [fixedNowMs])); }
                 static now() { return fixedNowMs; }
                 static [Symbol.hasInstance](value) { return value instanceof NativeDate; }
+                getFullYear() { return new NativeDate(this.getTime() + offsetMs).getUTCFullYear(); }
+                getMonth() { return new NativeDate(this.getTime() + offsetMs).getUTCMonth(); }
+                getDate() { return new NativeDate(this.getTime() + offsetMs).getUTCDate(); }
             }
             globalThis.Date = FixedDate;
             try {
