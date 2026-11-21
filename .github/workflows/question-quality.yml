@@ -69,6 +69,7 @@ jobs:
         run: |
           node --check app/modules/profile/profile-timezone-settings.js
           node --check app/modules/profile/firebase-profile-timezone-invoker.js
+          node --check app/modules/profile/firebase-profile-timezone-preview.js
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Verify centralized profile read migration gate
