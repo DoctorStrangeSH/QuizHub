@@ -11,6 +11,7 @@ import { createDailyChallenge, getUtcDateKey } from './daily-challenge.js';
 let currentMode = null;
 let attachedMode = null;
 let serverModePreviewActive = false;
+let dailyChallengePreviewActive = false;
 
 // ========== ФАБРИКА РЕЖИМОВ ==========
 function createMode(modeType) {
@@ -50,6 +51,16 @@ export async function renderQuiz() {
 
 
     
+    dailyChallengePreviewActive = Boolean(browserLocation &&
+        ['localhost', '127.0.0.1'].includes(browserLocation.hostname) &&
+        previewParams.get('firebaseEmulator') === '1' &&
+        previewParams.get('dailyChallengePreview') === '1' &&
+        settings.mode === 'daily');
+    if (dailyChallengePreviewActive) {
+        const preview = await import('./daily-challenge-preview-screen.js');
+        return preview.renderDailyChallengePreview({ ...settings, language: getState().language });
+    }
+
     // Daily Challenge uses a UTC date key so every player receives the same set.
     const challenge = settings.mode === 'daily'
         ? createDailyChallenge(settings.challengeDate || getUtcDateKey())
@@ -117,6 +128,10 @@ export function resetQuiz() {
         serverModePreviewActive = false;
         import('./server-mode-preview-screen.js').then(module => module.resetServerModePreview());
     }
+    if (dailyChallengePreviewActive) {
+        dailyChallengePreviewActive = false;
+        import('./daily-challenge-preview-screen.js').then(module => module.resetDailyChallengePreview());
+    }
     currentMode = null;
     attachedMode = null;
 }
@@ -127,6 +142,8 @@ export function attachQuizListeners() {
     if (!currentMode) {
         if (serverModePreviewActive) {
             import('./server-mode-preview-screen.js').then(module => module.attachServerModePreviewListeners());
+        } else if (dailyChallengePreviewActive) {
+            import('./daily-challenge-preview-screen.js').then(module => module.attachDailyChallengePreviewListeners());
         }
         return;
     }
