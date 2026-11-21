@@ -644,3 +644,12 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Added isolated transport/client tests and CI syntax checks. The existing Auth + Firestore + Functions emulator callable suite covers Classic session ownership, answer validation, retries and reward persistence.
 - Added an authenticated Playwright browser acceptance test that creates a test profile, completes ten questions through the real callable transport, claims the result and verifies an idempotent retry against Firestore.
 - The production Classic UI still uses its legacy client-computed reward writer. This PR enables local acceptance only; production cutover, existing-user baselines and restrictive Rules remain separate blocked milestones.
+
+
+## 44. Trusted daily-login reward browser acceptance
+
+- Added an authenticated Playwright browser test using only the `demo-quizhub` Auth, Firestore and Functions emulators.
+- The test creates a new test account and profile through the app, then calls the existing `claimDailyReward()` browser entry point with the explicit local `dailyLoginPreview=1` flag.
+- The browser verifies the first-day reward, server-returned balance, persisted streak and claim timestamp; a same-day retry must return no reward and leave balance/streak unchanged.
+- Added the browser test to Firebase Emulator CI. Existing callable tests continue to cover UTC day boundaries, streak continuation/reset and concurrent claims.
+- Production behavior is unchanged: outside the exact local preview gate, the legacy client-side daily reward write remains active. Do not enable restrictive production Rules or claim server-authoritative daily login until browser acceptance, existing-user baseline/migration and release gates are complete.
