@@ -55,6 +55,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Verify centralized profile read migration gate
         run: node --experimental-default-type=module --test tests/profile-read-source.test.mjs
+      - name: Verify viewer-safe profile projection and card rendering
+        run: node --experimental-default-type=module --test tests/profile-viewer-projection.test.mjs
       - name: Test collision-safe nickname claims migration planner
         run: node --experimental-default-type=module --test tests/nickname-claims-backfill.test.mjs
       - name: Audit legacy account migration readiness without writes

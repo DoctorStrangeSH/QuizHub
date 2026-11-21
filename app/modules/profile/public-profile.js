@@ -1,6 +1,6 @@
 import { getState } from '../../store/state.js';
-import { auth, db, doc, getDoc, updateDoc, arrayUnion } from '../../firebase-config.js';
-import { profileCollectionForViewer } from './profile-read-source.js';
+import { auth, db, doc, getDoc } from '../../firebase-config.js';
+import { profileCollectionForViewer, projectProfileForViewer } from './profile-read-source.js';
 
 // Достижения для отображения
 const ALL_ACHIEVEMENTS = [
@@ -36,7 +36,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
     const lang = getState().language;
     const isRU = lang === 'ru';
     
-    const p = profileData;
+    const p = isOwnProfile ? profileData : projectProfileForViewer(null, profileData?.uid, profileData);
     const stats = p.stats || {};
     const achievements = p.achievements || [];
     const frameStyle = FRAME_STYLES[p.equippedFrame] || FRAME_STYLES.frame_default;
@@ -95,9 +95,9 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                                 <h1 class="profile-nickname text-gradient">${escapeHTML(p.nickname || 'Игрок')}</h1>
                                 <div class="profile-badges">
                                     <span class="profile-badge level">⭐ Ур. ${level}</span>
-                                    <span class="profile-badge coins">🪙 ${p.coins || 0}</span>
+                                    ${isOwnProfile ? `<span class="profile-badge coins">🪙 ${p.coins || 0}</span>` : ''}
                                     ${isOwnProfile ? '<span class="profile-badge you">Это вы</span>' : `
-                                        <button class="btn-premium btn-sm" onclick="window.sendFriendRequest('${p.uid || ''}')">👥 Добавить</button>
+                                        <button class="btn-premium btn-sm" onclick="window.sendFriendRequestFromProfile('${p.uid || ''}')">👥 Добавить</button>
                                     `}
                                 </div>
                             </div>
@@ -114,6 +114,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     </div>
                     
+                    ${isOwnProfile ? `
                     <div class="profile-stats-grid animate-in animate-in-delay-1">
                         <div class="stat-box glass-card">
                             <span class="stat-icon">🎮</span>
@@ -157,7 +158,23 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     </div>
                     
-                    ${recentAchievements.length > 0 ? `
+                    ` : `
+                    <div class="profile-stats-grid animate-in animate-in-delay-1">
+                        <div class="stat-box glass-card">
+                            <span class="stat-icon">🏆</span>
+                            <span class="stat-number">${p.wins}</span>
+                            <span class="stat-text">${isRU ? 'Побед' : 'Wins'}</span>
+                        </div>
+                        <div class="stat-box glass-card">
+                            <span class="stat-icon">⚡</span>
+                            <span class="stat-number">${p.experience}</span>
+                            <span class="stat-text">${isRU ? 'Всего XP' : 'Total XP'}</span>
+                        </div>
+                    </div>
+                    
+                    `}
+                    
+                    ${isOwnProfile && recentAchievements.length > 0 ? `
                         <div class="profile-achievements glass-card animate-in animate-in-delay-2">
                             <h4 class="section-label">🏆 Последние достижения</h4>
                             <div class="profile-ach-list">
@@ -171,9 +188,11 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     ` : ''}
                     
+                    ${isOwnProfile ? `
                     <div class="profile-footer-info glass-card animate-in animate-in-delay-3">
                         <p class="text-secondary small mb-0">🗓️ На сайте с ${createdDate}</p>
                     </div>
+                    ` : ''}
                 </div>
             </main>
         </div>
@@ -185,7 +204,7 @@ export async function loadProfile(userId) {
     try {
         const docSnap = await getDoc(doc(db, profileCollectionForViewer(auth.currentUser?.uid, userId), userId));
         if (docSnap.exists()) {
-            return { uid: userId, ...docSnap.data() };
+            return projectProfileForViewer(auth.currentUser?.uid, userId, docSnap.data());
         }
         return null;
     } catch (error) {
@@ -194,20 +213,15 @@ export async function loadProfile(userId) {
     }
 }
 
-// ========== ОТПРАВКА ЗАЯВКИ В ДРУЗЬЯ ==========
-window.sendFriendRequest = async (friendId) => {
-    const user = auth.currentUser;
-    if (!user || !friendId) return;
-    
+// Карточка профиля может открываться до экрана друзей. Загружаем единый
+// обработчик по требованию, не подменяя его устаревшей второй реализацией.
+window.sendFriendRequestFromProfile = async (friendId) => {
+    if (!auth.currentUser || !friendId) return;
     try {
-        await updateDoc(doc(db, 'users', friendId), {
-            friendRequests: arrayUnion(user.uid)
-        });
-        await updateDoc(doc(db, 'users', user.uid), {
-            sentRequests: arrayUnion(friendId)
-        });
-        alert('Заявка отправлена!');
+        await import('../friends/friends.js');
+        await window.sendFriendRequest(friendId);
     } catch (error) {
-        alert('Ошибка: ' + error.message);
+        console.error('Ошибка отправки заявки из профиля:', error);
+        alert('Не удалось отправить заявку. Попробуйте ещё раз.');
     }
 };
