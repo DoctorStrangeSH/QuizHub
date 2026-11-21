@@ -4,7 +4,7 @@ import { getDirectChatUnreadCount } from '../server/chat-unread-count.mjs';
 
 const chatId='dm_'+'a'.repeat(48), cursorId='message_1234567890abcd';
 function fixture({actor='alice',participants=['alice','bob'],receipt=true,count=3,cursorRecipient='alice'}={}) {
-    const chat={participants,...(receipt?{readReceipts:{alice:{lastReadMessageId:cursorId}}}:{})};
+    let chat={participants,...(receipt?{readReceipts:{alice:{lastReadMessageId:cursorId}}}:{})};
     const cursor={senderId:'bob',recipientId:cursorRecipient,createdAt:{toMillis:()=>1000}};
     const records=new Map([['chats/'+chatId,chat],['chats/'+chatId+'/messages/'+cursorId,cursor]]);
     let queryState={cursor:null,filters:[]};
@@ -19,7 +19,7 @@ function fixture({actor='alice',participants=['alice','bob'],receipt=true,count=
     const chatRef=ref('chats/'+chatId);
     const db={collection(name){return {doc(id){return ref(name+'/'+id)}}}};
     chatRef.get=async()=>({exists:true,data:()=>chat});
-    return {db,queryState,records};
+    return {db,queryState,records,setChat(value){chat=value;}};
 }
 
 test('unread count uses aggregate query after the participant cursor',async()=>{
@@ -42,10 +42,7 @@ test('strangers and malformed receipt cursors fail closed',async()=>{
     const malformed=fixture();
     malformed.records.set('chats/'+chatId+'/messages/'+cursorId,{senderId:'bob',recipientId:'charlie',createdAt:{toMillis:()=>1}});
     // Mutate chat's persisted receipt to a cursor belonging to the other participant.
-    const chatRef=malformed.db.collection('chats').doc(chatId);
-    const original=chatRef.get;
-    chatRef.get=async()=>({exists:true,data:()=>({participants:['alice','bob'],readReceipts:{alice:{lastReadMessageId:cursorId}}})});
+    malformed.setChat({participants:['alice','bob'],readReceipts:{alice:{lastReadMessageId:cursorId}}});
     await assert.rejects(getDirectChatUnreadCount(malformed.db,{actorUid:'alice',chatId}),/CHAT_READ_RECEIPT_STATE_CONFLICT/);
-    assert.equal(typeof original,'function');
     await assert.rejects(getDirectChatUnreadCount(malformed.db,{actorUid:'alice',chatId:'bad'}),/INVALID_CHAT_UNREAD_REQUEST/);
 });
