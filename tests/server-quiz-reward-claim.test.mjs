@@ -190,7 +190,7 @@ test('legacy profiles without timezone use UTC and never accept client multiplie
         store: fixture.store,
         sessionId: 'session-1',
         uid: 'player',
-        at: Date.parse('2026-11-21T17:30:00Z')
+        at: Date.parse('2026-11-24T12:00:00Z')
     });
     assert.equal(receipt.xp, 30);
     assert.equal(receipt.coins, 15);
