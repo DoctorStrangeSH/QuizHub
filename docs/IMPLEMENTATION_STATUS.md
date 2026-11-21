@@ -983,3 +983,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Следующий отдельный privacy patch после проверки/объединения PR #82: импортировать `profileCollectionForViewer` и `projectDirectoryProfile` в chat module, читать профиль друга через viewer-aware source и передавать в UI только allowlist-проекцию. Собственный документ пользователя остаётся приватным и может читаться владельцем.
 - Это клиентская минимизация. Network-level privacy появится только после завершения миграции и включения проверенных Firestore Rules/publicProfiles cutover.
 - Никакие production Rules, Functions, данные или флаги доступа не менялись.
+
+
+## 78. Friend-directory projection merged; chat profile read is next (2026-11-21)
+
+- PR #82 merged successfully with squash commit `a172239fb14d50649953abdca398f0a7390f8749`.
+- All required checks passed on the merged head: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview.
+- The merged change projects friend lists, incoming/outgoing requests and player-search results through the public-profile allowlist before UI rendering.
+- The production public-profile read gate remains disabled. This change is client-side data minimization and does not provide network-level privacy while legacy `users/{uid}` documents remain readable.
+- Next focused patch: update `app/modules/chat/chat.js` so foreign friend profiles are loaded via `profileCollectionForViewer(viewerUid, targetUid)` and passed through `projectDirectoryProfile` before entering `chatFriendsCache` or rendering. Keep the owner's own profile read private.
+- No production Firebase Rules, Functions, data or feature flags were changed.
