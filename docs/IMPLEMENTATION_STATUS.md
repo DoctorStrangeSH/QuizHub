@@ -755,3 +755,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Reconfirmed repository deployment boundary: `firebase.json` configures Functions and local emulators only; no root `.firebaserc`, `firestore.rules`, or `firestore.indexes.json` is present. No production deploy workflow was identified in `.github/workflows/`.
 - Reconfirmed that all seven preview callables must remain emulator-only until explicit owner approval, client migration and production Rules release gates are complete. Do not run `firebase deploy` as part of Phase 0.
 - No production Firebase resources or user data were accessed or changed.
+
+
+## 55. Review of legacy social/privacy PR #3 (2026-11-21)
+
+- Reviewed PR #3 at head `6d2ed70141afbacf7aac199515657ead19d7fba1`: 110 commits, 58 changed files, Draft, GitHub reports `mergeable: false`; base SHA predates current main.
+- The PR head's last inspected CI set passed: validate-questions, screenshot-and-smoke, emulator-daily. This does not justify merging the full change set.
+- The change set mixes independent V1 requirements: public profile viewer projection (PROF-02/PROF-03/RANK-02), trusted friend transitions (FRIEND-01), chat send/actions/read state and legacy migration rehearsal (CHAT-01..04/DATA-03), plus UI/accessibility and emulator workflow changes.
+- Added `docs/PR3_REVIEW_PLAN.md` with the file-scope assessment, safe decomposition, acceptance gates and recommended order.
+- Decision: do not merge PR #3 wholesale. Integrate selected changes as small PRs based on current main, preserving `PUBLIC_PROFILE_READS_ENABLED=false`, `CHAT_SERVER_TRANSPORT_ENABLED=false`, and emulator-only callable/rules guards.
+- No production data, Rules, Functions or client cutover changed.
