@@ -104,13 +104,18 @@ test('CHAT lifecycle works end-to-end between two authenticated accounts', {
             id: originalMessageId, senderId: alice.uid, text: 'Hello, Bob!'
         });
 
-        const marked = await invoke(endpoints.read, alice, { chatId, upToMessageId: messageId });
-        assert.equal(marked.status, 200, JSON.stringify(marked.body));
-        const readUnread = await invoke(endpoints.unread, alice, { chatId });
-        assert.equal(readUnread.body.result.unreadCount, 0);
+        const bobMarked = await invoke(endpoints.read, bob, { chatId, upToMessageId: originalMessageId });
+        assert.equal(bobMarked.status, 200, JSON.stringify(bobMarked.body));
+        const bobReadUnread = await invoke(endpoints.unread, bob, { chatId });
+        assert.equal(bobReadUnread.body.result.unreadCount, 0);
 
-        const aliceHistoryAfterRead = await invoke(endpoints.history, bob, { chatId });
-        assert.equal(aliceHistoryAfterRead.body.result.messages.find(message => message.id === messageId).readByRecipient, true);
+        const aliceMarked = await invoke(endpoints.read, alice, { chatId, upToMessageId: messageId });
+        assert.equal(aliceMarked.status, 200, JSON.stringify(aliceMarked.body));
+        const aliceReadUnread = await invoke(endpoints.unread, alice, { chatId });
+        assert.equal(aliceReadUnread.body.result.unreadCount, 0);
+
+        const aliceHistoryAfterRead = await invoke(endpoints.history, alice, { chatId });
+        assert.equal(aliceHistoryAfterRead.body.result.messages.find(message => message.id === originalMessageId).readByRecipient, true);
 
         const aliceReaction = await invoke(endpoints.reaction, alice, {
             chatId, messageId, reactionType: 'love'
