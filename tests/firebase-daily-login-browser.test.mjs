@@ -56,12 +56,12 @@ test('authenticated browser claims daily login reward through trusted callable e
             };
         });
 
-        // Choose the local timezone that exposes the old local-midnight bug:
-        // UTC-10 before 10:00 UTC catches premature claims; UTC+14 after 10:00
-        // UTC catches delayed claims after UTC midnight.
+        // Simulate the local calendar offset that exposes the old local-midnight
+        // bug: UTC-10 before 10:00 UTC catches premature claims; UTC+14 after
+        // 10:00 UTC catches delayed claims after UTC midnight.
         const claimedAt = new Date(firstOutcome.claimedAtIso);
         const beforeUtcRollover = claimedAt.getUTCHours() < 10;
-        const timezoneId = beforeUtcRollover ? 'Pacific/Honolulu' : 'Pacific/Kiritimati';
+        const localUtcOffsetHours = beforeUtcRollover ? -10 : 14;
         const fixedNow = new Date(Date.UTC(
             claimedAt.getUTCFullYear(),
             claimedAt.getUTCMonth(),
@@ -70,10 +70,10 @@ test('authenticated browser claims daily login reward through trusted callable e
             15
         ));
         const expectedCanClaim = !beforeUtcRollover;
-        await page.emulateTimezone(timezoneId);
-        const availabilityAfterBoundary = await page.evaluate(async ({ fixedNowMs }) => {
+        const availabilityAfterBoundary = await page.evaluate(async ({ fixedNowMs, localUtcOffsetHours }) => {
             const { checkDailyReward } = await import('./app/modules/daily/daily.js');
             const NativeDate = Date;
+            const offsetMs = localUtcOffsetHours * 60 * 60 * 1000;
             class FixedDate extends NativeDate {
                 constructor(...args) { super(...(args.length ? args : [fixedNowMs])); }
                 static now() { return fixedNowMs; }
@@ -85,7 +85,7 @@ test('authenticated browser claims daily login reward through trusted callable e
             } finally {
                 globalThis.Date = NativeDate;
             }
-        }, { fixedNowMs: fixedNow.getTime() });
+        }, { fixedNowMs: fixedNow.getTime(), localUtcOffsetHours });
 
         const retryOutcome = await page.evaluate(async () => {
             const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
