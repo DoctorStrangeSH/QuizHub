@@ -69,6 +69,10 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
             }
 
+            const initialProgressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
+            const initialCount = initialProgressText.match(/0\\s*\\/\\s*(\\d+)/);
+            assert.ok(initialCount, mode + ' must expose its selected question count');
+
             await page.locator('[data-server-answer]').first().click();
             await page.locator('[data-server-next]').waitFor({ timeout: 15000 });
             const feedback = await page.locator('.quiz-result h2').innerText();
