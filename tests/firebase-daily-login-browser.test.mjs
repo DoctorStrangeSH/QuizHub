@@ -35,7 +35,7 @@ test('authenticated browser claims daily login reward through trusted callable e
         await page.locator('#save-profile-btn').click();
         await page.locator('.play-btn').waitFor({ timeout: 30000 });
 
-        const outcome = await page.evaluate(async () => {
+        const firstOutcome = await page.evaluate(async () => {
             const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
                 import('./app/firebase-config.js'),
                 import('./app/modules/daily/daily.js')
@@ -44,26 +44,75 @@ test('authenticated browser claims daily login reward through trusted callable e
             const beforeSnapshot = await getDoc(ref);
             if (!beforeSnapshot.exists()) throw new Error('PROFILE_NOT_CREATED');
             const before = beforeSnapshot.data();
-
             const first = await claimDailyReward();
             const afterFirst = (await getDoc(ref)).data();
-            const retry = await claimDailyReward();
-            const afterRetry = (await getDoc(ref)).data();
+            const claimedAt = afterFirst.lastDailyClaim?.toDate?.();
+            if (!claimedAt) throw new Error('SERVER_CLAIM_TIMESTAMP_MISSING');
             return {
-                uid: auth.currentUser.uid,
                 before,
                 first,
                 afterFirst,
-                retry,
-                afterRetry
+                claimedAtIso: claimedAt.toISOString()
             };
         });
+
+        // Simulate the local calendar offset that exposes the old local-midnight
+        // bug: UTC-10 before 10:00 UTC catches premature claims; UTC+14 after
+        // 10:00 UTC catches delayed claims after UTC midnight.
+        const claimedAt = new Date(firstOutcome.claimedAtIso);
+        const beforeUtcRollover = claimedAt.getUTCHours() < 10;
+        const localUtcOffsetHours = beforeUtcRollover ? -10 : 14;
+        const fixedNow = new Date(Date.UTC(
+            claimedAt.getUTCFullYear(),
+            claimedAt.getUTCMonth(),
+            claimedAt.getUTCDate() + (beforeUtcRollover ? 0 : 1),
+            beforeUtcRollover ? 10 : 0,
+            15
+        ));
+        const expectedCanClaim = !beforeUtcRollover;
+        const availabilityAfterBoundary = await page.evaluate(async ({ fixedNowMs, localUtcOffsetHours }) => {
+            const { checkDailyReward } = await import('./app/modules/daily/daily.js');
+            const NativeDate = Date;
+            const offsetMs = localUtcOffsetHours * 60 * 60 * 1000;
+            class FixedDate extends NativeDate {
+                constructor(...args) { super(...(args.length ? args : [fixedNowMs])); }
+                static now() { return fixedNowMs; }
+                static [Symbol.hasInstance](value) { return value instanceof NativeDate; }
+                getFullYear() { return new NativeDate(this.getTime() + offsetMs).getUTCFullYear(); }
+                getMonth() { return new NativeDate(this.getTime() + offsetMs).getUTCMonth(); }
+                getDate() { return new NativeDate(this.getTime() + offsetMs).getUTCDate(); }
+            }
+            globalThis.Date = FixedDate;
+            try {
+                return await checkDailyReward();
+            } finally {
+                globalThis.Date = NativeDate;
+            }
+        }, { fixedNowMs: fixedNow.getTime(), localUtcOffsetHours });
+
+        const retryOutcome = await page.evaluate(async () => {
+            const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
+                import('./app/firebase-config.js'),
+                import('./app/modules/daily/daily.js')
+            ]);
+            const retry = await claimDailyReward();
+            const afterRetry = (await getDoc(doc(db, 'users', auth.currentUser.uid))).data();
+            return { retry, afterRetry };
+        });
+        const outcome = {
+            ...firstOutcome,
+            availabilityAfterBoundary,
+            expectedCanClaim,
+            ...retryOutcome
+        };
 
         assert.equal(outcome.first?.coins, 10, 'First-day reward must use the server catalog');
         assert.equal(outcome.first?.day, 1);
         assert.equal(outcome.first?.balance, (outcome.before.coins || 0) + 10);
         assert.equal(outcome.afterFirst.coins, outcome.first.balance);
         assert.equal(outcome.afterFirst.dailyStreak, 1);
+        assert.equal(outcome.availabilityAfterBoundary.canClaim, outcome.expectedCanClaim,
+            'Claim availability must follow UTC midnight, not the simulated local calendar boundary');
         assert.ok(outcome.afterFirst.lastDailyClaim, 'Server claim timestamp must be persisted');
         assert.equal(outcome.retry, false, 'Same-day retry must not produce another reward');
         assert.equal(outcome.afterRetry.coins, outcome.afterFirst.coins);
