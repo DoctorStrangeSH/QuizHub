@@ -890,3 +890,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit tests for read-state projection, invalid cursor handling and indicator rendering. Added emulator history acceptance that advances Bob's receipt and verifies Alice sees only the covered outgoing message as read.
 - All read/unread callables remain emulator-only. The production chat listener and legacy underscore chat path are unchanged; full UI transport migration, inbox badge and production Rules/data migration remain outstanding.
 - PR #73 is opened for CHAT-05 read indicator projection and rendering. Merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
+
+## 67. CHAT-05 read indicators merged; browser transport foundation opened (2026-11-21)
+
+- PR #73 merged into `main` as squash commit `6ea9a275dba584b370ff95f5bd8b5c98d9abdb5e`. Question Quality, Firebase Emulator Integration and Visual Preview all passed after correcting the emulator acceptance fixture.
+- CHAT-05 trusted history now exposes recipient read state for own messages, and the chat renderer supports accessible single/double-check indicators. This is a server-projected state only; legacy snapshots do not fabricate read status.
+- Next slice adds a dedicated browser transport wrapper for trusted send, history, read receipt and unread-count callables. It is strictly opt-in on localhost with both `firebaseEmulator=1` and `chatPreview=1`, and both Auth and Functions clients must target `demo-quizhub`.
+- The wrapper validates exact payload keys and message/chat identifiers, derives identity exclusively from Firebase Auth, and exposes no production fallback. It is a transport foundation; existing production chat UI and legacy Firestore paths are not switched.
+- PR #74 covers this isolated browser transport and unit tests. Full UI cutover, per-chat inbox badges, production Rules/index review and legacy data migration remain outstanding.
