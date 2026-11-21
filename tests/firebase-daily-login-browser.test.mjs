@@ -67,6 +67,7 @@ test('authenticated browser claims daily login reward through trusted callable e
             class FixedDate extends NativeDate {
                 constructor(...args) { super(...(args.length ? args : [fixedNow.getTime()])); }
                 static now() { return fixedNow.getTime(); }
+                static [Symbol.hasInstance](value) { return value instanceof NativeDate; }
                 getFullYear() { return new NativeDate(this.getTime() + offsetMs).getUTCFullYear(); }
                 getMonth() { return new NativeDate(this.getTime() + offsetMs).getUTCMonth(); }
                 getDate() { return new NativeDate(this.getTime() + offsetMs).getUTCDate(); }
