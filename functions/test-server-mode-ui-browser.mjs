@@ -9,7 +9,7 @@ import { getAuth } from 'firebase-admin/auth';
 const project = 'demo-quizhub';
 const url = 'http://127.0.0.1:8765/?firebaseEmulator=1&serverModePreview=1';
 
-test('browser renders and advances Duel, Survival and Time Trial through the server preview', { timeout: 150000 }, async () => {
+test('browser renders and advances Classic, Duel, Survival and Time Trial through the server preview', { timeout: 150000 }, async () => {
     assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, 'Auth emulator required');
     assert.ok(process.env.FIRESTORE_EMULATOR_HOST, 'Firestore emulator required');
     assert.equal(process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT, project,
@@ -28,7 +28,7 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
         page.on('pageerror', error => errors.push(error.message));
         await page.goto(url);
 
-        for (const mode of ['duel', 'survival', 'time']) {
+        for (const mode of ['classic', 'duel', 'survival', 'time']) {
             const identity = await page.evaluate(async modeName => {
                 const [{ auth }, { signInAnonymously }, { setState }, { renderQuiz, attachQuizListeners }] =
                     await Promise.all([
