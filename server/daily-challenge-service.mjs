@@ -105,11 +105,19 @@ export function createServerDailyChallenge({ catalog, store, durationMs = 15 * 6
                 const previous = attempt.session.answers.find(answer => answer.questionId === questionId);
                 if (previous) {
                     if (previous.answerIndex !== answerIndex) throw new Error('ANSWER_ALREADY_LOCKED');
-                    return { ...view(attempt, language, now), replayed: true };
+                    return {
+                        ...view(attempt, language, now),
+                        answerResult: { correct: previous.correct, points: previous.points },
+                        replayed: true
+                    };
                 }
-                submitAnswer(attempt.session, { uid, questionId, answerIndex, at: now });
+                const answerResult = submitAnswer(attempt.session, { uid, questionId, answerIndex, at: now });
                 await tx.setDailyAttempt(key, attempt);
-                return { ...view(attempt, language, now), replayed: false };
+                return {
+                    ...view(attempt, language, now),
+                    answerResult: { correct: answerResult.correct, points: answerResult.points },
+                    replayed: false
+                };
             });
         },
         async complete({ uid, date, now }) {
