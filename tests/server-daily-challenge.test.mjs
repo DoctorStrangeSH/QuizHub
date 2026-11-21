@@ -77,6 +77,8 @@ test('answer retries are idempotent, locked, and score is computed on server onc
         questionId: state.question.id, answerIndex: 1 };
     const [a, b] = await Promise.all([service.answer(first), service.answer(first)]);
     assert.deepEqual([a.replayed, b.replayed], [false, true]);
+    assert.deepEqual(a.answerResult, { correct: true, points: 10 });
+    assert.deepEqual(b.answerResult, { correct: true, points: 10 });
     await assert.rejects(service.answer({ ...first, answerIndex: 0 }), /ANSWER_ALREADY_LOCKED/);
     state = b;
     for (let index = 1; index < 10; index++) {

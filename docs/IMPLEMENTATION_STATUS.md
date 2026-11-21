@@ -662,3 +662,14 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - The test verifies public question payloads do not expose answer keys, the server receipt contains the canonical score/correct-answer count, a repeated completion returns the original receipt, and resume reports the completed session.
 - Added the test to Firebase Emulator CI. The service uses the server's UTC date, canonical question catalog, answer ordering and scoring; no browser score or reward is accepted.
 - Important limitation: this is a server-session/score receipt, not a ranked leaderboard or reward payout. The current Daily Challenge UI remains explicitly practice-only and is not yet connected to this callable. Ranking seal, prize claims, browser UI migration and production security cutover remain separate work.
+
+
+## 46. Daily Challenge server-backed local UI preview
+
+- PR #56 merged the authenticated browser acceptance for the `dailyChallenge` callable. The emulator test verifies the complete ten-question session, answer-key privacy, server-derived score receipt, idempotent completion and resume.
+- Added a local-only browser transport for `dailyChallenge`, guarded by localhost/127.0.0.1, `firebaseEmulator=1&dailyChallengePreview=1` and Firebase project `demo-quizhub`.
+- The quiz route can now opt into a server-backed Daily Challenge screen. The browser receives only public question text/options, sends selected option indexes, and displays per-answer correctness/points only after the server has accepted the answer.
+- The final result is rendered from the server receipt and explicitly remains practice-only: no leaderboard placement, XP, coins or prize claim is implied.
+- The server answer response now includes a minimal post-submission feedback object; retries return the same verified feedback without recording a second answer.
+- Added client/invoker validation tests and syntax checks to Question Quality CI.
+- Added an authenticated browser test for the actual quiz route: it plays all ten questions through the local server preview, verifies the practice-only receipt, reloads the page and confirms the same server-owned result is restored. Production UI remains on the existing practice implementation until a separately reviewed migration, account compatibility plan and Rules release gate are complete.
