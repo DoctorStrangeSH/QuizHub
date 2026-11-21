@@ -49,7 +49,7 @@ test('CHAT-02 history is readable only by the two chat participants and paginate
         assert.ok(first.body.result.nextCursor);
         assert.equal(first.body.result.peerUid,bob.uid);
         assert.deepEqual(first.body.result.messages[0].reactions, {});
-        assert.equal('alice' in JSON.stringify(first.body.result.messages[0].reactions), false);
+        assert.equal(JSON.stringify(first.body.result.messages[0].reactions).includes(alice.uid), false);
         const second=await invoke(bob,{chatId,pageSize:2,cursorMessageId:first.body.result.nextCursor});
         assert.equal(second.status,200,JSON.stringify(second.body));
         assert.equal(second.body.result.messages.length,1);
