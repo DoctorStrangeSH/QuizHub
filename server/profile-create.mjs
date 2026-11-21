@@ -1,8 +1,9 @@
 import { buildPublicProfile } from '../app/modules/profile/public-profile-data.js';
+import { normalizeQuizTimeZone } from './quiz-event-rewards.mjs';
 
 // Trusted server-only registration contract. Do not connect clients until legacy
 // nicknameClaims backfill is complete and production rules deny client profile writes.
-export async function createPlayerProfile(db, { uid, nickname, email = null }) {
+export async function createPlayerProfile(db, { uid, nickname, email = null, timeZone = 'UTC' }) {
     if (!db || typeof db.runTransaction !== 'function' || typeof db.collection !== 'function') {
         throw new TypeError('TRUSTED_DATABASE_REQUIRED');
     }
@@ -11,13 +12,13 @@ export async function createPlayerProfile(db, { uid, nickname, email = null }) {
     if (email !== null && (typeof email !== 'string' || email.length > 254 || !email.includes('@'))) {
         throw new Error('INVALID_EMAIL');
     }
+    const normalizedTimeZone = normalizeQuizTimeZone(timeZone);
     const normalized = nickname.toLowerCase();
     const userRef = db.collection('users').doc(uid);
     const publicRef = db.collection('publicProfiles').doc(uid);
     const claimRef = db.collection('nicknameClaims').doc(normalized);
 
     return db.runTransaction(async tx => {
-        // Read all documents before staging any transaction writes.
         const userSnapshot = await tx.get(userRef);
         const publicSnapshot = await tx.get(publicRef);
         const claimSnapshot = await tx.get(claimRef);
@@ -27,6 +28,7 @@ export async function createPlayerProfile(db, { uid, nickname, email = null }) {
         const profile = {
             nickname, nicknameLower: normalized,
             email,
+            timeZone: normalizedTimeZone,
             createdAt: new Date(),
             level: 1, experience: 0, weeklyExperience: 0, coins: 100,
             quizzesCompleted: 0, wins: 0,
