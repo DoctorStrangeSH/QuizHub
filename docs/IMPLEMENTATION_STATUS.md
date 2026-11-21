@@ -745,3 +745,13 @@ Development is now blocked on production evidence that cannot be inferred from r
 4. Production backup configuration and a verified restore rehearsal in a safe separate environment.
 
 Until these are reviewed, do not deploy restrictive Rules, migrate live profiles, enable production server-mode cutover, or delete legacy data.
+
+
+## 54. Phase 0 deployment-boundary source audit (2026-11-21)
+
+- Rechecked `functions/index.mjs`: all seven exported callable endpoints are explicitly guarded to require project `demo-quizhub` and the Auth, Firestore and Functions emulators together. The callable-guard regression test remains in Question Quality CI.
+- Source exports: `dailyChallenge`, `quizSessionPreview`, `profileCreatePreview`, `quizModePreview`, `shopPurchasePreview`, `dailyLoginRewardPreview`, and `achievementUnlockPreview`.
+- This proves only the current repository source behavior. It does **not** prove which functions, versions or regions are deployed in project `quizhub-e65f5`; deployed inventory remains an owner/operator evidence gate.
+- Reconfirmed repository deployment boundary: `firebase.json` configures Functions and local emulators only; no root `.firebaserc`, `firestore.rules`, or `firestore.indexes.json` is present. No production deploy workflow was identified in `.github/workflows/`.
+- Reconfirmed that all seven preview callables must remain emulator-only until explicit owner approval, client migration and production Rules release gates are complete. Do not run `firebase deploy` as part of Phase 0.
+- No production Firebase resources or user data were accessed or changed.
