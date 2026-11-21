@@ -19,12 +19,11 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
     const db = getFirestore(app);
     const adminAuth = getAuth(app);
     const browser = await chromium.launch({ headless: true });
-    let uid = null;
     const sessionIds = [];
+    const uids = [];
     try {
         const context = await browser.newContext({ serviceWorkers: 'block' });
         const errors = [];
-        const uids = [];
 
         for (const mode of ['classic', 'duel', 'survival', 'time']) {
             const page = await context.newPage();
