@@ -44,7 +44,11 @@ test('sends nickname and timezone preference and rejects invalid input before ca
     for (const nickname of ['ab', 'bad name', 'name/with/slash', 'a'.repeat(21)]) {
         await assert.rejects(create(nickname), /INVALID_NICKNAME/);
     }
-    await assert.rejects(create('ValidName', 'Mars/Olympus'), /INVALID_TIME_ZONE/);\n    assert.equal(calls.length, 3);\n});\n\ntest('rejects a forged or mismatched server receipt', async () => {
+    await assert.rejects(create('ValidName', 'Mars/Olympus'), /INVALID_TIME_ZONE/);
+    assert.equal(calls.length, 3);
+});
+
+test('rejects a forged or mismatched server receipt', async () => {
     const auth = { app: { options: { projectId: 'demo-quizhub' } }, currentUser: { uid: 'verified-user', isAnonymous: false } };
     const create = createFirebaseProfileCreateInvoker({
         auth, getFunctions: () => ({}), connectFunctionsEmulator() {},
