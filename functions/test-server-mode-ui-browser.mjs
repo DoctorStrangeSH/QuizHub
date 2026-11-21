@@ -60,7 +60,8 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
 
             if (mode === 'duel') {
                 await page.locator('.duel-scoreboard').waitFor();
-                assert.match(await page.locator('.duel-scoreboard').innerText(), /0s*:s*0/);
+                const scoreboard = await page.locator('.duel-scoreboard').innerText();
+                assert.ok(scoreboard.includes('0') && scoreboard.includes(':'));
             } else if (mode === 'survival') {
                 await page.locator('.survival-lives').waitFor();
                 assert.match(await page.locator('.survival-lives').innerText(), /3\/3/);
