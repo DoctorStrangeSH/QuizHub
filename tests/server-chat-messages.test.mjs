@@ -92,6 +92,31 @@ test('non-friends, one-sided friendships, missing users and malformed inputs are
     await assert.rejects(send(db, { targetUid: 'alice' }), /INVALID_CHAT_PARTICIPANTS/);
 });
 
+test('reply targets must be existing messages in the same direct conversation', async () => {
+    const { db, records } = fixture();
+    for (const [uid, profile] of Object.entries(users())) records.set('users/' + uid, profile);
+    const original = await send(db);
+    const replyId = 'message_2234567890abcd';
+    const reply = await sendDirectMessage(db, {
+        actorUid: 'bob', targetUid: 'alice', messageId: replyId,
+        text: 'A reply', replyToMessageId: original.messageId
+    });
+    assert.equal(reply.status, 'created');
+    const stored = records.get('chats/' + original.chatId + '/messages/' + replyId);
+    assert.deepEqual(stored.replyTo, {
+        id: original.messageId, senderId: 'alice', text: 'Hello, Bob!'
+    });
+    assert.equal((await sendDirectMessage(db, {
+        actorUid: 'bob', targetUid: 'alice', messageId: replyId,
+        text: 'A reply', replyToMessageId: original.messageId
+    })).status, 'unchanged');
+    await assert.rejects(sendDirectMessage(db, {
+        actorUid: 'bob', targetUid: 'alice', messageId: 'message_3234567890abcd',
+        text: 'Missing target', replyToMessageId: 'message_4234567890abcd'
+    }), /REPLY_TARGET_NOT_FOUND/);
+    await assert.rejects(send(db, { replyToMessageId: 'short' }), /INVALID_REPLY_TARGET/);
+});
+
 test('pre-existing chat with mismatched participants is rejected without writing', async () => {
     const { db, records } = fixture();
     for (const [uid, profile] of Object.entries(users())) records.set('users/' + uid, profile);
