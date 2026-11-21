@@ -170,4 +170,79 @@ export async function renderMyProfile() {
 export function attachMyProfileListeners() {
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); };
     window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
+
+    const timeZoneInput = document.getElementById('profile-timezone-input');
+    const timeZoneSave = document.getElementById('profile-timezone-save');
+    const timeZoneStatus = document.getElementById('profile-timezone-status');
+    if (!timeZoneInput || !timeZoneSave || !timeZoneStatus) return;
+
+    const isRU = getState().language !== 'en';
+    const previewEnabled = isProfileTimeZonePreviewEnabled(window.location, auth);
+    const messages = isRU ? {
+        unchanged: 'Этот часовой пояс уже выбран.',
+        invalid: 'Укажите корректный часовой пояс IANA, например Europe/Berlin.',
+        confirm: 'Сохранить этот часовой пояс? Он будет использоваться для расчёта времени игровых событий.',
+        cancelled: 'Изменение отменено.',
+        saving: 'Сохраняем настройку…',
+        saved: 'Часовой пояс сохранён. Новые расчёты событий будут использовать его.',
+        failed: 'Не удалось сохранить часовой пояс. Попробуйте ещё раз.',
+        changed: 'Есть несохранённое изменение.'
+    } : {
+        unchanged: 'This time zone is already selected.',
+        invalid: 'Enter a valid IANA time zone, for example Europe/Berlin.',
+        confirm: 'Save this time zone? It will be used to calculate game event times.',
+        cancelled: 'Change cancelled.',
+        saving: 'Saving preference…',
+        saved: 'Time zone saved. New event calculations will use this preference.',
+        failed: 'Could not save the time zone. Please try again.',
+        changed: 'You have an unsaved change.'
+    };
+    let savedTimeZone = timeZoneInput.value.trim();
+    timeZoneSave.disabled = !previewEnabled || timeZoneInput.value.trim() === savedTimeZone;
+
+    timeZoneInput.addEventListener('input', () => {
+        timeZoneSave.disabled = !previewEnabled || timeZoneInput.value.trim() === savedTimeZone;
+        timeZoneStatus.textContent = timeZoneInput.value.trim() === savedTimeZone
+            ? messages.unchanged
+            : messages.changed;
+        timeZoneStatus.classList.toggle('is-error', false);
+        timeZoneStatus.classList.toggle('is-success', false);
+    });
+
+    timeZoneSave.addEventListener('click', async () => {
+        const nextTimeZone = timeZoneInput.value.trim();
+        if (!isValidIanaTimeZone(nextTimeZone)) {
+            timeZoneStatus.textContent = messages.invalid;
+            timeZoneStatus.classList.add('is-error');
+            return;
+        }
+        if (nextTimeZone === savedTimeZone) {
+            timeZoneStatus.textContent = messages.unchanged;
+            return;
+        }
+        if (!window.confirm(messages.confirm)) {
+            timeZoneStatus.textContent = messages.cancelled;
+            return;
+        }
+
+        timeZoneSave.disabled = true;
+        timeZoneInput.disabled = true;
+        timeZoneStatus.classList.remove('is-error', 'is-success');
+        timeZoneStatus.textContent = messages.saving;
+        try {
+            const { createLocalFirebaseProfileTimeZoneInvoker } = await import('./firebase-profile-timezone-invoker.js');
+            const updateTimeZone = createLocalFirebaseProfileTimeZoneInvoker();
+            await updateTimeZone(nextTimeZone);
+            savedTimeZone = nextTimeZone;
+            timeZoneStatus.textContent = messages.saved;
+            timeZoneStatus.classList.add('is-success');
+        } catch (error) {
+            console.error('Timezone preference update failed:', error);
+            timeZoneStatus.textContent = messages.failed;
+            timeZoneStatus.classList.add('is-error');
+            timeZoneSave.disabled = false;
+        } finally {
+            timeZoneInput.disabled = false;
+        }
+    });
 }
