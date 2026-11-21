@@ -932,3 +932,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The author edits the message; the recipient's attempt to edit is denied. The author then deletes it and the recipient sees a tombstone with a cleared body and no reactions.
 - The test cleans up both emulator users, profiles, chat document and message subcollection.
 - The test is added to the required Firebase Emulator Integration workflow. This is emulator acceptance only; it does not certify production Rules, deployed Functions or legacy-chat migration.
+
+
+## 73. V1 scope gate: CHAT-07 deferred (2026-11-21)
+
+- Rechecked `docs/PRODUCT_SPECIFICATION_V1.md`: the approved chat scope covers direct text messaging, edit/delete, reactions, unread/read state and multi-device synchronization. Reply-to-message previews are not an explicit V1 acceptance requirement.
+- PR #79 (trusted reply previews) passed the three required CI workflows, but passing CI does not authorize scope expansion.
+- CHAT-07 is therefore deferred beyond V1. Its implementation remains preserved on its feature branch for a future, explicitly approved Change Request; it is not merged into `main` and is not a V1 blocker.
+- The PR is closed as deferred to keep the V1 queue limited to approved requirements. No production Firebase configuration, Rules, Functions, or live data are changed.
+- Next V1 priority remains completion of Stage 0 evidence: live read-only Firestore inventory, deployed Rules/index export, Auth provider/domain confirmation, and a verified production backup/restore rehearsal in a disposable environment. These steps require owner-side Firebase access and must not be simulated with emulator results.
