@@ -108,9 +108,9 @@ test('profile UI exposes timezone settings only on the owner card and never writ
     const { readFile } = await import('node:fs/promises');
     const profileSource = await readFile(new URL('../app/modules/profile/public-profile.js', import.meta.url), 'utf8');
     const listenerSource = await readFile(new URL('../app/modules/profile/profile.js', import.meta.url), 'utf8');
+    const timezoneListener = listenerSource.slice(listenerSource.indexOf('export function attachMyProfileListeners'));
     assert.match(profileSource, /isOwnProfile \? renderProfileTimeZoneSettings/);
-    assert.match(listenerSource, /window\.confirm\(messages\.confirm\)/);
-    assert.match(listenerSource, /createFirebaseProfileTimeZoneInvoker/);
-    assert.doesNotMatch(listenerSource, /updateDoc\([^\n]*timeZone/);
-    assert.doesNotMatch(listenerSource, /setDoc\([^\n]*timeZone/);
+    assert.match(timezoneListener, /window\.confirm\(messages\.confirm\)/);
+    assert.match(timezoneListener, /createLocalFirebaseProfileTimeZoneInvoker/);
+    assert.doesNotMatch(timezoneListener, /updateDoc|setDoc/);
 });
