@@ -97,7 +97,7 @@ test('authenticated browser claims daily login reward through trusted callable e
         assert.equal(outcome.first?.balance, (outcome.before.coins || 0) + 10);
         assert.equal(outcome.afterFirst.coins, outcome.first.balance);
         assert.equal(outcome.afterFirst.dailyStreak, 1);
-        assert.equal(outcome.availabilityAfterBoundary.canClaim, expectedCanClaim,
+        assert.equal(outcome.availabilityAfterBoundary.canClaim, outcome.expectedCanClaim,
             'Claim availability must follow UTC midnight, not the simulated local calendar boundary');
         assert.ok(outcome.afterFirst.lastDailyClaim, 'Server claim timestamp must be persisted');
         assert.equal(outcome.retry, false, 'Same-day retry must not produce another reward');
