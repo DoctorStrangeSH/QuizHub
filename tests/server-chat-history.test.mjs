@@ -53,12 +53,13 @@ const message=(id,createdAt,extra={})=>({
 });
 
 test('history is participant-scoped, paginated and returns only allowlisted message fields', async () => {
-    const {db}=fixture({messages:[message('message_000000000001',1),message('message_000000000002',2),message('message_000000000003',3)]});
+    const {db}=fixture({messages:[message('message_000000000001',1),message('message_000000000002',2),message('message_000000000003',3,{reactions:{like:['alice','bob'],love:['bob']}})]});
     const first=await readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:2});
     assert.equal(first.peerUid,'bob');
     assert.deepEqual(first.messages.map(x=>x.id),['message_000000000003','message_000000000002']);
     assert.equal(first.nextCursor,'message_000000000002');
     assert.equal('secretInternalField' in first.messages[0],false);
+    assert.deepEqual(first.messages[0].reactions,{like:{count:2,reactedByMe:true},love:{count:1,reactedByMe:false}});
     const second=await readDirectMessages(db,{actorUid:'bob',chatId:CHAT_ID,pageSize:2,cursorMessageId:first.nextCursor});
     assert.deepEqual(second.messages.map(x=>x.id),['message_000000000001']);
     assert.equal(second.nextCursor,null);
@@ -72,6 +73,7 @@ test('deleted messages hide their content and malformed message membership is re
     const result=await readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:1});
     assert.equal(result.messages[0].deleted,true);
     assert.equal(result.messages[0].text,null);
+    assert.deepEqual(result.messages[0].reactions,{});
     await assert.rejects(readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:2}),/CHAT_MESSAGE_STATE_CONFLICT/);
 });
 

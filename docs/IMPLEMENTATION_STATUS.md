@@ -840,3 +840,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - History serialization was adjusted to safely project both legacy deleted messages and newly body-erased deleted messages.
 - PR #70 is opened for CHAT-03. Merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
 - No browser chat mutation UI, production Rules, Functions deployment or live Firestore data is changed. Production chat still uses legacy paths pending the broader security and migration release gates.
+
+
+## 63. CHAT-03 author-only edit/delete merged; CHAT-04 reactions opened (2026-11-21)
+
+- PR #70 merged into `main` as squash commit `3c48a4ede5b5fc6188c2361b70039092256768ba`. Question Quality, Firebase Emulator Integration and Visual Preview all passed.
+- CHAT-03 now provides trusted transactional author-only message editing and deletion. Edits set `edited`/ `editedAt`; deletion clears the stored text body, records deletion time and remains idempotent. Recipients and non-participants cannot mutate messages.
+- CHAT-04 adds a transactional reaction toggle service with six stable allowlisted types: `like`, `love`, `laugh`, `wow`, `sad`, `fire`. Each of the two participants can independently add/remove their own reaction. The service rejects strangers, malformed reaction state and deleted messages.
+- Reaction identity is derived from Firebase Auth; clients cannot submit a user ID or arbitrary emoji/string. The callable is restricted to the isolated demo project with Auth, Firestore and Functions emulators active.
+- CHAT-02 history projection now returns only per-type counts and whether the requesting participant reacted. It never exposes the underlying participant UID arrays. Deleted messages project no reactions.
+- Added service/callable tests and a three-account emulator acceptance test covering both participants, stranger/forged identity denial, toggle behavior, deleted-message denial and reaction projection in history.
+- Added the new callable to the fail-closed source guard and both CI workflows. No production Rules, Functions deployment, browser UI or live Firestore data is changed.
+- PR #71 is opened for CHAT-04; merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.

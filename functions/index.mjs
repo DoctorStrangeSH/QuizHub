@@ -34,6 +34,7 @@ import { createFriendCallableAdapter } from '../server/friend-callable-adapter.m
 import { createFirestoreChatSendCallable } from '../server/chat-send-callable-adapter.mjs';
 import { createFirestoreChatHistoryCallable } from '../server/chat-history-callable-adapter.mjs';
 import { createFirestoreChatMessageMutationCallable } from '../server/chat-message-mutation-callable-adapter.mjs';
+import { createFirestoreChatReactionCallable } from '../server/chat-reaction-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -284,4 +285,21 @@ export const chatMessageMutationPreviewCallable = onCall({
         throw new HttpsError('failed-precondition', 'CHAT_MESSAGE_MUTATION_PREVIEW_DISABLED');
     }
     return chatMessageMutationPreview(request);
+});
+
+
+// CHAT-04 reaction preview. Participant-scoped, transactional toggle only.
+const chatReactionPreview = createFirestoreChatReactionCallable({ db: getFirestore(), HttpsError });
+export const chatReactionPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_REACTION_PREVIEW_DISABLED');
+    }
+    return chatReactionPreview(request);
 });

@@ -1,6 +1,7 @@
 const CHAT_ID = /^dm_[a-f0-9]{48}$/;
 const MESSAGE_ID = /^[A-Za-z0-9_-]{16,128}$/;
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
+const REACTION_TYPES = ['like', 'love', 'laugh', 'wow', 'sad', 'fire'];
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 50;
 
@@ -10,7 +11,28 @@ function validParticipants(value) {
         value[0] !== value[1];
 }
 
-function serializeMessage(snapshot, participants) {
+function projectReactions(value, participants, actorUid, deleted) {
+    if (deleted) return {};
+    if (value === undefined) return {};
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+    }
+    const projected = {};
+    for (const [type, users] of Object.entries(value)) {
+        if (!REACTION_TYPES.includes(type) || !Array.isArray(users) ||
+            users.length > 2 || new Set(users).size !== users.length ||
+            !users.every(uid => participants.includes(uid))) {
+            throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+        }
+        if (users.length) projected[type] = {
+            count: users.length,
+            reactedByMe: users.includes(actorUid)
+        };
+    }
+    return projected;
+}
+
+function serializeMessage(snapshot, participants, actorUid) {
     const value = snapshot.data();
     if (!value || !participants.includes(value.senderId) ||
         !participants.includes(value.recipientId) || value.senderId === value.recipientId ||
@@ -25,7 +47,8 @@ function serializeMessage(snapshot, participants) {
         text: value.deleted ? null : value.text,
         createdAt: value.createdAt,
         edited: value.edited,
-        deleted: value.deleted
+        deleted: value.deleted,
+        reactions: projectReactions(value.reactions, participants, actorUid, value.deleted)
     };
 }
 
@@ -74,7 +97,7 @@ export async function readDirectMessages(db, {
     const page = await query.limit(pageSize + 1).get();
     const hasMore = page.docs.length > pageSize;
     const visible = page.docs.slice(0, pageSize);
-    const messages = visible.map(snapshot => serializeMessage(snapshot, chat.participants));
+    const messages = visible.map(snapshot => serializeMessage(snapshot, chat.participants, actorUid));
     return {
         chatId,
         peerUid: chat.participants.find(uid => uid !== actorUid),
