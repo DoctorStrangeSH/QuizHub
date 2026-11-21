@@ -1,7 +1,9 @@
 import { getState } from '../../store/state.js';
 import { renderMessageReadState } from './chat-read-indicator.js';
+import { createFirebaseChatTransport } from './firebase-chat-transport.js';
+import { createDirectChatId, renderUnreadBadge } from './chat-unread-badges.js';
 import {
-    auth, db, doc, getDoc, setDoc, updateDoc,
+    auth, db, functions, httpsCallable, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
     addDoc, serverTimestamp, onSnapshot, arrayUnion, arrayRemove
 } from '../../firebase-config.js';
@@ -14,6 +16,7 @@ let replyMessageId = null;
 let selectedMessageId = null;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
+let chatPreviewTransport = null;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // ========== ОТРИСОВКА ==========
@@ -44,7 +47,7 @@ export function renderChat() {
             <main class="dashboard-main">
                 <div class="chat-layout">
                     <div class="chat-list-panel glass-card" id="chat-list-panel">
-                        <div class="chat-list-header"><span class="chat-kicker">QUIZHUB / СООБЩЕНИЯ</span><h4><i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Чаты</h4></div>
+                        <div class="chat-list-header"><span class="chat-kicker">QUIZHUB / СООБЩЕНИЯ</span><h4><i class="bi bi-chat-dots-fill" aria-hidden="true"></i> Чаты <span id="chat-total-unread" class="chat-unread-total" aria-label="Всего непрочитанных сообщений"></span></h4></div>
                         <div class="chat-friends-list" id="chat-friends-list"><div class="text-center py-3"><div class="loading-spinner"></div></div></div>
                     </div>
                     <div class="chat-window glass-card" id="chat-window">
@@ -82,6 +85,27 @@ export function renderChat() {
     `;
 }
 
+async function refreshUnreadBadges(friends, lifecycle) {
+    const totalBadge = document.getElementById('chat-total-unread');
+    if (!chatPreviewTransport || !totalBadge || !auth.currentUser) return;
+    const results = await Promise.all(friends.map(async friend => {
+        try {
+            const chatId = await createDirectChatId(auth.currentUser.uid, friend.id);
+            const result = await chatPreviewTransport.getUnreadCount({ chatId });
+            const count = Number.isSafeInteger(result?.unreadCount) && result.unreadCount > 0 ? result.unreadCount : 0;
+            return { friendId: friend.id, count };
+        } catch { return { friendId: friend.id, count: 0 }; }
+    }));
+    if (lifecycle !== chatLifecycle || !document.getElementById('chat-friends-list')?.isConnected) return;
+    let total = 0;
+    for (const { friendId, count } of results) {
+        total += count;
+        const badge = Array.from(document.querySelectorAll('[data-unread-badge]')).find(node => node.dataset.unreadBadge === friendId);
+        if (badge) badge.innerHTML = renderUnreadBadge(count, `Непрочитанных сообщений: ${count}`);
+    }
+    totalBadge.innerHTML = renderUnreadBadge(total, `Всего непрочитанных сообщений: ${total}`);
+}
+
 // ========== ЗАГРУЗКА ДРУЗЕЙ ==========
 export async function loadChatFriends() {
     const lifecycle = chatLifecycle;
@@ -107,6 +131,7 @@ export async function loadChatFriends() {
             <button type="button" class="chat-friend-item" data-chat-index="${index}" data-friend-id="${escapeHtml(friend.id)}">
                 <span class="avatar-circle small"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
                 <span class="chat-friend-info"><span class="fw-semibold">${escapeHtml(friend.nickname || 'Игрок')}</span><span class="online-dot offline" id="online-${escapeHtml(friend.id)}"></span></span>
+                <span class="chat-friend-unread" data-unread-badge="${escapeHtml(friend.id)}"></span>
             </button>
         `).join('');
         list.onclick = event => {
@@ -116,6 +141,7 @@ export async function loadChatFriends() {
             if (friend) window.openChat(friend.id, friend.nickname || 'Игрок');
         };
         friendsData.forEach(friend => watchOnlineStatus(friend.id));
+        refreshUnreadBadges(friendsData, lifecycle);
     } catch (error) { console.error('Ошибка загрузки друзей:', error); }
 }
 
@@ -287,6 +313,16 @@ export function cleanupChatListeners() {
 
 export function attachChatListeners() {
     cleanupChatListeners();
+    chatPreviewTransport = null;
+    const params = new URLSearchParams(location.search);
+    if (['localhost', '127.0.0.1'].includes(location.hostname) &&
+        params.get('firebaseEmulator') === '1' && params.get('chatPreview') === '1') {
+        try {
+            chatPreviewTransport = createFirebaseChatTransport({ auth, functions, httpsCallable, location });
+        } catch (error) {
+            console.warn('Chat preview transport is unavailable:', error.message);
+        }
+    }
     loadChatFriends();
     setOnlineStatus();
     const form = document.getElementById('chat-form');
