@@ -765,3 +765,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added `docs/PR3_REVIEW_PLAN.md` with the file-scope assessment, safe decomposition, acceptance gates and recommended order.
 - Decision: do not merge PR #3 wholesale. Integrate selected changes as small PRs based on current main, preserving `PUBLIC_PROFILE_READS_ENABLED=false`, `CHAT_SERVER_TRANSPORT_ENABLED=false`, and emulator-only callable/rules guards.
 - No production data, Rules, Functions or client cutover changed.
+
+
+## 56. Public profile privacy slice merged; FRIEND-01 service opened (2026-11-21)
+
+- PR #64 merged into `main` as squash commit `61817fc3f2801345e261b6adb5335f53bba34817`.
+- All three required PR #64 checks passed: Question Quality, Firebase Emulator Integration and Visual Preview.
+- Foreign profile cards now pass through the strict public allowlist; document path UID overrides any stored UID; private fields remain available only to the owner renderer.
+- `PUBLIC_PROFILE_READS_ENABLED` remains `false`. This is application-layer minimization only; active production Rules still require independent verification and no network-level privacy claim is made.
+- PR #65 (`feat/friendship-service-v1`) introduces the pure symmetric friendship transition service, trusted transactional Firestore adapter and strict Auth-derived callable input adapter, with unit tests in Question Quality CI.
+- PR #65 deliberately does not export/deploy a callable, change the browser friend UI, modify Rules or touch production data. It is the first isolated FRIEND-01 server slice.
+- PR #65 checks are running; merge only after Question Quality, Firebase Emulator Integration and Visual Preview all pass.
+- The legacy PR #3 remains Draft and is not to be merged wholesale.
