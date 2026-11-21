@@ -1,11 +1,12 @@
 import { finalizeSession } from './quiz-session-core.mjs';
 import { calculateQuizRewards } from '../app/modules/quiz/rewards.js';
 import { advanceAchievementFacts } from './achievement-progress.mjs';
+import { getServerQuizRewardMultipliers } from './quiz-event-rewards.mjs';
 
 // Storage-independent transaction coordinator. The production adapter MUST
-// implement one atomic, retryable transaction across session and user records:
-// store.runTransaction(async tx => ...), tx.getSession(), tx.getUser(),
-// tx.setSession(), tx.setUser(). Neither the API nor Firestore adapter is live.
+// implement one atomic, retryable transaction across session and user records.
+// Event time is supplied by the authenticated callable's server clock; the
+// IANA timezone is read only from the stored user profile.
 export async function claimSessionReward({ store, sessionId, uid, at }) {
     if (!store || typeof store.runTransaction !== 'function') throw new Error('TRANSACTION_REQUIRED');
     if (typeof sessionId !== 'string' || !sessionId.trim()) throw new Error('INVALID_SESSION_ID');
@@ -22,14 +23,17 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
 
         const session = structuredClone(stored);
         const result = finalizeSession(session, { uid, at });
-        // All points come from the server-owned answer key and answer log.
-        // Event bonuses must also be resolved server-side when integrated.
-        const { xp, coins } = calculateQuizRewards(result.score);
+        const user = await transaction.getUser(uid);
+        if (!user) throw new Error('USER_NOT_FOUND');
+        const rewardMultipliers = getServerQuizRewardMultipliers({
+            at,
+            timeZone: user.timeZone ?? 'UTC'
+        });
+        // All points and event multipliers come from trusted server data.
+        const { xp, coins } = calculateQuizRewards(result.score, rewardMultipliers);
         // Preserve the existing Classic win rule: at least 70% correct.
         const won = result.correctAnswers >= Math.ceil(result.totalQuestions * 0.7);
         const perfect = result.totalQuestions === 10 && result.correctAnswers === 10;
-        const user = await transaction.getUser(uid);
-        if (!user) throw new Error('USER_NOT_FOUND');
         const stats = user.stats ?? {};
         if (!stats || typeof stats !== 'object' || Array.isArray(stats)) {
             throw new Error('INVALID_USER_STATS');
@@ -68,7 +72,15 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
             }
         };
 
-        const receipt = { sessionId, uid, ...result, xp, coins, won, perfect, newlyUnlocked: achievementProgress.newlyUnlocked };
+        const receipt = {
+            sessionId, uid, ...result, xp, coins, won, perfect,
+            rewardMultipliers: {
+                xp: rewardMultipliers.xpMultiplier,
+                coins: rewardMultipliers.coinMultiplier
+            },
+            activeRewardEvents: rewardMultipliers.activeEventIds,
+            newlyUnlocked: achievementProgress.newlyUnlocked
+        };
         session.receipt = receipt;
         await transaction.setAchievementFacts(uid, achievementProgress.facts);
         await transaction.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
