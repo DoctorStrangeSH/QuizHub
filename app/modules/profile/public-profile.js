@@ -1,6 +1,7 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc } from '../../firebase-config.js';
 import { profileCollectionForViewer, projectProfileForViewer } from './profile-read-source.js';
+import { isProfileTimeZonePreviewEnabled, renderProfileTimeZoneSettings } from './profile-timezone-settings.js';
 
 // Достижения для отображения
 const ALL_ACHIEVEMENTS = [
@@ -35,6 +36,19 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
     const t = getState().translations.profile || {};
     const lang = getState().language;
     const isRU = lang === 'ru';
+    let detectedTimeZone = 'UTC';
+    try {
+        const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (typeof detected === 'string' && detected) detectedTimeZone = detected;
+    } catch {
+        // Keep UTC as a safe display fallback.
+    }
+    const timeZoneSettings = isOwnProfile ? renderProfileTimeZoneSettings({
+        timeZone: p.timeZone || detectedTimeZone,
+        detectedTimeZone,
+        language: lang,
+        previewEnabled: isProfileTimeZonePreviewEnabled(window.location, auth)
+    }) : '';
     
     const p = isOwnProfile ? profileData : projectProfileForViewer(null, profileData?.uid, profileData);
     const stats = p.stats || {};
@@ -188,6 +202,8 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                         </div>
                     ` : ''}
                     
+                    ${timeZoneSettings}
+
                     ${isOwnProfile ? `
                     <div class="profile-footer-info glass-card animate-in animate-in-delay-3">
                         <p class="text-secondary small mb-0">🗓️ На сайте с ${createdDate}</p>
