@@ -29,6 +29,8 @@ import { createAchievementUnlockService } from '../server/achievement-unlock-ser
 import { createAchievementFirestoreStore } from '../server/achievement-firestore-store.mjs';
 import { createAuthenticatedAchievementHandler } from '../server/authenticated-achievement-handler.mjs';
 import { createAchievementCallableAdapter } from '../server/firebase-achievement-callable-adapter.mjs';
+import { updateFriendship } from '../server/friend-relationships.mjs';
+import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -208,9 +210,6 @@ export const achievementUnlockPreview = onCall({
 // Trusted friendship preview. This endpoint remains restricted to the isolated
 // Auth + Firestore + Functions emulators until the production Rules, legacy
 // social-data audit and owner-approved client migration are complete.
-import { updateFriendship } from '../server/friend-relationships.mjs';
-import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
-
 const friendRelationshipPreviewHandler = createFriendCallableAdapter({
     update: args => updateFriendship(getFirestore(), args),
     HttpsError
