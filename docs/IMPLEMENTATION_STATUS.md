@@ -1088,3 +1088,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Legacy profiles without `timeZone` deliberately use UTC. This is a compatibility limitation, not an approved Production cutover: existing users need an explicit timezone preference/backfill path before enabling event-based trusted rewards for them.
 - Added deterministic tests for IANA validation, UTC fallback, Berlin local event hours, daylight-saving handling, overlapping boosts, inactive holidays, profile persistence and claim transaction integration.
 - Production callables remain emulator-only. No deployed Firebase settings, Rules, live user documents, reward balances or feature flags were changed.
+
+
+## 88. Existing-account timezone preference backend (2026-11-21)
+
+- Added `server/profile-timezone-update.mjs`: an authenticated profile preference update changes exactly `users/{uid}.timeZone` inside a Firestore transaction. It preserves all other profile fields and rejects missing profiles or invalid IANA zones.
+- Added `server/profile-timezone-callable-adapter.mjs`: UID is derived only from verified Firebase Auth; anonymous users, malformed payloads and extra fields (including a caller-supplied UID) are rejected.
+- Exported `profileTimeZonePreview` from Functions with the same strict `demo-quizhub` + Auth/Firestore/Functions emulator guard as other preview callables. It is not enabled in Production.
+- Added regression tests for exact-field updates, preservation of XP/level/coins/stats, missing profile, invalid timezone, Auth ownership and payload allowlisting.
+- This is the trusted backend contract only. A user-facing settings control, existing-account migration/backfill and live deployment are not included. Existing profiles without a saved preference continue to use UTC in the event resolver.
+- No Production Firebase reads/writes, Rules, Functions deployments, indexes, Auth settings, live data, rewards or feature flags were changed.

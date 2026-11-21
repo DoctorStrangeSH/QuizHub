@@ -14,6 +14,8 @@ import { createAuthenticatedQuizHandler } from '../server/authenticated-quiz-han
 import { createQuizCallableAdapter } from '../server/firebase-quiz-callable-adapter.mjs';
 import { createPlayerProfile } from '../server/profile-create.mjs';
 import { createProfileCallableAdapter } from '../server/profile-create-callable-adapter.mjs';
+import { updatePlayerTimeZone } from '../server/profile-timezone-update.mjs';
+import { createProfileTimeZoneCallableAdapter } from '../server/profile-timezone-callable-adapter.mjs';
 import { createModeSessionService } from '../server/quiz-mode-session-service.mjs';
 import { createAuthenticatedModeHandler } from '../server/authenticated-mode-handler.mjs';
 import { createModeCallableAdapter } from '../server/firebase-mode-callable-adapter.mjs';
@@ -109,6 +111,27 @@ export const profileCreatePreview = onCall({
         throw new HttpsError('failed-precondition', 'PROFILE_CREATE_PREVIEW_DISABLED');
     }
     return profilePreview(request);
+});
+
+const profileTimeZoneHandler = createProfileTimeZoneCallableAdapter({
+    update: args => updatePlayerTimeZone(getFirestore(), args),
+    HttpsError
+});
+
+// Existing-account timezone preference preview. It changes only users/{uid}.timeZone
+// and remains disabled outside the isolated Auth/Firestore/Functions emulators.
+export const profileTimeZonePreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'PROFILE_TIMEZONE_PREVIEW_DISABLED');
+    }
+    return profileTimeZoneHandler(request);
 });
 
 const modeStore = createQuizFirestoreStore(getFirestore());
