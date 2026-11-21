@@ -54,3 +54,11 @@ The repository-derived migration inventory also omitted two server-side idempote
 - PR #86 adds authenticated browser acceptance against isolated Firebase emulators, including idempotent retry and the two offset-sensitive local calendar cases: UTC-10 can expose a premature local-day claim; UTC+14 can delay a claim after UTC midnight.
 - All three required workflows passed on the final PR #86 head, including the network/browser emulator suite, emulator backup snapshot capture, and server-owned session Rules denial.
 - These changes correct the display/availability decision and validate the existing emulator callable. They do **not** switch the normal Production reward mutation: the default browser path still directly writes coins, streak and last-claim timestamp. The callable remains emulator-only.
+
+
+## Addendum — Quiz Rewards trusted-path findings (2026-11-21)
+
+- The normal browser path still calculates XP/coins from its local score and directly updates `users/{uid}`; Classic also supplies win increments and separately writes the level. The trusted Classic callable is connected only through the localhost emulator preview.
+- The server reward claim recomputes score from server-owned answer keys and persists a single idempotent receipt. It currently uses base rewards only; the legacy client applies event multipliers based on player-local time. Server-side event parity needs an explicit timezone policy before cutover.
+- The trusted achievement ledger starts at zero if no baseline facts exist. Do not overwrite legacy `users.level` from that ledger until an audited migration has seeded existing XP/progression. Otherwise established players could regress.
+- See `docs/QUIZ_REWARDS_CUTOVER_V1.md` for release gaps and the required safe migration sequence. No Production data, Rules, Functions or feature flags changed.
