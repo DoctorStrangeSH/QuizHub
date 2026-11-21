@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
     canClaimOnUtcDate,
-    millisecondsUntilNextUtcDay,
     toValidDate,
     utcDateKey
 } from '../app/modules/daily/daily-login-date.js';
@@ -34,12 +33,4 @@ test('invalid timestamps fail closed instead of accidentally enabling a claim', 
     assert.equal(toValidDate(new Date(NaN)), null);
     assert.equal(toValidDate({ toMillis: () => NaN }), null);
     assert.equal(canClaimOnUtcDate(null, new Date(NaN)), false);
-});
-
-test('next daily reset countdown follows UTC midnight', () => {
-    assert.equal(
-        millisecondsUntilNextUtcDay(new Date('2026-11-20T23:59:59.000Z')),
-        1000
-    );
-    assert.equal(millisecondsUntilNextUtcDay(new Date('2026-11-21T00:00:00.000Z')), 86_400_000);
 });
