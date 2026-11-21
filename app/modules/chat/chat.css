@@ -418,3 +418,11 @@
     cursor: pointer;
 }
 .chat-load-older:hover { border-color: var(--accent, #7c5cff); color: var(--text-primary, inherit); }
+
+/* Trusted emulator preview message actions. */
+.chat-messages .message-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.chat-messages .message-actions .reaction-btn {
+    min-width: 30px; min-height: 28px; border: 1px solid var(--glass-border, rgba(255,255,255,.12));
+    border-radius: 9px; background: var(--glass-bg, rgba(255,255,255,.05)); cursor: pointer;
+}
+.chat-messages .message-actions .reaction-btn:hover { border-color: var(--accent, #7c5cff); transform: translateY(-1px); }
