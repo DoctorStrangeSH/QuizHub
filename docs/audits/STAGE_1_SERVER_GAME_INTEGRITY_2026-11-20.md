@@ -89,3 +89,15 @@ No code path was switched, no new game mechanics were designed, no production Ru
 The `dailyChallenge` export has now been wrapped in the same fail-closed emulator guard used by `quizSessionPreview`, `quizModePreview` and other preview callables. It requires project `demo-quizhub` and active Auth, Firestore and Functions emulators; otherwise it returns `DAILY_CHALLENGE_PREVIEW_DISABLED`.
 
 This corrects the repository source exposure identified above for future deployments. **It does not disable or update an already deployed Cloud Function.** The deployed Functions inventory remains an owner/operator Phase 0 requirement and must be checked before any production migration or release.
+
+## Verification addendum — 2026-11-21
+
+The original findings above describe the source state at the audit date and are retained as historical evidence. Follow-up changes on main:
+
+- PR #61 (`b937b03`) added the missing fail-closed emulator guard to `dailyChallenge`. This removes the source-level inconsistency described in section 3 for future deployments; it does not alter any already deployed Function.
+- A fresh source scan of `functions/index.mjs` confirms that all seven exported callable functions currently require project `demo-quizhub` and active Auth, Firestore and Functions emulators, and reject requests otherwise.
+- PR #62 (`9f7fab1`) added a Question Quality regression test that enumerates every exported `onCall` function and checks this guard. Question Quality, Visual Preview and Firebase Emulator workflows all passed on the merged commit.
+
+The standard-mode implementation has also advanced beyond the original source snapshot: Classic has an authenticated server-session browser/callable acceptance test; Duel, Survival and Time Trial have authenticated callable emulator acceptance and browser UI preview acceptance (PRs #59 and #60). These remain emulator previews, not production client cutover. The live browser game still contains client-authoritative answer/reward paths, and Stage 1 remains NOT complete.
+
+**Release boundary unchanged:** no production Functions or Rules deployment, no live Firestore reads/writes, no migration, and no owner approval has occurred. The actual deployed Functions inventory, active Rules/indexes, Auth configuration and production backup/restore evidence remain Phase 0 blockers.
