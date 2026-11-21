@@ -87,7 +87,6 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
             const advancedCount = progressText.slice(progressText.lastIndexOf('/') + 1).trim();
             assert.ok(progressText.includes('1/'), mode + ' must advance exactly one server-accepted question');
             assert.equal(advancedCount, initialCount, mode + ' question count must remain stable');
-                mode + ' must advance exactly one server-accepted question');
         }
 
         assert.deepEqual(errors, [], 'No uncaught browser exceptions');
