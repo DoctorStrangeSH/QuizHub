@@ -653,3 +653,12 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - The browser verifies the first-day reward, server-returned balance, persisted streak and claim timestamp; a same-day retry must return no reward and leave balance/streak unchanged.
 - Added the browser test to Firebase Emulator CI. Existing callable tests continue to cover UTC day boundaries, streak continuation/reset and concurrent claims.
 - Production behavior is unchanged: outside the exact local preview gate, the legacy client-side daily reward write remains active. Do not enable restrictive production Rules or claim server-authoritative daily login until browser acceptance, existing-user baseline/migration and release gates are complete.
+
+
+## 45. Server-owned Daily Challenge browser acceptance
+
+- Added an authenticated Playwright browser test for the existing `dailyChallenge` Firebase callable, using only the `demo-quizhub` Auth, Firestore and Functions emulators.
+- The browser signs in through Firebase Auth, starts the server-selected 10-question daily session, submits all answers through the callable, and completes the session.
+- The test verifies public question payloads do not expose answer keys, the server receipt contains the canonical score/correct-answer count, a repeated completion returns the original receipt, and resume reports the completed session.
+- Added the test to Firebase Emulator CI. The service uses the server's UTC date, canonical question catalog, answer ordering and scoring; no browser score or reward is accepted.
+- Important limitation: this is a server-session/score receipt, not a ranked leaderboard or reward payout. The current Daily Challenge UI remains explicitly practice-only and is not yet connected to this callable. Ranking seal, prize claims, browser UI migration and production security cutover remain separate work.
