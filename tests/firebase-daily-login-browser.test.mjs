@@ -47,7 +47,25 @@ test('authenticated browser claims daily login reward through trusted callable e
 
             const first = await claimDailyReward();
             const afterFirst = (await getDoc(ref)).data();
-            const availabilityAfterFirst = await checkDailyReward();
+            // Freeze browser time at noon UTC on the server-claimed date. In
+            // Pacific/Kiritimati this is already the following local calendar day.
+            const claimedAt = afterFirst.lastDailyClaim?.toDate?.();
+            if (!claimedAt) throw new Error('SERVER_CLAIM_TIMESTAMP_MISSING');
+            const fixedNow = new Date(Date.UTC(
+                claimedAt.getUTCFullYear(), claimedAt.getUTCMonth(), claimedAt.getUTCDate(), 12
+            ));
+            const NativeDate = Date;
+            class FixedDate extends NativeDate {
+                constructor(...args) { super(...(args.length ? args : [fixedNow.getTime()])); }
+                static now() { return fixedNow.getTime(); }
+            }
+            let availabilityAfterFirst;
+            globalThis.Date = FixedDate;
+            try {
+                availabilityAfterFirst = await checkDailyReward();
+            } finally {
+                globalThis.Date = NativeDate;
+            }
             const retry = await claimDailyReward();
             const afterRetry = (await getDoc(ref)).data();
             return {
