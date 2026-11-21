@@ -16,7 +16,7 @@ function fixture() {
             const tx = {
                 async get(reference) {
                     const value = records.get(reference.path);
-                    return { exists: value !== undefined, data: () => value };
+                    return { id: reference.id, exists: value !== undefined, data: () => value };
                 },
                 create(reference, value) {
                     if (records.has(reference.path)) throw new Error('ALREADY_EXISTS');
