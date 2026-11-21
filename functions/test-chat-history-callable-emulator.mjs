@@ -8,6 +8,7 @@ import { directChatId } from '../server/chat-messages.mjs';
 
 const project='demo-quizhub';
 const callable=`http://127.0.0.1:5001/${project}/europe-west1/chatHistoryPreviewCallable`;
+const readCallable=`http://127.0.0.1:5001/${project}/europe-west1/chatReadReceiptPreviewCallable`;
 const authBase='http://127.0.0.1:9099';
 async function register(suffix,name){
     const response=await fetch(`${authBase}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=emulator-key`,{
@@ -17,11 +18,13 @@ async function register(suffix,name){
     const body=await response.json();assert.equal(response.status,200,JSON.stringify(body));
     return {uid:body.localId,token:body.idToken};
 }
-async function invoke(user,data){
+async function invokeAt(url,user,data){
     const headers={'content-type':'application/json'};if(user)headers.authorization='Bearer '+user.token;
-    const response=await fetch(callable,{method:'POST',headers,body:JSON.stringify({data})});
+    const response=await fetch(url,{method:'POST',headers,body:JSON.stringify({data})});
     return {status:response.status,body:await response.json()};
 }
+const invoke=(user,data)=>invokeAt(callable,user,data);
+const markRead=(user,data)=>invokeAt(readCallable,user,data);
 test('CHAT-02 history is readable only by the two chat participants and paginates safely',{timeout:60000},async()=>{
     assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST);
     assert.ok(process.env.FIRESTORE_EMULATOR_HOST);
@@ -43,16 +46,20 @@ test('CHAT-02 history is readable only by the two chat participants and paginate
             });
         }
         await batch.commit();
+        const readByBob=await markRead(bob,{chatId,upToMessageId:'message_'+String(1).padStart(16,'0')});
+        assert.equal(readByBob.status,200,JSON.stringify(readByBob.body));
         const first=await invoke(alice,{chatId,pageSize:2});
         assert.equal(first.status,200,JSON.stringify(first.body));
         assert.equal(first.body.result.messages.length,2);
         assert.ok(first.body.result.nextCursor);
         assert.equal(first.body.result.peerUid,bob.uid);
         assert.deepEqual(first.body.result.messages[0].reactions, {});
+        assert.equal(first.body.result.messages[0].readByRecipient,false);
         assert.equal(JSON.stringify(first.body.result.messages[0].reactions).includes(alice.uid), false);
-        const second=await invoke(bob,{chatId,pageSize:2,cursorMessageId:first.body.result.nextCursor});
+        const second=await invoke(alice,{chatId,pageSize:2,cursorMessageId:first.body.result.nextCursor});
         assert.equal(second.status,200,JSON.stringify(second.body));
         assert.equal(second.body.result.messages.length,1);
+        assert.equal(second.body.result.messages[0].readByRecipient,true);
         const stranger=await invoke(charlie,{chatId});
         assert.equal(stranger.body.error?.status,'PERMISSION_DENIED');
         const forged=await invoke(alice,{chatId,actorUid:charlie.uid});

@@ -382,3 +382,15 @@
         display: flex !important;
     }
 }
+
+/* Server-projected direct-message read state (CHAT-05). */
+.message-read-state {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: -.12em;
+    vertical-align: baseline;
+}
+.message-read-state.is-sent { opacity: .55; }
+.message-read-state.is-read { color: #b8fa55; opacity: 1; }

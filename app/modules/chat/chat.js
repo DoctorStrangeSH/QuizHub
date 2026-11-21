@@ -1,4 +1,5 @@
 import { getState } from '../../store/state.js';
+import { renderMessageReadState } from './chat-read-indicator.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -184,12 +185,13 @@ function renderMessage(msg, container) {
     msgEl.dataset.messageId = msg.id;
     let replyHTML = msg.replyTo ? `<div class="message-reply">↩️ ${escapeHtml(String(msg.replyTo.text ?? '...').substring(0, 50))}</div>` : '';
     let reactionsHTML = msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '';
+    const readStateHTML = renderMessageReadState({ isMine, readByRecipient: msg.readByRecipient });
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
         <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
             ${replyHTML}
             <div class="message-text">${msg.edited ? '<span class="edited-label">(изм.)</span> ' : ''}${escapeHtml(displayText)}</div>
-            <div class="message-time">${timeStr}</div>
+            <div class="message-time">${timeStr}${readStateHTML}</div>
             ${reactionsHTML}
         </div>
         <div class="message-actions">
