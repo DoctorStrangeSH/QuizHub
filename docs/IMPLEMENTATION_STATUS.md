@@ -906,3 +906,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Missing conversations and preview failures render no badge; counts are bounded to safe non-negative integers and display as `99+` above 99.
 - This slice does not mark messages read or switch the conversation message listener. Opening/reading conversations and trusted history/send integration remain separate follow-up work.
 - No production Rules, Functions deployment or live user data is changed.
+## 69. CHAT-05 trusted history/read browser preview opened (2026-11-21)
+
+- PR #75 merged into `main` as squash commit `a42455f688c832eb3925f0f2cac0608149ff476e`; Question Quality, Firebase Emulator Integration and Visual Preview passed.
+- PR #76 adds an explicitly local-only chat preview path: direct-chat IDs are derived with the server-compatible SHA-256 algorithm, message history is loaded through the authenticated history callable, and incoming messages in the visible newest page are marked read through the trusted receipt callable.
+- History pages are normalized and rendered chronologically, older pages can be loaded with the server cursor, duplicate IDs are removed, and the view preserves scroll position when older messages are prepended.
+- The local preview sends through the trusted send callable and refreshes history/unread badges. It polls the trusted history endpoint while a preview conversation is open so a second emulator account can see new messages and have them marked read.
+- Legacy production chat listener, direct Firestore writes, message actions and production routes remain unchanged. Preview message actions that still require legacy client writes are hidden rather than routed to the new hashed chat document.
+- No production Rules, Functions deployment, live user data or migration is performed. CHAT-05 remains open until two-account browser acceptance and final UI/transport review pass.
