@@ -52,7 +52,7 @@ test('overlapping XP boosts use the strongest multiplier rather than stacking', 
 
 test('inactive holiday events do not grant rewards', () => {
     const result = getServerQuizRewardMultipliers({
-        at: at('2026-10-31T12:00:00Z'), timeZone: 'UTC'
+        at: at('2026-10-30T12:00:00Z'), timeZone: 'UTC'
     });
     assert.deepEqual(result.activeEventIds, []);
     assert.equal(result.xpMultiplier, 1);
