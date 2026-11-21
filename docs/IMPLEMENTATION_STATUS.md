@@ -993,3 +993,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The production public-profile read gate remains disabled. This change is client-side data minimization and does not provide network-level privacy while legacy `users/{uid}` documents remain readable.
 - Next focused patch: update `app/modules/chat/chat.js` so foreign friend profiles are loaded via `profileCollectionForViewer(viewerUid, targetUid)` and passed through `projectDirectoryProfile` before entering `chatFriendsCache` or rendering. Keep the owner's own profile read private.
 - No production Firebase Rules, Functions, data or feature flags were changed.
+
+
+## 79. Chat foreign-profile projection merged (2026-11-21)
+
+- PR #83 merged successfully with squash commit `df85996385e24f6d9245a7e628895e4ef364d6a9`.
+- All three required CI workflows passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview.
+- Chat friend cards now resolve foreign profile collection through `profileCollectionForViewer(viewerUid, targetUid)` and project the record through `projectDirectoryProfile` before adding it to `chatFriendsCache` or rendering.
+- The signed-in user's own `users/{uid}` document remains the source for private profile state and friend IDs.
+- Additional source audit: leaderboard uses `directoryCollection()` plus `buildPublicProfile()`; public profile view uses `profileCollectionForViewer()` plus `projectProfileForViewer()`. No additional raw foreign-profile spread was found in those reviewed modules.
+- Remaining critical boundary: all these protections are client-side data minimization while `PUBLIC_PROFILE_READS_ENABLED=false`; they do not prevent the browser from receiving legacy private documents when legacy Firestore Rules permit those reads.
+- Next V1 security task: complete a source-to-Rules audit using the exact deployed Firestore Rules and a live read-only inventory, then document the release gate and backup/restore evidence. Do not change production Rules, Functions, live data or public-profile gate until evidence is complete.
