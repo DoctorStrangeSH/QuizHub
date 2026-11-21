@@ -48,14 +48,14 @@ test('CHAT-02 history is readable only by the two chat participants and paginate
         await batch.commit();
         const readByBob=await markRead(bob,{chatId,upToMessageId:'message_000000000001'});
         assert.equal(readByBob.status,200,JSON.stringify(readByBob.body));
-        const first=await invoke(alice,{chatId,pageSize:2});
+        const first=await invoke(alice,{chatId,pageSize:3});
         assert.equal(first.status,200,JSON.stringify(first.body));
-        assert.equal(first.body.result.messages.length,2);
+        assert.equal(first.body.result.messages.length,3);
         assert.ok(first.body.result.nextCursor);
         assert.equal(first.body.result.peerUid,bob.uid);
         assert.deepEqual(first.body.result.messages[0].reactions, {});
         assert.equal(first.body.result.messages[0].readByRecipient,false);
-        assert.equal(first.body.result.messages[1].readByRecipient,true);
+        assert.equal(first.body.result.messages[2].readByRecipient,true);
         assert.equal(JSON.stringify(first.body.result.messages[0].reactions).includes(alice.uid), false);
         const second=await invoke(bob,{chatId,pageSize:2,cursorMessageId:first.body.result.nextCursor});
         assert.equal(second.status,200,JSON.stringify(second.body));
