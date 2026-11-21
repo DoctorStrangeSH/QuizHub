@@ -13,7 +13,7 @@ test('authenticated browser claims daily login reward through trusted callable e
 
     const browser = await chromium.launch({ headless: true });
     try {
-        const context = await browser.newContext({ serviceWorkers: 'block', timezoneId: 'Pacific/Kiritimati' });
+        const context = await browser.newContext({ serviceWorkers: 'block' });
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
@@ -47,22 +47,34 @@ test('authenticated browser claims daily login reward through trusted callable e
 
             const first = await claimDailyReward();
             const afterFirst = (await getDoc(ref)).data();
-            // Freeze browser time at noon UTC on the server-claimed date. In
-            // Pacific/Kiritimati this is already the following local calendar day.
+            // Simulate a local calendar offset at the critical UTC boundary.
+            // Before 10:00 UTC, UTC-10 has not reached local midnight; after
+            // 10:00 UTC, UTC+14 has already moved into the next local day.
             const claimedAt = afterFirst.lastDailyClaim?.toDate?.();
             if (!claimedAt) throw new Error('SERVER_CLAIM_TIMESTAMP_MISSING');
+            const claimedUtcHour = claimedAt.getUTCHours();
+            const offsetMs = (claimedUtcHour < 10 ? -10 : 14) * 60 * 60 * 1000;
+            const nextUtcDate = claimedUtcHour < 10 ? claimedAt : new Date(claimedAt.getTime() + 86_400_000);
             const fixedNow = new Date(Date.UTC(
-                claimedAt.getUTCFullYear(), claimedAt.getUTCMonth(), claimedAt.getUTCDate(), 12
+                nextUtcDate.getUTCFullYear(),
+                nextUtcDate.getUTCMonth(),
+                nextUtcDate.getUTCDate(),
+                claimedUtcHour < 10 ? 10 : 0,
+                15
             ));
+            const expectedCanClaim = claimedUtcHour >= 10;
             const NativeDate = Date;
             class FixedDate extends NativeDate {
                 constructor(...args) { super(...(args.length ? args : [fixedNow.getTime()])); }
                 static now() { return fixedNow.getTime(); }
+                getFullYear() { return new NativeDate(this.getTime() + offsetMs).getUTCFullYear(); }
+                getMonth() { return new NativeDate(this.getTime() + offsetMs).getUTCMonth(); }
+                getDate() { return new NativeDate(this.getTime() + offsetMs).getUTCDate(); }
             }
-            let availabilityAfterFirst;
+            let availabilityAfterBoundary;
             globalThis.Date = FixedDate;
             try {
-                availabilityAfterFirst = await checkDailyReward();
+                availabilityAfterBoundary = await checkDailyReward();
             } finally {
                 globalThis.Date = NativeDate;
             }
@@ -73,7 +85,8 @@ test('authenticated browser claims daily login reward through trusted callable e
                 before,
                 first,
                 afterFirst,
-                availabilityAfterFirst,
+                availabilityAfterBoundary,
+                expectedCanClaim,
                 retry,
                 afterRetry
             };
@@ -84,8 +97,8 @@ test('authenticated browser claims daily login reward through trusted callable e
         assert.equal(outcome.first?.balance, (outcome.before.coins || 0) + 10);
         assert.equal(outcome.afterFirst.coins, outcome.first.balance);
         assert.equal(outcome.afterFirst.dailyStreak, 1);
-        assert.equal(outcome.availabilityAfterFirst.canClaim, false,
-            'UTC same-day claim must remain unavailable even when browser timezone is UTC+14');
+        assert.equal(outcome.availabilityAfterBoundary.canClaim, expectedCanClaim,
+            'Claim availability must follow UTC midnight, not the simulated local calendar boundary');
         assert.ok(outcome.afterFirst.lastDailyClaim, 'Server claim timestamp must be persisted');
         assert.equal(outcome.retry, false, 'Same-day retry must not produce another reward');
         assert.equal(outcome.afterRetry.coins, outcome.afterFirst.coins);
