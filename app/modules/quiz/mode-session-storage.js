@@ -1,7 +1,7 @@
 const STORAGE_PREFIX = 'quizhub:server-mode-session:';
 
 function keyFor(mode) {
-    if (!['survival', 'duel', 'time'].includes(mode)) throw new Error('UNSUPPORTED_QUIZ_MODE');
+    if (!['classic', 'survival', 'duel', 'time'].includes(mode)) throw new Error('UNSUPPORTED_QUIZ_MODE');
     return STORAGE_PREFIX + mode;
 }
 
