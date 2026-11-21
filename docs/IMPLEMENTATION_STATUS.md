@@ -1077,3 +1077,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Classic browser acceptance exists in `tests/firebase-classic-server-browser.test.mjs` and verifies a ten-question authenticated emulator run, one reward claim and an idempotent retry. It does not prove Production cutover or other modes.
 - Next: define authoritative event-time/timezone semantics and a lossless legacy progression baseline before changing trusted reward writes. Keep all Production callables guarded and the existing client path unchanged.
 - No Production Firebase data, Rules, Functions, indexes, Auth settings or feature flags were changed.
+
+
+## 87. Server-authoritative quiz event rewards (2026-11-21)
+
+- Added `server/quiz-event-rewards.mjs`: V1 event multipliers are derived from the trusted callable server timestamp and a validated IANA timezone stored on the user's private profile. No client clock or client multiplier is accepted.
+- Preserved existing active event semantics: weekend XP x2, Night Owl XP x2, Monday Motivation XP x1.5 and Happy Hour coins x1.5. Overlapping XP boosts use the strongest multiplier, not a product. Holiday events remain inactive because their source definitions are inactive.
+- Integrated the resolver into the atomic Classic reward claim. The receipt records the effective multipliers and event IDs so a claim can be audited and retries return the exact original receipt.
+- New profiles store the browser-detected IANA timezone; the trusted profile callable validates the preference. The public profile projection does not expose the timezone.
+- Legacy profiles without `timeZone` deliberately use UTC. This is a compatibility limitation, not an approved Production cutover: existing users need an explicit timezone preference/backfill path before enabling event-based trusted rewards for them.
+- Added deterministic tests for IANA validation, UTC fallback, Berlin local event hours, daylight-saving handling, overlapping boosts, inactive holidays, profile persistence and claim transaction integration.
+- Production callables remain emulator-only. No deployed Firebase settings, Rules, live user documents, reward balances or feature flags were changed.
