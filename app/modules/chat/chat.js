@@ -22,6 +22,7 @@ let previewChatId = null;
 let previewHistoryCursor = null;
 let previewHasMore = false;
 let previewMessages = [];
+let previewLastMarkedReadId = null;
 let previewRefreshTimer = null;
 let previewLoadingToken = null;
 let conversationToken = 0;
@@ -178,7 +179,7 @@ window.openChat = async (friendId, friendName) => {
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
     if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
     const token = ++conversationToken;
-    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
+    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = []; previewLastMarkedReadId = null;
     currentChatId = [user.uid, friendId].sort().join('_');
     chatFriend = { id: friendId, name: friendName };
     document.getElementById('chat-empty').style.display = 'none';
@@ -200,7 +201,7 @@ window.openChat = async (friendId, friendName) => {
 window.closeChatWindow = () => {
     conversationToken++;
     if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
-    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
+    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = []; previewLastMarkedReadId = null;
     document.getElementById('chat-empty').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
@@ -265,21 +266,11 @@ async function loadPreviewMessages({ older = false } = {}) {
         else if (wasNearBottom || previousHeight === 0) container.scrollTop = container.scrollHeight;
         else container.scrollTop = previousTop;
         const readTarget = latestIncomingMessageId(page.messages, auth.currentUser?.uid);
-        if (readTarget) {
+        if (readTarget && readTarget !== previewLastMarkedReadId) {
             await chatPreviewTransport.markRead({ chatId, upToMessageId: readTarget });
             if (token === conversationToken && chatId === previewChatId) {
-                const latest = await chatPreviewTransport.readHistory({ chatId, pageSize: 30 });
-                const normalized = normalizeChatHistoryPage(latest, chatId);
-                previewMessages = mergeChatHistoryMessages([], normalized.messages);
-                previewHistoryCursor = normalized.nextCursor; previewHasMore = Boolean(normalized.nextCursor);
-                container.innerHTML = '';
-                if (previewHasMore) {
-                    const button = document.createElement('button'); button.type = 'button';
-                    button.className = 'chat-load-older'; button.textContent = 'Загрузить предыдущие сообщения';
-                    button.addEventListener('click', () => loadPreviewMessages({ older: true })); container.appendChild(button);
-                }
-                previewMessages.forEach(message => renderMessage(message, container));
-                container.scrollTop = container.scrollHeight;
+                previewLastMarkedReadId = readTarget;
+                await refreshUnreadBadges(chatFriendsCache, chatLifecycle);
             }
         }
         if (token === conversationToken) await refreshUnreadBadges(chatFriendsCache, chatLifecycle);
@@ -401,7 +392,7 @@ export function cleanupChatListeners() {
     chatLifecycle++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
     if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
-    conversationToken++; previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
+    conversationToken++; previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = []; previewLastMarkedReadId = null;
     onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
     onlineUnsubscribes = [];
     currentChatId = null;
