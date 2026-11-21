@@ -109,6 +109,7 @@ jobs:
           node --check app/modules/quiz/daily-challenge-client.js
           node --check app/modules/quiz/firebase-daily-challenge-invoker.js
           node --check app/modules/quiz/firebase-daily-challenge-preview.js
+          node --check app/modules/quiz/daily-challenge-preview-screen.js
       - name: Test daily result summaries
         run: node --experimental-default-type=module --test tests/daily-results.test.mjs
       - name: Test daily challenge mode
