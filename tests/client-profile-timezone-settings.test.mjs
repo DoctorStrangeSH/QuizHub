@@ -6,7 +6,7 @@ import {
     renderProfileTimeZoneSettings,
     getSupportedTimeZones
 } from '../app/modules/profile/profile-timezone-settings.js';
-import { createLocalFirebaseProfileTimeZoneInvoker } from '../app/modules/profile/firebase-profile-timezone-invoker.js';
+import { createFirebaseProfileTimeZoneInvoker } from '../app/modules/profile/firebase-profile-timezone-invoker.js';
 
 function setup({
     hostname = 'localhost',
