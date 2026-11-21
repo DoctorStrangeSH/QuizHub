@@ -35,6 +35,8 @@ import { createFirestoreChatSendCallable } from '../server/chat-send-callable-ad
 import { createFirestoreChatHistoryCallable } from '../server/chat-history-callable-adapter.mjs';
 import { createFirestoreChatMessageMutationCallable } from '../server/chat-message-mutation-callable-adapter.mjs';
 import { createFirestoreChatReactionCallable } from '../server/chat-reaction-callable-adapter.mjs';
+import { createFirestoreChatReadReceiptCallable } from '../server/chat-read-receipt-callable-adapter.mjs';
+import { createFirestoreChatUnreadCountCallable } from '../server/chat-unread-count-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -302,4 +304,40 @@ export const chatReactionPreviewCallable = onCall({
         throw new HttpsError('failed-precondition', 'CHAT_REACTION_PREVIEW_DISABLED');
     }
     return chatReactionPreview(request);
+});
+
+
+// CHAT-05 read receipt preview. A participant can advance only their own
+// receipt cursor to an incoming message in this server-owned conversation.
+const chatReadReceiptPreview = createFirestoreChatReadReceiptCallable({ db: getFirestore(), HttpsError });
+export const chatReadReceiptPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_READ_RECEIPT_PREVIEW_DISABLED');
+    }
+    return chatReadReceiptPreview(request);
+});
+
+
+// CHAT-05 unread count preview. Counts incoming, non-deleted messages after
+// the authenticated participant's own read cursor using Firestore aggregation.
+const chatUnreadCountPreview = createFirestoreChatUnreadCountCallable({ db: getFirestore(), HttpsError });
+export const chatUnreadCountPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_UNREAD_COUNT_PREVIEW_DISABLED');
+    }
+    return chatUnreadCountPreview(request);
 });
