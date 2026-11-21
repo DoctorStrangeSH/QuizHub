@@ -852,3 +852,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added service/callable tests and a three-account emulator acceptance test covering both participants, stranger/forged identity denial, toggle behavior, deleted-message denial and reaction projection in history.
 - Added the new callable to the fail-closed source guard and both CI workflows. No production Rules, Functions deployment, browser UI or live Firestore data is changed.
 - PR #71 is opened for CHAT-04; merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
+
+## 64. CHAT-04 reactions merged; CHAT-05 read receipts opened (2026-11-21)
+
+- PR #71 merged into `main` as squash commit `37d8086da69328223e2974c1c89121607465c05c`. Question Quality, Firebase Emulator Integration and Visual Preview passed.
+- CHAT-05 adds a trusted transactional read-receipt service. Authenticated participant identity is derived from Firebase Auth; client-supplied actor IDs and extra payload fields are rejected.
+- A participant can advance only their own read cursor to a valid, non-deleted incoming message in the conversation. Outgoing messages, deleted messages, strangers and malformed targets are rejected.
+- Receipt cursors are monotonic: a delayed/older request cannot move the cursor backwards. Repeated requests are idempotent.
+- The callable is restricted to the `demo-quizhub` project with Auth, Firestore and Functions emulators active. Added unit, callable-boundary and three-account emulator acceptance tests; updated fail-closed guard and both CI workflows.
+- This backend milestone stores per-participant `readReceipts` on the server-owned chat document. Unread counters, message-level read indicators, browser integration and production migration are not yet implemented; do not describe CHAT-05 as complete until those pieces are accepted.
+- No production Rules, Functions deployment, browser UI or live Firestore data is changed.
+- PR #72 is opened for CHAT-05 backend read-receipt cursor. Merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
