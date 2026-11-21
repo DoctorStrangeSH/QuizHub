@@ -973,3 +973,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Question Quality run #1262 is queued at the time of this status update. Firebase Emulator Integration and Visual Preview are not yet reported for this new head.
 - PR #81 is not merged. Wait for all required checks and verify the mergeability state before merge.
 - No production Firebase Rules, Functions, public-profile read gate, or live data changed.
+
+
+## 77. Дополнительный privacy finding: профиль собеседника в чате (2026-11-21)
+
+- Повторный аудит `app/modules/chat/chat.js` выявил, что `loadChatFriends()` напрямую читает `users/{friendId}` и передаёт полный `friendDoc.data()` в `chatFriendsCache` и рендер списка чатов.
+- Этот путь обходит централизованный `profileCollectionForViewer()` и публичную проекцию. В результате браузер получает приватные поля друзей, хотя в интерфейсе чата нужен только минимальный публичный набор (как минимум UID и nickname).
+- Текущий PR #82 закрывает аналогичные пути в разделе «Друзья», но не меняет чат.
+- Следующий отдельный privacy patch после проверки/объединения PR #82: импортировать `profileCollectionForViewer` и `projectDirectoryProfile` в chat module, читать профиль друга через viewer-aware source и передавать в UI только allowlist-проекцию. Собственный документ пользователя остаётся приватным и может читаться владельцем.
+- Это клиентская минимизация. Network-level privacy появится только после завершения миграции и включения проверенных Firestore Rules/publicProfiles cutover.
+- Никакие production Rules, Functions, данные или флаги доступа не менялись.
