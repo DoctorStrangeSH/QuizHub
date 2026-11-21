@@ -1066,3 +1066,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Important: this closes the UTC availability correctness issue, **not** the Production mutation migration. The normal Production `claimDailyReward()` path still directly updates `users/{uid}`; `dailyLoginRewardPreview` remains guarded to the isolated emulator.
 - Next: prepare a complete daily-login Production cutover plan only after exact deployed Rules/index exports, Auth configuration, live inventory and a verified recoverable Production backup are supplied. Do not remove callable guards or change Rules/client gates yet.
 - No Production Firebase data, Rules, Functions, indexes, Auth settings or feature flags were changed.
+
+
+## 86. Quiz Rewards trusted-cutover audit (2026-11-21)
+
+- Added `docs/QUIZ_REWARDS_CUTOVER_V1.md` after tracing the default browser reward path and the isolated trusted Classic flow.
+- Confirmed the default `BaseMode.persistResults()` still calculates rewards from browser score and directly updates `users/{uid}`; Classic also submits browser-authored win increments and separately updates the profile level.
+- Confirmed the trusted Classic preview calculates score from server-owned question keys and answer logs, then atomically writes the claim receipt, XP/coins, weekly XP, quiz totals, wins, stats and achievement progress. Its callable remains restricted to isolated `demo-quizhub` emulators.
+- Identified two progression gaps before cutover: trusted claims currently award base rewards only while legacy event multipliers are evaluated in player-local time; and `achievementFacts` has a separate server-owned level ledger that cannot safely overwrite legacy `users.level` until an audited baseline is migrated.
+- Classic browser acceptance exists in `tests/firebase-classic-server-browser.test.mjs` and verifies a ten-question authenticated emulator run, one reward claim and an idempotent retry. It does not prove Production cutover or other modes.
+- Next: define authoritative event-time/timezone semantics and a lossless legacy progression baseline before changing trusted reward writes. Keep all Production callables guarded and the existing client path unchanged.
+- No Production Firebase data, Rules, Functions, indexes, Auth settings or feature flags were changed.
