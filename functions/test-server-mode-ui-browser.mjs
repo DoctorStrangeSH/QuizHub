@@ -65,14 +65,12 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
             } else if (mode === 'survival') {
                 await page.locator('.survival-lives').waitFor();
                 assert.ok((await page.locator('.survival-lives').innerText()).includes('3/3'));
-            } else {
-                try {
-                    await page.locator('[data-time-trial-timer]').waitFor({ timeout: 5000 });
-                } catch {
-                    throw new Error('Time Trial preview did not render its timer. Current preview: ' +
-                        (await root.innerText()).slice(0, 1000));
-                }
+            } else if (mode === 'time') {
+                await page.locator('[data-time-trial-timer]').waitFor();
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
+            } else {
+                await page.locator('.mode-badge').waitFor();
+                assert.ok((await page.locator('.mode-badge').innerText()).includes('Server mode preview'));
             }
 
             const initialProgressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
