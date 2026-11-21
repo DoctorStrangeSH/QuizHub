@@ -54,12 +54,20 @@ test('Daily Challenge UI uses server questions, verified answer feedback and res
 
         await page.reload();
         await page.evaluate(async () => {
-            const [{ auth }, { setState }, { renderQuiz, attachQuizListeners }] = await Promise.all([
+            const [{ auth }, { onAuthStateChanged }, { setState }, { renderQuiz, attachQuizListeners }] = await Promise.all([
                 import('./app/firebase-config.js'),
+                import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
                 import('./app/store/state.js'),
                 import('./app/modules/quiz/quiz.js')
             ]);
-            if (!auth.currentUser) throw new Error('AUTH_SESSION_NOT_RESTORED');
+            const restoredUser = await new Promise(resolve => {
+                let unsubscribe = () => {};
+                unsubscribe = onAuthStateChanged(auth, user => {
+                    unsubscribe();
+                    resolve(user);
+                });
+            });
+            if (!restoredUser) throw new Error('AUTH_SESSION_NOT_RESTORED');
             setState('gameSettings', { mode: 'daily', category: 'all', difficulty: 'easy' });
             document.body.innerHTML = await renderQuiz();
             attachQuizListeners();
