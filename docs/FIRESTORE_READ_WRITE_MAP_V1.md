@@ -79,3 +79,10 @@ The migration manifest now includes the previously omitted `dailyLoginClaims` an
 ## 6. Safety
 
 This branch changes only the repository-derived migration manifest and its test. It does not read or write Production Firebase, deploy Rules/Functions, modify Auth settings, migrate data, or change feature gates.
+
+
+## Addendum — daily login UTC acceptance (2026-11-21)
+
+- The browser's daily reward availability check now compares UTC date keys, matching the server claim receipt date. Timestamp normalization supports Firestore Timestamp, Date and numeric legacy values and fails closed for invalid/out-of-range values.
+- Authenticated browser acceptance covers the server callable, same-day duplicate claim, and local-calendar edge cases at UTC-10 and UTC+14 using isolated emulators.
+- This is an availability correctness fix only. The default Production reward claim still performs a direct client update of `users/{uid}`; trusted callable export remains emulator-guarded. The economy migration blocker remains open.
