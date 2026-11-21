@@ -13,7 +13,7 @@ test('authenticated browser claims daily login reward through trusted callable e
 
     const browser = await chromium.launch({ headless: true });
     try {
-        const context = await browser.newContext({ serviceWorkers: 'block' });
+        const context = await browser.newContext({ serviceWorkers: 'block', timezoneId: 'Pacific/Kiritimati' });
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
@@ -36,7 +36,7 @@ test('authenticated browser claims daily login reward through trusted callable e
         await page.locator('.play-btn').waitFor({ timeout: 30000 });
 
         const outcome = await page.evaluate(async () => {
-            const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
+            const [{ auth, db, doc, getDoc }, { claimDailyReward, checkDailyReward }] = await Promise.all([
                 import('./app/firebase-config.js'),
                 import('./app/modules/daily/daily.js')
             ]);
@@ -47,6 +47,7 @@ test('authenticated browser claims daily login reward through trusted callable e
 
             const first = await claimDailyReward();
             const afterFirst = (await getDoc(ref)).data();
+            const availabilityAfterFirst = await checkDailyReward();
             const retry = await claimDailyReward();
             const afterRetry = (await getDoc(ref)).data();
             return {
@@ -54,6 +55,7 @@ test('authenticated browser claims daily login reward through trusted callable e
                 before,
                 first,
                 afterFirst,
+                availabilityAfterFirst,
                 retry,
                 afterRetry
             };
@@ -64,6 +66,8 @@ test('authenticated browser claims daily login reward through trusted callable e
         assert.equal(outcome.first?.balance, (outcome.before.coins || 0) + 10);
         assert.equal(outcome.afterFirst.coins, outcome.first.balance);
         assert.equal(outcome.afterFirst.dailyStreak, 1);
+        assert.equal(outcome.availabilityAfterFirst.canClaim, false,
+            'UTC same-day claim must remain unavailable even when browser timezone is UTC+14');
         assert.ok(outcome.afterFirst.lastDailyClaim, 'Server claim timestamp must be persisted');
         assert.equal(outcome.retry, false, 'Same-day retry must not produce another reward');
         assert.equal(outcome.afterRetry.coins, outcome.afterFirst.coins);
