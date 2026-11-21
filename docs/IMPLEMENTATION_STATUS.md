@@ -863,3 +863,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - This backend milestone stores per-participant `readReceipts` on the server-owned chat document. Unread counters, message-level read indicators, browser integration and production migration are not yet implemented; do not describe CHAT-05 as complete until those pieces are accepted.
 - No production Rules, Functions deployment, browser UI or live Firestore data is changed.
 - PR #72 is opened for CHAT-05 backend read-receipt cursor. Merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
+
+### CHAT-05 extension — unread counters
+
+- Added an authenticated per-conversation unread-count callable using Firestore count aggregation. It counts only incoming, non-deleted messages after the requesting participant's own read cursor.
+- Cursor is read from the server-owned conversation document; caller cannot choose another user's cursor or submit an arbitrary timestamp.
+- Added strict callable validation, fail-closed emulator guard, unit tests and emulator acceptance for 2 → 1 → 0 unread transitions, stranger denial and read-cursor synchronization.
+- Added the required Firestore composite index (`recipientId`, `deleted`, `createdAt`) and configured it in `firebase.json`.
+- Global inbox badge aggregation and browser UI binding remain outstanding; this PR currently delivers per-conversation unread counts only.
