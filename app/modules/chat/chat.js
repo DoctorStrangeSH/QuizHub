@@ -296,19 +296,28 @@ function renderMessage(msg, container) {
     const readStateHTML = renderMessageReadState({ isMine, readByRecipient: msg.readByRecipient });
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
-        <div class="message-bubble" ${previewChatId ? '' : `oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})"`}>
+        <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
             ${replyHTML}
             <div class="message-text">${msg.edited ? '<span class="edited-label">(изм.)</span> ' : ''}${escapeHtml(displayText)}</div>
             <div class="message-time">${timeStr}${readStateHTML}</div>
             ${reactionsHTML}
         </div>
-        ${previewChatId ? '' : `<div class="message-actions">
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
-            <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
-        </div>`}
+        <div class="message-actions">
+            ${previewChatId ? `
+                <button class="reaction-btn" aria-label="Нравится" onclick="window.addReaction('${msg.id}', 'like')">👍</button>
+                <button class="reaction-btn" aria-label="Сердце" onclick="window.addReaction('${msg.id}', 'love')">❤️</button>
+                <button class="reaction-btn" aria-label="Смех" onclick="window.addReaction('${msg.id}', 'laugh')">😂</button>
+                <button class="reaction-btn" aria-label="Удивление" onclick="window.addReaction('${msg.id}', 'wow')">😮</button>
+                <button class="reaction-btn" aria-label="Грусть" onclick="window.addReaction('${msg.id}', 'sad')">😢</button>
+                <button class="reaction-btn" aria-label="Огонь" onclick="window.addReaction('${msg.id}', 'fire')">🔥</button>
+            ` : `
+                <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
+                <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
+                <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
+                <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
+                <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
+            `}
+        </div>
     `;
     container.appendChild(msgEl);
 }
@@ -353,11 +362,21 @@ window.editMessage = () => {
     if (!selectedMessageId || !currentChatId) return;
     const newText = prompt('Редактировать сообщение:');
     if (!newText || !newText.trim()) return;
+    if (previewChatId && chatPreviewTransport) {
+        chatPreviewTransport.mutateMessage({ operation: 'edit', chatId: previewChatId, messageId: selectedMessageId, text: newText.trim() })
+            .then(() => loadPreviewMessages()).catch(error => console.error('Не удалось изменить сообщение:', error));
+        return;
+    }
     updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: newText.trim(), edited: true });
 };
 window.deleteMessage = () => {
     if (!selectedMessageId || !currentChatId) return;
     if (!confirm('Удалить сообщение?')) return;
+    if (previewChatId && chatPreviewTransport) {
+        chatPreviewTransport.mutateMessage({ operation: 'delete', chatId: previewChatId, messageId: selectedMessageId })
+            .then(() => loadPreviewMessages()).catch(error => console.error('Не удалось удалить сообщение:', error));
+        return;
+    }
     updateDoc(doc(db, 'chats', currentChatId, 'messages', selectedMessageId), { text: '🗑️ Сообщение удалено', deleted: true });
 };
 window.replyMessage = () => {
@@ -378,6 +397,13 @@ window.addReaction = async (messageId, reaction) => {
     const user = auth.currentUser;
     if (!user || !currentChatId) return;
     try {
+        if (previewChatId && chatPreviewTransport) {
+            const reactionType = ({ '👍': 'like', '❤️': 'love', '😂': 'laugh', '😮': 'wow', '😢': 'sad', '🔥': 'fire' })[reaction];
+            if (!reactionType && !['like', 'love', 'laugh', 'wow', 'sad', 'fire'].includes(reaction)) return;
+            await chatPreviewTransport.toggleReaction({ chatId: previewChatId, messageId, reactionType: reactionType || reaction });
+            await loadPreviewMessages();
+            return;
+        }
         const msgRef = doc(db, 'chats', currentChatId, 'messages', messageId);
         const msgSnap = await getDoc(msgRef);
         const reactions = msgSnap.data()?.reactions || {};
