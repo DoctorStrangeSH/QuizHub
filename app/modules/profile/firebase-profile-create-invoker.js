@@ -2,6 +2,16 @@
  * Emulator-only transport for trusted profile creation.
  * The callable derives UID and email from verified Firebase Auth.
  */
+function validTimeZone(value) {
+    if (typeof value !== 'string' || value.length < 1 || value.length > 64) return false;
+    try {
+        new Intl.DateTimeFormat('en-US', { timeZone: value }).format(0);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export function createFirebaseProfileCreateInvoker({
     auth,
     getFunctions,
@@ -34,11 +44,12 @@ export function createFirebaseProfileCreateInvoker({
     connectFunctionsEmulator(functions, emulatorHost, emulatorPort);
     const callable = httpsCallable(functions, 'profileCreatePreview');
 
-    return async function createProfile(nickname) {
+    return async function createProfile(nickname, timeZone = 'UTC') {
         if (typeof nickname !== 'string' || !/^[A-Za-z0-9_]{3,20}$/.test(nickname)) {
             throw new Error('INVALID_NICKNAME');
         }
-        const response = await callable({ nickname });
+        if (!validTimeZone(timeZone)) throw new Error('INVALID_TIME_ZONE');
+        const response = await callable({ nickname, timeZone });
         const result = response?.data;
         if (!result || result.status !== 'created' ||
             result.uid !== auth.currentUser.uid || result.nickname !== nickname) {
