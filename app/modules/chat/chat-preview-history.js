@@ -34,7 +34,10 @@ export function normalizeChatHistoryPage(response, expectedChatId) {
             typeof message.senderId !== 'string' || typeof message.recipientId !== 'string' ||
             typeof message.deleted !== 'boolean' || typeof message.edited !== 'boolean' ||
             (!message.deleted && typeof message.text !== 'string') ||
-            (message.readByRecipient !== undefined && typeof message.readByRecipient !== 'boolean')) {
+            (message.readByRecipient !== undefined && typeof message.readByRecipient !== 'boolean') ||
+            (message.replyTo !== undefined && (!message.replyTo || typeof message.replyTo !== 'object' ||
+                typeof message.replyTo.id !== 'string' || typeof message.replyTo.senderId !== 'string' ||
+                typeof message.replyTo.text !== 'string' || message.replyTo.text.length > 160))) {
             throw new Error('INVALID_CHAT_HISTORY_MESSAGE');
         }
         seen.add(message.id);
