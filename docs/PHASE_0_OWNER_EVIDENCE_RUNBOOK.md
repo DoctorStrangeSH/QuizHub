@@ -157,3 +157,6 @@ Do not mark a gate complete merely because the collector or emulator tests pass.
 - No client migration or public-profile cutover.
 - No production writes, migrations, deletions or cleanup.
 - No collection of document IDs, user values, message contents or credentials in the public repository.
+## Follow-up note — callable source guard
+
+As of 2026-11-21, the repository source wraps `dailyChallenge` in the same demo-project + Auth/Firestore/Functions emulator guard as the other preview callables. This is a source-level safeguard only. It does not revoke, update or prove the absence of an already deployed production Function. During the deployed Functions inventory, explicitly record whether `dailyChallenge` exists, its region, runtime/version and last update time. Do not assume a source change has changed deployed behavior.
