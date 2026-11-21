@@ -36,7 +36,7 @@ export function getSupportedTimeZones() {
 }
 
 export function isProfileTimeZonePreviewEnabled(location, auth) {
-    if (!location || !auth?.currentUser || auth.currentUser.isAnonymous) return false;
+    if (!location || typeof auth?.currentUser?.uid !== 'string' || !auth.currentUser.uid || auth.currentUser.isAnonymous) return false;
     const params = new URLSearchParams(location.search || '');
     return ['localhost', '127.0.0.1'].includes(location.hostname) &&
         params.get('firebaseEmulator') === '1' &&
