@@ -828,3 +828,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit/callable tests plus a three-account emulator acceptance test for participant-only reads, cursor pagination, forged actor rejection and anonymous access denial.
 - PR #69 is opened for CHAT-02; acceptance requires Question Quality, Firebase Emulator Integration and Visual Preview.
 - Production chat reads remain on the existing legacy path until the broader Rules and data migration is completed. No production deployment or live data changes.
+
+
+## 62. CHAT-02 history reads merged; CHAT-03 edit/delete opened (2026-11-21)
+
+- PR #69 merged into `main` as squash commit `c4e5aeeab6b9fa24ee8799ac303d912c51afb061`. Question Quality, Firebase Emulator Integration and Visual Preview all passed after correcting a test-fixture ordering issue.
+- CHAT-02 now provides authenticated, participant-only, newest-first history pagination with a maximum page size of 50 and explicit message-field projection.
+- CHAT-03 adds transactional message edit/delete. Only the original sender may mutate a message; recipients and non-participants are denied. Editing validates 1–2000 characters, sets `edited` and `editedAt`, and updates the conversation preview when the edited message is the latest.
+- Deletion is a soft-delete state for history/UI compatibility but clears the stored message body (`text: null`), records `deletedAt`, and updates the latest preview to a deleted-message marker. Repeated deletion is idempotent; deleted messages cannot be edited/restored through this endpoint.
+- Added strict Auth-derived callable validation, safe error mapping, a demo-project + Auth/Firestore/Functions emulator guard, unit tests, and a three-account emulator acceptance test covering author, recipient and stranger access.
+- History serialization was adjusted to safely project both legacy deleted messages and newly body-erased deleted messages.
+- PR #70 is opened for CHAT-03. Merge only after Question Quality, Firebase Emulator Integration and Visual Preview pass.
+- No browser chat mutation UI, production Rules, Functions deployment or live Firestore data is changed. Production chat still uses legacy paths pending the broader security and migration release gates.
