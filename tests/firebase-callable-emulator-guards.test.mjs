@@ -12,7 +12,8 @@ const EXPECTED_PREVIEW_CALLABLES = [
     'achievementUnlockPreview',
     'friendRelationshipPreview',
     'chatSendPreviewCallable',
-    'chatHistoryPreviewCallable'
+    'chatHistoryPreviewCallable',
+    'chatMessageMutationPreviewCallable'
 ];
 
 test('every exported callable preview fails closed outside the isolated Firebase emulators', async () => {
