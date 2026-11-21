@@ -65,7 +65,7 @@ export function renderProfileTimeZoneSettings({
         detected: 'Предложено браузером',
         save: 'Сохранить часовой пояс',
         disabled: 'Изменение появится после безопасного серверного выпуска. Сейчас доступен только локальный тест.',
-        ready: 'Изменения пока не сохранены.',
+        ready: 'Выберите часовой пояс и сохраните настройку.',
         confirm: 'Сохранить этот часовой пояс? Он будет использоваться для расчёта времени игровых событий.',
         cancel: 'Изменение отменено.'
     } : {
@@ -76,7 +76,7 @@ export function renderProfileTimeZoneSettings({
         detected: 'Suggested by your browser',
         save: 'Save time zone',
         disabled: 'Editing will be available after the secure server release. Local preview only for now.',
-        ready: 'Your change has not been saved yet.',
+        ready: 'Choose a time zone and save to update your preference.',
         confirm: 'Save this time zone? It will be used to calculate game event times.',
         cancel: 'Change cancelled.'
     };
