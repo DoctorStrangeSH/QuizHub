@@ -329,7 +329,7 @@ window.sendMessage = async (text, replyTo = null) => {
     if (!user) return;
     try {
         if (previewChatId && chatPreviewTransport) {
-            await chatPreviewTransport.sendMessage({ targetUid: chatFriend.id, messageId: createChatMessageId(), text: text.trim() });
+            await chatPreviewTransport.sendMessage({ targetUid: chatFriend.id, messageId: createChatMessageId(), text: text.trim(), ...(replyTo?.id ? { replyToMessageId: replyTo.id } : {}) });
             document.getElementById('chat-input').value = '';
             window.cancelReply();
             await loadPreviewMessages();
