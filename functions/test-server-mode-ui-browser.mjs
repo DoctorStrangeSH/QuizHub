@@ -23,12 +23,13 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
     const sessionIds = [];
     try {
         const context = await browser.newContext({ serviceWorkers: 'block' });
-        const page = await context.newPage();
         const errors = [];
-        page.on('pageerror', error => errors.push(error.message));
-        await page.goto(url);
+        const uids = [];
 
         for (const mode of ['classic', 'duel', 'survival', 'time']) {
+            const page = await context.newPage();
+            page.on('pageerror', error => errors.push(error.message));
+            await page.goto(url);
             const identity = await page.evaluate(async modeName => {
                 const [{ auth }, { signInAnonymously }, { setState }, { renderQuiz, attachQuizListeners }] =
                     await Promise.all([
@@ -50,7 +51,7 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
                     sessionId: sessionStorage.getItem('quizhub:server-mode-session:' + modeName)
                 };
             }, mode);
-            uid = identity.uid;
+            uids.push(identity.uid);
             assert.ok(identity.sessionId, mode + ' session must be saved for resume');
             sessionIds.push(identity.sessionId);
 
@@ -87,6 +88,7 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
             const advancedCount = progressText.slice(progressText.lastIndexOf('/') + 1).trim();
             assert.ok(progressText.includes('1/'), mode + ' must advance exactly one server-accepted question');
             assert.equal(advancedCount, initialCount, mode + ' question count must remain stable');
+            await page.close();
         }
 
         assert.deepEqual(errors, [], 'No uncaught browser exceptions');
@@ -95,7 +97,7 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
         for (const sessionId of sessionIds) {
             await db.collection('quizSessions').doc(sessionId).delete().catch(() => {});
         }
-        if (uid) await adminAuth.deleteUser(uid).catch(() => {});
+        for (const uid of uids) await adminAuth.deleteUser(uid).catch(() => {});
         await browser.close();
         await db.terminate();
         await deleteApp(app);
