@@ -871,3 +871,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added strict callable validation, fail-closed emulator guard, unit tests and emulator acceptance for 2 → 1 → 0 unread transitions, stranger denial and read-cursor synchronization.
 - Added the required Firestore composite index (`recipientId`, `deleted`, `createdAt`) and configured it in `firebase.json`.
 - Global inbox badge aggregation and browser UI binding remain outstanding; this PR currently delivers per-conversation unread counts only.
+
+## 65. CHAT-05 read indicators opened (2026-11-21)
+
+- PR #72 merged into `main` as squash commit `52c97021d82373648f5c89765302e84787b0eefa`. Question Quality, Firebase Emulator Integration and Visual Preview all passed.
+- CHAT-05 backend now includes per-participant read cursors and per-conversation unread counts through authenticated, emulator-only callables. The unread count uses Firestore aggregation and the required composite index.
+- PR #73 adds a trusted history projection field `readByRecipient` for messages authored by the requesting participant. The projection validates the peer's stored read cursor against an actual message addressed to that peer and computes read state using timestamp plus message-ID tie-break.
+- Added service tests for read/unread projection and invalid cursor state, plus emulator acceptance verifying one read and one unread outgoing message.
+- Chat message renderer now supports the server-projected status with a single/double check indicator. The existing production chat data listener still reads the legacy underscore chat path; the new hashed server transport is not wired into production UI. Indicator is therefore only shown when a trusted history payload supplies the boolean field.
+- Global inbox badge, explicit opt-in browser transport and full chat UI migration remain outstanding. All callables remain guarded to the isolated demo project. No production Rules, Functions deployment or live data changes.
