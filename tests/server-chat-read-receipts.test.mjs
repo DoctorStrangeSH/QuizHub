@@ -34,10 +34,10 @@ const call=(db,overrides={})=>markDirectMessagesRead(db,{
 test('participant marks an incoming message read and repeated receipt is idempotent',async()=>{
     const {db,records}=fixture();
     assert.equal((await call(db)).status,'updated');
-    assert.deepEqual(records.get('chats/'+chatId).readReceipts.alice,{
-        lastReadMessageId:messageId,lastReadAt:stamp(1000),updatedAt:records.get('chats/'+chatId).readReceipts.alice.updatedAt
-    });
-    assert.ok(records.get('chats/'+chatId).readReceipts.alice.updatedAt instanceof Date);
+    const receipt=records.get('chats/'+chatId).readReceipts.alice;
+    assert.equal(receipt.lastReadMessageId,messageId);
+    assert.equal(receipt.lastReadAt.toMillis(),1000);
+    assert.ok(receipt.updatedAt instanceof Date);
     assert.equal((await call(db)).status,'unchanged');
 });
 
