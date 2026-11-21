@@ -66,7 +66,12 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
                 await page.locator('.survival-lives').waitFor();
                 assert.ok((await page.locator('.survival-lives').innerText()).includes('3/3'));
             } else {
-                await page.locator('[data-time-trial-timer]').waitFor();
+                try {
+                    await page.locator('[data-time-trial-timer]').waitFor({ timeout: 5000 });
+                } catch {
+                    throw new Error('Time Trial preview did not render its timer. Current preview: ' +
+                        (await root.innerText()).slice(0, 1000));
+                }
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
             }
 
