@@ -1,4 +1,5 @@
 import { getState } from '../../store/state.js';
+import { canClaimOnUtcDate } from './daily-login-date.js';
 import { auth, db, doc, getDoc, updateDoc, increment, serverTimestamp } from '../../firebase-config.js';
 
 const DAILY_REWARDS = [
@@ -20,20 +21,7 @@ export async function checkDailyReward() {
         if (!userDoc.exists()) return { canClaim: false };
         
         const data = userDoc.data();
-        const lastClaim = data.lastDailyClaim?.toDate?.() || null;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        let canClaim = true;
-        
-        if (lastClaim) {
-            const lastDate = new Date(lastClaim);
-            lastDate.setHours(0, 0, 0, 0);
-            
-            if (lastDate.getTime() === today.getTime()) {
-                canClaim = false;
-            }
-        }
+        const canClaim = canClaimOnUtcDate(data.lastDailyClaim, new Date());
         
         const streak = data.dailyStreak || 0;
         
