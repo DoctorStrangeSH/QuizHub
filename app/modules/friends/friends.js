@@ -1,6 +1,42 @@
 import { getState } from '../../store/state.js';
 import { directoryCollection, profileCollectionForViewer } from '../profile/profile-read-source.js';
-import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from '../../firebase-config.js';
+import { auth, db, doc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove, getFunctions, connectFunctionsEmulator, httpsCallable } from '../../firebase-config.js';
+import { createFirebaseFriendInvoker } from './firebase-friend-invoker.js';
+import { createFriendshipClient } from './friendship-client.js';
+
+let friendshipPreviewClient = null;
+
+function setupFriendshipPreview() {
+    const params = new URLSearchParams(location.search);
+    const requested = ['localhost', '127.0.0.1'].includes(location.hostname) &&
+        params.get('firebaseEmulator') === '1' && params.get('friendshipPreview') === '1';
+    if (!requested) { friendshipPreviewClient = null; return; }
+    const invoke = createFirebaseFriendInvoker({ auth, getFunctions, connectFunctionsEmulator, httpsCallable, location });
+    friendshipPreviewClient = createFriendshipClient({ invoke });
+}
+
+async function performFriendship(operation, targetUid) {
+    if (friendshipPreviewClient) return friendshipPreviewClient.perform(operation, targetUid);
+    const user = auth.currentUser;
+    if (!user) throw new Error('AUTH_REQUIRED');
+    if (operation === 'send') {
+        await updateDoc(doc(db, 'users', targetUid), { friendRequests: arrayUnion(user.uid) });
+        await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayUnion(targetUid) });
+    } else if (operation === 'accept') {
+        await updateDoc(doc(db, 'users', user.uid), { friends: arrayUnion(targetUid), friendRequests: arrayRemove(targetUid) });
+        await updateDoc(doc(db, 'users', targetUid), { friends: arrayUnion(user.uid), sentRequests: arrayRemove(user.uid) });
+    } else if (operation === 'decline') {
+        await updateDoc(doc(db, 'users', user.uid), { friendRequests: arrayRemove(targetUid) });
+        await updateDoc(doc(db, 'users', targetUid), { sentRequests: arrayRemove(user.uid) });
+    } else if (operation === 'cancel') {
+        await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayRemove(targetUid) });
+        await updateDoc(doc(db, 'users', targetUid), { friendRequests: arrayRemove(user.uid) });
+    } else if (operation === 'remove') {
+        await updateDoc(doc(db, 'users', user.uid), { friends: arrayRemove(targetUid) });
+        await updateDoc(doc(db, 'users', targetUid), { friends: arrayRemove(user.uid) });
+    } else throw new Error('INVALID_FRIENDSHIP_OPERATION');
+    return { status: 'updated' };
+}
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
@@ -62,6 +98,7 @@ export function renderFriends() {
 export function attachFriendsListeners() {
     const user = auth.currentUser;
     if (!user) return;
+    setupFriendshipPreview();
     loadFriendsList(user);
     setupSearch(user);
     setupTabs(user);
@@ -129,7 +166,7 @@ async function loadSentRequests(user) {
         tabContent.innerHTML = sentData.map(s => `
             <div class="friend-item glass-card">
                 <div class="d-flex align-items-center gap-3"><div class="avatar-circle"><i class="bi bi-person-fill" aria-hidden="true"></i></div><div><span class="fw-semibold">${escapeHtml(s.nickname || 'Игрок')}</span><span class="text-secondary small ms-2">Ур. ${Number.isFinite(Number(s.level)) ? Math.max(1, Math.trunc(Number(s.level))) : 1}</span></div></div>
-                <span class="text-secondary small">Ожидает</span>
+                <div class="d-flex align-items-center gap-2"><span class="text-secondary small">Ожидает</span><button class="btn-decline" onclick="window.cancelFriendRequest('${s.id}')">Отменить</button></div>
             </div>
         `).join('');
     } catch (error) { console.error('Ошибка загрузки отправленных:', error); }
@@ -177,38 +214,40 @@ function setupTabs(user) {
 }
 
 window.sendFriendRequest = async (friendId) => {
-    const user = auth.currentUser;
-    if (!user) return;
     try {
-        await updateDoc(doc(db, 'users', friendId), { friendRequests: arrayUnion(user.uid) });
-        await updateDoc(doc(db, 'users', user.uid), { sentRequests: arrayUnion(friendId) });
+        await performFriendship('send', friendId);
         alert('Заявка отправлена!');
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Не удалось отправить заявку: ' + error.message); }
 };
 window.acceptRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
-        await updateDoc(doc(db, 'users', user.uid), { friends: arrayUnion(friendId), friendRequests: arrayRemove(friendId) });
-        await updateDoc(doc(db, 'users', friendId), { friends: arrayUnion(user.uid), sentRequests: arrayRemove(user.uid) });
+        await performFriendship('accept', friendId);
         loadFriendRequests(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Не удалось принять заявку: ' + error.message); }
 };
 window.declineRequest = async (friendId) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
-        await updateDoc(doc(db, 'users', user.uid), { friendRequests: arrayRemove(friendId) });
-        await updateDoc(doc(db, 'users', friendId), { sentRequests: arrayRemove(user.uid) });
+        await performFriendship('decline', friendId);
         loadFriendRequests(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Не удалось отклонить заявку: ' + error.message); }
+};
+window.cancelFriendRequest = async (friendId) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        await performFriendship('cancel', friendId);
+        loadSentRequests(user);
+    } catch (error) { alert('Не удалось отменить заявку: ' + error.message); }
 };
 window.removeFriend = async (friendId) => {
     const user = auth.currentUser;
     if (!user || !confirm('Удалить из друзей?')) return;
     try {
-        await updateDoc(doc(db, 'users', user.uid), { friends: arrayRemove(friendId) });
-        await updateDoc(doc(db, 'users', friendId), { friends: arrayRemove(user.uid) });
+        await performFriendship('remove', friendId);
         loadFriendsList(user);
-    } catch (error) { alert('Ошибка: ' + error.message); }
+    } catch (error) { alert('Не удалось удалить друга: ' + error.message); }
 };
