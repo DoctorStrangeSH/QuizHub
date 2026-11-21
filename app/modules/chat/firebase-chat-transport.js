@@ -38,6 +38,8 @@ export function createFirebaseChatTransport({
     const history = httpsCallable(functions, 'chatHistoryPreviewCallable');
     const markRead = httpsCallable(functions, 'chatReadReceiptPreviewCallable');
     const unreadCount = httpsCallable(functions, 'chatUnreadCountPreviewCallable');
+    const mutateMessage = httpsCallable(functions, 'chatMessageMutationPreviewCallable');
+    const toggleReaction = httpsCallable(functions, 'chatReactionPreviewCallable');
 
     const invoke = async (callable, payload) => {
         if (!auth.currentUser || auth.currentUser.isAnonymous) {
@@ -87,6 +89,37 @@ export function createFirebaseChatTransport({
             return invoke(markRead, {
                 chatId: payload.chatId,
                 upToMessageId: payload.upToMessageId
+            });
+        },
+        async mutateMessage(payload) {
+            if (!isPlainRecord(payload) ||
+                Object.keys(payload).some(key => !['operation', 'chatId', 'messageId', 'text'].includes(key)) ||
+                !['edit', 'delete'].includes(payload.operation) ||
+                typeof payload.chatId !== 'string' || !CHAT_ID.test(payload.chatId) ||
+                typeof payload.messageId !== 'string' || !MESSAGE_ID.test(payload.messageId) ||
+                (payload.operation === 'edit' &&
+                    (typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 2000)) ||
+                (payload.operation === 'delete' && Object.hasOwn(payload, 'text'))) {
+                throw new Error('INVALID_CHAT_MESSAGE_MUTATION');
+            }
+            return invoke(mutateMessage, {
+                operation: payload.operation,
+                chatId: payload.chatId,
+                messageId: payload.messageId,
+                ...(payload.operation === 'edit' ? { text: payload.text } : {})
+            });
+        },
+        async toggleReaction(payload) {
+            assertExactKeys(payload, ['chatId', 'messageId', 'reactionType'], 'INVALID_CHAT_REACTION');
+            if (typeof payload.chatId !== 'string' || !CHAT_ID.test(payload.chatId) ||
+                typeof payload.messageId !== 'string' || !MESSAGE_ID.test(payload.messageId) ||
+                !['like', 'love', 'laugh', 'wow', 'sad', 'fire'].includes(payload.reactionType)) {
+                throw new Error('INVALID_CHAT_REACTION');
+            }
+            return invoke(toggleReaction, {
+                chatId: payload.chatId,
+                messageId: payload.messageId,
+                reactionType: payload.reactionType
             });
         },
         async getUnreadCount(payload) {
