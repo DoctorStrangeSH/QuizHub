@@ -32,7 +32,7 @@ function projectReactions(value, participants, actorUid, deleted) {
     return projected;
 }
 
-function serializeMessage(snapshot, participants, actorUid) {
+function serializeMessage(snapshot, participants, actorUid, peerReadCursor = null) {
     const value = snapshot.data();
     if (!value || !participants.includes(value.senderId) ||
         !participants.includes(value.recipientId) || value.senderId === value.recipientId ||
@@ -48,7 +48,14 @@ function serializeMessage(snapshot, participants, actorUid) {
         createdAt: value.createdAt,
         edited: value.edited,
         deleted: value.deleted,
-        reactions: projectReactions(value.reactions, participants, actorUid, value.deleted)
+        reactions: projectReactions(value.reactions, participants, actorUid, value.deleted),
+        ...(value.senderId === actorUid ? {
+            readByRecipient: Boolean(peerReadCursor && value.createdAt &&
+                typeof value.createdAt.toMillis === 'function' &&
+                (value.createdAt.toMillis() < peerReadCursor.createdAt.toMillis() ||
+                    (value.createdAt.toMillis() === peerReadCursor.createdAt.toMillis() &&
+                        snapshot.id <= peerReadCursor.id)))
+        } : {})
     };
 }
 
@@ -83,6 +90,23 @@ export async function readDirectMessages(db, {
     }
 
     const messagesRef = chatRef.collection('messages');
+    const peerUid = chat.participants.find(uid => uid !== actorUid);
+    const peerReceipt = chat.readReceipts?.[peerUid];
+    let peerReadCursor = null;
+    if (peerReceipt?.lastReadMessageId) {
+        const receiptId = peerReceipt.lastReadMessageId;
+        if (typeof receiptId !== 'string' || !MESSAGE_ID.test(receiptId)) {
+            throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+        }
+        const receiptSnap = await messagesRef.doc(receiptId).get();
+        if (!receiptSnap.exists) throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+        const receiptMessage = receiptSnap.data();
+        if (receiptMessage.senderId !== actorUid || receiptMessage.recipientId !== peerUid ||
+            !receiptMessage.createdAt || typeof receiptMessage.createdAt.toMillis !== 'function') {
+            throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+        }
+        peerReadCursor = { id: receiptSnap.id, createdAt: receiptMessage.createdAt };
+    }
     let query = messagesRef.orderBy('createdAt', 'desc');
     if (cursorMessageId) {
         const cursorSnap = await messagesRef.doc(cursorMessageId).get();
@@ -97,7 +121,7 @@ export async function readDirectMessages(db, {
     const page = await query.limit(pageSize + 1).get();
     const hasMore = page.docs.length > pageSize;
     const visible = page.docs.slice(0, pageSize);
-    const messages = visible.map(snapshot => serializeMessage(snapshot, chat.participants, actorUid));
+    const messages = visible.map(snapshot => serializeMessage(snapshot, chat.participants, actorUid, peerReadCursor));
     return {
         chatId,
         peerUid: chat.participants.find(uid => uid !== actorUid),
