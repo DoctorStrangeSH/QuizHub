@@ -27,13 +27,14 @@ test('every exported callable preview fails closed outside the isolated Firebase
         const end = declarations[index + 1]?.index ?? source.length;
         const body = source.slice(declaration.index, end);
         const name = declaration[1];
+        const label = 'Callable ' + name + ': ';
 
-        assert.match(body, /GCLOUD_PROJECT\s*\|\|\s*process\.env\.GOOGLE_CLOUD_PROJECT/, \`\${name}: project identity must be checked\`);
-        assert.match(body, /===\s*'demo-quizhub'/, \`\${name}: only the demo emulator project is allowed\`);
-        assert.match(body, /process\.env\.FIRESTORE_EMULATOR_HOST/, \`\${name}: Firestore Emulator must be active\`);
-        assert.match(body, /process\.env\.FIREBASE_AUTH_EMULATOR_HOST/, \`\${name}: Auth Emulator must be active\`);
-        assert.match(body, /process\.env\.FUNCTIONS_EMULATOR/, \`\${name}: Functions Emulator must be active\`);
-        assert.match(body, /if\s*\(!emulatorProject\s*\|\|\s*!isolated\)/, \`\${name}: missing fail-closed guard\`);
-        assert.match(body, /new HttpsError\('failed-precondition'/, \`\${name}: production invocation must be rejected\`);
+        assert.match(body, /GCLOUD_PROJECT\s*\|\|\s*process\.env\.GOOGLE_CLOUD_PROJECT/, label + 'project identity must be checked');
+        assert.match(body, /===\s*'demo-quizhub'/, label + 'only the demo emulator project is allowed');
+        assert.match(body, /process\.env\.FIRESTORE_EMULATOR_HOST/, label + 'Firestore Emulator must be active');
+        assert.match(body, /process\.env\.FIREBASE_AUTH_EMULATOR_HOST/, label + 'Auth Emulator must be active');
+        assert.match(body, /process\.env\.FUNCTIONS_EMULATOR/, label + 'Functions Emulator must be active');
+        assert.match(body, /if\s*\(!emulatorProject\s*\|\|\s*!isolated\)/, label + 'missing fail-closed guard');
+        assert.match(body, /new HttpsError\('failed-precondition'/, label + 'production invocation must be rejected');
     }
 });
