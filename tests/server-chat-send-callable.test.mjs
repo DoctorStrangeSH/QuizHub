@@ -18,6 +18,9 @@ test('chat callable derives sender UID from verified Auth and accepts only the s
     const data = { targetUid: 'bob', messageId: 'message_1234567890abcd', text: 'Hello' };
     assert.deepEqual(await handler(request(data)), { status: 'created', chatId: 'dm_abc', messageId: data.messageId });
     assert.deepEqual(calls, [{ actorUid: 'alice', ...data }]);
+    const replyData = { ...data, messageId: 'message_2234567890abcd', replyToMessageId: 'message_3234567890abcd' };
+    await handler(request(replyData));
+    assert.deepEqual(calls[1], { actorUid: 'alice', ...replyData });
     for (const payload of [
         { ...data, senderId: 'victim' },
         { ...data, targetUid: 'alice' },
@@ -26,10 +29,12 @@ test('chat callable derives sender UID from verified Auth and accepts only the s
         { ...data, text: ' ' },
         { ...data, text: 'x'.repeat(2001) },
         { ...data, extra: true },
+        { ...data, replyToMessageId: 'short' },
+        { ...data, replyToMessageId: data.messageId },
         ['bob', 'hello'],
         null
     ]) await assert.rejects(handler(request(payload)), e => e.code === 'invalid-argument');
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
 });
 
 test('chat callable rejects guests and hides unexpected backend errors', async () => {
