@@ -23,7 +23,7 @@ export function directChatId(firstUid, secondUid) {
 }
 
 export async function sendDirectMessage(db, {
-    actorUid, targetUid, messageId, text
+    actorUid, targetUid, messageId, text, replyToMessageId = null
 }) {
     if (!db || typeof db.runTransaction !== 'function' || typeof db.collection !== 'function') {
         throw new TypeError('TRUSTED_DATABASE_REQUIRED');
@@ -36,6 +36,10 @@ export async function sendDirectMessage(db, {
         throw new Error('INVALID_MESSAGE_ID');
     }
     const safeText = normalizeText(text);
+    if (replyToMessageId !== null &&
+        (typeof replyToMessageId !== 'string' || !MESSAGE_ID.test(replyToMessageId) || replyToMessageId === messageId)) {
+        throw new Error('INVALID_REPLY_TARGET');
+    }
     const participants = [actorUid, targetUid].sort();
     const chatId = directChatId(actorUid, targetUid);
     const chatRef = db.collection('chats').doc(chatId);
@@ -47,6 +51,9 @@ export async function sendDirectMessage(db, {
         const [actorSnap, targetSnap, chatSnap, messageSnap] = await Promise.all([
             tx.get(actorRef), tx.get(targetRef), tx.get(chatRef), tx.get(messageRef)
         ]);
+        const replySnap = replyToMessageId
+            ? await tx.get(chatRef.collection('messages').doc(replyToMessageId))
+            : null;
         if (!actorSnap.exists || !targetSnap.exists) throw new Error('PROFILE_NOT_FOUND');
         const actor = actorSnap.data();
         const target = targetSnap.data();
@@ -65,8 +72,26 @@ export async function sendDirectMessage(db, {
         if (messageSnap.exists) {
             const previous = messageSnap.data();
             if (previous.senderId === actorUid && previous.recipientId === targetUid &&
-                previous.text === safeText) return { status: 'unchanged', chatId, messageId };
+                previous.text === safeText && (previous.replyTo?.id ?? null) === replyToMessageId) {
+                return { status: 'unchanged', chatId, messageId };
+            }
             throw new Error('MESSAGE_ID_CONFLICT');
+        }
+        let replyTo = null;
+        if (replyToMessageId) {
+            if (!replySnap?.exists) throw new Error('REPLY_TARGET_NOT_FOUND');
+            const targetMessage = replySnap.data();
+            if (![actorUid, targetUid].includes(targetMessage.senderId) ||
+                ![actorUid, targetUid].includes(targetMessage.recipientId) ||
+                targetMessage.senderId === targetMessage.recipientId ||
+                targetMessage.deleted !== false || typeof targetMessage.text !== 'string') {
+                throw new Error('INVALID_REPLY_TARGET');
+            }
+            replyTo = {
+                id: replySnap.id,
+                senderId: targetMessage.senderId,
+                text: targetMessage.text.slice(0, 160)
+            };
         }
         const now = new Date();
         if (!chatSnap.exists) {
@@ -93,7 +118,8 @@ export async function sendDirectMessage(db, {
             createdAt: now,
             edited: false,
             deleted: false,
-            reactions: {}
+            reactions: {},
+            ...(replyTo ? { replyTo } : {})
         });
         return { status: 'created', chatId, messageId };
     });
