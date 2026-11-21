@@ -1055,3 +1055,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Corrected the first client-write audit: `app/modules/daily/daily.js` also directly increments coins/streak and sets `lastDailyClaim` in the default browser path; its trusted callable is emulator-preview-only.
 - This source-derived map does not establish which Production operations currently succeed. Exact deployed Rules and indexes remain unknown.
 - No live Firebase reads/writes, deploys, Auth changes, data migrations or feature-gate changes were performed.
+
+
+## 85. Daily-login UTC boundary acceptance completed (2026-11-21)
+
+- PR #85 merged into `main` as `f28da00e597096657c580322c2a123a16f88544a`: browser claim availability now uses the same UTC date boundary as the trusted server reward service, with coverage for Firestore Timestamp, Date, numeric legacy timestamps and invalid/out-of-range values.
+- PR #86 merged into `main` as `870d21ce82db2141e159d9b78be279e9f3f9fa45`: authenticated browser acceptance verifies the trusted daily-login callable, same-day retry idempotency and both local-calendar boundary failure modes (UTC-10 premature availability and UTC+14 delayed availability).
+- Required CI passed on the final PR #86 head: Question Quality, Firebase Emulator Integration (including network/browser suite, complete read-only emulator snapshot capture and server-owned session Rules denial), and QuizHub Visual Preview.
+- The timezone test is emulator-only and uses a controlled local-date shim; it does not connect to or mutate Production Firebase.
+- Important: this closes the UTC availability correctness issue, **not** the Production mutation migration. The normal Production `claimDailyReward()` path still directly updates `users/{uid}`; `dailyLoginRewardPreview` remains guarded to the isolated emulator.
+- Next: prepare a complete daily-login Production cutover plan only after exact deployed Rules/index exports, Auth configuration, live inventory and a verified recoverable Production backup are supplied. Do not remove callable guards or change Rules/client gates yet.
+- No Production Firebase data, Rules, Functions, indexes, Auth settings or feature flags were changed.
