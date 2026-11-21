@@ -87,6 +87,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-daily-leaderboard.test.mjs
       - name: Test Firebase callable boundary
         run: node --experimental-default-type=module --test tests/server-firebase-daily-callable.test.mjs
+      - name: Enforce emulator-only guards on exported callables
+        run: node --test tests/firebase-callable-emulator-guards.test.mjs
       - name: Build Firebase Functions bundle
         run: |
           npm install --prefix functions --no-audit --no-fund
