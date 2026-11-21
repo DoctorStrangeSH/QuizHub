@@ -160,3 +160,21 @@ Do not mark a gate complete merely because the collector or emulator tests pass.
 ## Follow-up note — callable source guard
 
 As of 2026-11-21, the repository source wraps `dailyChallenge` in the same demo-project + Auth/Firestore/Functions emulator guard as the other preview callables. This is a source-level safeguard only. It does not revoke, update or prove the absence of an already deployed production Function. During the deployed Functions inventory, explicitly record whether `dailyChallenge` exists, its region, runtime/version and last update time. Do not assume a source change has changed deployed behavior.
+
+
+## 7. Deployed Cloud Functions inventory (source is not deployment evidence)
+
+The current repository source exports seven callable preview endpoints from `functions/index.mjs`:
+- `dailyChallenge`
+- `quizSessionPreview`
+- `profileCreatePreview`
+- `quizModePreview`
+- `shopPurchasePreview`
+- `dailyLoginRewardPreview`
+- `achievementUnlockPreview`
+
+Each current source handler is guarded to require the `demo-quizhub` project and Auth, Firestore and Functions emulators together. This is intentionally fail-closed preview code.
+
+**Do not infer deployed state from source code.** Before closing Phase 0, the owner/operator must inspect the Cloud Functions list for project `quizhub-e65f5` and privately record every deployed function name, generation, region, runtime, state and last update time. Explicitly check whether any earlier `dailyChallenge` deployment or other legacy function remains active. A source guard does not update or revoke an already deployed endpoint.
+
+Do not deploy, delete, or update functions during this inventory step. If deployed functions are found, preserve their details for a separate risk assessment and approved rollout plan.
