@@ -9,7 +9,8 @@ const EXPECTED_PREVIEW_CALLABLES = [
     'quizModePreview',
     'shopPurchasePreview',
     'dailyLoginRewardPreview',
-    'achievementUnlockPreview'
+    'achievementUnlockPreview',
+    'friendRelationshipPreview'
 ];
 
 test('every exported callable preview fails closed outside the isolated Firebase emulators', async () => {

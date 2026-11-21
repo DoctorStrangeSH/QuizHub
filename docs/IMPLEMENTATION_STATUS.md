@@ -786,3 +786,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added pure symmetric relationship transitions for send, accept, decline, cancel and remove; a Firestore transaction adapter that reads both profiles before writing; and a strict callable input adapter that derives actor UID from verified Firebase Auth.
 - Tests cover symmetric transitions, idempotency, inconsistent legacy relationship arrays, forged identity/payload rejection, anonymous users, and preservation of unrelated profile/economy fields.
 - This is service/core only: no callable export, browser integration, Rules change or production deployment. The next isolated slice adds an emulator-only callable and two-account integration tests.
+
+
+## 58. FRIEND-01 emulator callable integration opened (2026-11-21)
+
+- PR #66 adds `friendRelationshipPreview`, wired to the merged trusted friendship transaction service and callable adapter.
+- The new callable uses the same fail-closed guard as all other preview endpoints: project must be `demo-quizhub` and Auth, Firestore and Functions emulators must all be active.
+- Added a two-account emulator test covering unauthenticated/forged/self requests, send and duplicate send, conflicting reverse request, accept, remove, decline and cancel. It verifies relationship symmetry and that coins, XP, level and email remain unchanged.
+- Added the callable to the source-level fail-closed guard regression test and emulator CI command.
+- PR #66 is awaiting all three CI checks. No browser client, production Rules, production Functions or live Firestore data are changed.
