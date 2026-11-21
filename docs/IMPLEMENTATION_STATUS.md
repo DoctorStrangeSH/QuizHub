@@ -673,3 +673,11 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - The server answer response now includes a minimal post-submission feedback object; retries return the same verified feedback without recording a second answer.
 - Added client/invoker validation tests and syntax checks to Question Quality CI.
 - Added an authenticated browser test for the actual quiz route: it plays all ten questions through the local server preview, verifies the practice-only receipt, reloads the page and confirms the same server-owned result is restored. Production UI remains on the existing practice implementation until a separately reviewed migration, account compatibility plan and Rules release gate are complete.
+## 47. Daily ranking and prize claims — real Firestore emulator acceptance
+
+- Added a dedicated Firebase Admin integration test for the existing Daily Challenge ranking seal and prize services.
+- The test writes finalized server receipts through the production Firestore adapter, rejects sealing before UTC day close, seals one immutable snapshot under concurrent requests, and verifies repeat sealing is idempotent.
+- It simulates a later source-receipt mutation and verifies the sealed snapshot remains unchanged.
+- It runs concurrent prize claims against Firestore transactions and verifies exactly one XP/coin credit per player, correct rank tiers, stable retry receipts, and preservation of unrelated private profile fields.
+- The test uses unique disposable emulator documents and fails closed unless both FIRESTORE_EMULATOR_HOST and project demo-quizhub are present. It is included in Firebase Emulator CI.
+- This is persistence/transaction acceptance only. It does not approve the currently proposed prize amounts, expose a production claim endpoint, enable ranked UI, or authorize a production Rules/Functions deployment.
