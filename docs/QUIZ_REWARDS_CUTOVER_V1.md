@@ -40,6 +40,21 @@ This document records the current boundary between the legacy browser reward pat
 6. Add reversible client feature gates and prepare a coordinated client + Rules cutover. Do not tighten Rules before the shipped client uses compatible trusted paths.
 7. Obtain explicit owner approval before any Production deployment or data migration.
 
-## Server event reward implementation (2026-11-21)\n\n- `server/quiz-event-rewards.mjs` calculates event multipliers from the authenticated callable's server timestamp and the validated private profile `timeZone` value. Missing legacy values default to UTC.\n- The trusted claim transaction applies those multipliers and stores the effective multipliers/event IDs in its immutable receipt. Weekend XP, Night Owl XP, Monday Motivation XP and Happy Hour coin bonuses retain the current client schedule; overlapping XP boosts do not stack.\n- New profiles persist their detected IANA timezone. The profile-create callable validates it, and the public projection deliberately omits it.\n- Existing profiles still need a user-facing timezone preference/backfill path. Do not cut over existing players while their intended timezone is unknown.\n\n## Existing-account timezone preference backend (2026-11-21)\n\n- `server/profile-timezone-update.mjs` validates an IANA timezone and transactionally updates only the authenticated user's private `users/{uid}.timeZone` field. XP, level, coins, stats, public profile and other fields are not touched.\n- `server/profile-timezone-callable-adapter.mjs` derives UID from Firebase Auth, rejects anonymous users and rejects every payload field except `timeZone`.\n- `profileTimeZonePreview` is exported from Functions but guarded to the isolated `demo-quizhub` Auth/Firestore/Functions emulators. It is not a Production endpoint.\n- Unit tests cover preservation of legacy progress/economy fields, invalid zones, missing profiles, authentication and payload allowlisting.\n- A user-facing settings control, opt-in migration/backfill, and Production deployment remain open. Missing legacy preferences continue to resolve to UTC.\n\n## Safety boundary
+## Server event reward implementation (2026-11-21)
 
-This audit changed no application code, tests, Firebase configuration, deployed Rules, Functions, indexes, Auth settings, live Firestore data, reward balances, or feature flags. All current trusted-callable browser acceptance is emulator-only.
+- `server/quiz-event-rewards.mjs` calculates event multipliers from the authenticated callable's server timestamp and the validated private profile `timeZone` value. Missing legacy values default to UTC.
+- The trusted claim transaction applies those multipliers and stores the effective multipliers/event IDs in its immutable receipt. Weekend XP, Night Owl XP, Monday Motivation XP and Happy Hour coin bonuses retain the current client schedule; overlapping XP boosts do not stack.
+- New profiles persist their detected IANA timezone. The profile-create callable validates it, and the public projection deliberately omits it.
+- Existing profiles still need a user-facing timezone preference/backfill path. Do not cut over existing players while their intended timezone is unknown.
+
+## Existing-account timezone preference backend (2026-11-21)
+
+- `server/profile-timezone-update.mjs` validates an IANA timezone and transactionally updates only the authenticated user's private `users/{uid}.timeZone` field. XP, level, coins, stats, public profile and other fields are not touched.
+- `server/profile-timezone-callable-adapter.mjs` derives UID from Firebase Auth, rejects anonymous users and rejects every payload field except `timeZone`.
+- `profileTimeZonePreview` is exported from Functions but guarded to the isolated `demo-quizhub` Auth/Firestore/Functions emulators. It is not a Production endpoint.
+- Unit tests cover preservation of legacy progress/economy fields, invalid zones, missing profiles, authentication and payload allowlisting.
+- A user-facing settings control, opt-in migration/backfill, and Production deployment remain open. Missing legacy preferences continue to resolve to UTC.
+
+## Safety boundary
+
+This preparation adds a server-side timezone preference service, a strictly emulator-guarded callable, and unit/emulator tests. It does not change deployed Rules or Functions, indexes, Auth settings, live Firestore data, reward balances, or feature flags. The new callable and all trusted reward acceptance remain emulator-only.
