@@ -35,8 +35,8 @@ test('authenticated browser claims daily login reward through trusted callable e
         await page.locator('#save-profile-btn').click();
         await page.locator('.play-btn').waitFor({ timeout: 30000 });
 
-        const outcome = await page.evaluate(async () => {
-            const [{ auth, db, doc, getDoc }, { claimDailyReward, checkDailyReward }] = await Promise.all([
+        const firstOutcome = await page.evaluate(async () => {
+            const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
                 import('./app/firebase-config.js'),
                 import('./app/modules/daily/daily.js')
             ]);
@@ -44,53 +44,63 @@ test('authenticated browser claims daily login reward through trusted callable e
             const beforeSnapshot = await getDoc(ref);
             if (!beforeSnapshot.exists()) throw new Error('PROFILE_NOT_CREATED');
             const before = beforeSnapshot.data();
-
             const first = await claimDailyReward();
             const afterFirst = (await getDoc(ref)).data();
-            // Simulate a local calendar offset at the critical UTC boundary.
-            // Before 10:00 UTC, UTC-10 has not reached local midnight; after
-            // 10:00 UTC, UTC+14 has already moved into the next local day.
             const claimedAt = afterFirst.lastDailyClaim?.toDate?.();
             if (!claimedAt) throw new Error('SERVER_CLAIM_TIMESTAMP_MISSING');
-            const claimedUtcHour = claimedAt.getUTCHours();
-            const offsetMs = (claimedUtcHour < 10 ? -10 : 14) * 60 * 60 * 1000;
-            const nextUtcDate = claimedUtcHour < 10 ? claimedAt : new Date(claimedAt.getTime() + 86_400_000);
-            const fixedNow = new Date(Date.UTC(
-                nextUtcDate.getUTCFullYear(),
-                nextUtcDate.getUTCMonth(),
-                nextUtcDate.getUTCDate(),
-                claimedUtcHour < 10 ? 10 : 0,
-                15
-            ));
-            const expectedCanClaim = claimedUtcHour >= 10;
-            const NativeDate = Date;
-            class FixedDate extends NativeDate {
-                constructor(...args) { super(...(args.length ? args : [fixedNow.getTime()])); }
-                static now() { return fixedNow.getTime(); }
-                static [Symbol.hasInstance](value) { return value instanceof NativeDate; }
-                getFullYear() { return new NativeDate(this.getTime() + offsetMs).getUTCFullYear(); }
-                getMonth() { return new NativeDate(this.getTime() + offsetMs).getUTCMonth(); }
-                getDate() { return new NativeDate(this.getTime() + offsetMs).getUTCDate(); }
-            }
-            let availabilityAfterBoundary;
-            globalThis.Date = FixedDate;
-            try {
-                availabilityAfterBoundary = await checkDailyReward();
-            } finally {
-                globalThis.Date = NativeDate;
-            }
-            const retry = await claimDailyReward();
-            const afterRetry = (await getDoc(ref)).data();
             return {
-                uid: auth.currentUser.uid,
                 before,
                 first,
                 afterFirst,
-                availabilityAfterBoundary,
-                expectedCanClaim,
-                retry,
-                afterRetry
+                claimedAtIso: claimedAt.toISOString()
             };
+        });
+
+        // Choose the local timezone that exposes the old local-midnight bug:
+        // UTC-10 before 10:00 UTC catches premature claims; UTC+14 after 10:00
+        // UTC catches delayed claims after UTC midnight.
+        const claimedAt = new Date(firstOutcome.claimedAtIso);
+        const beforeUtcRollover = claimedAt.getUTCHours() < 10;
+        const timezoneId = beforeUtcRollover ? 'Pacific/Honolulu' : 'Pacific/Kiritimati';
+        const fixedNow = new Date(Date.UTC(
+            claimedAt.getUTCFullYear(),
+            claimedAt.getUTCMonth(),
+            claimedAt.getUTCDate() + (beforeUtcRollover ? 0 : 1),
+            beforeUtcRollover ? 10 : 0,
+            15
+        ));
+        const expectedCanClaim = !beforeUtcRollover;
+        await page.emulateTimezone(timezoneId);
+        const availabilityAfterBoundary = await page.evaluate(async ({ fixedNowMs }) => {
+            const { checkDailyReward } = await import('./app/modules/daily/daily.js');
+            const NativeDate = Date;
+            class FixedDate extends NativeDate {
+                constructor(...args) { super(...(args.length ? args : [fixedNowMs])); }
+                static now() { return fixedNowMs; }
+                static [Symbol.hasInstance](value) { return value instanceof NativeDate; }
+            }
+            globalThis.Date = FixedDate;
+            try {
+                return await checkDailyReward();
+            } finally {
+                globalThis.Date = NativeDate;
+            }
+        }, { fixedNowMs: fixedNow.getTime() });
+
+        const retryOutcome = await page.evaluate(async () => {
+            const [{ auth, db, doc, getDoc }, { claimDailyReward }] = await Promise.all([
+                import('./app/firebase-config.js'),
+                import('./app/modules/daily/daily.js')
+            ]);
+            const retry = await claimDailyReward();
+            const afterRetry = (await getDoc(doc(db, 'users', auth.currentUser.uid))).data();
+            return { retry, afterRetry };
+        });
+        const outcome = {
+            ...firstOutcome,
+            availabilityAfterBoundary,
+            expectedCanClaim,
+            ...retryOutcome
         });
 
         assert.equal(outcome.first?.coins, 10, 'First-day reward must use the server catalog');
