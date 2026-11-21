@@ -192,6 +192,9 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-daily-login-invoker.test.mjs
       - name: Syntax-check daily login browser module
         run: node --check app/modules/daily/daily.js
+      - name: Verify UTC daily login rollover in the browser
+        run: node --experimental-default-type=module --test tests/daily-login-date.test.mjs
+        
       - name: Test trusted XP level progression and achievement thresholds
         run: node --experimental-default-type=module --test tests/server-achievement-progress.test.mjs
       - name: Test local browser achievement preview transport
