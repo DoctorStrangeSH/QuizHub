@@ -702,3 +702,10 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - This is one-question UI acceptance only. The complete session/reward lifecycle remains covered by the separate server callable integration test. Production UI and Rules remain unchanged.
 - PR #60 merged into main (squash commit `6f0bd4b`). All required checks passed: Question Quality, Visual Preview, and Firebase Emulator integration.
 - The authenticated Playwright test verified all three mode-specific preview interfaces and server-backed answer/progress flow on isolated Firebase emulators. This remains an emulator-only preview; no production UI or Rules cutover occurred.
+## 50. Daily Challenge callable release guard
+
+- Source audit found `dailyChallenge` was the only game callable exported without the explicit `demo-quizhub` + Auth/Firestore/Functions emulator guard used by the other preview callables.
+- Added the same fail-closed guard. It now rejects requests outside the isolated Firebase emulators with `DAILY_CHALLENGE_PREVIEW_DISABLED`.
+- Existing authenticated Daily Challenge browser acceptance continues to exercise the callable through the emulators.
+- This source change does not prove or change which Functions are currently deployed. Phase 0 still requires the owner/operator to inventory deployed Functions; if an older `dailyChallenge` deployment exists, it remains live until a separately approved deployment updates it.
+- No production deployment, Rules change, or live data access was performed.
