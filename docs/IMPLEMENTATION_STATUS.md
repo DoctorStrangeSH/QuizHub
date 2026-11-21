@@ -1046,3 +1046,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - These source findings establish a migration gap, not the current success/failure of Production writes: deployed Firestore Rules remain unknown.
 - This is a V1 release blocker. The cutover must migrate each active client flow and deploy compatible Rules together; do not tighten Production Rules before the currently published client has a compatible trusted path.
 - No Production Rules, Functions, indexes, Auth settings, user/chat documents, economy values or feature flags were changed.
+
+
+## 84. Firestore read/write map and inventory gap correction (2026-11-21)
+
+- Added `docs/FIRESTORE_READ_WRITE_MAP_V1.md` with source-derived browser read/query paths, active default client writes, server-side collection paths, index observations and release blockers.
+- Extended `server/firestore-migration-inventory.mjs` and its regression test to include `dailyLoginClaims/{date}/users/{uid}` and `shopPurchaseRequests/{uid}/requests/{operationId}` as protected idempotency receipt collections.
+- Corrected the first client-write audit: `app/modules/daily/daily.js` also directly increments coins/streak and sets `lastDailyClaim` in the default browser path; its trusted callable is emulator-preview-only.
+- This source-derived map does not establish which Production operations currently succeed. Exact deployed Rules and indexes remain unknown.
+- No live Firebase reads/writes, deploys, Auth changes, data migrations or feature-gate changes were performed.
