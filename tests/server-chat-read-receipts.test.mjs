@@ -46,6 +46,12 @@ test('older receipt cannot move a participant cursor backwards',async()=>{
     assert.equal((await call(db)).status,'unchanged');
 });
 
+test('same-timestamp older message cannot move the cursor backwards',async()=>{
+    const previousId='message_zzzzzzzzzzzzzz';
+    const {db}=fixture({previous:{lastReadMessageId:previousId,lastReadAt:stamp(1000)}});
+    assert.equal((await call(db)).status,'unchanged');
+});
+
 test('strangers, outgoing messages, deleted messages and malformed targets are rejected',async()=>{
     const stranger=fixture({participants:['alice','charlie']});
     await assert.rejects(call(stranger.db,{actorUid:'mallory'}),/CHAT_MEMBERSHIP_REQUIRED/);
