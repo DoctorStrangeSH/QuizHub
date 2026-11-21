@@ -51,17 +51,25 @@ export function createFirebaseChatTransport({
 
     return Object.freeze({
         async sendMessage(payload) {
-            assertExactKeys(payload, ['targetUid', 'messageId', 'text'], 'INVALID_CHAT_SEND_REQUEST');
+            if (!isPlainRecord(payload) ||
+                Object.keys(payload).some(key => !['targetUid', 'messageId', 'text', 'replyToMessageId'].includes(key)) ||
+                !['targetUid', 'messageId', 'text'].every(key => Object.hasOwn(payload, key))) {
+                throw new Error('INVALID_CHAT_SEND_REQUEST');
+            }
             if (typeof payload.targetUid !== 'string' || !UID.test(payload.targetUid) ||
                 payload.targetUid === auth.currentUser.uid ||
                 typeof payload.messageId !== 'string' || !MESSAGE_ID.test(payload.messageId) ||
-                typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 2000) {
+                typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 2000 ||
+                (payload.replyToMessageId !== undefined &&
+                    (typeof payload.replyToMessageId !== 'string' || !MESSAGE_ID.test(payload.replyToMessageId) ||
+                        payload.replyToMessageId === payload.messageId))) {
                 throw new Error('INVALID_CHAT_SEND_REQUEST');
             }
             return invoke(send, {
                 targetUid: payload.targetUid,
                 messageId: payload.messageId,
-                text: payload.text
+                text: payload.text,
+                ...(payload.replyToMessageId ? { replyToMessageId: payload.replyToMessageId } : {})
             });
         },
         async readHistory(payload) {
