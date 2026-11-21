@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readDirectMessages } from '../server/chat-history.mjs';
 
 const CHAT_ID = 'dm_' + 'a'.repeat(48);
-function fixture({ participants = ['alice', 'bob'], messages = [] } = {}) {
-    const chat = { participants };
+function fixture({ participants = ['alice', 'bob'], messages = [], readReceipts = {} } = {}) {
+    const chat = { participants, readReceipts };
     const records = new Map(messages.map(message => [message.id, message]));
     const db = {
         collection(name) {
@@ -29,7 +29,8 @@ function fixture({ participants = ['alice', 'bob'], messages = [] } = {}) {
                                     startAfter(snapshot) { cursorId = snapshot.id; return this; },
                                     limit(count) {
                                         return { async get() {
-                                            const sorted = [...records.values()].sort((a,b) => b.createdAt - a.createdAt);
+                                            const millis = value => typeof value?.toMillis === 'function' ? value.toMillis() : Number(value);
+                                            const sorted = [...records.values()].sort((a,b) => millis(b.createdAt) - millis(a.createdAt));
                                             const start = cursorId ? sorted.findIndex(x => x.id === cursorId) + 1 : 0;
                                             const docs = sorted.slice(start, start + count).map(value => ({
                                                 id: value.id, data: () => value
@@ -83,4 +84,29 @@ test('strangers, malformed chat membership, invalid cursors and invalid paginati
     await assert.rejects(readDirectMessages(db,{actorUid:'alice',chatId:'bad'}),/INVALID_CHAT_READ_REQUEST/);
     await assert.rejects(readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:51}),/INVALID_CHAT_PAGE_SIZE/);
     await assert.rejects(readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,cursorMessageId:'not-found-cursor-123'}),/INVALID_CHAT_CURSOR/);
+});
+
+
+test('history marks only own messages at or before the peer read cursor as read', async () => {
+    const stamp = ms => ({ toMillis: () => ms });
+    const first = message('message_000000000001', stamp(1000));
+    const second = message('message_000000000002', stamp(2000));
+    const third = message('message_000000000003', stamp(3000));
+    const {db}=fixture({
+        messages:[first,second,third],
+        readReceipts:{bob:{lastReadMessageId:first.id,lastReadAt:first.createdAt}}
+    });
+    const result=await readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:10});
+    assert.deepEqual(result.messages.map(item=>item.readByRecipient),[false,false,true]);
+    const received=await readDirectMessages(db,{actorUid:'bob',chatId:CHAT_ID,pageSize:10});
+    assert.equal('readByRecipient' in received.messages[0],false);
+});
+
+test('history rejects a peer read cursor pointing at a message they did not receive', async () => {
+    const stamp = ms => ({ toMillis: () => ms });
+    const own=message('message_000000000001',stamp(1000));
+    const {db,chat}=fixture({messages:[own],readReceipts:{bob:{lastReadMessageId:own.id,lastReadAt:own.createdAt}}});
+    // The peer's cursor may only point to a message authored by this viewer and addressed to that peer.
+    chat.readReceipts.bob.lastReadMessageId='message_000000000099';
+    await assert.rejects(readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID}),/CHAT_MESSAGE_STATE_CONFLICT/);
 });
