@@ -63,6 +63,12 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-profile-create-invoker.test.mjs
       - name: Syntax-check profile creation browser module
         run: node --check app/modules/profile/profile.js
+      - name: Test safe timezone settings UI and preview transport
+        run: node --experimental-default-type=module --test tests/client-profile-timezone-settings.test.mjs
+      - name: Syntax-check timezone settings modules
+        run: |
+          node --check app/modules/profile/profile-timezone-settings.js
+          node --check app/modules/profile/firebase-profile-timezone-invoker.js
       - name: Test privacy-safe public profile projection
         run: node --experimental-default-type=module --test tests/public-profile-data.test.mjs
       - name: Verify centralized profile read migration gate
