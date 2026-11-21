@@ -952,3 +952,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Important limitation: UI-side projection does not prevent the browser from downloading legacy private `users/{uid}` documents. Friends-list and search paths still read legacy user documents while the gate is off. This is not network-level privacy and must not be described as such.
 - Next code task: create a small, current-main-based PR that applies the existing public projection consistently to foreign friend/search/directory data and tests that no private fields reach renderers. Keep the read gate disabled; this task is defense-in-depth only, not a replacement for deployed Rules.
 - Production privacy cutover remains blocked on Stage 0 evidence: live Firestore inventory, deployed Rules/index export, Auth provider/domain confirmation and a verified restorable backup. No production Firebase settings, Rules, Functions or live data were changed.
+
+
+## 75. Foreign friend-directory projection PR opened (2026-11-21)
+
+- PR #80 is open as a draft from a branch created directly from current `main`.
+- The focused change applies the existing public-profile allowlist before friend lists, incoming/outgoing requests and player-search results reach UI renderers.
+- Added tests for removal of email, coins, friend lists, admin flags, stats and forged document identity, plus coverage that all four foreign-directory render paths use the projection.
+- PR diff is limited to three files; no unrelated chat, migration or workflow changes.
+- CI status for PR #80 is pending/not yet reported at the time of this update. Do not merge until Question Quality, Firebase Emulator Integration and Visual Preview pass and the diff is reviewed.
+- This remains client-side data minimization only: with `PUBLIC_PROFILE_READS_ENABLED=false`, Firestore still sends legacy private user documents to the browser. It does not close the network-level privacy issue.
+- No Production Rules, Functions, read gates, or live data were changed.
