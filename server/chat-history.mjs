@@ -14,7 +14,7 @@ function serializeMessage(snapshot, participants) {
     const value = snapshot.data();
     if (!value || !participants.includes(value.senderId) ||
         !participants.includes(value.recipientId) || value.senderId === value.recipientId ||
-        typeof value.text !== 'string' || typeof value.deleted !== 'boolean' ||
+        typeof value.deleted !== 'boolean' || (value.deleted ? (value.text !== null && typeof value.text !== 'string') : typeof value.text !== 'string') ||
         typeof value.edited !== 'boolean') {
         throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
     }
