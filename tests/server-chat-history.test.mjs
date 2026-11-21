@@ -66,8 +66,8 @@ test('history is participant-scoped, paginated and returns only allowlisted mess
 
 test('deleted messages hide their content and malformed message membership is rejected', async () => {
     const {db}=fixture({messages:[
-        message('message_000000000001',1,{deleted:true,text:'secret'}),
-        message('message_000000000002',2,{senderId:'charlie'})
+        message('message_000000000001',2,{deleted:true,text:'secret'}),
+        message('message_000000000002',1,{senderId:'charlie'})
     ]});
     const result=await readDirectMessages(db,{actorUid:'alice',chatId:CHAT_ID,pageSize:1});
     assert.equal(result.messages[0].deleted,true);
