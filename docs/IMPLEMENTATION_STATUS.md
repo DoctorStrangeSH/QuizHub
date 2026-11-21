@@ -795,3 +795,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added a two-account emulator test covering unauthenticated/forged/self requests, send and duplicate send, conflicting reverse request, accept, remove, decline and cancel. It verifies relationship symmetry and that coins, XP, level and email remain unchanged.
 - Added the callable to the source-level fail-closed guard regression test and emulator CI command.
 - PR #66 is awaiting all three CI checks. No browser client, production Rules, production Functions or live Firestore data are changed.
+
+
+## 59. FRIEND-01 browser preview integration opened (2026-11-21)
+
+- PR #66 merged into `main` as squash commit `c2b44a7437bab88d37d59ae2959b21a657aa063d`. All required Question Quality, Firebase Emulator Integration and Visual Preview checks passed.
+- PR #67 adds the browser-side callable invoker and client contract for send, accept, decline, cancel and remove. The Friends screen uses it only when both `firebaseEmulator=1` and `friendshipPreview=1` are present on localhost/127.0.0.1 and the active Firebase project is `demo-quizhub`.
+- Firebase Functions emulator is connected only inside the existing local emulator configuration. The invoker rejects production hosts/projects, anonymous users, malformed operations, unexpected payload fields and self-targets.
+- The existing production friend mutation path remains unchanged and is still a legacy client-side Firestore write. This PR does not claim to remediate the live production Rules risk or enable a production rollout.
+- Added client transport, invoker and source-guard tests to Question Quality CI. PR #67 awaits all three checks.
+- Next: accept PR #67 after CI, then complete the separate legacy-data/read migration and Rules acceptance before any production client cutover. Production Rules, Functions deployment and live user data remain untouched.
