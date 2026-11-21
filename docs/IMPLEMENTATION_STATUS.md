@@ -805,3 +805,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The existing production friend mutation path remains unchanged and is still a legacy client-side Firestore write. This PR does not claim to remediate the live production Rules risk or enable a production rollout.
 - Added client transport, invoker and source-guard tests to Question Quality CI. PR #67 awaits all three checks.
 - Next: accept PR #67 after CI, then complete the separate legacy-data/read migration and Rules acceptance before any production client cutover. Production Rules, Functions deployment and live user data remain untouched.
+
+
+## 60. FRIEND-01 browser preview merged; CHAT-01 send service opened (2026-11-21)
+
+- PR #67 merged into `main` as squash commit `67d543a3ac1d56851f891b6921ee6c4adc04a62c`. Question Quality, Firebase Emulator Integration and Visual Preview all passed.
+- The Friends UI now has an opt-in local emulator preview transport for send, accept, decline, cancel and remove. The production path remains the legacy client-side mutation and is not considered secure or migrated.
+- CHAT-01 begins with a trusted server-side direct-message send service. It requires symmetric friendship, derives sender identity from verified Auth, validates target/text/message ID, creates a deterministic pair chat and message atomically, and makes exact retries idempotent.
+- New message records use server-authored sender/recipient IDs, timestamps, text, edited/deleted flags and reactions container. Existing user profile/economy documents are not mutated by send.
+- `chatSendPreviewCallable` is exported only behind the demo project + Auth/Firestore/Functions emulator guard. A two-account + non-friend third-account emulator acceptance test and unit tests are added to CI.
+- This slice does not yet migrate chat history reads, editing, deletion, reactions, unread/read cursors, online presence, Firestore Rules or production traffic. Those remain separate acceptance gates.
+- PR #68 is opened for CHAT-01 send backend; merge only after Question Quality, Firebase Emulator Integration and Visual Preview all pass.
