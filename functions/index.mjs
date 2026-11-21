@@ -39,11 +39,23 @@ const handle = createAuthenticatedDailyChallengeHandler(
 
 // This is deliberately NOT connected to the existing practice UI yet.
 // A future verified migration will enable ranked server sessions.
+const dailyChallengePreview = createDailyCallableAdapter({ handle, HttpsError });
 export const dailyChallenge = onCall({
     region: 'europe-west1',
     memory: '256MiB',
     timeoutSeconds: 30
-}, createDailyCallableAdapter({ handle, HttpsError }));
+}, async request => {
+    // The current browser path is not yet migrated to trusted sessions.
+    // Keep this callable emulator-only until Stage 1 and the production
+    // Rules/client migration have explicit owner approval.
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'DAILY_CHALLENGE_PREVIEW_DISABLED');
+    }
+    return dailyChallengePreview(request);
+});
 
 // Emulator-only integration preview. This callable intentionally refuses every
 // request in real Firebase projects, even from authenticated users, because
