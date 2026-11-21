@@ -898,3 +898,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Next slice adds a dedicated browser transport wrapper for trusted send, history, read receipt and unread-count callables. It is strictly opt-in on localhost with both `firebaseEmulator=1` and `chatPreview=1`, and both Auth and Functions clients must target `demo-quizhub`.
 - The wrapper validates exact payload keys and message/chat identifiers, derives identity exclusively from Firebase Auth, and exposes no production fallback. It is a transport foundation; existing production chat UI and legacy Firestore paths are not switched.
 - PR #74 covers this isolated browser transport and unit tests. Full UI cutover, per-chat inbox badges, production Rules/index review and legacy data migration remain outstanding.
+## 68. CHAT-05 local inbox unread badges opened (2026-11-21)
+
+- PR #75 adds per-friend unread badges and an inbox total in the chat list, powered by the trusted per-conversation unread-count callable.
+- Deterministic direct-chat IDs are derived in the browser with Web Crypto using the exact server algorithm (sorted UIDs, NUL separator, SHA-256, 48 hex characters); tests verify the result against Node Web Crypto.
+- The UI queries unread counts only when both local preview flags are present and the authenticated Firebase Auth/Functions clients target `demo-quizhub`. Production UI and legacy Firestore paths remain unchanged.
+- Missing conversations and preview failures render no badge; counts are bounded to safe non-negative integers and display as `99+` above 99.
+- This slice does not mark messages read or switch the conversation message listener. Opening/reading conversations and trusted history/send integration remain separate follow-up work.
+- No production Rules, Functions deployment or live user data is changed.
