@@ -51,8 +51,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-friend-relationships.test.mjs tests/server-friend-callable.test.mjs
       - name: Verify messenger display and secure chat rendering
         run: node --test tests/messenger-design.test.mjs
-      - name: Test trusted CHAT-01 message service and callable boundary
-        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs
+      - name: Test trusted CHAT-01 and CHAT-02 service and callable boundaries
+        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs tests/server-chat-history.test.mjs tests/server-chat-history-callable.test.mjs
       - name: Verify tournament hall and daily reward visuals
         run: node --test tests/event-hall-design.test.mjs
       - name: Test PWA refresh and mobile visual overrides
