@@ -1098,3 +1098,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added regression tests for exact-field updates, preservation of XP/level/coins/stats, missing profile, invalid timezone, Auth ownership and payload allowlisting.
 - This is the trusted backend contract only. A user-facing settings control, existing-account migration/backfill and live deployment are not included. Existing profiles without a saved preference continue to use UTC in the event resolver.
 - No Production Firebase reads/writes, Rules, Functions deployments, indexes, Auth settings, live data, rewards or feature flags were changed.
+
+
+## 89. Profile timezone preference UI preview (2026-11-21)
+
+- Added a bilingual timezone settings card to the owner's profile only. Other players' public cards never render this control.
+- The input uses the browser's supported IANA timezone list with a compact fallback for older browsers. It displays the saved preference when present, otherwise suggests the browser-detected zone without writing it automatically.
+- A user must explicitly select/confirm the value before saving. The UI validates the IANA identifier and verifies the callable receipt belongs to the signed-in UID.
+- The update transport is enabled only on localhost/127.0.0.1 with `firebaseEmulator=1`, `profileTimeZonePreview=1`, the `demo-quizhub` project and a non-anonymous signed-in user.
+- On Production and every non-opted-in host, the save button is disabled with a clear explanation. There is no direct Firestore fallback.
+- Added unit coverage for localization, owner-only rendering contract, IANA validation, emulator opt-in, payload/receipt validation and absence of direct client timezone writes.
+- Production callable enablement, real-account opt-in, migration/backfill, and release acceptance remain blocked on Stage 0 evidence and explicit approval.
+- No deployed Firebase Rules/Functions, live Firestore data, indexes, Auth settings, balances or feature flags were changed.

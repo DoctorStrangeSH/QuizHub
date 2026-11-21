@@ -33,7 +33,7 @@ This document records the current boundary between the legacy browser reward pat
 ## Required cutover sequence
 
 1. Complete Stage 0 evidence and reconcile it with repository configuration.
-2. Complete the user-facing timezone settings control and a safe, opt-in existing-account backfill using the emulator-tested `profileTimeZonePreview` contract. Then run deterministic server-clock tests at day/week/hour boundaries across the supported IANA zones.
+2. The owner-only bilingual timezone settings UI and emulator transport are implemented. Keep Production writes disabled. After Stage 0 evidence and explicit release approval, deploy the trusted callable in a coordinated release, then offer an explicit opt-in timezone confirmation/update to existing accounts. Run deterministic server-clock tests at day/week/hour boundaries across supported IANA zones.
 3. Define a versioned, auditable baseline for legacy XP, level, weekly XP, wins, stats and achievement state. Preserve every existing account field; resolve anomalous/negative/overflow values explicitly rather than coercing them.
 4. Extend the trusted transaction to write the approved progression projection and reward receipt atomically. Preserve idempotency for concurrent/retried claims.
 5. Run two-account authenticated browser acceptance for Classic, including event boundaries, same-session retries, simultaneous claims, reload/resume, existing profiles, and unchanged private profile fields.
@@ -45,7 +45,7 @@ This document records the current boundary between the legacy browser reward pat
 - `server/quiz-event-rewards.mjs` calculates event multipliers from the authenticated callable's server timestamp and the validated private profile `timeZone` value. Missing legacy values default to UTC.
 - The trusted claim transaction applies those multipliers and stores the effective multipliers/event IDs in its immutable receipt. Weekend XP, Night Owl XP, Monday Motivation XP and Happy Hour coin bonuses retain the current client schedule; overlapping XP boosts do not stack.
 - New profiles persist their detected IANA timezone. The profile-create callable validates it, and the public projection deliberately omits it.
-- Existing profiles still need a user-facing timezone preference/backfill path. Do not cut over existing players while their intended timezone is unknown.
+- An owner-only, bilingual timezone settings card is now implemented, but its save action is deliberately available only in the isolated demo emulator. Production users cannot change the preference yet. Do not cut over existing players until the secure callable is separately released and each legacy user's intended timezone is explicitly confirmed.
 
 ## Existing-account timezone preference backend (2026-11-21)
 
@@ -58,3 +58,12 @@ This document records the current boundary between the legacy browser reward pat
 ## Safety boundary
 
 This preparation adds a server-side timezone preference service, a strictly emulator-guarded callable, and unit/emulator tests. It does not change deployed Rules or Functions, indexes, Auth settings, live Firestore data, reward balances, or feature flags. The new callable and all trusted reward acceptance remain emulator-only.
+
+
+## Owner timezone settings UI preview (2026-11-21)
+
+- The owner's profile now includes a localized IANA timezone selector. The saved value is shown when present; otherwise the browser's detected timezone is only a suggestion and is not written automatically.
+- Saving requires a confirmation prompt and uses the authenticated `profileTimeZonePreview` callable. The client validates the IANA value and checks that the returned UID matches the current Firebase Auth user.
+- The transport is restricted to the local `demo-quizhub` project, both local hostnames, explicit `firebaseEmulator=1&profileTimeZonePreview=1` flags, and a non-anonymous account.
+- Production and non-opted-in hosts render the setting read-only with the reason; there is no insecure direct Firestore fallback.
+- The UI does not perform a bulk migration. Existing users choose and confirm their own timezone; accounts with no saved preference continue to resolve to UTC until they opt in.

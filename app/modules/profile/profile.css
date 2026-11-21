@@ -717,3 +717,141 @@
         justify-content: center;
     }
 }
+
+/* ========== НАСТРОЙКА ЧАСОВОГО ПОЯСА ========== */
+.profile-timezone-card {
+    padding: 22px;
+    margin: 0 0 20px;
+    border: 1px solid var(--border-glow);
+    background:
+        radial-gradient(circle at 100% 0, var(--accent-glow), transparent 42%),
+        var(--bg-card);
+}
+
+.profile-timezone-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.profile-timezone-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid var(--border-glow);
+    font-size: 1.2rem;
+}
+
+.profile-timezone-heading h2 {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 750;
+    margin: 1px 0 5px;
+}
+
+.profile-timezone-heading p {
+    color: var(--text-secondary);
+    font-size: .84rem;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.profile-timezone-label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.profile-timezone-input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    outline: none;
+    color: var(--text-primary);
+    background: var(--bg-card);
+    font: inherit;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.profile-timezone-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.profile-timezone-input:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+.profile-timezone-hint {
+    color: var(--text-secondary);
+    font-size: .76rem;
+    margin: 8px 0 16px;
+    overflow-wrap: anywhere;
+}
+
+.profile-timezone-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.profile-timezone-actions .btn-premium {
+    min-height: 42px;
+    padding: 10px 16px;
+    white-space: nowrap;
+}
+
+.profile-timezone-actions .btn-premium:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    filter: saturate(.45);
+    transform: none;
+    box-shadow: none;
+}
+
+.profile-timezone-status {
+    flex: 1 1 220px;
+    min-width: 0;
+    color: var(--text-secondary);
+    font-size: .78rem;
+    line-height: 1.45;
+}
+
+.profile-timezone-status.is-success {
+    color: var(--success);
+}
+
+.profile-timezone-status.is-error {
+    color: var(--danger);
+}
+
+@media (max-width: 520px) {
+    .profile-timezone-card {
+        padding: 18px 16px;
+    }
+
+    .profile-timezone-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .profile-timezone-actions .btn-premium {
+        width: 100%;
+    }
+}
