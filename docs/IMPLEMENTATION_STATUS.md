@@ -777,3 +777,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - PR #65 deliberately does not export/deploy a callable, change the browser friend UI, modify Rules or touch production data. It is the first isolated FRIEND-01 server slice.
 - PR #65 checks are running; merge only after Question Quality, Firebase Emulator Integration and Visual Preview all pass.
 - The legacy PR #3 remains Draft and is not to be merged wholesale.
+
+
+## 57. FRIEND-01 trusted relationship core merged (2026-11-21)
+
+- PR #65 merged into `main` as squash commit `410456c8cb8cba78d3debda43043ef960f40328f`.
+- All required checks passed: Question Quality, Firebase Emulator Integration and Visual Preview.
+- Added pure symmetric relationship transitions for send, accept, decline, cancel and remove; a Firestore transaction adapter that reads both profiles before writing; and a strict callable input adapter that derives actor UID from verified Firebase Auth.
+- Tests cover symmetric transitions, idempotency, inconsistent legacy relationship arrays, forged identity/payload rejection, anonymous users, and preservation of unrelated profile/economy fields.
+- This is service/core only: no callable export, browser integration, Rules change or production deployment. The next isolated slice adds an emulator-only callable and two-account integration tests.
