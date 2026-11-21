@@ -52,7 +52,7 @@ jobs:
       - name: Verify messenger display and secure chat rendering
         run: node --test tests/messenger-design.test.mjs
       - name: Test trusted CHAT-01 and CHAT-02 service and callable boundaries
-        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs tests/server-chat-history.test.mjs tests/server-chat-history-callable.test.mjs
+        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs tests/server-chat-history.test.mjs tests/server-chat-history-callable.test.mjs tests/server-chat-message-mutations.test.mjs tests/server-chat-message-mutation-callable.test.mjs
       - name: Verify tournament hall and daily reward visuals
         run: node --test tests/event-hall-design.test.mjs
       - name: Test PWA refresh and mobile visual overrides
@@ -103,8 +103,14 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-firebase-daily-callable.test.mjs
       - name: Enforce emulator-only guards on exported callables
         run: node --test tests/firebase-callable-emulator-guards.test.mjs
-      - name: Syntax-check trusted chat send service
-        run: node --check server/chat-messages.mjs && node --check server/chat-send-callable-adapter.mjs
+      - name: Syntax-check trusted chat services
+        run: |
+          node --check server/chat-messages.mjs
+          node --check server/chat-send-callable-adapter.mjs
+          node --check server/chat-history.mjs
+          node --check server/chat-history-callable-adapter.mjs
+          node --check server/chat-message-mutations.mjs
+          node --check server/chat-message-mutation-callable-adapter.mjs
       - name: Build Firebase Functions bundle
         run: |
           npm install --prefix functions --no-audit --no-fund
