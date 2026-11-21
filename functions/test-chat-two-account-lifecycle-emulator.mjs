@@ -71,31 +71,46 @@ test('CHAT lifecycle works end-to-end between two authenticated accounts', {
             db.collection('users').doc(bob.uid).set({ friends: [alice.uid] })
         ]);
 
-        const messageId = 'message_' + randomUUID().replaceAll('-', '');
+        const originalMessageId = 'message_' + randomUUID().replaceAll('-', '');
         const sent = await invoke(endpoints.send, alice, {
-            targetUid: bob.uid, messageId, text: 'Hello, Bob!'
+            targetUid: bob.uid, messageId: originalMessageId, text: 'Hello, Bob!'
         });
         assert.equal(sent.status, 200, JSON.stringify(sent.body));
         assert.equal(sent.body.result.status, 'created');
         chatId = directChatId(alice.uid, bob.uid);
         assert.equal(sent.body.result.chatId, chatId);
 
+        const messageId = 'message_' + randomUUID().replaceAll('-', '');
+        const replySent = await invoke(endpoints.send, bob, {
+            targetUid: alice.uid, messageId, text: 'Replying to your greeting',
+            replyToMessageId: originalMessageId
+        });
+        assert.equal(replySent.status, 200, JSON.stringify(replySent.body));
+        assert.equal(replySent.body.result.status, 'created');
+
         const initialUnread = await invoke(endpoints.unread, bob, { chatId });
         assert.equal(initialUnread.status, 200, JSON.stringify(initialUnread.body));
         assert.equal(initialUnread.body.result.unreadCount, 1);
 
+        const aliceUnread = await invoke(endpoints.unread, alice, { chatId });
+        assert.equal(aliceUnread.body.result.unreadCount, 1);
+
         const bobHistory = await invoke(endpoints.history, bob, { chatId });
         assert.equal(bobHistory.status, 200, JSON.stringify(bobHistory.body));
-        assert.equal(bobHistory.body.result.messages.length, 1);
-        assert.equal(bobHistory.body.result.messages[0].text, 'Hello, Bob!');
+        assert.equal(bobHistory.body.result.messages.length, 2);
+        const replyMessage = bobHistory.body.result.messages.find(message => message.id === messageId);
+        assert.equal(replyMessage.text, 'Replying to your greeting');
+        assert.deepEqual(replyMessage.replyTo, {
+            id: originalMessageId, senderId: alice.uid, text: 'Hello, Bob!'
+        });
 
-        const marked = await invoke(endpoints.read, bob, { chatId, upToMessageId: messageId });
+        const marked = await invoke(endpoints.read, alice, { chatId, upToMessageId: messageId });
         assert.equal(marked.status, 200, JSON.stringify(marked.body));
-        const readUnread = await invoke(endpoints.unread, bob, { chatId });
+        const readUnread = await invoke(endpoints.unread, alice, { chatId });
         assert.equal(readUnread.body.result.unreadCount, 0);
 
-        const aliceHistoryAfterRead = await invoke(endpoints.history, alice, { chatId });
-        assert.equal(aliceHistoryAfterRead.body.result.messages[0].readByRecipient, true);
+        const aliceHistoryAfterRead = await invoke(endpoints.history, bob, { chatId });
+        assert.equal(aliceHistoryAfterRead.body.result.messages.find(message => message.id === messageId).readByRecipient, true);
 
         const aliceReaction = await invoke(endpoints.reaction, alice, {
             chatId, messageId, reactionType: 'love'
