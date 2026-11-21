@@ -103,3 +103,14 @@ test('rejects invalid timezone values and mismatched server receipts', async () 
     } });
     await assert.rejects(forged.update('Europe/Berlin'), /INVALID_PROFILE_TIMEZONE_RECEIPT/);
 });
+
+test('profile UI exposes timezone settings only on the owner card and never writes timezone directly', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const profileSource = await readFile(new URL('../app/modules/profile/public-profile.js', import.meta.url), 'utf8');
+    const listenerSource = await readFile(new URL('../app/modules/profile/profile.js', import.meta.url), 'utf8');
+    assert.match(profileSource, /isOwnProfile \? renderProfileTimeZoneSettings/);
+    assert.match(listenerSource, /window\.confirm\(messages\.confirm\)/);
+    assert.match(listenerSource, /createLocalFirebaseProfileTimeZoneInvoker/);
+    assert.doesNotMatch(listenerSource, /updateDoc\([^\n]*timeZone/);
+    assert.doesNotMatch(listenerSource, /setDoc\([^\n]*timeZone/);
+});
