@@ -1,4 +1,5 @@
 import { getState } from '../../store/state.js';
+import { renderMessageReadState } from './chat-read-indicator.js';
 import {
     auth, db, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -184,9 +185,7 @@ function renderMessage(msg, container) {
     msgEl.dataset.messageId = msg.id;
     let replyHTML = msg.replyTo ? `<div class="message-reply">↩️ ${escapeHtml(String(msg.replyTo.text ?? '...').substring(0, 50))}</div>` : '';
     let reactionsHTML = msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '';
-    const readStateHTML = isMine && typeof msg.readByRecipient === 'boolean'
-        ? `<span class="message-read-state ${msg.readByRecipient ? 'is-read' : 'is-sent'}" aria-label="${msg.readByRecipient ? 'Прочитано' : 'Доставлено'}" title="${msg.readByRecipient ? 'Прочитано' : 'Доставлено'}">${msg.readByRecipient ? '✓✓' : '✓'}</span>`
-        : '';
+    const readStateHTML = renderMessageReadState({ isMine, readByRecipient: msg.readByRecipient });
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
         <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
