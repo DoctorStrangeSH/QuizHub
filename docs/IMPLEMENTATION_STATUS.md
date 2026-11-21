@@ -1004,3 +1004,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Additional source audit: leaderboard uses `directoryCollection()` plus `buildPublicProfile()`; public profile view uses `profileCollectionForViewer()` plus `projectProfileForViewer()`. No additional raw foreign-profile spread was found in those reviewed modules.
 - Remaining critical boundary: all these protections are client-side data minimization while `PUBLIC_PROFILE_READS_ENABLED=false`; they do not prevent the browser from receiving legacy private documents when legacy Firestore Rules permit those reads.
 - Next V1 security task: complete a source-to-Rules audit using the exact deployed Firestore Rules and a live read-only inventory, then document the release gate and backup/restore evidence. Do not change production Rules, Functions, live data or public-profile gate until evidence is complete.
+
+
+## 80. Firestore Rules source-of-truth gap identified (2026-11-21)
+
+- Repository audit found that root `firebase.json` declares the Firestore indexes file but does not declare a `firestore.rules` path.
+- A root `firestore.rules` file is not present at the checked `main` ref. The likely deployment Rules source is therefore not represented by the currently inspected repository config; do not assume the rules deployed in Firebase match any rules pasted in older chat messages.
+- This is a release blocker for the privacy cutover and any claim of network-level profile privacy. Before proposing Rules changes, obtain the exact deployed Rules export from Firebase Console/CLI and establish its provenance/version.
+- Next Stage 0 evidence request: exact deployed Firestore Rules text, Firestore indexes export, live collection inventory, Auth provider/domain configuration, and a tested restorable backup. Then add the approved Rules file and explicit `firestore.rules` mapping to repository configuration in a separate reviewed change, after reconciling it with the live deployed state.
+- No Production Firebase Rules, Functions, indexes, live data or access flags were changed in this audit.
