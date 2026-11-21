@@ -197,11 +197,11 @@ export function attachMyProfileListeners() {
         failed: 'Could not save the time zone. Please try again.',
         changed: 'You have an unsaved change.'
     };
-    let savedTimeZone = timeZoneInput.value.trim();
-    timeZoneSave.disabled = !previewEnabled || timeZoneInput.value.trim() === savedTimeZone;
+    let savedTimeZone = timeZoneInput.dataset.savedTimeZone || '';
+    timeZoneSave.disabled = !previewEnabled || (savedTimeZone !== '' && timeZoneInput.value.trim() === savedTimeZone);
 
     timeZoneInput.addEventListener('input', () => {
-        timeZoneSave.disabled = !previewEnabled || timeZoneInput.value.trim() === savedTimeZone;
+        timeZoneSave.disabled = !previewEnabled || (savedTimeZone !== '' && timeZoneInput.value.trim() === savedTimeZone);
         timeZoneStatus.textContent = timeZoneInput.value.trim() === savedTimeZone
             ? messages.unchanged
             : messages.changed;
@@ -234,6 +234,7 @@ export function attachMyProfileListeners() {
             const updateTimeZone = createLocalFirebaseProfileTimeZoneInvoker();
             await updateTimeZone(nextTimeZone);
             savedTimeZone = nextTimeZone;
+            timeZoneInput.dataset.savedTimeZone = nextTimeZone;
             timeZoneStatus.textContent = messages.saved;
             timeZoneStatus.classList.add('is-success');
         } catch (error) {
