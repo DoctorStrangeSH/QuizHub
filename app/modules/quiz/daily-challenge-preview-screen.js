@@ -152,7 +152,7 @@ export async function renderDailyChallengePreview(settings = {}) {
 
 export function attachDailyChallengePreviewListeners(onExit = () => window.navigateTo('home')) {
     const root = document.querySelector('.server-daily-challenge-preview');
-    if (!root || !client) return;
+    if (!root) return;
     root.addEventListener('click', async event => {
         if (event.target.closest('[data-daily-menu]')) {
             resetDailyChallengePreview();
