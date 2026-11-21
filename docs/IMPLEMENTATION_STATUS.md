@@ -1013,3 +1013,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - This is a release blocker for the privacy cutover and any claim of network-level profile privacy. Before proposing Rules changes, obtain the exact deployed Rules export from Firebase Console/CLI and establish its provenance/version.
 - Next Stage 0 evidence request: exact deployed Firestore Rules text, Firestore indexes export, live collection inventory, Auth provider/domain configuration, and a tested restorable backup. Then add the approved Rules file and explicit `firestore.rules` mapping to repository configuration in a separate reviewed change, after reconciling it with the live deployed state.
 - No Production Firebase Rules, Functions, indexes, live data or access flags were changed in this audit.
+
+
+## 81. Callable Functions production guard audit (2026-11-21)
+
+- Reviewed the complete root `functions/index.mjs` export surface: 14 callable exports are present.
+- All 14 exported callables check both the Firebase project ID (`demo-quizhub`) and the presence of Firestore, Auth and Functions emulator environment markers before invoking their handler; every non-isolated/non-demo request fails with a callable-specific `failed-precondition`.
+- Coverage includes quiz and daily challenge sessions, profile creation, quiz modes, shop purchase, daily login rewards, achievements, friendship operations, and chat send/history/mutation/reaction/read-receipt/unread-count.
+- This is a source-level guard audit, not a substitute for verifying deployed Functions configuration and IAM. No production deployment was attempted.
+- The root `firebase.json` currently configures Functions and Firestore indexes but has no `firestore.rules` mapping; the root Rules file is absent. The deployed Rules source remains unknown until the owner provides the exact current export.
+- Stage 0 remains blocked on verified deployed Firestore Rules and indexes, live collection/schema inventory, Auth provider/domain settings, and tested backup/restore evidence.
+- No production Rules, Functions, indexes, live data, Auth configuration or feature flags were changed.
