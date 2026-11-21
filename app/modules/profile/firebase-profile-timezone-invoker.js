@@ -1,28 +1,27 @@
-import { auth, functions, httpsCallable } from '../../firebase-config.js';
 import { isProfileTimeZonePreviewEnabled, isValidIanaTimeZone } from './profile-timezone-settings.js';
 
 /**
- * The timezone preference transport is deliberately emulator-only until the
- * production callable and Rules/client cutover receive separate approval.
+ * Emulator-only callable transport. Firebase dependencies are injected so the
+ * authorization boundary can be unit-tested without browser/network imports.
  */
-export function createLocalFirebaseProfileTimeZoneInvoker({
-    currentAuth = auth,
-    functionsInstance = functions,
-    callableFactory = httpsCallable,
-    location = window.location
+export function createFirebaseProfileTimeZoneInvoker({
+    auth,
+    functions,
+    httpsCallable,
+    location
 } = {}) {
-    if (!isProfileTimeZonePreviewEnabled(location, currentAuth)) {
+    if (!isProfileTimeZonePreviewEnabled(location, auth)) {
         throw new Error('PROFILE_TIMEZONE_PREVIEW_EMULATOR_REQUIRED');
     }
-    if (typeof callableFactory !== 'function' || !functionsInstance) {
+    if (typeof httpsCallable !== 'function' || !functions) {
         throw new Error('INVALID_PROFILE_TIMEZONE_CONFIGURATION');
     }
 
-    const callable = callableFactory(functionsInstance, 'profileTimeZonePreview');
+    const callable = httpsCallable(functions, 'profileTimeZonePreview');
     return async function updateProfileTimeZone(timeZone) {
         if (!isValidIanaTimeZone(timeZone)) throw new Error('INVALID_TIME_ZONE');
-        const ownerUid = currentAuth.currentUser?.uid;
-        if (!ownerUid || currentAuth.currentUser?.isAnonymous) {
+        const ownerUid = auth.currentUser?.uid;
+        if (!ownerUid || auth.currentUser?.isAnonymous) {
             throw new Error('SIGNED_IN_ACCOUNT_REQUIRED');
         }
         const response = await callable({ timeZone });
