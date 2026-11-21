@@ -100,6 +100,15 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-daily-prize.test.mjs
       - name: Test complete ranked daily flow across players
         run: node --experimental-default-type=module --test tests/server-daily-complete-flow.test.mjs
+      - name: Test daily challenge browser client and emulator invoker
+        run: node --experimental-default-type=module --test tests/daily-challenge-client.test.mjs tests/firebase-daily-challenge-invoker.test.mjs
+      - name: Syntax-check server Daily Challenge preview integration
+        run: |
+          node --check app/modules/quiz/quiz.js
+          node --check app/modules/quiz/daily-challenge-preview-screen.js
+          node --check app/modules/quiz/daily-challenge-client.js
+          node --check app/modules/quiz/firebase-daily-challenge-invoker.js
+          node --check app/modules/quiz/firebase-daily-challenge-preview.js
       - name: Test daily result summaries
         run: node --experimental-default-type=module --test tests/daily-results.test.mjs
       - name: Test daily challenge mode
