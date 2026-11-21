@@ -15,7 +15,7 @@ function fixture({actor='alice',participants=['alice','bob'],receipt=true,count=
         count(){return {get:async()=>({data:()=>({count})})};}
     };
     const messages={where:query.where.bind(query),orderBy:query.orderBy.bind(query),startAfter:query.startAfter.bind(query),count:query.count.bind(query),doc(id){return ref('chats/'+chatId+'/messages/'+id)}};
-    const ref=path=>({path,collection(name){return {doc(id){return ref(path+'/'+name+'/'+id)},...messages}}});
+    const ref=path=>({path,async get(){const value=records.get(path);return {exists:value!==undefined,data:()=>value};},collection(name){return {doc(id){return ref(path+'/'+name+'/'+id)},...messages}}});
     const chatRef=ref('chats/'+chatId);
     const db={collection(name){return {doc(id){return ref(name+'/'+id)}}}};
     chatRef.get=async()=>({exists:true,data:()=>chat});
