@@ -230,7 +230,7 @@ export function attachMyProfileListeners() {
         timeZoneStatus.classList.remove('is-error', 'is-success');
         timeZoneStatus.textContent = messages.saving;
         try {
-            const { createLocalFirebaseProfileTimeZoneInvoker } = await import('./firebase-profile-timezone-invoker.js');
+            const { createLocalFirebaseProfileTimeZoneInvoker } = await import('./firebase-profile-timezone-preview.js');
             const updateTimeZone = createLocalFirebaseProfileTimeZoneInvoker();
             await updateTimeZone(nextTimeZone);
             savedTimeZone = nextTimeZone;
