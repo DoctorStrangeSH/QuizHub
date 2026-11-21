@@ -39,3 +39,10 @@ This audit distinguishes working trusted-service previews from the actual defaul
 ## Safety boundary
 
 No production Rules, Functions, indexes, Auth settings, user documents, chat documents, economy values or feature flags were changed by this audit.
+
+
+## Addendum — daily login and receipt preservation (2026-11-21)
+
+The first pass omitted one active default-path mutation: `app/modules/daily/daily.js` directly increments `users/{uid}.coins` and `dailyStreak`, and writes `lastDailyClaim`. The trusted daily-login callable is used only when the explicit localhost emulator preview flags are enabled. This is a high-priority economy release blocker and must be migrated with the same idempotency guarantees as quiz rewards and shop purchases.
+
+The repository-derived migration inventory also omitted two server-side idempotency collections: `dailyLoginClaims/{date}/users/{uid}` and `shopPurchaseRequests/{uid}/requests/{operationId}`. Both are now included as protected collections so backup/preservation validation cannot silently omit their receipts if populated.
