@@ -24,10 +24,10 @@ function setup({
             status: 'updated', uid: auth.currentUser.uid, timeZone: payload.timeZone
         } };
     };
-    const update = createLocalFirebaseProfileTimeZoneInvoker({
-        currentAuth: auth,
-        functionsInstance: functions,
-        callableFactory: (...args) => (calls.push(['httpsCallable', ...args]), invoke),
+    const update = createFirebaseProfileTimeZoneInvoker({
+        auth,
+        functions,
+        httpsCallable: (...args) => (calls.push(['httpsCallable', ...args]), invoke),
         location: { hostname, search }
     });
     return { update, calls, auth, functions };
@@ -50,8 +50,8 @@ test('only accepts a signed-in local demo emulator with explicit timezone previe
         assert.equal(isProfileTimeZonePreviewEnabled(
             { hostname: config.hostname, search: config.search }, auth
         ), false);
-        assert.throws(() => createLocalFirebaseProfileTimeZoneInvoker({
-            currentAuth: auth, functionsInstance: {}, callableFactory: () => async () => ({}),
+        assert.throws(() => createFirebaseProfileTimeZoneInvoker({
+            auth, functions: {}, httpsCallable: () => async () => ({}),
             location: { hostname: config.hostname, search: config.search }
         }), /PROFILE_TIMEZONE_PREVIEW_EMULATOR_REQUIRED/);
     }
@@ -110,7 +110,7 @@ test('profile UI exposes timezone settings only on the owner card and never writ
     const listenerSource = await readFile(new URL('../app/modules/profile/profile.js', import.meta.url), 'utf8');
     assert.match(profileSource, /isOwnProfile \? renderProfileTimeZoneSettings/);
     assert.match(listenerSource, /window\.confirm\(messages\.confirm\)/);
-    assert.match(listenerSource, /createLocalFirebaseProfileTimeZoneInvoker/);
+    assert.match(listenerSource, /createFirebaseProfileTimeZoneInvoker/);
     assert.doesNotMatch(listenerSource, /updateDoc\([^\n]*timeZone/);
     assert.doesNotMatch(listenerSource, /setDoc\([^\n]*timeZone/);
 });
