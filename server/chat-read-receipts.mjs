@@ -37,9 +37,15 @@ export async function markDirectMessagesRead(db, {
             !Array.isArray(chat.readReceipts) ? chat.readReceipts : {};
         const previous = receipts[actorUid];
         if (previous && previous.lastReadAt &&
-            typeof previous.lastReadAt.toMillis === 'function' &&
-            previous.lastReadAt.toMillis() > message.createdAt.toMillis()) {
-            return { status: 'unchanged', chatId, lastReadMessageId: previous.lastReadMessageId ?? null };
+            typeof previous.lastReadAt.toMillis === 'function') {
+            const previousMillis = previous.lastReadAt.toMillis();
+            const targetMillis = message.createdAt.toMillis();
+            const previousId = previous.lastReadMessageId;
+            const isOlder = previousMillis > targetMillis ||
+                (previousMillis === targetMillis && typeof previousId === 'string' && upToMessageId <= previousId);
+            if (isOlder) {
+                return { status: 'unchanged', chatId, lastReadMessageId: previousId ?? null };
+            }
         }
         if (previous?.lastReadMessageId === upToMessageId) {
             return { status: 'unchanged', chatId, lastReadMessageId: upToMessageId };
