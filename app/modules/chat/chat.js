@@ -2,6 +2,7 @@ import { getState } from '../../store/state.js';
 import { renderMessageReadState } from './chat-read-indicator.js';
 import { createFirebaseChatTransport } from './firebase-chat-transport.js';
 import { createDirectChatId, renderUnreadBadge } from './chat-unread-badges.js';
+import { chatTimestampDate, normalizeChatHistoryPage, mergeChatHistoryMessages, latestIncomingMessageId, formatProjectedReactions, createChatMessageId } from './chat-preview-history.js';
 import {
     auth, db, functions, httpsCallable, doc, getDoc, setDoc, updateDoc,
     collection, query, orderBy, limit, getDocs,
@@ -17,6 +18,14 @@ let selectedMessageId = null;
 let onlineUnsubscribes = [];
 let chatLifecycle = 0;
 let chatPreviewTransport = null;
+let previewChatId = null;
+let previewHistoryCursor = null;
+let previewHasMore = false;
+let previewMessages = [];
+let previewRefreshTimer = null;
+let previewLoadInFlight = false;
+let conversationToken = 0;
+let chatFriendsCache = [];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // ========== ОТРИСОВКА ==========
@@ -127,6 +136,7 @@ export async function loadChatFriends() {
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];
         if (lifecycle !== chatLifecycle || !list.isConnected || auth.currentUser?.uid !== user.uid) return;
+        chatFriendsCache = friendsData;
         list.innerHTML = friendsData.map((friend, index) => `
             <button type="button" class="chat-friend-item" data-chat-index="${index}" data-friend-id="${escapeHtml(friend.id)}">
                 <span class="avatar-circle small"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
@@ -166,6 +176,9 @@ window.openChat = async (friendId, friendName) => {
     const user = auth.currentUser;
     if (!user) return;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
+    const token = ++conversationToken;
+    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
     currentChatId = [user.uid, friendId].sort().join('_');
     chatFriend = { id: friendId, name: friendName };
     document.getElementById('chat-empty').style.display = 'none';
@@ -175,10 +188,19 @@ window.openChat = async (friendId, friendName) => {
     document.querySelectorAll('.chat-friend-item').forEach(el => el.classList.remove('active'));
     const activeItem = Array.from(document.querySelectorAll('.chat-friend-item')).find(el => el.dataset.friendId === friendId);
     if (activeItem) activeItem.classList.add('active');
+    if (chatPreviewTransport) {
+        try { previewChatId = await createDirectChatId(user.uid, friendId); }
+        catch (error) { console.error('Не удалось подготовить безопасный ID чата:', error); }
+        if (token !== conversationToken || auth.currentUser?.uid !== user.uid) return;
+    }
     loadMessages();
+    if (previewChatId) previewRefreshTimer = setInterval(() => { loadPreviewMessages(); }, 5000);
 };
 
 window.closeChatWindow = () => {
+    conversationToken++;
+    if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
+    previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
     document.getElementById('chat-empty').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
     document.getElementById('chat-list-panel').classList.remove('hidden');
@@ -189,6 +211,7 @@ window.closeChatWindow = () => {
 
 function loadMessages() {
     if (!currentChatId) return;
+    if (previewChatId && chatPreviewTransport) { loadPreviewMessages(); return; }
     const messagesContainer = document.getElementById('chat-messages');
     messagesContainer.innerHTML = '<div class="text-center py-3 text-secondary">Загрузка...</div>';
     const messagesRef = collection(db, 'chats', currentChatId, 'messages');
@@ -201,32 +224,100 @@ function loadMessages() {
     });
 }
 
+
+async function loadPreviewMessages({ older = false } = {}) {
+    if (!previewChatId || !chatPreviewTransport || previewLoadInFlight) return;
+    const chatId = previewChatId;
+    const token = conversationToken;
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    const previousHeight = container.scrollHeight;
+    const previousTop = container.scrollTop;
+    const wasNearBottom = previousHeight - previousTop - container.clientHeight < 80;
+    previewLoadInFlight = true;
+    try {
+        const response = await chatPreviewTransport.readHistory({
+            chatId, pageSize: 30,
+            ...(older && previewHistoryCursor ? { cursorMessageId: previewHistoryCursor } : {})
+        });
+        if (token !== conversationToken || chatId !== previewChatId) return;
+        const page = normalizeChatHistoryPage(response, chatId);
+        previewMessages = older
+            ? mergeChatHistoryMessages(previewMessages, page.messages)
+            : mergeChatHistoryMessages([], page.messages);
+        previewHistoryCursor = page.nextCursor;
+        previewHasMore = Boolean(page.nextCursor);
+        container.innerHTML = '';
+        if (previewHasMore) {
+            const olderButton = document.createElement('button');
+            olderButton.type = 'button'; olderButton.className = 'chat-load-older';
+            olderButton.textContent = 'Загрузить предыдущие сообщения';
+            olderButton.addEventListener('click', () => loadPreviewMessages({ older: true }));
+            container.appendChild(olderButton);
+        }
+        if (!previewMessages.length) {
+            const empty = document.createElement('div'); empty.className = 'text-center py-4 text-secondary';
+            empty.textContent = 'Нет сообщений. Напишите первым! 👋'; container.appendChild(empty);
+        } else {
+            previewMessages.forEach(message => renderMessage(message, container));
+        }
+        if (older) container.scrollTop = previousTop + (container.scrollHeight - previousHeight);
+        else if (wasNearBottom || previousHeight === 0) container.scrollTop = container.scrollHeight;
+        else container.scrollTop = previousTop;
+        const readTarget = latestIncomingMessageId(page.messages, auth.currentUser?.uid);
+        if (readTarget) {
+            await chatPreviewTransport.markRead({ chatId, upToMessageId: readTarget });
+            if (token === conversationToken && chatId === previewChatId) {
+                const latest = await chatPreviewTransport.readHistory({ chatId, pageSize: 30 });
+                const normalized = normalizeChatHistoryPage(latest, chatId);
+                previewMessages = mergeChatHistoryMessages([], normalized.messages);
+                previewHistoryCursor = normalized.nextCursor; previewHasMore = Boolean(normalized.nextCursor);
+                container.innerHTML = '';
+                if (previewHasMore) {
+                    const button = document.createElement('button'); button.type = 'button';
+                    button.className = 'chat-load-older'; button.textContent = 'Загрузить предыдущие сообщения';
+                    button.addEventListener('click', () => loadPreviewMessages({ older: true })); container.appendChild(button);
+                }
+                previewMessages.forEach(message => renderMessage(message, container));
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        if (token === conversationToken) await refreshUnreadBadges(chatFriendsCache, chatLifecycle);
+    } catch (error) {
+        if (token === conversationToken) {
+            console.error('Ошибка загрузки безопасной истории чата:', error);
+            container.innerHTML = '<div class="text-center py-3 text-secondary">Не удалось загрузить сообщения. Попробуйте открыть чат ещё раз.</div>';
+        }
+    } finally { previewLoadInFlight = false; }
+}
 function renderMessage(msg, container) {
     const user = auth.currentUser;
     const isMine = msg.senderId === user.uid;
-    const time = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date();
+    const time = chatTimestampDate(msg.createdAt);
     const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const msgEl = document.createElement('div');
     msgEl.className = `message-wrapper ${isMine ? 'mine' : 'theirs'}`;
     msgEl.dataset.messageId = msg.id;
     let replyHTML = msg.replyTo ? `<div class="message-reply">↩️ ${escapeHtml(String(msg.replyTo.text ?? '...').substring(0, 50))}</div>` : '';
-    let reactionsHTML = msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '';
+    const projectedReactionText = formatProjectedReactions(msg.reactions);
+    let reactionsHTML = projectedReactionText ? `<div class="message-reactions">${escapeHtml(projectedReactionText)}</div>` :
+        (msg.reactions && Object.keys(msg.reactions).length > 0 ? `<div class="message-reactions">${Object.values(msg.reactions).map(escapeHtml).join(' ')}</div>` : '');
     const readStateHTML = renderMessageReadState({ isMine, readByRecipient: msg.readByRecipient });
     const displayText = msg.deleted ? '🗑️ Сообщение удалено' : msg.text;
     msgEl.innerHTML = `
-        <div class="message-bubble" oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})">
+        <div class="message-bubble" ${previewChatId ? '' : `oncontextmenu="window.showContextMenu(event, '${msg.id}', ${isMine})"`}>
             ${replyHTML}
             <div class="message-text">${msg.edited ? '<span class="edited-label">(изм.)</span> ' : ''}${escapeHtml(displayText)}</div>
             <div class="message-time">${timeStr}${readStateHTML}</div>
             ${reactionsHTML}
         </div>
-        <div class="message-actions">
+        ${previewChatId ? '' : `<div class="message-actions">
             <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '👍')">👍</button>
             <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '❤️')">❤️</button>
             <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😂')">😂</button>
             <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😮')">😮</button>
             <button class="reaction-btn" onclick="window.addReaction('${msg.id}', '😢')">😢</button>
-        </div>
+        </div>`}
     `;
     container.appendChild(msgEl);
 }
@@ -237,6 +328,13 @@ window.sendMessage = async (text, replyTo = null) => {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        if (previewChatId && chatPreviewTransport) {
+            await chatPreviewTransport.sendMessage({ targetUid: chatFriend.id, messageId: createChatMessageId(), text: text.trim() });
+            document.getElementById('chat-input').value = '';
+            window.cancelReply();
+            await loadPreviewMessages();
+            return;
+        }
         await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
             senderId: user.uid, senderName: currentUserProfile?.nickname || 'User',
             text: text.trim(), createdAt: serverTimestamp(), edited: false, replyTo, reactions: {}
@@ -302,6 +400,8 @@ window.addReaction = async (messageId, reaction) => {
 export function cleanupChatListeners() {
     chatLifecycle++;
     if (messagesUnsubscribe) { messagesUnsubscribe(); messagesUnsubscribe = null; }
+    if (previewRefreshTimer) { clearInterval(previewRefreshTimer); previewRefreshTimer = null; }
+    conversationToken++; previewChatId = null; previewHistoryCursor = null; previewHasMore = false; previewMessages = [];
     onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
     onlineUnsubscribes = [];
     currentChatId = null;
