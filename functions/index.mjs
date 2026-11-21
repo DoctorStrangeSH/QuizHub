@@ -203,3 +203,28 @@ export const achievementUnlockPreview = onCall({
     }
     return achievementPreview(request);
 });
+
+
+// Trusted friendship preview. This endpoint remains restricted to the isolated
+// Auth + Firestore + Functions emulators until the production Rules, legacy
+// social-data audit and owner-approved client migration are complete.
+import { updateFriendship } from '../server/friend-relationships.mjs';
+import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
+
+const friendRelationshipPreviewHandler = createFriendCallableAdapter({
+    update: args => updateFriendship(getFirestore(), args),
+    HttpsError
+});
+export const friendRelationshipPreview = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'FRIEND_RELATIONSHIP_PREVIEW_DISABLED');
+    }
+    return friendRelationshipPreviewHandler(request);
+});
