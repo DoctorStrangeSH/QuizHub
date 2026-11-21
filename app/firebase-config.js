@@ -69,5 +69,7 @@ export {
     arrayRemove,
     increment,
     runTransaction,
-    httpsCallable
+    httpsCallable,
+    getFunctions,
+    connectFunctionsEmulator
 };
