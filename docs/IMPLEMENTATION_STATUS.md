@@ -914,3 +914,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The local preview sends through the trusted send callable and refreshes history/unread badges. It polls the trusted history endpoint while a preview conversation is open so a second emulator account can see new messages and have them marked read.
 - Legacy production chat listener, direct Firestore writes, message actions and production routes remain unchanged. Preview message actions that still require legacy client writes are hidden rather than routed to the new hashed chat document.
 - No production Rules, Functions deployment, live user data or migration is performed. CHAT-05 remains open until two-account browser acceptance and final UI/transport review pass.
+## 70. CHAT-06 trusted message actions preview opened (2026-11-21)
+
+- PR #76 merged into `main` as squash commit `089fce38ce26c420199c236ab6ca0ce96cc074f8`; Question Quality, Firebase Emulator Integration and Visual Preview passed.
+- PR #77 connects the existing authenticated message mutation and reaction callables to the local chat preview transport.
+- Preview message actions now use trusted edit/delete and reaction toggle endpoints. The legacy production UI continues using its existing path; no direct writes are sent to the hashed preview conversation.
+- Transport validation rejects extra identity fields, malformed message/chat IDs, unsupported reactions, blank edit text and delete requests containing text.
+- Backend mutation/reaction emulator tests already run in the Firebase integration workflow; this PR extends browser transport unit coverage and keeps all preview guards intact.
+- Production Rules, deployed Functions, live conversations and migration are unchanged.
