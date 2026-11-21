@@ -118,41 +118,41 @@ test('CHAT lifecycle works end-to-end between two authenticated accounts', {
         assert.equal(aliceHistoryAfterRead.body.result.messages.find(message => message.id === originalMessageId).readByRecipient, true);
 
         const aliceReaction = await invoke(endpoints.reaction, alice, {
-            chatId, messageId, reactionType: 'love'
+            chatId, messageId: originalMessageId, reactionType: 'love'
         });
         const bobReaction = await invoke(endpoints.reaction, bob, {
-            chatId, messageId, reactionType: 'love'
+            chatId, messageId: originalMessageId, reactionType: 'love'
         });
         assert.equal(aliceReaction.body.result.status, 'added');
         assert.equal(bobReaction.body.result.status, 'added');
         let projected = await invoke(endpoints.history, bob, { chatId });
-        assert.deepEqual(projected.body.result.messages[0].reactions, {
+        assert.deepEqual(projected.body.result.messages.find(message => message.id === originalMessageId).reactions, {
             love: { count: 2, reactedByMe: true }
         });
 
         const edited = await invoke(endpoints.mutate, alice, {
-            operation: 'edit', chatId, messageId, text: 'Hello, Bob! (edited)'
+            operation: 'edit', chatId, messageId: originalMessageId, text: 'Hello, Bob! (edited)'
         });
         assert.equal(edited.status, 200, JSON.stringify(edited.body));
         assert.equal(edited.body.result.status, 'updated');
 
         const forbiddenEdit = await invoke(endpoints.mutate, bob, {
-            operation: 'edit', chatId, messageId, text: 'I am not the author'
+            operation: 'edit', chatId, messageId: originalMessageId, text: 'I am not the author'
         });
         assert.equal(forbiddenEdit.body.error?.status, 'PERMISSION_DENIED');
 
         projected = await invoke(endpoints.history, bob, { chatId });
-        assert.equal(projected.body.result.messages[0].text, 'Hello, Bob! (edited)');
-        assert.equal(projected.body.result.messages[0].edited, true);
+        assert.equal(projected.body.result.messages.find(message => message.id === originalMessageId).text, 'Hello, Bob! (edited)');
+        assert.equal(projected.body.result.messages.find(message => message.id === originalMessageId).edited, true);
 
         const deleted = await invoke(endpoints.mutate, alice, {
-            operation: 'delete', chatId, messageId
+            operation: 'delete', chatId, messageId: originalMessageId
         });
         assert.equal(deleted.status, 200, JSON.stringify(deleted.body));
         assert.equal(deleted.body.result.status, 'deleted');
 
         projected = await invoke(endpoints.history, bob, { chatId });
-        const finalMessage = projected.body.result.messages[0];
+        const finalMessage = projected.body.result.messages.find(message => message.id === originalMessageId);
         assert.equal(finalMessage.deleted, true);
         assert.equal(finalMessage.text, null);
         assert.deepEqual(finalMessage.reactions, {});
