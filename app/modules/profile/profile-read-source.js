@@ -27,3 +27,13 @@ export function projectProfileForViewer(viewerUid, targetUid, rawProfile) {
     }
     return buildPublicProfile(targetUid, rawProfile);
 }
+
+
+// Project foreign directory records before they reach friend/search UI code.
+// This is a client-side data minimization boundary, not a substitute for Rules.
+export function projectDirectoryProfile(uid, rawProfile) {
+    if (!rawProfile || typeof rawProfile !== 'object' || Array.isArray(rawProfile)) {
+        throw new TypeError('INVALID_PROFILE_DATA');
+    }
+    return buildPublicProfile(uid, rawProfile);
+}
