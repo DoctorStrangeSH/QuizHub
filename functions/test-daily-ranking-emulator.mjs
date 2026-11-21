@@ -53,6 +53,10 @@ test('real Firestore emulator: seal immutable daily snapshot and pay each ranked
         }
 
         const sealer = createDailyRankingSealService(store);
+        await assert.rejects(
+            sealer.seal({ date, now: sealedAt - 1 }),
+            /DAILY_NOT_CLOSED/
+        );
         const [sealed, replay] = await Promise.all([
             sealer.seal({ date, now: sealedAt }),
             sealer.seal({ date, now: sealedAt })
@@ -111,10 +115,7 @@ test('real Firestore emulator: seal immutable daily snapshot and pay each ranked
             prizeService.claim({ uid: 'not-a-participant-' + suffix, date, now: sealedAt }),
             /DAILY_RESULT_NOT_FOUND/
         );
-        await assert.rejects(
-            sealer.seal({ date, now: sealedAt + 1000 }),
-            /INVALID_SEALED_RANKING|/
-        ).catch(() => {});
+        assert.equal((await sealer.seal({ date, now: sealedAt + 1000 })).alreadySealed, true);
 
         assert.equal((await db.collection('users').doc(alice).get()).data().coins, 107);
     } finally {
