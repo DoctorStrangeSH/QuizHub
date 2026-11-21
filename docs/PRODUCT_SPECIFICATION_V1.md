@@ -559,7 +559,7 @@ V1 принимается по сквозным пользовательским
 - [ ] Проверить повторные, конкурентные, просроченные и поддельные запросы.
 - [x] Daily Challenge не выдаёт соревновательные награды до прохождения этапа (текущий UI явно practice-only; ranked rewards не подключены).
 
-**Промежуточная проверка Daily Challenge (2026-11-21):** серверная 10-вопросная сессия, скрытие ключей ответов, server-owned receipt, повторное завершение, resume и локальный practice-only UI покрыты browser/emulator CI. Ranking seal и idempotent prize claims дополнительно проверены на реальном Firestore Emulator: UTC close boundary, конкурентное запечатывание, неизменяемый snapshot, однократная выдача XP/coins и сохранение посторонних полей профиля. Это не завершает этап 1: остальные режимы, production callable/security cutover и общий anti-cheat acceptance остаются открытыми.\n\n**Выход:** emulator и интеграционные тесты подтверждают, что клиент не может сам назначить результат/награду.
+**Промежуточная проверка Daily Challenge (2026-11-21):** серверная 10-вопросная сессия, скрытие ключей ответов, server-owned receipt, повторное завершение, resume и локальный practice-only UI покрыты browser/emulator CI. Ranking seal и idempotent prize claims дополнительно проверены на реальном Firestore Emulator: UTC close boundary, конкурентное запечатывание, неизменяемый snapshot, однократная выдача XP/coins и сохранение посторонних полей профиля. Это не завершает этап 1: остальные режимы, production callable/security cutover и общий anti-cheat acceptance остаются открытыми.\n\n**Промежуточная проверка стандартных режимов (2026-11-21):** Duel, Survival и Time Trial имеют серверный session service, owner-bound callable boundary и локальный emulator-only preview. Добавлена сквозная Auth + Functions + Firestore Emulator проверка для трёх режимов: серверная выдача вопросов без answer key, ответы/повторы, запрет чужого доступа, атомарный reward claim и сохранение профиля. До прохождения CI эта проверка остаётся pending; даже после PASS этап 1 не закрывается без браузерного cutover, полного набора adversarial сценариев, проверки всех режимов V1 и release gate.\n\n**Выход:** emulator и интеграционные тесты подтверждают, что клиент не может сам назначить результат/награду.
 
 ### Этап 2 — Профили и приватность
 - [ ] Полная проекция publicProfiles.
@@ -677,7 +677,7 @@ V1 принимается по сквозным пользовательским
 | Базовая браузерная игра | Есть в коде | Требуется общая регрессия |
 | Каталог 14 категорий / 765 вопросов | Зафиксирован в README | Качество проверяется CI |
 | Email/Password и Google Auth | Реализована клиентская основа | OAuth и release checklist требуют ручной проверки |
-| Игровые режимы | Клиентские реализации есть | Серверная защита всех режимов не завершена |
+| Игровые режимы | Classic preview и серверные Duel/Survival/Time Trial services; локальный mode preview | Emulator acceptance всех серверных режимов ожидает CI; production client cutover не выполнен |
 | Daily Challenge | Серверная сессия, practice-only UI, ranking seal и prize services покрыты emulator CI | Production leaderboard/reward endpoint и security cutover не включать до общей приёмки этапов 1 и 4 |
 | XP и coins | Есть клиентские старые записи и серверная подготовка | Production anti-cheat не включён |
 | Публичные профили | Клиентская проекция, backfill planner и серверная синхронизация присутствуют в main | `PUBLIC_PROFILE_READS_ENABLED` выключен; сетевой privacy и production rules не подтверждены |
