@@ -23,7 +23,7 @@ let previewHistoryCursor = null;
 let previewHasMore = false;
 let previewMessages = [];
 let previewRefreshTimer = null;
-let previewLoadInFlight = false;
+let previewLoadingToken = null;
 let conversationToken = 0;
 let chatFriendsCache = [];
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -226,9 +226,11 @@ function loadMessages() {
 
 
 async function loadPreviewMessages({ older = false } = {}) {
-    if (!previewChatId || !chatPreviewTransport || previewLoadInFlight) return;
+    if (!previewChatId || !chatPreviewTransport) return;
     const chatId = previewChatId;
     const token = conversationToken;
+    if (previewLoadingToken === token) return;
+    previewLoadingToken = token;
     const container = document.getElementById('chat-messages');
     if (!container) return;
     const previousHeight = container.scrollHeight;
@@ -242,10 +244,8 @@ async function loadPreviewMessages({ older = false } = {}) {
         });
         if (token !== conversationToken || chatId !== previewChatId) return;
         const page = normalizeChatHistoryPage(response, chatId);
-        previewMessages = older
-            ? mergeChatHistoryMessages(previewMessages, page.messages)
-            : mergeChatHistoryMessages([], page.messages);
-        previewHistoryCursor = page.nextCursor;
+        previewMessages = mergeChatHistoryMessages(previewMessages, page.messages);
+        previewHistoryCursor = older ? page.nextCursor : (previewHistoryCursor || page.nextCursor);
         previewHasMore = Boolean(page.nextCursor);
         container.innerHTML = '';
         if (previewHasMore) {
@@ -288,7 +288,7 @@ async function loadPreviewMessages({ older = false } = {}) {
             console.error('Ошибка загрузки безопасной истории чата:', error);
             container.innerHTML = '<div class="text-center py-3 text-secondary">Не удалось загрузить сообщения. Попробуйте открыть чат ещё раз.</div>';
         }
-    } finally { previewLoadInFlight = false; }
+    } finally { if (previewLoadingToken === token) previewLoadingToken = null; }
 }
 function renderMessage(msg, container) {
     const user = auth.currentUser;
