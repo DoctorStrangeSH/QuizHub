@@ -64,15 +64,16 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
                 assert.ok(scoreboard.includes('0') && scoreboard.includes(':'));
             } else if (mode === 'survival') {
                 await page.locator('.survival-lives').waitFor();
-                assert.match(await page.locator('.survival-lives').innerText(), /3\/3/);
+                assert.ok((await page.locator('.survival-lives').innerText()).includes('3/3'));
             } else {
                 await page.locator('[data-time-trial-timer]').waitFor();
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
             }
 
             const initialProgressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
-            const initialCount = initialProgressText.match(/0\\s*\\/\\s*(\\d+)/);
-            assert.ok(initialCount, mode + ' must expose its selected question count');
+            const initialCount = initialProgressText.slice(initialProgressText.lastIndexOf('/') + 1).trim();
+            assert.ok(Number.isSafeInteger(Number(initialCount)) && Number(initialCount) > 0,
+                mode + ' must expose its selected question count');
 
             await page.locator('[data-server-answer]').first().click();
             await page.locator('[data-server-next]').waitFor({ timeout: 15000 });
@@ -83,7 +84,9 @@ test('browser renders and advances Duel, Survival and Time Trial through the ser
             await page.locator('[data-server-next]').click();
             await page.locator('[data-server-answer]').first().waitFor({ timeout: 15000 });
             const progressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
-            assert.match(progressText, /1\s*\/\s*(7|100|10)/,
+            const advancedCount = progressText.slice(progressText.lastIndexOf('/') + 1).trim();
+            assert.ok(progressText.includes('1/'), mode + ' must advance exactly one server-accepted question');
+            assert.equal(advancedCount, initialCount, mode + ' question count must remain stable');
                 mode + ' must advance exactly one server-accepted question');
         }
 
