@@ -1024,3 +1024,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The root `firebase.json` currently configures Functions and Firestore indexes but has no `firestore.rules` mapping; the root Rules file is absent. The deployed Rules source remains unknown until the owner provides the exact current export.
 - Stage 0 remains blocked on verified deployed Firestore Rules and indexes, live collection/schema inventory, Auth provider/domain settings, and tested backup/restore evidence.
 - No production Rules, Functions, indexes, live data, Auth configuration or feature flags were changed.
+
+
+## 82. Production Firebase Stage 0 runbook and deployment-target findings (2026-11-21)
+
+- Added `docs/PRODUCTION_FIREBASE_STAGE0.md` with the evidence checklist, guarded optional read-only inventory instructions, release gates and explicit no-deploy boundary.
+- Confirmed root `.firebaserc` is absent. The Firebase CLI deployment target is therefore not pinned in repository configuration; the browser Firebase config alone does not establish the CLI deployment target.
+- Confirmed `firebase.rules-preview.json` references `tests/fixtures/quiz-sessions.rules`, a narrow emulator preview for quiz-session access, not a complete production Ruleset.
+- CI backup/restore tests use disposable `demo-quizhub` emulators only. No production backup or production restore evidence has been supplied or verified.
+- README and `docs/ECONOMY_SECURITY.md` explicitly state that the browser still writes economy fields directly to `users/{uid}`; server reward endpoints are preparation only and remain emulator-guarded. This remains a V1 release blocker until the complete client migration and production Rules are verified.
+- No live Firestore reads were initiated by this audit. No Production Rules, Functions, indexes, Auth settings, live data or access flags were changed.
+- Next action: collect the exact published Rules/index exports and Auth configuration from the owner; only after approval, run the guarded read-only inventory and review a production backup/restore plan.
