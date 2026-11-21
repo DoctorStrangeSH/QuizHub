@@ -49,6 +49,18 @@ function serializeMessage(snapshot, participants, actorUid, peerReadCursor = nul
         edited: value.edited,
         deleted: value.deleted,
         reactions: projectReactions(value.reactions, participants, actorUid, value.deleted),
+        ...(value.replyTo !== undefined ? {
+            replyTo: (() => {
+                const reply = value.replyTo;
+                if (!reply || typeof reply !== 'object' || Array.isArray(reply) ||
+                    typeof reply.id !== 'string' || !MESSAGE_ID.test(reply.id) ||
+                    !participants.includes(reply.senderId) ||
+                    typeof reply.text !== 'string' || reply.text.length > 160) {
+                    throw new Error('CHAT_MESSAGE_STATE_CONFLICT');
+                }
+                return { id: reply.id, senderId: reply.senderId, text: reply.text };
+            })()
+        } : {}),
         ...(value.senderId === actorUid ? {
             readByRecipient: Boolean(peerReadCursor && value.createdAt &&
                 typeof value.createdAt.toMillis === 'function' &&
