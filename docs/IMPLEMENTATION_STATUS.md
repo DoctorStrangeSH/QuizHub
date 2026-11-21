@@ -941,3 +941,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - CHAT-07 is therefore deferred beyond V1. Its implementation remains preserved on its feature branch for a future, explicitly approved Change Request; it is not merged into `main` and is not a V1 blocker.
 - The PR is closed as deferred to keep the V1 queue limited to approved requirements. No production Firebase configuration, Rules, Functions, or live data are changed.
 - Next V1 priority remains completion of Stage 0 evidence: live read-only Firestore inventory, deployed Rules/index export, Auth provider/domain confirmation, and a verified production backup/restore rehearsal in a disposable environment. These steps require owner-side Firebase access and must not be simulated with emulator results.
+
+
+## 74. Public profile privacy PR reviewed; isolated follow-up required (2026-11-21)
+
+- PR #3 exact head `6d2ed70141afbacf7aac199515657ead19d7fba1` has successful Question Quality (#980), QuizHub Visual Preview (#265), and Firebase Emulator Integration (#579) runs.
+- Despite green CI, PR #3 is not safe to merge as-is: its branch is 110 commits ahead and 103 commits behind current `main`, and the PR changes 58 files (3,860 additions / 107 deletions), mixing profile projection with broad chat, friendship, workflow and migration work.
+- PR #3 was retitled `[Needs rebase]` and its description now records the review decision. It remains open as a draft; no code from it was merged.
+- Current `main` already contains the public-field allowlist (`public-profile-data.js`), viewer projection (`projectProfileForViewer`) and focused projection tests. The public read gate remains disabled.
+- Important limitation: UI-side projection does not prevent the browser from downloading legacy private `users/{uid}` documents. Friends-list and search paths still read legacy user documents while the gate is off. This is not network-level privacy and must not be described as such.
+- Next code task: create a small, current-main-based PR that applies the existing public projection consistently to foreign friend/search/directory data and tests that no private fields reach renderers. Keep the read gate disabled; this task is defense-in-depth only, not a replacement for deployed Rules.
+- Production privacy cutover remains blocked on Stage 0 evidence: live Firestore inventory, deployed Rules/index export, Auth provider/domain confirmation and a verified restorable backup. No production Firebase settings, Rules, Functions or live data were changed.
