@@ -69,8 +69,10 @@ test('browser renders and advances Classic, Duel, Survival and Time Trial throug
                 await page.locator('[data-time-trial-timer]').waitFor();
                 assert.ok((await page.locator('[data-time-trial-value]').innerText()).includes(':'));
             } else {
-                await page.locator('.mode-badge').waitFor();
-                assert.ok((await page.locator('.mode-badge').innerText()).includes('Server mode preview'));
+                const badge = page.locator('.mode-badge');
+                await badge.waitFor();
+                assert.ok((await badge.innerText()).trim().length > 0,
+                    'Classic must show a non-empty mode badge in the active UI locale');
             }
 
             const initialProgressText = await page.locator('.server-mode-preview .quiz-progress').first().innerText();
