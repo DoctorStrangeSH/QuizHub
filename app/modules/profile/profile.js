@@ -114,6 +114,13 @@ export function attachProfileListeners() {
         saveBtnLoading.style.display = 'inline';
         try {
             const nickname = nicknameInput.value.trim();
+            let timeZone = 'UTC';
+            try {
+                const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (typeof detectedTimeZone === 'string' && detectedTimeZone) timeZone = detectedTimeZone;
+            } catch {
+                // UTC is the documented fallback when the browser cannot expose an IANA timezone.
+            }
             const params = new URLSearchParams(window.location.search);
             const profileCreatePreview = ['localhost', '127.0.0.1'].includes(window.location.hostname) &&
                 params.get('firebaseEmulator') === '1' &&
@@ -124,10 +131,10 @@ export function attachProfileListeners() {
                 // creates private/public profile plus nickname claim.
                 // Fail closed; never fall back to client setDoc on transport errors.
                 const { createLocalFirebaseProfileCreateInvoker } = await import('./firebase-profile-create-preview.js');
-                await createLocalFirebaseProfileCreateInvoker()(nickname);
+                await createLocalFirebaseProfileCreateInvoker()(nickname, timeZone);
             } else {
                 await setDoc(doc(db, 'users', user.uid), {
-                nickname, nicknameLower: nickname.toLowerCase(), email: user.email,
+                nickname, nicknameLower: nickname.toLowerCase(), email: user.email, timeZone,
                 createdAt: serverTimestamp(), level: 1, experience: 0, coins: 100,
                 quizzesCompleted: 0, wins: 0, friends: [], friendRequests: [], sentRequests: [],
                 achievements: [], dailyStreak: 0, lastDailyClaim: null,

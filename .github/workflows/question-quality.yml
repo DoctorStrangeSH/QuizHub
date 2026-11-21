@@ -205,6 +205,10 @@ jobs:
       - name: Test server mode Firestore persistence and retries
         run: node --experimental-default-type=module --test tests/server-mode-firestore-persistence.test.mjs
 
+      - name: Test server-authoritative quiz event rewards and timezone rules
+        run: node --experimental-default-type=module --test tests/server-quiz-event-rewards.test.mjs
+      - name: Test private profile timezone persistence and callable validation
+        run: node --experimental-default-type=module --test tests/server-profile-timezone.test.mjs
       - name: Test atomic reward claim contract
         run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
       - name: Test atomic Duel Survival and Time Trial reward claims
