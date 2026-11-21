@@ -683,3 +683,11 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - This is persistence/transaction acceptance only. It does not approve the currently proposed prize amounts, expose a production claim endpoint, enable ranked UI, or authorize a production Rules/Functions deployment.
 - PR #58 merged into main (squash commit `464b4df`). Final head passed all three required checks: Question Quality, Visual Preview, and Firebase Emulator integration.
 - The real Firestore Emulator workflow also completed its read-only backup capture and server-session Rules checks successfully. No production deployment or live database writes were performed.
+## 48. Duel, Survival and Time Trial — authenticated callable emulator acceptance
+
+- Added a real Auth + Functions + Firestore Emulator acceptance test for all three non-Classic V1 modes through the exported, emulator-guarded `quizModePreview` callable.
+- The test creates isolated authenticated users, rejects forged UID/score payloads and cross-user access, and verifies public question payloads omit canonical answer keys and point values.
+- It plays each mode through server-owned start/answer/claim/resume operations, verifies exact answer retries do not add a second transition, and confirms claim retries return the original receipt without a second XP/coin credit.
+- It checks persisted profile balances/statistics and preservation of unrelated profile, preference and social fields.
+- The test uses only `demo-quizhub` emulators, disposable user/session documents and cleanup. It is included in Firebase Emulator CI.
+- This does not authorize browser cutover, production Rules/Functions deployment, or completion of Stage 1; production release blockers and Phase 0 evidence remain open.
