@@ -162,3 +162,38 @@ test('corrupted chronological answer log cannot claim a reward', async () => {
     assert.equal(users.get('player').coins, 7);
     assert.equal(sessions.get('session-1').finalized, false);
 });
+
+
+test('reward claim applies server-time events using the stored player timezone', async () => {
+    const fixture = setup();
+    fixture.users.get('player').timeZone = 'Europe/Berlin';
+    const receipt = await claimSessionReward({
+        store: fixture.store,
+        sessionId: 'session-1',
+        uid: 'player',
+        at: Date.parse('2026-11-21T17:30:00Z')
+    });
+    assert.equal(receipt.score, 30);
+    assert.equal(receipt.xp, 60);
+    assert.equal(receipt.coins, 22);
+    assert.deepEqual(receipt.rewardMultipliers, { xp: 2, coins: 1.5 });
+    assert.deepEqual(receipt.activeRewardEvents, ['xp_weekend', 'happy_hour']);
+    assert.equal(fixture.users.get('player').experience, 65);
+    assert.equal(fixture.users.get('player').coins, 29);
+    assert.equal(fixture.facts.get('player').experience, 60);
+});
+
+test('legacy profiles without timezone use UTC and never accept client multipliers', async () => {
+    const fixture = setup();
+    delete fixture.users.get('player').timeZone;
+    const receipt = await claimSessionReward({
+        store: fixture.store,
+        sessionId: 'session-1',
+        uid: 'player',
+        at: Date.parse('2026-11-21T17:30:00Z')
+    });
+    assert.equal(receipt.xp, 30);
+    assert.equal(receipt.coins, 15);
+    assert.deepEqual(receipt.rewardMultipliers, { xp: 1, coins: 1 });
+    assert.deepEqual(receipt.activeRewardEvents, []);
+});
