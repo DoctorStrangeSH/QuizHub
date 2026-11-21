@@ -700,3 +700,5 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - It verifies mode-specific UI (Duel scoreboard, Survival lives, Time Trial clock), submits an answer through the real callable transport, checks server feedback, advances to the next question and confirms the accepted progress counter.
 - The test fails closed outside project `demo-quizhub` with Auth and Firestore emulators, removes its disposable sessions/account, and is included in Firebase Emulator CI.
 - This is one-question UI acceptance only. The complete session/reward lifecycle remains covered by the separate server callable integration test. Production UI and Rules remain unchanged.
+- PR #60 merged into main (squash commit `6f0bd4b`). All required checks passed: Question Quality, Visual Preview, and Firebase Emulator integration.
+- The authenticated Playwright test verified all three mode-specific preview interfaces and server-backed answer/progress flow on isolated Firebase emulators. This remains an emulator-only preview; no production UI or Rules cutover occurred.
