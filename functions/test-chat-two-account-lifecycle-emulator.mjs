@@ -156,8 +156,9 @@ test('CHAT lifecycle works end-to-end between two authenticated accounts', {
         assert.equal(finalMessage.deleted, true);
         assert.equal(finalMessage.text, null);
         assert.deepEqual(finalMessage.reactions, {});
+        // Deleting an older message must not overwrite the newer reply preview.
         assert.equal((await db.collection('chats').doc(chatId).get()).data().lastMessagePreview,
-            'Сообщение удалено');
+            'Replying to your greeting');
     } finally {
         if (chatId) {
             const messages = await db.collection('chats').doc(chatId).collection('messages').get().catch(() => null);
