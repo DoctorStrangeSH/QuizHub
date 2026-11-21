@@ -68,7 +68,6 @@ test('existing profile timezone callable updates only the authenticated private 
         assert.equal(bobProfile.timeZone, 'UTC');
         assert.equal(bobProfile.coins, 17);
 
-        const missing = await invoke(bob, { timeZone: 'UTC' });
         await db.collection('users').doc(bob.uid).delete();
         const missingAfterDelete = await invoke(bob, { timeZone: 'UTC' });
         assert.equal(missingAfterDelete.body.error?.status, 'NOT_FOUND');
