@@ -709,3 +709,17 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Existing authenticated Daily Challenge browser acceptance continues to exercise the callable through the emulators.
 - This source change does not prove or change which Functions are currently deployed. Phase 0 still requires the owner/operator to inventory deployed Functions; if an older `dailyChallenge` deployment exists, it remains live until a separately approved deployment updates it.
 - No production deployment, Rules change, or live data access was performed.
+
+## 51. Daily Challenge callable emulator guard merged
+
+- PR #61 merged into main (squash commit `b937b03`).
+- `dailyChallenge` now has the same fail-closed `demo-quizhub` + Auth/Firestore/Functions Emulator guard as the other preview callables.
+- All three required workflows passed: Question Quality, Visual Preview and Firebase Emulator integration.
+- No production deployment, Rules change or live data access was performed. This source change does not update a previously deployed Function; Phase 0 deployed Functions inventory remains required.
+
+## 52. Callable emulator guard regression prevention
+
+- PR #62 merged into main (squash commit `9f7fab1`).
+- Added `tests/firebase-callable-emulator-guards.test.mjs`, which enumerates all exported `onCall` functions and asserts the project, Auth, Firestore and Functions Emulator checks plus fail-closed behavior.
+- Added the test to Question Quality CI so newly exported callables cannot silently omit the emulator guard.
+- Final CI passed: Question Quality, Visual Preview and Firebase Emulator integration. No production deployment or live data access.
