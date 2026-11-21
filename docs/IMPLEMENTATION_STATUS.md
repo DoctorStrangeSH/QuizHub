@@ -1035,3 +1035,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - README and `docs/ECONOMY_SECURITY.md` explicitly state that the browser still writes economy fields directly to `users/{uid}`; server reward endpoints are preparation only and remain emulator-guarded. This remains a V1 release blocker until the complete client migration and production Rules are verified.
 - No live Firestore reads were initiated by this audit. No Production Rules, Functions, indexes, Auth settings, live data or access flags were changed.
 - Next action: collect the exact published Rules/index exports and Auth configuration from the owner; only after approval, run the guarded read-only inventory and review a production backup/restore plan.
+
+
+## 83. Active client write-path audit (2026-11-21)
+
+- Added `docs/CLIENT_WRITE_PATH_AUDIT.md` after tracing default browser mutation paths on `main`.
+- Confirmed the normal Production client still writes quiz XP/coins/stats directly from `app/modules/quiz/modes/base.js`; the trusted quiz callable remains emulator-only.
+- Confirmed shop purchases/equips, achievements, friend transitions and chat message send/edit/delete/reactions still have direct Firestore fallback paths in the normal browser flow. Their trusted callable previews are activated only by explicit local-emulator flags.
+- Profile creation still defaults to direct `setDoc(users/{uid})`; its trusted callable is a local-emulator preview. Chat presence also writes `online/{uid}` directly and needs explicit Rules/ownership review.
+- These source findings establish a migration gap, not the current success/failure of Production writes: deployed Firestore Rules remain unknown.
+- This is a V1 release blocker. The cutover must migrate each active client flow and deploy compatible Rules together; do not tighten Production Rules before the currently published client has a compatible trusted path.
+- No Production Rules, Functions, indexes, Auth settings, user/chat documents, economy values or feature flags were changed.
