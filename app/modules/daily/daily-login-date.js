@@ -9,7 +9,9 @@ export function toValidDate(value) {
         }
         if (value && typeof value.toMillis === 'function') {
             const millis = value.toMillis();
-            return Number.isSafeInteger(millis) && millis >= 0 ? new Date(millis) : null;
+            if (!Number.isSafeInteger(millis) || millis < 0) return null;
+            const date = new Date(millis);
+            return Number.isFinite(date.getTime()) ? date : null;
         }
         if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) {
             const date = new Date(value);
