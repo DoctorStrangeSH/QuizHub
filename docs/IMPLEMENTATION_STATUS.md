@@ -723,3 +723,25 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - Added `tests/firebase-callable-emulator-guards.test.mjs`, which enumerates all exported `onCall` functions and asserts the project, Auth, Firestore and Functions Emulator checks plus fail-closed behavior.
 - Added the test to Question Quality CI so newly exported callables cannot silently omit the emulator guard.
 - Final CI passed: Question Quality, Visual Preview and Firebase Emulator integration. No production deployment or live data access.
+
+
+## 53. Classic server-mode browser acceptance merged (2026-11-21)
+
+- PR #63 merged into `main` as squash commit `4c7b09f8d8529ecadda89852ea6133d8d38e4d39`.
+- The shared server-mode session storage adapter now accepts and persists Classic session IDs alongside Survival, Duel and Time Trial; unsupported modes remain rejected.
+- The authenticated Playwright browser acceptance now covers all four modes through the actual quiz route and callable transport, checks mode-specific UI, verified answer feedback and one-question progression.
+- A locale-sensitive assertion was corrected: Classic acceptance now requires a non-empty mode badge rather than hard-coding the English label, so the test works with the Russian default locale.
+- Final required CI checks passed: Firebase Emulator integration, Question Quality and Visual Preview. Emulator integration also completed its isolated read-only Firestore snapshot capture and server-owned session Rules checks.
+- All changes remain emulator/test-only. No production client cutover, Firebase deployment, Rules change or live data access occurred.
+
+### Current next step — Phase 0 owner evidence
+
+The only open pull request is the legacy PR #3. It remains intentionally unmerged; do not merge it wholesale.
+
+Development is now blocked on production evidence that cannot be inferred from repository tests:
+1. Owner-run read-only live Firestore inventory JSON for project `quizhub-e65f5`.
+2. Current deployed Firestore Rules and indexes exports.
+3. Firebase Authentication provider and authorized-domain settings.
+4. Production backup configuration and a verified restore rehearsal in a safe separate environment.
+
+Until these are reviewed, do not deploy restrictive Rules, migrate live profiles, enable production server-mode cutover, or delete legacy data.
