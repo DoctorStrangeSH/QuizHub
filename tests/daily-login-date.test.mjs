@@ -32,5 +32,6 @@ test('invalid timestamps fail closed instead of accidentally enabling a claim', 
     assert.equal(toValidDate(null), null);
     assert.equal(toValidDate(new Date(NaN)), null);
     assert.equal(toValidDate({ toMillis: () => NaN }), null);
+    assert.equal(toValidDate({ toMillis: () => Number.MAX_SAFE_INTEGER }), null);
     assert.equal(canClaimOnUtcDate(null, new Date(NaN)), false);
 });
