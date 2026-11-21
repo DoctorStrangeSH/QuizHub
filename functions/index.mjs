@@ -113,7 +113,7 @@ export const profileCreatePreview = onCall({
     return profilePreview(request);
 });
 
-const profileTimeZonePreview = createProfileTimeZoneCallableAdapter({
+const profileTimeZoneHandler = createProfileTimeZoneCallableAdapter({
     update: args => updatePlayerTimeZone(getFirestore(), args),
     HttpsError
 });
@@ -131,7 +131,7 @@ export const profileTimeZonePreview = onCall({
     if (!emulatorProject || !isolated) {
         throw new HttpsError('failed-precondition', 'PROFILE_TIMEZONE_PREVIEW_DISABLED');
     }
-    return profileTimeZonePreview(request);
+    return profileTimeZoneHandler(request);
 });
 
 const modeStore = createQuizFirestoreStore(getFirestore());
