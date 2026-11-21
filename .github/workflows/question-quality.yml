@@ -52,7 +52,7 @@ jobs:
       - name: Verify messenger display and secure chat rendering
         run: node --test tests/messenger-design.test.mjs
       - name: Test trusted CHAT-01 and CHAT-02 service and callable boundaries
-        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs tests/server-chat-history.test.mjs tests/server-chat-history-callable.test.mjs tests/server-chat-message-mutations.test.mjs tests/server-chat-message-mutation-callable.test.mjs tests/server-chat-message-reactions.test.mjs tests/server-chat-reaction-callable.test.mjs tests/server-chat-read-receipts.test.mjs tests/server-chat-read-receipt-callable.test.mjs tests/server-chat-unread-count.test.mjs tests/server-chat-unread-count-callable.test.mjs
+        run: node --experimental-default-type=module --test tests/server-chat-messages.test.mjs tests/server-chat-send-callable.test.mjs tests/server-chat-history.test.mjs tests/server-chat-history-callable.test.mjs tests/server-chat-message-mutations.test.mjs tests/server-chat-message-mutation-callable.test.mjs tests/server-chat-message-reactions.test.mjs tests/server-chat-reaction-callable.test.mjs tests/server-chat-read-receipts.test.mjs tests/server-chat-read-receipt-callable.test.mjs tests/server-chat-unread-count.test.mjs tests/server-chat-unread-count-callable.test.mjs tests/chat-read-indicator-ui.test.mjs
       - name: Verify tournament hall and daily reward visuals
         run: node --test tests/event-hall-design.test.mjs
       - name: Test PWA refresh and mobile visual overrides
@@ -108,6 +108,7 @@ jobs:
           node --check server/chat-messages.mjs
           node --check server/chat-send-callable-adapter.mjs
           node --check server/chat-history.mjs
+          node --check app/modules/chat/chat-read-indicator.js
           node --check server/chat-history-callable-adapter.mjs
           node --check server/chat-message-mutations.mjs
           node --check server/chat-message-mutation-callable-adapter.mjs
