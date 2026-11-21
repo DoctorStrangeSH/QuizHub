@@ -6,6 +6,7 @@ function fixture() {
     const records = new Map();
     const ref = path => ({
         path,
+        id: path.split('/').at(-1),
         collection(name) { return { doc(id) { return ref(path + '/' + name + '/' + id); } }; }
     });
     const db = {
