@@ -394,3 +394,13 @@
 }
 .message-read-state.is-sent { opacity: .55; }
 .message-read-state.is-read { color: #b8fa55; opacity: 1; }
+/* Trusted unread counters: visible only in the local CHAT preview. */
+.chat-friend-item { position: relative; }
+.chat-friend-unread { margin-left: auto; display: inline-flex; align-items: center; }
+.chat-unread-badge, .chat-unread-total {
+    display: inline-flex; min-width: 21px; height: 21px; padding: 0 6px;
+    align-items: center; justify-content: center; border-radius: 999px;
+    background: var(--accent, #7c5cff); color: #fff; font-size: 11px;
+    font-weight: 800; line-height: 1; white-space: nowrap;
+}
+.chat-unread-total { margin-left: 7px; vertical-align: middle; }
