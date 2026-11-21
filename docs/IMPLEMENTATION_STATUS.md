@@ -693,3 +693,10 @@ Automated UI contract tests cover the scoreboard, round feedback, localized labe
 - This does not authorize browser cutover, production Rules/Functions deployment, or completion of Stage 1; production release blockers and Phase 0 evidence remain open.
 - PR #59 merged into main (squash commit `b9b6732`). Final head passed Question Quality, Visual Preview, and Firebase Emulator integration.
 - The real emulator run also completed the read-only backup capture and server-session Rules checks. No production deployment or live database writes were performed.
+## 49. Duel, Survival and Time Trial — browser UI preview acceptance
+
+- Added an authenticated Playwright browser test that opens the actual quiz route with the explicit localhost + `firebaseEmulator=1&serverModePreview=1` opt-in.
+- The browser signs in through Auth Emulator and renders the existing server-mode preview screen for Duel, Survival and Time Trial.
+- It verifies mode-specific UI (Duel scoreboard, Survival lives, Time Trial clock), submits an answer through the real callable transport, checks server feedback, advances to the next question and confirms the accepted progress counter.
+- The test fails closed outside project `demo-quizhub` with Auth and Firestore emulators, removes its disposable sessions/account, and is included in Firebase Emulator CI.
+- This is one-question UI acceptance only. The complete session/reward lifecycle remains covered by the separate server callable integration test. Production UI and Rules remain unchanged.
