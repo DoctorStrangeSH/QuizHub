@@ -816,3 +816,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - `chatSendPreviewCallable` is exported only behind the demo project + Auth/Firestore/Functions emulator guard. A two-account + non-friend third-account emulator acceptance test and unit tests are added to CI.
 - This slice does not yet migrate chat history reads, editing, deletion, reactions, unread/read cursors, online presence, Firestore Rules or production traffic. Those remain separate acceptance gates.
 - PR #68 is opened for CHAT-01 send backend; merge only after Question Quality, Firebase Emulator Integration and Visual Preview all pass.
+
+
+## 61. CHAT-01 trusted message sending merged; CHAT-02 history read opened (2026-11-21)
+
+- PR #68 merged into `main` as squash commit `c1d7d769b474509a5b640dd787d863ac855844e1`. Question Quality, Firebase Emulator Integration and Visual Preview all passed.
+- CHAT-01 now provides transactional, idempotent direct-message sending for mutually connected friends through an emulator-only callable. The three-account emulator acceptance passed, including a non-friend stranger, duplicate retry and profile/economy preservation.
+- CHAT-02 adds a separate trusted history read service and callable. It verifies the caller is one of exactly two participants in the server-owned chat document, paginates newest-first with a bounded page size (max 50), validates cursor IDs, allowlists returned fields and hides deleted message text.
+- Existing chat membership is based on the persisted chat participant list, so removing a friendship does not silently erase access to an already-created conversation. Both participants retain access; strangers do not.
+- The history callable is restricted to the demo project with Auth, Firestore and Functions emulators active. No production Rules or chat UI is changed.
+- Added unit/callable tests plus a three-account emulator acceptance test for participant-only reads, cursor pagination, forged actor rejection and anonymous access denial.
+- PR #69 is opened for CHAT-02; acceptance requires Question Quality, Firebase Emulator Integration and Visual Preview.
+- Production chat reads remain on the existing legacy path until the broader Rules and data migration is completed. No production deployment or live data changes.

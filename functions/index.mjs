@@ -32,6 +32,7 @@ import { createAchievementCallableAdapter } from '../server/firebase-achievement
 import { updateFriendship } from '../server/friend-relationships.mjs';
 import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
 import { createFirestoreChatSendCallable } from '../server/chat-send-callable-adapter.mjs';
+import { createFirestoreChatHistoryCallable } from '../server/chat-history-callable-adapter.mjs';
 
 if (!getApps().length) initializeApp();
 const store = createDailyFirestoreStore(getFirestore());
@@ -246,4 +247,22 @@ export const chatSendPreviewCallable = onCall({
         throw new HttpsError('failed-precondition', 'CHAT_SEND_PREVIEW_DISABLED');
     }
     return chatSendPreview(request);
+});
+
+
+// CHAT-02 history preview. Reads are allowed only to one of the two
+// participants stored in the server-owned chat parent document.
+const chatHistoryPreview = createFirestoreChatHistoryCallable({ db: getFirestore(), HttpsError });
+export const chatHistoryPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'CHAT_HISTORY_PREVIEW_DISABLED');
+    }
+    return chatHistoryPreview(request);
 });
