@@ -14,7 +14,7 @@ const EXPECTED_PREVIEW_CALLABLES = [
 
 test('every exported callable preview fails closed outside the isolated Firebase emulators', async () => {
     const source = await readFile(new URL('../functions/index.mjs', import.meta.url), 'utf8');
-    const declarations = [...source.matchAll(/export const (\\w+)\\s*=\\s*onCall\\(/g)];
+    const declarations = [...source.matchAll(/export const (\w+)\s*=\s*onCall\(/g)];
 
     assert.deepEqual(
         declarations.map(match => match[1]).sort(),
@@ -28,12 +28,12 @@ test('every exported callable preview fails closed outside the isolated Firebase
         const body = source.slice(declaration.index, end);
         const name = declaration[1];
 
-        assert.match(body, /GCLOUD_PROJECT\\s*\\|\\|\\s*process\\.env\\.GOOGLE_CLOUD_PROJECT/,` ${name}: project identity must be checked`);
-        assert.match(body, /===\\s*'demo-quizhub'/,` ${name}: only the demo emulator project is allowed`);
-        assert.match(body, /process\\.env\\.FIRESTORE_EMULATOR_HOST/,` ${name}: Firestore Emulator must be active`);
-        assert.match(body, /process\\.env\\.FIREBASE_AUTH_EMULATOR_HOST/,` ${name}: Auth Emulator must be active`);
-        assert.match(body, /process\\.env\\.FUNCTIONS_EMULATOR/,` ${name}: Functions Emulator must be active`);
-        assert.match(body, /if\\s*\\(!emulatorProject\\s*\\|\\|\\s*!isolated\\)/,` ${name}: missing fail-closed guard`);
-        assert.match(body, /new HttpsError\\('failed-precondition'/,` ${name}: production invocation must be rejected`);
+        assert.match(body, /GCLOUD_PROJECT\s*\|\|\s*process\.env\.GOOGLE_CLOUD_PROJECT/, \`\${name}: project identity must be checked\`);
+        assert.match(body, /===\s*'demo-quizhub'/, \`\${name}: only the demo emulator project is allowed\`);
+        assert.match(body, /process\.env\.FIRESTORE_EMULATOR_HOST/, \`\${name}: Firestore Emulator must be active\`);
+        assert.match(body, /process\.env\.FIREBASE_AUTH_EMULATOR_HOST/, \`\${name}: Auth Emulator must be active\`);
+        assert.match(body, /process\.env\.FUNCTIONS_EMULATOR/, \`\${name}: Functions Emulator must be active\`);
+        assert.match(body, /if\s*\(!emulatorProject\s*\|\|\s*!isolated\)/, \`\${name}: missing fail-closed guard\`);
+        assert.match(body, /new HttpsError\('failed-precondition'/, \`\${name}: production invocation must be rejected\`);
     }
 });
