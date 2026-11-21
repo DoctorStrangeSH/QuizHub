@@ -63,3 +63,12 @@ test('friend list and request renderers use projected records', () => {
     assert.ok(source.includes('projectDirectoryProfile(sentId, sentDoc.data())'));
     assert.ok(source.includes('projectDirectoryProfile(docSnap.id, docSnap.data())'));
 });
+
+
+test('chat friend cards use viewer-aware profile reads and public projection', () => {
+    const chat = readFileSync(new URL('../app/modules/chat/chat.js', import.meta.url), 'utf8');
+    assert.match(chat, /profileCollectionForViewer\(user\.uid, friendId\)/);
+    assert.match(chat, /projectDirectoryProfile\(friendId, friendDoc\.data\(\)\)/);
+    assert.doesNotMatch(chat, /getDoc\(doc\(db, 'users', friendId\)\)/);
+    assert.match(chat, /getDoc\(doc\(db, 'users', user\.uid\)\)/);
+});

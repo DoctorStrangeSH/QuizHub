@@ -2,6 +2,7 @@ import { getState } from '../../store/state.js';
 import { renderMessageReadState } from './chat-read-indicator.js';
 import { createFirebaseChatTransport } from './firebase-chat-transport.js';
 import { createDirectChatId, renderUnreadBadge } from './chat-unread-badges.js';
+import { profileCollectionForViewer, projectDirectoryProfile } from '../profile/profile-read-source.js';
 import { chatTimestampDate, normalizeChatHistoryPage, mergeChatHistoryMessages, latestIncomingMessageId, formatProjectedReactions, createChatMessageId } from './chat-preview-history.js';
 import {
     auth, db, functions, httpsCallable, doc, getDoc, setDoc, updateDoc,
@@ -131,8 +132,15 @@ export async function loadChatFriends() {
         if (friends.length === 0) { list.innerHTML = '<div class="text-center py-3 text-secondary">Нет друзей для чата</div>'; return; }
         const friendsData = [];
         for (const friendId of friends) {
-            const friendDoc = await getDoc(doc(db, 'users', friendId));
-            if (friendDoc.exists()) friendsData.push({ id: friendId, ...friendDoc.data() });
+            try {
+                const collectionName = profileCollectionForViewer(user.uid, friendId);
+                const friendDoc = await getDoc(doc(db, collectionName, friendId));
+                if (friendDoc.exists()) {
+                    friendsData.push({ id: friendId, ...projectDirectoryProfile(friendId, friendDoc.data()) });
+                }
+            } catch (error) {
+                console.warn('Пропускаем некорректный профиль собеседника:', friendId);
+            }
         }
         onlineUnsubscribes.forEach(unsubscribe => unsubscribe());
         onlineUnsubscribes = [];
