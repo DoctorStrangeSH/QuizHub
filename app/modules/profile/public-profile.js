@@ -45,6 +45,7 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
     }
     const timeZoneSettings = isOwnProfile ? renderProfileTimeZoneSettings({
         timeZone: p.timeZone || detectedTimeZone,
+        savedTimeZone: p.timeZone || '',
         detectedTimeZone,
         language: lang,
         previewEnabled: isProfileTimeZonePreviewEnabled(window.location, auth)
