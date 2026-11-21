@@ -33,9 +33,13 @@ test('send, history, read receipt and unread count call only their trusted previ
     assert.deepEqual(await transport.readHistory({chatId,pageSize:20}),{ok:true,name:'chatHistoryPreviewCallable'});
     assert.deepEqual(await transport.markRead({chatId,upToMessageId:messageId}),{ok:true,name:'chatReadReceiptPreviewCallable'});
     assert.deepEqual(await transport.getUnreadCount({chatId}),{ok:true,name:'chatUnreadCountPreviewCallable'});
+    assert.deepEqual(await transport.mutateMessage({operation:'edit',chatId,messageId,text:'updated'}),{ok:true,name:'chatMessageMutationPreviewCallable'});
+    assert.deepEqual(await transport.mutateMessage({operation:'delete',chatId,messageId}),{ok:true,name:'chatMessageMutationPreviewCallable'});
+    assert.deepEqual(await transport.toggleReaction({chatId,messageId,reactionType:'love'}),{ok:true,name:'chatReactionPreviewCallable'});
     assert.deepEqual(calls.map(x=>x.name),[
         'chatSendPreviewCallable','chatHistoryPreviewCallable',
-        'chatReadReceiptPreviewCallable','chatUnreadCountPreviewCallable'
+        'chatReadReceiptPreviewCallable','chatUnreadCountPreviewCallable',
+        'chatMessageMutationPreviewCallable','chatMessageMutationPreviewCallable','chatReactionPreviewCallable'
     ]);
     assert.deepEqual(calls[0].payload,{targetUid:'bob',messageId,text:' hello '});
 });
@@ -46,5 +50,10 @@ test('transport rejects forged identity fields, extra keys and malformed cursors
     await assert.rejects(transport.readHistory({chatId,actorUid:'alice'}),/INVALID_CHAT_HISTORY_REQUEST/);
     await assert.rejects(transport.markRead({chatId,upToMessageId:messageId,actorUid:'bob'}),/INVALID_CHAT_READ_RECEIPT/);
     await assert.rejects(transport.getUnreadCount({chatId,uid:'alice'}),/INVALID_CHAT_UNREAD_REQUEST/);
+    await assert.rejects(transport.mutateMessage({operation:'delete',chatId,messageId,text:'forged'}),/INVALID_CHAT_MESSAGE_MUTATION/);
+    await assert.rejects(transport.mutateMessage({operation:'edit',chatId,messageId,text:'   '}),/INVALID_CHAT_MESSAGE_MUTATION/);
+    await assert.rejects(transport.mutateMessage({operation:'edit',chatId,messageId,text:'hi',actorUid:'alice'}),/INVALID_CHAT_MESSAGE_MUTATION/);
+    await assert.rejects(transport.toggleReaction({chatId,messageId,reactionType:'evil'}),/INVALID_CHAT_REACTION/);
+    await assert.rejects(transport.toggleReaction({chatId,messageId,reactionType:'like',actorUid:'alice'}),/INVALID_CHAT_REACTION/);
     await assert.rejects(transport.readHistory({chatId,pageSize:51}),/INVALID_CHAT_HISTORY_REQUEST/);
 });
