@@ -13,8 +13,10 @@ function memoryStorage() {
 
 test('mode session storage persists independent mode session ids', () => {
     const storage = createModeSessionStorage(memoryStorage());
+    storage.write('classic', 'classic-session');
     storage.write('survival', 'survival-session');
     storage.write('duel', 'duel-session');
+    assert.equal(storage.read('classic'), 'classic-session');
     assert.equal(storage.read('survival'), 'survival-session');
     assert.equal(storage.read('duel'), 'duel-session');
     assert.equal(storage.read('time'), null);
@@ -29,6 +31,6 @@ test('mode session storage clears a completed mode session', () => {
 
 test('mode session storage rejects unsupported modes and invalid ids', () => {
     const storage = createModeSessionStorage(memoryStorage());
-    assert.throws(() => storage.read('classic'), /UNSUPPORTED_QUIZ_MODE/);
+    assert.throws(() => storage.read('daily'), /UNSUPPORTED_QUIZ_MODE/);
     assert.throws(() => storage.write('survival', '  '), /INVALID_SESSION_ID/);
 });
