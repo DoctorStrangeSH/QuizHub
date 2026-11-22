@@ -123,8 +123,9 @@ export function auditLegacyProgressionProfile({ uid, profile, existingAchievemen
                     anomalies.push({ code: 'INVALID_EXISTING_ACHIEVEMENT_FACT', path: 'achievementFacts.' + key });
                 }
             }
-            if (Array.isArray(existingAchievementFacts.unlockedIds) &&
-                existingAchievementFacts.unlockedIds.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
+            if (existingAchievementFacts.unlockedIds !== undefined &&
+                (!Array.isArray(existingAchievementFacts.unlockedIds) ||
+                    existingAchievementFacts.unlockedIds.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id)))) {
                 anomalies.push({ code: 'INVALID_EXISTING_ACHIEVEMENT_FACTS', path: 'achievementFacts.unlockedIds' });
             }
         }
