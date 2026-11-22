@@ -101,7 +101,8 @@ test('profile UI renders localized locked and emulator-preview states and is own
 
 test('history panel never uses direct Firestore reads or displays unverified legacy activity', () => {
     const ui = readFileSync(new URL('../app/modules/profile/account-ledger-history.js', import.meta.url), 'utf8');
-    assert.match(ui, /accountLedgerHistoryPreviewCallable/);
+    const invoker = readFileSync(new URL('../app/modules/profile/firebase-account-ledger-history-invoker.js', import.meta.url), 'utf8');
+    assert.match(invoker, /accountLedgerHistoryPreviewCallable/);
     assert.doesNotMatch(ui, /getDocs|collection\(db|onSnapshot/);
     assert.match(ui, /Старые неподтверждённые записи/);
 });
