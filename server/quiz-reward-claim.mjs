@@ -57,6 +57,7 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
             perfectDelta: Number(perfect)
         });
         const nextUser = {
+            ...(achievementProgress.facts.baselineTrusted === true ? { level: achievementProgress.facts.level } : {}),
             ...user,
             achievements: achievementProgress.achievements,
             experience: add(user.experience, xp),
