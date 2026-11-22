@@ -1,3 +1,5 @@
+import { createAccountLedgerFirestoreWriter } from './account-ledger-firestore-writer.mjs';
+
 const UID = /^[^/\x00-\x1f]{1,256}$/;
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
 function requireUid(uid) {
@@ -15,7 +17,9 @@ export function createAchievementFirestoreStore(db) {
     return {
         runTransaction(callback) {
             if (typeof callback !== 'function') throw new Error('INVALID_TRANSACTION_CALLBACK');
-            return db.runTransaction(async native => callback({
+            return db.runTransaction(async native => {
+                const ledger = createAccountLedgerFirestoreWriter(db, native);
+                return callback({
                 getAchievementFacts: async uid => data(await native.get(factsRef(uid))),
                 getUser: async uid => data(await native.get(userRef(uid))),
                 setAchievementFacts: async (uid, facts) => {
@@ -38,10 +42,12 @@ export function createAchievementFirestoreStore(db) {
                     native.update(userRef(uid), patch);
                 },
                 createUnlockReceipts: async (uid, ids) => {
-                    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) throw new Error('INVALID_ACHIEVEMENT_RECEIPT');
+                    if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) throw new Error('INVALID_ACHIEVEMENT_RECEIPT');
                     for (const id of ids) native.create(receiptRef(uid, id), { achievementId: id, unlockedAt: new Date() });
-                }
-            }));
+                },
+                createLedgerEntry: async entry => ledger.create(entry)
+                });
+            });
         }
     };
 }

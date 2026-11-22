@@ -1160,3 +1160,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Scope remains intentionally partial: quiz rewards, daily login rewards, refunds and achievement unlocks are not yet wired to the ledger; no history endpoint/UI or backfill is included.
 - No Production Firebase reads/writes, Rules/index changes, Functions deployment, migration/import, Auth changes or feature-flag changes were made.
 - Next: wire the existing trusted quiz-reward, daily-login and achievement-unlock transactions to the same append-only ledger contract (each in the exact balance/reward transaction), then implement and test an owner-scoped paginated history reader. Preserve legacy activity as explicitly unverified.
+
+
+## 95. Achievement unlock account ledger integration (2026-11-22)
+
+- Added canonical `achievement_unlock` ledger events to the trusted achievement evaluation transaction.
+- Each newly unlocked achievement creates one deterministic per-account event keyed by achievement ID; existing unlock receipts and profile achievement IDs remain intact.
+- Ledger event records zero coin/XP delta and the achievement ID, so unlock history is auditable without implying a currency grant.
+- Firestore writer uses create-only semantics in the same native transaction as achievement facts, profile projection and immutable unlock receipts.
+- Added unit and Firestore adapter coverage for exact event count, event shape and idempotent concurrent evaluations.
+- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills.
+- Account ledger rollout remains incomplete until quiz modes, refunds (if supported in V1) and the owner-scoped paginated history reader are audited/integrated. Legacy activity remains unverified.

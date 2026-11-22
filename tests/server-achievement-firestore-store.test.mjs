@@ -39,6 +39,13 @@ test('Firestore adapter reads server facts and writes only user achievements plu
     assert.deepEqual(db.docs.get('users/alice').achievements, ['first_quiz']);
     assert.equal(db.docs.get('users/alice').coins, 40);
     assert.equal(db.docs.get('users/alice').nickname, 'Alice');
+    const ledgerDocs = [...db.docs.entries()].filter(([path]) => path.startsWith('accountLedger/alice/entries/'));
+    assert.equal(ledgerDocs.length, 1);
+    assert.equal(ledgerDocs[0][1].type, 'achievement_unlock');
+    assert.equal(ledgerDocs[0][1].achievementId, 'first_quiz');
+    assert.equal(ledgerDocs[0][1].sourceId, 'first_quiz');
+    assert.equal(ledgerDocs[0][1].coinsDelta, 0);
+    assert.equal(ledgerDocs[0][1].xpDelta, 0);
     assert.deepEqual(db.docs.get('achievementUnlockReceipts/alice/unlocks/first_quiz'), {
         achievementId: 'first_quiz',
         unlockedAt: db.docs.get('achievementUnlockReceipts/alice/unlocks/first_quiz').unlockedAt

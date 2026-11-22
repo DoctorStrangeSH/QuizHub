@@ -1,3 +1,4 @@
+import { createAccountLedgerEntry } from './account-ledger-entry.mjs';
 import { ACHIEVEMENT_CATALOG } from './achievement-catalog.mjs';
 
 const ID = /^[a-z0-9_]{1,64}$/;
@@ -36,6 +37,13 @@ export function createAchievementUnlockService({ store, catalog = ACHIEVEMENT_CA
                     await tx.setAchievementFacts(uid, { ...facts, unlockedIds: nextServerUnlocked });
                     await tx.setUserPatch(uid, { achievements: [...new Set([...legacyAchievements, ...nextServerUnlocked])] });
                     await tx.createUnlockReceipts(uid, newlyUnlocked);
+                    const occurredAt = Date.now();
+                    for (const achievementId of newlyUnlocked) {
+                        await tx.createLedgerEntry(createAccountLedgerEntry({
+                            uid, type: 'achievement_unlock', sourceId: achievementId,
+                            achievementId, occurredAt, coinsDelta: 0, xpDelta: 0
+                        }));
+                    }
                 }
                 return {
                     unlocked: [...new Set([...legacyAchievements, ...nextServerUnlocked])],
