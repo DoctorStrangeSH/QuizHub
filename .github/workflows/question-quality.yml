@@ -242,8 +242,12 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-profile-timezone.test.mjs
       - name: Test existing-account timezone preference update boundary
         run: node --experimental-default-type=module --test tests/server-profile-timezone-update.test.mjs
-      - name: Test atomic reward claim contract
+      - name: Test atomic reward claim and account ledger contract
         run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
+      - name: Syntax-check quiz reward ledger integration
+        run: |
+          node --check server/quiz-reward-claim.mjs
+          node --check server/quiz-firestore-store.mjs
       - name: Test atomic Duel Survival and Time Trial reward claims
         run: node --experimental-default-type=module --test tests/server-quiz-mode-reward-claim.test.mjs
       - name: Test private question delivery contract

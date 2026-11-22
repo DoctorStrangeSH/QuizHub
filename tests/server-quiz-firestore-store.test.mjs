@@ -101,6 +101,14 @@ test('reward claim updates only economy fields and replays exactly once', async 
     assert.equal(receipt.alreadyClaimed, false);
     assert.equal(retry.alreadyClaimed, true);
     assert.equal(receipt.coins, 10);
+    const ledgerPath = 'accountLedger/alice/entries/' + 'quiz_reward_' + (await import('node:crypto')).createHash('sha256').update('quiz_reward:session_2').digest('hex').slice(0, 40);
+    const ledgerEvent = db.records.get(ledgerPath);
+    assert.ok(ledgerEvent);
+    assert.equal(ledgerEvent.type, 'quiz_reward');
+    assert.equal(ledgerEvent.sourceId, 'session_2');
+    assert.equal(ledgerEvent.coinsDelta, 10);
+    assert.equal(ledgerEvent.xpDelta, 20);
+    assert.equal(ledgerEvent.uid, 'alice');
     const user = db.records.get('users/alice');
     assert.equal(user.coins, 18);
     assert.equal(user.experience, 22);
@@ -144,13 +152,19 @@ test('opt-in reward claim atomically refreshes a privacy-safe public ranking pro
     assert.equal('email' in profile, false);
     assert.equal('coins' in profile, false);
     assert.equal(db.records.get('users/alice').email, 'private@example.test');
+    const ledgerPath = 'accountLedger/alice/entries/' + 'quiz_reward_' + (await import('node:crypto')).createHash('sha256').update('quiz_reward:session_pub').digest('hex').slice(0, 40);
+    const ledgerEvent = db.records.get(ledgerPath);
+    assert.ok(ledgerEvent);
+    assert.equal(ledgerEvent.type, 'quiz_reward');
+    assert.equal(ledgerEvent.sourceId, 'session_pub');
     const before = db.mutations.length;
     assert.equal((await claimSessionReward({ store, uid: 'alice', sessionId: 'session_pub', at: 3000 })).alreadyClaimed, true);
     assert.equal(db.mutations.length, before, 'replayed claims must not republish the profile');
     assert.deepEqual(db.mutations.map(item => item.path).sort(), [
         'users/alice', 'quizSessions/session_pub', 'publicProfiles/alice',
         'achievementFacts/alice', 'achievementUnlockReceipts/alice/unlocks/first_quiz',
-        'achievementUnlockReceipts/alice/unlocks/first_win'
+        'achievementUnlockReceipts/alice/unlocks/first_win',
+        ledgerPath
     ].sort());
 });
 

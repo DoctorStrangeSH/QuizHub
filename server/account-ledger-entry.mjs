@@ -22,7 +22,7 @@ function validateInput(input) {
     if (!Number.isSafeInteger(occurredAt) || occurredAt < 0) throw new Error('INVALID_LEDGER_TIMESTAMP');
     const coinsDelta = safeDelta(input.coinsDelta ?? 0, 'coins_delta');
     const xpDelta = safeDelta(input.xpDelta ?? 0, 'xp_delta');
-    if (coinsDelta === 0 && xpDelta === 0 && type !== 'achievement_unlock') {
+    if (coinsDelta === 0 && xpDelta === 0 && type !== 'achievement_unlock' && type !== 'quiz_reward') {
         throw new Error('EMPTY_LEDGER_EVENT');
     }
     if (type === 'quiz_reward' && (coinsDelta < 0 || xpDelta < 0)) throw new Error('INVALID_QUIZ_REWARD_DELTA');

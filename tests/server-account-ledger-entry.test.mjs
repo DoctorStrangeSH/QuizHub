@@ -21,11 +21,15 @@ test('supports daily login rewards, shop purchases/refunds and achievement unloc
     assert.equal(createAccountLedgerEntry({uid:'p1',type:'achievement_unlock',sourceId:'first_quiz',occurredAt:4,achievementId:'first_quiz'}).achievementId, 'first_quiz');
 });
 
-test('rejects unsafe timestamps, non-integer deltas, empty events and invalid type semantics', () => {
+test('rejects unsafe timestamps, non-integer deltas, empty non-quiz events and invalid type semantics', () => {
     const base = {uid:'p1',type:'quiz_reward',sourceId:'session_1',occurredAt:1,xpDelta:1,coinsDelta:1};
     assert.throws(() => createAccountLedgerEntry({...base,occurredAt:-1}), /INVALID_LEDGER_TIMESTAMP/);
     assert.throws(() => createAccountLedgerEntry({...base,xpDelta:1.5}), /INVALID_LEDGER_XP_DELTA/);
-    assert.throws(() => createAccountLedgerEntry({...base,xpDelta:0,coinsDelta:0}), /EMPTY_LEDGER_EVENT/);
+    assert.deepEqual(
+        createAccountLedgerEntry({...base,xpDelta:0,coinsDelta:0}),
+        { uid:'p1', type:'quiz_reward', sourceId:'session_1', occurredAt:1, xpDelta:0, coinsDelta:0, schemaVersion:1, entryId:accountLedgerEntryId('quiz_reward','session_1') }
+    );
+    assert.throws(() => createAccountLedgerEntry({...base,type:'daily_login_reward',xpDelta:0,coinsDelta:0}), /EMPTY_LEDGER_EVENT/);
     assert.throws(() => createAccountLedgerEntry({...base,type:'daily_login_reward',coinsDelta:-1}), /INVALID_DAILY_LOGIN_DELTA/);
     assert.throws(() => createAccountLedgerEntry({...base,type:'shop_purchase',coinsDelta:1}), /INVALID_SHOP_PURCHASE_DELTA/);
 });

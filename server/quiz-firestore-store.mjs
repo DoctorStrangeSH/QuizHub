@@ -1,3 +1,4 @@
+import { createAccountLedgerFirestoreWriter } from './account-ledger-firestore-writer.mjs';
 import { buildPublicProfile } from '../app/modules/profile/public-profile-data.js';
 
 // Firestore Standard backend adapter for trusted quiz sessions.
@@ -40,12 +41,21 @@ export function createQuizFirestoreStore(db, { syncPublicProfiles = false } = {}
         runTransaction(callback) {
             if (typeof callback !== 'function') throw new Error('INVALID_TRANSACTION_CALLBACK');
             return db.runTransaction(async native => {
+                let ledgerWriter;
+                const createLedgerEntry = entry => {
+                    // Keep non-ledger transaction consumers compatible with
+                    // lightweight adapters; require native create() only when
+                    // an actual append-only ledger event is requested.
+                    ledgerWriter ??= createAccountLedgerFirestoreWriter(db, native);
+                    return ledgerWriter.create(entry);
+                };
                 return callback({
                     getSession: async id => data(await native.get(sessionRef(id))),
                     setSession: async (id, value) => {
                         // Server-generated canonical session, receipt and claim marker.
                         native.set(sessionRef(id), value);
                     },
+                    createLedgerEntry: async entry => createLedgerEntry(entry),
                     getAchievementFacts: async uid => data(await native.get(achievementFactsRef(uid))),
                     setAchievementFacts: async (uid, facts) => {
                         if (!facts || typeof facts !== 'object' || Array.isArray(facts) ||
