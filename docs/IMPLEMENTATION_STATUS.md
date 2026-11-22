@@ -1193,3 +1193,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added a callable adapter and an emulator-only `accountLedgerHistoryPreviewCallable`; it refuses non-isolated/non-demo Firebase environments.
 - Added unit/callable tests for owner derivation, UID injection, filtering, equal-timestamp page boundaries, empty history, malformed cursors and data-integrity checks.
 - Production indexes/rules, Functions deployment, browser UI, backfill and client cutover remain NOT DONE. Legacy client-side activity is not merged into verified ledger history.
+
+## 98. Repository documentation and hygiene (2026-11-22)
+
+- Reworked the root README with a concise product overview, workflow badges, repository map, local setup, test commands and explicit Production safety boundaries.
+- Added a documentation index at `docs/README.md` to distinguish product requirements, roadmap, implementation evidence, architecture contracts and dated audits.
+- Added `CONTRIBUTING.md` with branch, PR, testing, security and comment-maintenance conventions.
+- Added `scripts/README.md` describing the question validator and both browser preview scripts, including generated artifact locations.
+- Expanded `.gitignore` for local environment files, Firebase state, dependencies, browser artifacts and generated test output.
+- Audited GitHub code search for `DeepSeek`, `deepseek` and related spellings; no matching source comments or references were returned. No useful technical comments were bulk-deleted.
+- Kept existing source paths and preview scripts in place because the visual-preview workflow still invokes them. No unverified legacy files or remote branches were deleted.
+- No application behavior, Firebase Production configuration, Rules, deployed indexes, Functions deployment or user data were changed.
