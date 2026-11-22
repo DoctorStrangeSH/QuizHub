@@ -246,6 +246,15 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-profile-timezone.test.mjs
       - name: Test existing-account timezone preference update boundary
         run: node --experimental-default-type=module --test tests/server-profile-timezone-update.test.mjs
+      - name: Test account ledger history profile UI boundary
+        run: node --experimental-default-type=module --test tests/client-account-ledger-history.test.mjs
+      - name: Syntax-check account ledger history browser modules
+        run: |
+          node --check app/modules/profile/account-ledger-history-settings.js
+          node --check app/modules/profile/firebase-account-ledger-history-invoker.js
+          node --check app/modules/profile/account-ledger-history.js
+          node --check app/modules/profile/profile.js
+          node --check app/modules/profile/public-profile.js
       - name: Test atomic reward claim and account ledger contract
         run: node --experimental-default-type=module --test tests/server-quiz-reward-claim.test.mjs
       - name: Syntax-check quiz reward ledger integration
