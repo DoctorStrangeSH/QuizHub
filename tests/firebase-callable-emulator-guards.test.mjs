@@ -58,8 +58,8 @@ test('every exported callable preview fails closed outside the isolated Firebase
 
 test('staged production shop callable delegates to the authenticated service without a preview-only guard', async () => {
     const source = await readFile(new URL('../functions/index.mjs', import.meta.url), 'utf8');
-    const declaration = source.match(/export const shopPurchase\\s*=\\s*onCall\\(([\\s\\S]*?)\\);/);
+    const declaration = source.match(/export const shopPurchase\s*=\s*onCall\(([\s\S]*?)\);/);
     assert.ok(declaration, 'shopPurchase production callable must be exported');
-    assert.match(declaration[1], /shopPreview\\(request\\)/);
+    assert.match(declaration[1], /shopPreview\(request\)/);
     assert.doesNotMatch(declaration[1], /demo-quizhub|SHOP_PURCHASE_PREVIEW_DISABLED/);
 });
