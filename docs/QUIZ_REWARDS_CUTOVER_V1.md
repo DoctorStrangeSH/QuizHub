@@ -84,3 +84,11 @@ This preparation adds a server-side timezone preference service, a strictly emul
 - The report exposes only the compared field names and `equal` / `different` result. It never chooses a source of truth, calculates a merged baseline, or creates an overwrite plan.
 - Trusted facts may cover only the period after the server ledger was introduced. Therefore both equality and divergence require provenance/coverage review; neither is an automatic migration decision.
 - Every report remains `review_required` and `eligibleForAutomaticImport: false`. Do not backfill, reset or overwrite trusted facts from legacy profile values.
+
+
+## Legacy economy and cosmetic inventory audit (2026-11-22)
+
+- A read-only `auditLegacyEconomyProfile` helper now inspects old coin balance, owned themes/frames/particles, equipped cosmetics, active bonuses and optional purchase-receipt references.
+- Unsafe/negative balances, malformed inventories, duplicate IDs and equipped cosmetics absent from owned lists are reported. Unknown item IDs are preserved because retired/event catalog entries may no longer exist in the current client catalog.
+- Purchase receipt references are only structurally checked; this is not proof of a successful payment or valid entitlement. Receipt/payment evidence must be independently verified before any balance or ownership migration.
+- All reports remain `review_required`, `eligibleForAutomaticImport: false`. No database transport or import is included.
