@@ -56,7 +56,7 @@ const event=(sourceId,occurredAt,type='quiz_reward',deltas={})=>createAccountLed
     ...(type==='shop_purchase'?{coinsDelta:-50,xpDelta:0,itemId:'frame_gold'}:{})
 });
 
-test('reads only the authenticated owner path and paginates deterministically across equal timestamps',async()=>{
+test('accepts Firebase UID characters and rejects path traversal or control characters', async () => {\n    const valid = fixture([]);\n    await readAccountLedgerHistory(valid.db, { actorUid: 'firebase:account.name_123-xyz' });\n    for (const actorUid of ['../victim', '.', '..', 'bad\\u0000uid', 'x'.repeat(129)]) {\n        await assert.rejects(\n            readAccountLedgerHistory(valid.db, { actorUid }),\n            /INVALID_LEDGER_OWNER/\n        );\n    }\n});\n\ntest('reads only the authenticated owner path and paginates deterministically across equal timestamps',async()=>{
     const a=event('session_01',1000),b=event('session_02',1000),c=event('session_03',900);
     const {db,queryCalls}=fixture([a,b,c]);
     const first=await readAccountLedgerHistory(db,{actorUid:uid,pageSize:2});
