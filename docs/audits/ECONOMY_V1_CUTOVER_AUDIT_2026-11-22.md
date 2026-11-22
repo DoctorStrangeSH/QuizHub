@@ -102,3 +102,12 @@ Do not add owner-only Rules to `users/{uid}` until those cross-user reads and so
 - No IAM changes, migration, backfill or user balance adjustment.
 - No removal of emulator-only guards or Production client cutover.
 - No assertion that the live economy is currently secure or anti-cheat protected.
+
+
+## 2026-11-22 — Shop callable staging
+
+- PR #105 completed browser preview retry-key persistence and passed all three CI workflows.
+- A separate `shopPurchase` callable source export is now staged on the feature branch. It delegates to the same authenticated, server-priced Firestore transaction service as the emulator-only preview.
+- The emulator integration suite is redirected to exercise the staged callable contract end-to-end.
+- This does **not** mean the callable is deployed. The browser still uses legacy direct Firestore writes outside the explicit local preview.
+- Production Rules/indexes review, Functions deployment, client cutover, migration and rollback plan remain open gates. No live production data or configuration was touched.
