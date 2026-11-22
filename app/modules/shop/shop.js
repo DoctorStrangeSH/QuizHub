@@ -1,6 +1,7 @@
 import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc, updateDoc, increment, arrayUnion } from '../../firebase-config.js';
 import { SHOP_ITEMS } from './shop-data.js';
+import { getOrCreateShopOperationId, clearShopOperationId } from './shop-operation-id.js';
 
 export function renderShop() {
     return `
@@ -97,9 +98,16 @@ function isShopPreviewRequested() {
         params.get('shopPreview') === '1';
 }
 
-function createShopOperationId() {
-    if (!window.crypto?.randomUUID) throw new Error('SECURE_OPERATION_ID_UNAVAILABLE');
-    return `shop_${window.crypto.randomUUID()}`;
+function shopOperationContext(uid, itemId) {
+    return {
+        uid,
+        itemId,
+        storage: window.localStorage,
+        randomUUID: () => {
+            if (!window.crypto?.randomUUID) throw new Error('SECURE_OPERATION_ID_UNAVAILABLE');
+            return window.crypto.randomUUID();
+        }
+    };
 }
 
 async function invokeLocalShop(operation, payload) {
@@ -115,20 +123,21 @@ window.buyItem = async (itemId, price, type) => {
         if (isShopPreviewRequested()) {
             const response = await invokeLocalShop('purchase', {
                 itemId,
-                operationId: createShopOperationId()
+                operationId: getOrCreateShopOperationId(shopOperationContext(user.uid, itemId))
             });
             const receipt = response?.data;
-            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean') {
+            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean' ||
+                !Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
+                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
                 throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
             }
+            // Retain the same operation ID after a timeout or lost response.
+            // Clear it only after a valid server receipt confirms the outcome.
+            clearShopOperationId(shopOperationContext(user.uid, itemId));
             if (receipt.alreadyPurchased) {
                 alert('Покупка уже обработана.');
                 await loadShopItems(type);
                 return;
-            }
-            if (!Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
-                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
-                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
             }
             if (type === 'themes') applyTheme(itemId);
             else if (type === 'particles') applyParticles(itemId);
@@ -159,20 +168,21 @@ window.buyBonus = async (itemId, price, effect, duration) => {
         if (isShopPreviewRequested()) {
             const response = await invokeLocalShop('purchase', {
                 itemId,
-                operationId: createShopOperationId()
+                operationId: getOrCreateShopOperationId(shopOperationContext(user.uid, itemId))
             });
             const receipt = response?.data;
-            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean') {
+            if (!receipt || typeof receipt.alreadyPurchased !== 'boolean' ||
+                !Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
+                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
                 throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
             }
+            // Retain the same operation ID after a timeout or lost response.
+            // Clear it only after a valid server receipt confirms the outcome.
+            clearShopOperationId(shopOperationContext(user.uid, itemId));
             if (receipt.alreadyPurchased) {
                 alert('Покупка уже обработана.');
                 await loadShopItems('bonuses');
                 return;
-            }
-            if (!Number.isSafeInteger(receipt.balance) || receipt.balance < 0 ||
-                !Number.isSafeInteger(receipt.coinsSpent) || receipt.coinsSpent < 0) {
-                throw new Error('INVALID_SHOP_PURCHASE_RECEIPT');
             }
             alert('Бонус активирован! 🎁');
             await loadShopItems('bonuses');
