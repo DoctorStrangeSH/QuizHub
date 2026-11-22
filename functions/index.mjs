@@ -31,6 +31,7 @@ import { createAchievementUnlockService } from '../server/achievement-unlock-ser
 import { createAchievementFirestoreStore } from '../server/achievement-firestore-store.mjs';
 import { createAuthenticatedAchievementHandler } from '../server/authenticated-achievement-handler.mjs';
 import { createAchievementCallableAdapter } from '../server/firebase-achievement-callable-adapter.mjs';
+import { createFirestoreAccountLedgerHistoryCallable } from '../server/account-ledger-history-callable-adapter.mjs';
 import { updateFriendship } from '../server/friend-relationships.mjs';
 import { createFriendCallableAdapter } from '../server/friend-callable-adapter.mjs';
 import { createFirestoreChatSendCallable } from '../server/chat-send-callable-adapter.mjs';
@@ -363,4 +364,24 @@ export const chatUnreadCountPreviewCallable = onCall({
         throw new HttpsError('failed-precondition', 'CHAT_UNREAD_COUNT_PREVIEW_DISABLED');
     }
     return chatUnreadCountPreview(request);
+});
+
+
+// Owner-scoped account ledger history preview. The callable derives the owner
+// exclusively from Firebase Auth and remains isolated to local emulators.
+const accountLedgerHistoryPreview = createFirestoreAccountLedgerHistoryCallable({
+    db: getFirestore(), HttpsError
+});
+export const accountLedgerHistoryPreviewCallable = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => {
+    const emulatorProject = (process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT) === 'demo-quizhub';
+    const isolated = Boolean(process.env.FIRESTORE_EMULATOR_HOST &&
+        process.env.FIREBASE_AUTH_EMULATOR_HOST && process.env.FUNCTIONS_EMULATOR);
+    if (!emulatorProject || !isolated) {
+        throw new HttpsError('failed-precondition', 'ACCOUNT_LEDGER_HISTORY_PREVIEW_DISABLED');
+    }
+    return accountLedgerHistoryPreview(request);
 });
