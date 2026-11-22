@@ -1258,3 +1258,20 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added tests for retry reuse, module reload persistence, account/item isolation, invalid stored keys, receipt clearing and storage failure.
 - Work is on `fix/shop-retry-idempotency`; PR and CI evidence are pending.
 - This only improves the explicit local emulator preview path. Production still uses the legacy direct Firestore writes; no production client cutover, Rules change or deployment was made.
+
+
+## 104. Shop retry idempotency merged (2026-11-22)
+
+- PR #105 merged to `main` as `2525025f5af6fc3fd27d1925b677ce45906eee5d`.
+- Final-head CI passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview (3/3).
+- Browser preview now persists a pending operation ID per signed-in account and item, reuses it after ambiguous network failures and clears it only after validating a server receipt.
+- Retry keys survive a browser module reload through local storage; same-tab memory fallback is retained when storage is unavailable.
+- This behavior is only active in the explicit local shop preview. Legacy production direct-write path remains unchanged.
+
+## 105. Staged production shop callable (2026-11-22)
+
+- Added `shopPurchase` as a production-callable source export using the same authenticated handler, server catalog and Firestore transaction service as `shopPurchasePreview`.
+- The preview callable remains guarded to the isolated `demo-quizhub` Auth + Firestore + Functions emulator environment.
+- Firebase shop integration test now targets the staged `shopPurchase` export, covering forged fields, authoritative catalog price, atomic debit/ownership, idempotent retry, equip ownership and insufficient balance.
+- Source implementation only: no Firebase Functions deployment, client cutover, production Rules/index change, live database access or migration was performed.
+- Next gate: validate the production callable in emulator CI, review deployed production Rules/indexes and complete a full shop client migration plan before owner-approved deployment.
