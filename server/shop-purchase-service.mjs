@@ -1,4 +1,5 @@
 import { getAllItems } from '../app/modules/shop/shop-data.js';
+import { createAccountLedgerEntry } from './account-ledger-entry.mjs';
 
 const OPERATION_ID = /^[A-Za-z0-9_-]{8,128}$/;
 const COSMETIC_FIELDS = Object.freeze({
@@ -72,6 +73,10 @@ export function createShopPurchaseService({ store, catalog = getAllItems(), now 
 
                 await tx.setUserPatch(uid, patch);
                 await tx.setPurchase(uid, operationId, receipt);
+                await tx.createLedgerEntry(createAccountLedgerEntry({
+                    uid, type: 'shop_purchase', sourceId: operationId, occurredAt: timestamp,
+                    coinsDelta: -item.price, itemId: item.id
+                }));
                 return { ...receipt, alreadyPurchased: false };
             });
         },

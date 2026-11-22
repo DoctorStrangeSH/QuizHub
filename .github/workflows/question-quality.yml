@@ -84,6 +84,18 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-legacy-progression-audit.test.mjs
       - name: Audit legacy wallet and cosmetic inventory without writes
         run: node --experimental-default-type=module --test tests/server-legacy-economy-audit.test.mjs
+      - name: Validate append-only account ledger contract
+        run: node --experimental-default-type=module --test tests/server-account-ledger-entry.test.mjs
+      - name: Test atomic shop purchase ledger integration
+        run: node --experimental-default-type=module --test tests/server-shop-purchase-service.test.mjs
+      - name: Test create-only Firestore account ledger writer
+        run: node --experimental-default-type=module --test tests/server-account-ledger-firestore-writer.test.mjs
+      - name: Syntax-check Firestore account ledger writer
+        run: |
+          node --check server/account-ledger-entry.mjs
+          node --check server/account-ledger-firestore-writer.mjs
+          node --check server/shop-firestore-store.mjs
+          node --check server/shop-purchase-service.mjs
       - name: Verify legacy private, social and game data preservation
         run: node --experimental-default-type=module --test tests/legacy-data-preservation.test.mjs
       - name: Verify repository-derived Firestore migration inventory

@@ -4,10 +4,12 @@ import { createShopPurchaseService } from '../server/shop-purchase-service.mjs';
 
 function makeStore(users) {
     const purchases = new Map();
+    const ledger = new Map();
     let queue = Promise.resolve();
     const store = {
         users: structuredClone(users),
         purchases,
+        ledger,
         runTransaction(callback) {
             const task = queue.then(async () => {
                 const writes = [];
@@ -15,7 +17,8 @@ function makeStore(users) {
                     async getUser(uid) { return structuredClone(store.users[uid] ?? null); },
                     async getPurchase(uid, id) { return structuredClone(purchases.get(uid + '/' + id) ?? null); },
                     async setUserPatch(uid, patch) { writes.push(() => { store.users[uid] = { ...store.users[uid], ...structuredClone(patch) }; }); },
-                    async setPurchase(uid, id, receipt) { writes.push(() => { purchases.set(uid + '/' + id, structuredClone(receipt)); }); }
+                    async setPurchase(uid, id, receipt) { writes.push(() => { purchases.set(uid + '/' + id, structuredClone(receipt)); }); },
+                    async createLedgerEntry(entry) { writes.push(() => { if (ledger.has(entry.uid + '/' + entry.entryId)) throw new Error('LEDGER_ENTRY_EXISTS'); ledger.set(entry.uid + '/' + entry.entryId, structuredClone(entry)); }); }
                 };
                 const result = await callback(tx);
                 writes.forEach(write => write());
@@ -39,6 +42,11 @@ test('cosmetic purchase uses catalog price and updates ownership, equipment and 
     assert.deepEqual(store.users.alice.ownedThemes, ['theme_default', 'theme_neon']);
     assert.equal(store.users.alice.equippedTheme, 'theme_neon');
     assert.equal(store.users.alice.email, 'private@example.test');
+    const [entry] = [...store.ledger.values()];
+    assert.equal(entry.type, 'shop_purchase');
+    assert.equal(entry.coinsDelta, -500);
+    assert.equal(entry.itemId, 'theme_neon');
+    assert.equal(entry.sourceId, operationId);
 });
 
 test('concurrent identical purchase retries charge once and return the stored receipt', async () => {
@@ -54,6 +62,7 @@ test('concurrent identical purchase retries charge once and return the stored re
     assert.equal(retry.alreadyPurchased, true);
     assert.equal(store.users.alice.coins, 300);
     assert.deepEqual(store.users.alice.ownedFrames, ['frame_default', 'frame_gold']);
+    assert.equal(store.ledger.size, 1);
 });
 
 test('idempotency key cannot be reused for a different item', async () => {

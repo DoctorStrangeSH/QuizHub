@@ -1,3 +1,5 @@
+import { createAccountLedgerFirestoreWriter } from './account-ledger-firestore-writer.mjs';
+
 const UID = /^[^/\x00-\x1f]{1,256}$/;
 const OPERATION_ID = /^[A-Za-z0-9_-]{8,128}$/;
 const data = snapshot => snapshot.exists ? snapshot.data() : null;
@@ -19,7 +21,9 @@ export function createShopFirestoreStore(db) {
     return {
         runTransaction(callback) {
             if (typeof callback !== 'function') throw new Error('INVALID_TRANSACTION_CALLBACK');
-            return db.runTransaction(async native => callback({
+            return db.runTransaction(async native => {
+                const ledger = createAccountLedgerFirestoreWriter(db, native);
+                return callback({
                 getUser: async uid => data(await native.get(userRef(uid))),
                 getPurchase: async (uid, operationId) => data(await native.get(purchaseRef(uid, operationId))),
                 setUserPatch: async (uid, patch) => {
@@ -30,8 +34,10 @@ export function createShopFirestoreStore(db) {
                 },
                 setPurchase: async (uid, operationId, receipt) => {
                     native.create(purchaseRef(uid, operationId), receipt);
-                }
-            }));
+                },
+                createLedgerEntry: async entry => ledger.create(entry)
+            });
+            });
         }
     };
 }
