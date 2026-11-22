@@ -71,8 +71,9 @@ test('reads only the authenticated owner path and paginates deterministically ac
 test('filters by event type and binds the cursor to the same filter',async()=>{
     const quiz=event('session_01',3000);
     const shop=event('purchase_01',2000,'shop_purchase');
-    const {db}=fixture([quiz,shop]);
-    const page=await readAccountLedgerHistory(db,{actorUid:uid,type:'shop_purchase'});
+    const shop2=event('purchase_02',1000,'shop_purchase');
+    const {db}=fixture([quiz,shop,shop2]);
+    const page=await readAccountLedgerHistory(db,{actorUid:uid,type:'shop_purchase',pageSize:1});
     assert.deepEqual(page.entries.map(x=>x.type),['shop_purchase']);
     await assert.rejects(readAccountLedgerHistory(db,{actorUid:uid,type:'quiz_reward',cursor:page.nextCursor}),/INVALID_LEDGER_CURSOR/);
 });
