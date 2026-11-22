@@ -15,7 +15,7 @@ function memoryStorage() {
     };
 }
 
-test('pending purchase operation ID survives a lost response and a new module instance', () => {
+test('pending purchase operation ID survives a lost response and a new module instance', async () => {
     const storage = memoryStorage();
     let generated = 0;
     const options = {
@@ -30,10 +30,20 @@ test('pending purchase operation ID survives a lost response and a new module in
     assert.equal(retry, first);
     assert.equal(generated, 1);
 
-    // Simulate a reload: persisted storage still restores the same key.
+    // A fresh module instance represents a browser reload; local storage restores the key.
+    const reloadedModule = await import('../app/modules/shop/shop-operation-id.js?reload-test');
+    const reloaded = reloadedModule.getOrCreateShopOperationId({
+        ...options, randomUUID: () => 'uuid-after-reload'
+    });
+    assert.equal(reloaded, first);
+    assert.equal(generated, 1);
+
+    // Only an acknowledged receipt clears the pending key and permits a new purchase.
     clearShopOperationId(options);
-    const reloaded = getOrCreateShopOperationId({ ...options, randomUUID: () => 'uuid-after-reload' });
-    assert.equal(reloaded, 'shop_uuid-after-reload');
+    const nextPurchase = getOrCreateShopOperationId({
+        ...options, randomUUID: () => 'uuid-after-confirmation'
+    });
+    assert.equal(nextPurchase, 'shop_uuid-after-confirmation');
 });
 
 test('operation IDs are scoped independently by account and item', () => {
