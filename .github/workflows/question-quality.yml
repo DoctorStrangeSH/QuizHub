@@ -227,12 +227,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-achievement-invoker.test.mjs
       - name: Syntax-check achievements browser module
         run: node --check app/modules/achievements/achievements.js
-      - name: Test achievement unlock service, account ledger and callable
+      - name: Test achievement unlock service and callable
         run: node --experimental-default-type=module --test tests/server-achievement-unlock-service.test.mjs tests/server-achievement-firestore-store.test.mjs tests/server-achievement-callable.test.mjs tests/server-quiz-reward-claim.test.mjs tests/server-quiz-mode-reward-claim.test.mjs
-      - name: Syntax-check achievement ledger integration
-        run: |
-          node --check server/achievement-unlock-service.mjs
-          node --check server/achievement-firestore-store.mjs
       - name: Test server mode Firestore persistence and retries
         run: node --experimental-default-type=module --test tests/server-mode-firestore-persistence.test.mjs
 

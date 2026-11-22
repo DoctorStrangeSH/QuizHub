@@ -1,3 +1,4 @@
+import { createAccountLedgerEntry } from './account-ledger-entry.mjs';
 import { getModeResult } from './quiz-mode-session.mjs';
 import { hasModeWin } from './quiz-mode-rules.mjs';
 import { calculateQuizRewards } from '../app/modules/quiz/rewards.js';
@@ -180,6 +181,16 @@ export async function claimModeSessionReward({ store, sessionId, uid, at }) {
         await tx.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
         await tx.setUser(uid, nextUser);
         await tx.setSession(sessionId, updated);
+        await tx.createLedgerEntry(createAccountLedgerEntry({
+            uid, type: 'quiz_reward', sourceId: sessionId, occurredAt: at,
+            coinsDelta: coins, xpDelta: xp
+        }));
+        for (const achievementId of achievementProgress.newlyUnlocked) {
+            await tx.createLedgerEntry(createAccountLedgerEntry({
+                uid, type: 'achievement_unlock', sourceId: achievementId,
+                achievementId, occurredAt: at, coinsDelta: 0, xpDelta: 0
+            }));
+        }
         return { ...receipt, alreadyClaimed: false };
     });
 }

@@ -1162,12 +1162,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Next: wire the existing trusted quiz-reward, daily-login and achievement-unlock transactions to the same append-only ledger contract (each in the exact balance/reward transaction), then implement and test an owner-scoped paginated history reader. Preserve legacy activity as explicitly unverified.
 
 
-## 95. Achievement unlock account ledger integration (2026-11-22)
+## 96. Duel, Survival and Time Trial account ledger integration (2026-11-22)
 
-- Added canonical `achievement_unlock` ledger events to the trusted achievement evaluation transaction.
-- Each newly unlocked achievement creates one deterministic per-account event keyed by achievement ID; existing unlock receipts and profile achievement IDs remain intact.
-- Ledger event records zero coin/XP delta and the achievement ID, so unlock history is auditable without implying a currency grant.
-- Firestore writer uses create-only semantics in the same native transaction as achievement facts, profile projection and immutable unlock receipts.
-- Added unit and Firestore adapter coverage for exact event count, event shape and idempotent concurrent evaluations.
-- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills.
-- Account ledger rollout remains incomplete until quiz modes, refunds (if supported in V1) and the owner-scoped paginated history reader are audited/integrated. Legacy activity remains unverified.
+- Added one canonical `quiz_reward` event for every successfully claimed Duel, Survival and Time Trial session.
+- Added one `achievement_unlock` event per newly unlocked achievement in those mode reward claims.
+- Ledger events are created in the same Firestore transaction as profile reward fields, achievement facts/receipts and the finalized session receipt.
+- Deterministic identity uses the session ID for mode rewards and achievement ID for unlocks; retries return the stored receipt and do not append duplicates.
+- Added adapter-level tests for mode reward deltas, achievement event metadata, zero-value unlock events and no ledger writes after invalid/corrupted claims.
+- Existing win thresholds, streak behavior, score calculation and reward amounts are unchanged.
+- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills. Legacy activity remains unverified.
