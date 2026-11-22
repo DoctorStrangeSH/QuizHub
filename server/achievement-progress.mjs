@@ -15,6 +15,9 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
     if (!current || typeof current !== 'object' || Array.isArray(current)) {
         throw new Error('INVALID_ACHIEVEMENT_FACTS');
     }
+    if (current.baselineTrusted !== undefined && typeof current.baselineTrusted !== 'boolean') {
+        throw new Error('INVALID_ACHIEVEMENT_FACTS');
+    }
     const totalGames = current.totalGames === undefined ? 0 : nonNegative(current.totalGames, 'INVALID_ACHIEVEMENT_FACTS');
     const experience = current.experience === undefined ? 0 : nonNegative(current.experience, 'INVALID_ACHIEVEMENT_FACTS');
     const totalWins = current.totalWins === undefined ? 0 : nonNegative(current.totalWins, 'INVALID_ACHIEVEMENT_FACTS');
@@ -25,6 +28,9 @@ export function advanceAchievementFacts({ previousFacts, previousAchievements, e
         totalWins: totalWins + winDelta,
         perfectGames: perfectGames + perfectDelta
     };
+    // Only a baseline created by the trusted registration transaction authorizes
+    // mirroring this XP-derived level into the legacy profile projection.
+    if (current.baselineTrusted === true) nextFacts.baselineTrusted = true;
     if (current.unlockedIds !== undefined && !Array.isArray(current.unlockedIds)) throw new Error('INVALID_ACHIEVEMENT_FACTS');
     const serverUnlocked = Array.isArray(current.unlockedIds) ? current.unlockedIds : [];
     if (serverUnlocked.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
