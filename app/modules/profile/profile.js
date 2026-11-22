@@ -3,6 +3,7 @@ import { auth, db, doc, getDoc, setDoc, collection, query, where, getDocs, serve
 import { renderPublicProfile, loadProfile } from './public-profile.js';
 import { directoryCollection } from './profile-read-source.js';
 import { isProfileTimeZonePreviewEnabled, isValidIanaTimeZone } from './profile-timezone-settings.js';
+import { attachAccountLedgerHistoryListeners } from './account-ledger-history.js';
 
 export function renderProfileCreate() {
     const t = getState().translations.profile || {};
@@ -170,6 +171,8 @@ export async function renderMyProfile() {
 export function attachMyProfileListeners() {
     window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-overlay').classList.toggle('open'); };
     window.closeSidebar = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('open'); };
+
+    attachAccountLedgerHistoryListeners();
 
     const timeZoneInput = document.getElementById('profile-timezone-input');
     const timeZoneSave = document.getElementById('profile-timezone-save');
