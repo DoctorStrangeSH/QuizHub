@@ -212,3 +212,26 @@ test('legacy profiles without timezone use UTC and never accept client multiplie
     assert.deepEqual(receipt.rewardMultipliers, { xp: 1, coins: 1 });
     assert.deepEqual(receipt.activeRewardEvents, []);
 });
+
+test('trusted new-account baseline synchronizes the profile level atomically', async () => {
+    const fixture = setup();
+    fixture.users.get('player').level = 1;
+    fixture.facts.set('player', {
+        totalGames: 0, experience: 90, totalWins: 0, perfectGames: 0,
+        level: 1, unlockedIds: [], baselineTrusted: true
+    });
+    const receipt = await claim(fixture.store);
+    assert.equal(receipt.xp, 30);
+    assert.equal(fixture.facts.get('player').experience, 120);
+    assert.equal(fixture.facts.get('player').level, 2);
+    assert.equal(fixture.users.get('player').level, 2);
+});
+
+test('legacy profile level is preserved and never promoted to a trusted baseline', async () => {
+    const fixture = setup();
+    fixture.users.get('player').level = 99;
+    const receipt = await claim(fixture.store);
+    assert.ok(receipt.xp > 0);
+    assert.equal(fixture.users.get('player').level, 99);
+    assert.equal(Object.hasOwn(fixture.facts.get('player'), 'baselineTrusted'), false);
+});
