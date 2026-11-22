@@ -13,8 +13,8 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Atomic daily login ledger events | DONE | PR #96 merged to `main`; emulator + unit coverage |
 | Achievement unlock ledger events | DONE | PR #98 merged to `main`; unit + Firestore adapter coverage |
 | Classic quiz reward ledger events | DONE | PR #97 merged to `main`; Question Quality, Emulator and Visual Preview passed |
-| Duel / Survival / Time Trial ledger events | IN PROGRESS | Replacement PR #100; must pass CI on current `main` |
-| Owner-scoped account history API | IN PROGRESS | Current branch `feat/account-ledger-history-api`; PR and CI pending |
+| Duel / Survival / Time Trial ledger events | DONE | PR #100 merged to `main` as `738356c`; Question Quality, Emulator and Visual Preview passed (3/3) |
+| Owner-scoped account history API | IN PROGRESS | PR #101; owner-scoped callable, stable cursor pagination, type filter and emulator test submitted; CI pending |
 | Account history profile UI | NOT DONE | Starts after API contract and emulator coverage are accepted |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
