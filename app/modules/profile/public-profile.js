@@ -2,6 +2,8 @@ import { getState } from '../../store/state.js';
 import { auth, db, doc, getDoc } from '../../firebase-config.js';
 import { profileCollectionForViewer, projectProfileForViewer } from './profile-read-source.js';
 import { isProfileTimeZonePreviewEnabled, renderProfileTimeZoneSettings } from './profile-timezone-settings.js';
+import { renderAccountLedgerHistory } from './account-ledger-history.js';
+import { isAccountLedgerHistoryPreviewEnabled } from './account-ledger-history-settings.js';
 
 // Достижения для отображения
 const ALL_ACHIEVEMENTS = [
@@ -189,6 +191,11 @@ export function renderPublicProfile(profileData, isOwnProfile = false) {
                     
                     `}
                     
+                    ${isOwnProfile ? renderAccountLedgerHistory({
+                        language: lang,
+                        previewEnabled: isAccountLedgerHistoryPreviewEnabled(window.location, auth)
+                    }) : ''}
+
                     ${isOwnProfile && recentAchievements.length > 0 ? `
                         <div class="profile-achievements glass-card animate-in animate-in-delay-2">
                             <h4 class="section-label">🏆 Последние достижения</h4>
