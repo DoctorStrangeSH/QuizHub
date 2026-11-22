@@ -3,7 +3,7 @@ import test from 'node:test';
 
 const project = 'demo-quizhub';
 const authBase = 'http://127.0.0.1:9099';
-const callableUrl = `http://127.0.0.1:5001/${project}/europe-west1/shopPurchasePreview`;
+const callableUrl = `http://127.0.0.1:5001/${project}/europe-west1/shopPurchase`;
 const firestoreBase = `http://127.0.0.1:8080/v1/projects/${project}/databases/(default)/documents`;
 
 async function signInGuest() {
