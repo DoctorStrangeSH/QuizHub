@@ -16,7 +16,7 @@ function validateResponse(value) {
         if (!entry || typeof entry !== 'object' || Array.isArray(entry) ||
             typeof entry.entryId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(entry.entryId) ||
             !EVENT_TYPES.has(entry.type) ||
-            !Number.isSafeInteger(entry.occurredAt) || entry.occurredAt < 0 ||
+            !Number.isSafeInteger(entry.occurredAt) || entry.occurredAt < 0 || entry.occurredAt > 8640000000000000 ||
             !Number.isSafeInteger(entry.coinsDelta) ||
             !Number.isSafeInteger(entry.xpDelta) ||
             (entry.itemId !== undefined && (typeof entry.itemId !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(entry.itemId))) ||
