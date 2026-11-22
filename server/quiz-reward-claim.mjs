@@ -1,3 +1,4 @@
+import { createAccountLedgerEntry } from './account-ledger-entry.mjs';
 import { finalizeSession } from './quiz-session-core.mjs';
 import { calculateQuizRewards } from '../app/modules/quiz/rewards.js';
 import { advanceAchievementFacts } from './achievement-progress.mjs';
@@ -86,6 +87,10 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
         await transaction.createAchievementReceipts(uid, achievementProgress.newlyUnlocked);
         await transaction.setUser(uid, nextUser);
         await transaction.setSession(sessionId, session);
+        await transaction.createLedgerEntry(createAccountLedgerEntry({
+            uid, type: 'quiz_reward', sourceId: sessionId, occurredAt: at,
+            coinsDelta: coins, xpDelta: xp
+        }));
         return { ...receipt, alreadyClaimed: false };
     });
 }
