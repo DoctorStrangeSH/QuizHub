@@ -1237,3 +1237,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit and emulator coverage for trusted baseline creation, 99 → 100 XP threshold progression, legacy-level preservation and public-profile level sync.
 - This is a server-side emulator-preview contract only. Production Rules must explicitly deny client writes to `achievementFacts`; no Production callable, Rules, indexes, migration or client cutover was changed.
 - Existing-account baseline/backfill remains NOT DONE and requires separate provenance review. Production deployment and browser cutover remain NOT DONE.
+
+
+## 102. Trusted progression baseline and atomic level sync — merged (2026-11-22)
+
+- PR #104 merged to `main` as `e77a0f94eb77bf2afc205a5dcc98b45c67066815`.
+- Final-head CI passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview (3/3).
+- New trusted profile creation writes the zero-XP `achievementFacts` baseline in the same transaction as private/public profile and nickname claim.
+- Classic and Duel / Survival / Time Trial claims mirror server-derived level to the private profile only when the server-created `baselineTrusted` marker exists; optional public-profile sync uses the same transaction.
+- Regression tests cover trusted and legacy profiles, threshold crossing and public projection.
+- This remains emulator-preview implementation. Production Rules, Functions deployment, client cutover and existing-account migration remain NOT DONE.
