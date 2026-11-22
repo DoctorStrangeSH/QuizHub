@@ -55,6 +55,13 @@ test('Firestore adapter writes only approved profile fields and creates per-day 
     assert.deepEqual(profile.preferences, { theme: 'night' });
     assert.equal(db.docs.has('dailyLoginClaims/2026-11-20/users/alice'), true);
     assert.equal(result.coins, 10);
+    const ledgerPaths = [...db.docs.keys()].filter(path => path.startsWith('accountLedger/alice/entries/'));
+    assert.equal(ledgerPaths.length, 1);
+    const event = db.docs.get(ledgerPaths[0]);
+    assert.equal(event.type, 'daily_login_reward');
+    assert.equal(event.sourceId, '2026-11-20');
+    assert.equal(event.coinsDelta, 10);
+    assert.equal(event.uid, 'alice');
 });
 
 test('same-day concurrent requests cannot double-credit in Firestore transaction', async () => {
@@ -67,6 +74,7 @@ test('same-day concurrent requests cannot double-credit in Firestore transaction
     ]);
     assert.deepEqual([a.alreadyClaimed, b.alreadyClaimed].sort(), [false, true]);
     assert.equal(db.docs.get('users/alice').coins, 30);
+    assert.equal([...db.docs.keys()].filter(path => path.startsWith('accountLedger/alice/entries/')).length, 1);
 });
 
 test('unsafe UID and operation document paths are rejected', async () => {
