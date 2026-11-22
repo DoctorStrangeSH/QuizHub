@@ -76,3 +76,11 @@ This preparation adds a server-side timezone preference service, a strictly emul
 - Legacy and trusted achievement semantics differ for `perfect_score`: the legacy client checks `stats.bestStreak >= 10`; the trusted catalog checks a server-scored perfect quiz. Neither the legacy ID nor `bestStreak` can be translated into trusted `perfectGames`.
 - Existing `achievementFacts`, when supplied by a trusted collector, are kept separate from the legacy snapshot and validated independently.
 - This is a dry-run audit primitive only. No Firestore reads/writes, account migration, Production deployment, Rules changes or feature-gate changes are included.
+
+
+## Trusted-vs-legacy baseline comparison (2026-11-22)
+
+- The progression audit now compares legacy `experience`, `quizzesCompleted` / `stats.totalGames`, `wins` / `stats.totalWins`, and `level` with corresponding fields in an independently collected trusted `achievementFacts` document.
+- The report exposes only the compared field names and `equal` / `different` result. It never chooses a source of truth, calculates a merged baseline, or creates an overwrite plan.
+- Trusted facts may cover only the period after the server ledger was introduced. Therefore both equality and divergence require provenance/coverage review; neither is an automatic migration decision.
+- Every report remains `review_required` and `eligibleForAutomaticImport: false`. Do not backfill, reset or overwrite trusted facts from legacy profile values.
