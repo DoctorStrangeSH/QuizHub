@@ -298,3 +298,37 @@ test('Time Trial win threshold is exactly seven correct answers out of ten', asy
         assert.equal(db.records.get('users/player').wins, correctCount === 7 ? 3 : 2);
     }
 });
+
+test('mode reward claims sync level only for trusted registration baselines', async () => {
+    const { db, store, service } = setup();
+    const started = await service.start({
+        uid: 'player', mode: 'duel', category: 'science',
+        difficulty: 'easy', count: 1, now: 1000
+    });
+    await answerAll(service, started, 1);
+    db.records.set('achievementFacts/player', {
+        totalGames: 0, experience: 90, totalWins: 0, perfectGames: 0,
+        level: 1, unlockedIds: [], baselineTrusted: true
+    });
+    const receipt = await claimModeSessionReward({
+        store, uid: 'player', sessionId: started.sessionId, at: 3000
+    });
+    assert.equal(receipt.xp, 10);
+    assert.equal(db.records.get('achievementFacts/player').level, 2);
+    assert.equal(db.records.get('users/player').level, 2);
+});
+
+test('mode reward claims preserve unverified legacy levels', async () => {
+    const { db, store, service } = setup();
+    db.records.get('users/player').level = 77;
+    const started = await service.start({
+        uid: 'player', mode: 'duel', category: 'science',
+        difficulty: 'easy', count: 1, now: 1000
+    });
+    await answerAll(service, started, 1);
+    await claimModeSessionReward({
+        store, uid: 'player', sessionId: started.sessionId, at: 3000
+    });
+    assert.equal(db.records.get('users/player').level, 77);
+    assert.equal(Object.hasOwn(db.records.get('achievementFacts/player'), 'baselineTrusted'), false);
+});
