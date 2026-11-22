@@ -1285,3 +1285,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The end-to-end Firebase emulator test now calls `shopPurchase` and verifies forged payload rejection, catalog price, atomic balance/ownership mutation, idempotent retry, equip ownership and insufficient balance.
 - `shopPurchasePreview` remains separately guarded to the isolated `demo-quizhub` Auth + Firestore + Functions emulators.
 - Important: source merge is not deployment. No Production Functions deployment, browser client cutover, Firestore Rules/index change, migration, or live database operation was performed. Production direct-write shop path remains active until a separately reviewed cutover.
+
+
+## 107. Production shop browser transport preparation (2026-11-22)
+
+- Added a dedicated production callable transport targeting `shopPurchase`; it requires a signed-in Firebase user and sends only allowlisted `purchase` / `equip` payloads.
+- Extracted shared client payload validation so the emulator preview and production transport reject client-authored prices, UIDs, durations, effects and unexpected fields consistently.
+- Added tests for production callable selection, signed-out callers, malformed item IDs and forged economy fields.
+- This is transport preparation only. The live shop UI remains on its existing production direct-write path; the production transport is not wired or feature-enabled because Functions have not been deployed.
+- No Production Functions, Firestore Rules, indexes, live data or feature gates were changed. Coordinated cutover remains blocked on owner-approved environment/Rules evidence, deployed callable availability, migration and rollback review.
