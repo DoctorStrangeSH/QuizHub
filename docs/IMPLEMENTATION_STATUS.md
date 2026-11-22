@@ -1171,3 +1171,14 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit and Firestore adapter coverage for exact event count, event shape and idempotent concurrent evaluations.
 - No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills.
 - Account ledger rollout remains incomplete until quiz modes, refunds (if supported in V1) and the owner-scoped paginated history reader are audited/integrated. Legacy activity remains unverified.
+
+
+## 97. Owner-scoped account ledger history API (2026-11-22)
+
+- Added a read-only history service for `accountLedger/{auth.uid}/entries`; caller identity is derived from Firebase Auth and no UID field is accepted from the client.
+- Added stable cursor pagination ordered by `occurredAt DESC, entryId DESC`, with page sizes capped at 50 and an optional allowlisted event-type filter.
+- Cursor tokens are versioned and bound to the active filter; malformed tokens, forged owners and corrupt/foreign ledger documents are rejected.
+- Responses project only approved event fields and never expose raw Firestore documents or internal metadata.
+- Added a callable adapter and an emulator-only `accountLedgerHistoryPreviewCallable`; it refuses non-isolated/non-demo Firebase environments.
+- Added unit/callable tests for owner derivation, UID injection, filtering, equal-timestamp page boundaries, empty history, malformed cursors and data-integrity checks.
+- Production indexes/rules, Functions deployment, browser UI, backfill and client cutover remain NOT DONE. Legacy client-side activity is not merged into verified ledger history.
