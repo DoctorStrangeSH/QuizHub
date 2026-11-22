@@ -1275,3 +1275,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Firebase shop integration test now targets the staged `shopPurchase` export, covering forged fields, authoritative catalog price, atomic debit/ownership, idempotent retry, equip ownership and insufficient balance.
 - Source implementation only: no Firebase Functions deployment, client cutover, production Rules/index change, live database access or migration was performed.
 - Next gate: validate the production callable in emulator CI, review deployed production Rules/indexes and complete a full shop client migration plan before owner-approved deployment.
+
+
+## 106. Staged production shop callable merged (2026-11-22)
+
+- PR #106 merged to `main` as `38f24870e8acc6940afcadc1a02a70c4c3937b14`.
+- Final-head CI passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview (3/3).
+- `shopPurchase` is now an exported callable source endpoint. It delegates to the existing authenticated handler and the server-authoritative catalog-priced Firestore transaction service.
+- The end-to-end Firebase emulator test now calls `shopPurchase` and verifies forged payload rejection, catalog price, atomic balance/ownership mutation, idempotent retry, equip ownership and insufficient balance.
+- `shopPurchasePreview` remains separately guarded to the isolated `demo-quizhub` Auth + Firestore + Functions emulators.
+- Important: source merge is not deployment. No Production Functions deployment, browser client cutover, Firestore Rules/index change, migration, or live database operation was performed. Production direct-write shop path remains active until a separately reviewed cutover.
