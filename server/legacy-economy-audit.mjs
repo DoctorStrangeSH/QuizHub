@@ -42,11 +42,23 @@ export function auditLegacyEconomyProfile({ uid, profile, purchaseReceipts = nul
         else {
             const seen = new Set();
             receipts = purchaseReceipts.map((receipt,index) => {
-                if (!isRecord(receipt) || typeof receipt.operationId !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(receipt.operationId) || seen.has(receipt.operationId)) {
-                    anomalies.push({code:'INVALID_OR_DUPLICATE_PURCHASE_RECEIPT',index}); return {valid:false};
+                const validOperationId = isRecord(receipt) && typeof receipt.operationId === 'string' &&
+                    /^[A-Za-z0-9_-]{8,128}$/.test(receipt.operationId) && !seen.has(receipt.operationId);
+                const validReceiptShape = validOperationId &&
+                    receipt.uid === uid &&
+                    typeof receipt.itemId === 'string' && ITEM_ID.test(receipt.itemId) &&
+                    ['theme', 'frame', 'particles', 'bonus'].includes(receipt.kind) &&
+                    Number.isSafeInteger(receipt.coinsSpent) && receipt.coinsSpent >= 0 &&
+                    Number.isSafeInteger(receipt.balance) && receipt.balance >= 0;
+                if (!validReceiptShape) {
+                    anomalies.push({code:'INVALID_OR_DUPLICATE_PURCHASE_RECEIPT',index});
+                    return {valid:false};
                 }
                 seen.add(receipt.operationId);
-                return {valid:true,operationId:receipt.operationId,itemId:typeof receipt.itemId==='string'&&ITEM_ID.test(receipt.itemId)?receipt.itemId:null,status:typeof receipt.status==='string'?receipt.status:null};
+                return {
+                    valid:true, operationId:receipt.operationId, itemId:receipt.itemId,
+                    kind:receipt.kind, coinsSpent:receipt.coinsSpent, balance:receipt.balance
+                };
             });
         }
     } else warnings.push({code:'NO_PURCHASE_RECEIPT_SNAPSHOT'});
