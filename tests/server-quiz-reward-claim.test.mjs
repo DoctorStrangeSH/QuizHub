@@ -20,12 +20,13 @@ function setup(questionCount = 2) {
     }]]);
     const facts = new Map();
     const unlockReceipts = new Set();
+    const ledger = new Map();
     let queue = Promise.resolve();
     const store = {
         // Model the serializable transaction contract for independent callers.
         runTransaction(callback) {
             const task = queue.then(async () => {
-                const staged = { session: null, user: null, facts: null, receipts: [] };
+                const staged = { session: null, user: null, facts: null, receipts: [], ledger: null };
                 const tx = {
                     getSession: async id => structuredClone(sessions.get(id)),
                     getUser: async uid => structuredClone(users.get(uid)),
@@ -33,12 +34,18 @@ function setup(questionCount = 2) {
                     setAchievementFacts: async (uid, value) => { staged.facts = [uid, structuredClone(value)]; },
                     createAchievementReceipts: async (uid, ids) => { staged.receipts = ids.map(id => uid + ':' + id); },
                     setSession: async (id, value) => { staged.session = [id, structuredClone(value)]; },
+                    createLedgerEntry: async entry => {
+                        const key = entry.uid + ':' + entry.entryId;
+                        if (ledger.has(key)) throw new Error('LEDGER_ENTRY_EXISTS');
+                        staged.ledger = [key, structuredClone(entry)];
+                    },
                     setUser: async (uid, value) => { staged.user = [uid, structuredClone(value)]; }
                 };
                 const result = await callback(tx);
                 if (staged.user) users.set(...staged.user);
                 if (staged.facts) facts.set(...staged.facts);
                 for (const id of staged.receipts) unlockReceipts.add(id);
+                if (staged.ledger) ledger.set(...staged.ledger);
                 if (staged.session) sessions.set(...staged.session);
                 return result;
             });
@@ -46,7 +53,7 @@ function setup(questionCount = 2) {
             return task;
         }
     };
-    return { store, sessions, users, facts, unlockReceipts };
+    return { store, sessions, users, facts, unlockReceipts, ledger };
 }
 
 const claim = (store, uid = 'player') =>
@@ -71,6 +78,12 @@ test('first claim credits the server-scored result exactly once', async () => {
     assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
     assert.deepEqual(facts.get('player'), { totalGames: 1, experience: 30, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
     assert.ok(unlockReceipts.has('player:first_quiz'));
+    assert.equal(ledger.size, 1);
+    const event = [...ledger.values()][0];
+    assert.equal(event.type, 'quiz_reward');
+    assert.equal(event.sourceId, 'session-1');
+    assert.equal(event.coinsDelta, 15);
+    assert.equal(event.xpDelta, 30);
 });
 
 test('perfect Classic run unlocks the 10/10 achievement from server-scored answers', async () => {
@@ -102,13 +115,14 @@ test('server unlock ledger ignores legacy profile IDs when deciding new unlocks'
 });
 
 test('retries and concurrent completion requests return same receipt without double credit', async () => {
-    const { store, users } = setup();
+    const { store, users, ledger } = setup();
     const receipts = await Promise.all([claim(store), claim(store), claim(store)]);
     assert.equal(receipts.filter(receipt => !receipt.alreadyClaimed).length, 1);
     assert.deepEqual(receipts.map(receipt => receipt.coins), [15, 15, 15]);
     assert.equal(users.get('player').coins, 22);
     assert.equal(users.get('player').quizzesCompleted, 1);
     assert.deepEqual(users.get('player').achievements, ['first_quiz', 'first_win']);
+    assert.equal(ledger.size, 1);
 });
 
 test('foreign users cannot claim someone else\'s session', async () => {
@@ -137,6 +151,7 @@ test('failed transaction does not mark reward claimed or update balance', async 
     await assert.rejects(claim(store), /USER_NOT_FOUND/);
     assert.equal(sessions.get('session-1').finalized, false);
     assert.equal(sessions.get('session-1').receipt, undefined);
+    assert.equal(ledger.size, 0);
 });
 
 test('invalid or negative stored balances never get silently overwritten', async () => {
