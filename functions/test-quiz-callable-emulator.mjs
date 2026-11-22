@@ -98,6 +98,13 @@ test('emulator-only callable verifies auth, scores answers and credits once', as
         assert.equal(saved.coins, 3 + receipt.coins);
         assert.equal(saved.experience, 7 + receipt.xp);
         assert.equal(saved.email, 'never-return@example.test');
+        const ledger = await db.collection('accountLedger').doc(alice.uid).collection('entries').get();
+        assert.equal(ledger.size, 1, 'completed quiz must append exactly one ledger event, even with zero rewards');
+        const ledgerEvent = ledger.docs[0].data();
+        assert.equal(ledgerEvent.type, 'quiz_reward');
+        assert.equal(ledgerEvent.sourceId, started.sessionId);
+        assert.equal(ledgerEvent.coinsDelta, receipt.coins);
+        assert.equal(ledgerEvent.xpDelta, receipt.xp);
         const result = await invoke(alice, 'resume', { sessionId: started.sessionId });
         assert.equal(result.body.result?.receipt?.alreadyClaimed, true);
     } finally {
