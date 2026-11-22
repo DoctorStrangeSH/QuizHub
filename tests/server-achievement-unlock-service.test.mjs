@@ -5,28 +5,32 @@ import { createAchievementUnlockService } from '../server/achievement-unlock-ser
 function setup(facts, achievements = []) {
     const users = new Map([['alice', { nickname: 'Alice', coins: 50, achievements }]]);
     const receipts = new Set();
+    const ledger = new Map();
     let queue = Promise.resolve();
     const store = {
         users, receipts,
         runTransaction(callback) {
             const task = queue.then(async () => {
-                let patch = null, pending = [];
+                let patch = null, pending = [], ledgerPending = [];
                 const tx = {
                     async getAchievementFacts(uid) { return structuredClone(facts[uid] ?? null); },
                     async getUser(uid) { return structuredClone(users.get(uid) ?? null); },
                     async setAchievementFacts(uid, value) { facts[uid] = structuredClone(value); },
                     async setUserPatch(uid, value) { patch = structuredClone(value); },
-                    async createUnlockReceipts(uid, ids) { pending = ids.map(id => uid + ':' + id); }
+                    async createUnlockReceipts(uid, ids) { pending = ids.map(id => uid + ':' + id); },
+                    async createLedgerEntry(entry) { ledgerPending.push(structuredClone(entry)); }
                 };
                 const result = await callback(tx);
                 if (patch) users.set('alice', { ...users.get('alice'), ...patch });
                 for (const id of pending) receipts.add(id);
+                for (const entry of ledgerPending) ledger.set(entry.uid + ':' + entry.entryId, entry);
                 return result;
             });
             queue = task.catch(() => {});
             return task;
         }
     };
+    store.ledger = ledger;
     return store;
 }
 
@@ -38,6 +42,13 @@ test('catalog evaluates only server facts and unlocks eligible achievements', as
     assert.deepEqual(store.users.get('alice').achievements, result.newlyUnlocked);
     assert.equal(store.users.get('alice').coins, 50);
     assert.equal(store.receipts.size, 5);
+    assert.equal(store.ledger.size, 5);
+    for (const entry of store.ledger.values()) {
+        assert.equal(entry.type, 'achievement_unlock');
+        assert.equal(entry.coinsDelta, 0);
+        assert.equal(entry.xpDelta, 0);
+        assert.equal(entry.achievementId, entry.sourceId);
+    }
 });
 
 test('retries and concurrent evaluations do not issue duplicate unlocks', async () => {
@@ -49,6 +60,7 @@ test('retries and concurrent evaluations do not issue duplicate unlocks', async 
     ]);
     assert.equal(results.reduce((n, item) => n + item.newlyUnlocked.length, 0), 7);
     assert.equal(store.receipts.size, 7);
+    assert.equal(store.ledger.size, 7);
     assert.equal(new Set(store.users.get('alice').achievements).size, 7);
 });
 
@@ -60,6 +72,7 @@ test('trusted win and perfect-run facts unlock the matching catalog milestones',
     assert.deepEqual(result.newlyUnlocked, ['first_quiz', 'first_win', 'ten_wins', 'perfect_score']);
     assert.deepEqual(facts.alice.unlockedIds, result.newlyUnlocked);
     assert.equal(store.receipts.size, 4);
+    assert.equal(store.ledger.size, 4);
 });
 
 test('preserves existing achievement IDs and never accepts caller-supplied progress', async () => {
@@ -68,6 +81,7 @@ test('preserves existing achievement IDs and never accepts caller-supplied progr
     const result = await service.evaluate({ uid: 'alice', totalGames: 999999, experience: 999999, level: 99 });
     assert.deepEqual(result.newlyUnlocked, []);
     assert.deepEqual(store.users.get('alice').achievements, ['legacy_custom']);
+    assert.equal(store.ledger.size, 0);
 });
 
 test('missing facts do not unlock anything; missing profile and invalid catalog fail closed', async () => {
