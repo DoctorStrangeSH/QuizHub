@@ -1,3 +1,5 @@
+import { createAccountLedgerEntry } from './account-ledger-entry.mjs';
+
 const DAY_MS = 86_400_000;
 export const DAILY_LOGIN_REWARDS = Object.freeze([10, 20, 30, 50, 75, 100, 200]);
 
@@ -54,6 +56,10 @@ export function createDailyLoginRewardService({ store }) {
                 const receipt = { uid, date, streak, coins: reward, balance, claimedAt: now };
                 await tx.setUserPatch(uid, { coins: balance, dailyStreak: streak, lastDailyClaim: new Date(now) });
                 await tx.setDailyLoginClaim(key, receipt);
+                await tx.createLedgerEntry(createAccountLedgerEntry({
+                    uid, type: 'daily_login_reward', sourceId: date, occurredAt: now,
+                    coinsDelta: reward
+                }));
                 return { ...receipt, alreadyClaimed: false };
             });
         }
