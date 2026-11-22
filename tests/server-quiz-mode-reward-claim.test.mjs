@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createQuizFirestoreStore } from '../server/quiz-firestore-store.mjs';
 import { buildQuestionCatalog } from '../server/question-delivery.mjs';
 import { createModeSessionService } from '../server/quiz-mode-session-service.mjs';
+import { accountLedgerEntryId } from '../server/account-ledger-entry.mjs';
 import { claimModeSessionReward } from '../server/quiz-mode-reward-claim.mjs';
 
 function fakeFirestore() {
@@ -127,6 +128,16 @@ test('Duel reward is atomic, increments wins only for a player victory, and repl
     assert.deepEqual(user.achievements, ['first_quiz', 'first_win']);
     assert.deepEqual(db.records.get('achievementFacts/player'), { totalGames: 1, experience: first.xp, totalWins: 1, perfectGames: 0, level: 1, unlockedIds: ['first_quiz', 'first_win'] });
     assert.equal(db.records.get('achievementUnlockReceipts/player/unlocks/first_quiz').achievementId, 'first_quiz');
+    const quizEvent = db.records.get(`accountLedger/player/entries/${accountLedgerEntryId('quiz_reward', started.sessionId)}`);
+    assert.ok(quizEvent);
+    assert.equal(quizEvent.coinsDelta, first.coins);
+    assert.equal(quizEvent.xpDelta, first.xp);
+    const achievementEvent = db.records.get(`accountLedger/player/entries/${accountLedgerEntryId('achievement_unlock', 'first_quiz')}`);
+    assert.equal(achievementEvent.type, 'achievement_unlock');
+    assert.equal(achievementEvent.achievementId, 'first_quiz');
+    assert.equal(achievementEvent.coinsDelta, 0);
+    assert.equal(achievementEvent.xpDelta, 0);
+    assert.equal([...db.records.keys()].filter(path => path.startsWith('accountLedger/player/entries/')).length, 3);
     assert.equal(user.email, 'private@example.test');
     assert.deepEqual(user.friends, ['friend']);
 });
@@ -148,6 +159,10 @@ test('Survival updates best streak using max semantics and does not increment wi
     assert.equal(db.records.get('achievementFacts/player').perfectGames, 0);
     assert.equal(user.wins, 2);
     assert.equal(user.stats.totalWins, 2);
+    const events = [...db.records.entries()].filter(([path]) => path.startsWith('accountLedger/player/entries/'));
+    assert.equal(events.length, 2);
+    assert.ok(events.some(([, event]) => event.type === 'quiz_reward' && event.coinsDelta === receipt.coins && event.xpDelta === receipt.xp));
+    assert.ok(events.some(([, event]) => event.type === 'achievement_unlock' && event.achievementId === 'first_quiz'));
 });
 
 test('Time Trial applies strict 70 percent win threshold and server-scored rewards', async () => {
@@ -174,6 +189,12 @@ test('Time Trial applies strict 70 percent win threshold and server-scored rewar
     assert.equal(db.records.get('achievementFacts/player').totalWins, 1);
     assert.equal(db.records.get('achievementFacts/player').perfectGames, 1);
     assert.equal(db.records.get('users/player').wins, 3);
+    const events = [...db.records.entries()].filter(([path]) => path.startsWith('accountLedger/player/entries/'));
+    assert.equal(events.length, 4);
+    assert.ok(events.some(([, event]) => event.type === 'quiz_reward' && event.coinsDelta === receipt.coins && event.xpDelta === receipt.xp));
+    for (const achievementId of ['first_quiz', 'first_win', 'perfect_score']) {
+        assert.ok(events.some(([, event]) => event.type === 'achievement_unlock' && event.achievementId === achievementId));
+    }
 });
 
 test('foreign owner, incomplete run and corrupted mode log cannot claim rewards', async () => {
@@ -195,6 +216,7 @@ test('foreign owner, incomplete run and corrupted mode log cannot claim rewards'
     }), /INVALID_MODE_RESULT/);
     assert.equal(db.records.get('users/player').coins, 7);
     assert.equal(db.records.get(`quizSessions/${started.sessionId}`).finalized, false);
+    assert.equal([...db.records.keys()].filter(path => path.startsWith('accountLedger/player/entries/')).length, 0);
 });
 
 
