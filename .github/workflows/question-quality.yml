@@ -90,10 +90,14 @@ jobs:
         run: node --experimental-default-type=module --test tests/server-shop-purchase-service.test.mjs
       - name: Test create-only Firestore account ledger writer
         run: node --experimental-default-type=module --test tests/server-account-ledger-firestore-writer.test.mjs
+      - name: Test owner-scoped account ledger history and callable
+        run: node --experimental-default-type=module --test tests/server-account-ledger-history.test.mjs tests/server-account-ledger-history-callable.test.mjs
       - name: Syntax-check Firestore account ledger writer
         run: |
           node --check server/account-ledger-entry.mjs
           node --check server/account-ledger-firestore-writer.mjs
+          node --check server/account-ledger-history.mjs
+          node --check server/account-ledger-history-callable-adapter.mjs
           node --check server/shop-firestore-store.mjs
           node --check server/shop-purchase-service.mjs
       - name: Verify legacy private, social and game data preservation
@@ -227,8 +231,12 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-achievement-invoker.test.mjs
       - name: Syntax-check achievements browser module
         run: node --check app/modules/achievements/achievements.js
-      - name: Test achievement unlock service and callable
+      - name: Test achievement unlock service, account ledger and callable
         run: node --experimental-default-type=module --test tests/server-achievement-unlock-service.test.mjs tests/server-achievement-firestore-store.test.mjs tests/server-achievement-callable.test.mjs tests/server-quiz-reward-claim.test.mjs tests/server-quiz-mode-reward-claim.test.mjs
+      - name: Syntax-check achievement ledger integration
+        run: |
+          node --check server/achievement-unlock-service.mjs
+          node --check server/achievement-firestore-store.mjs
       - name: Test server mode Firestore persistence and retries
         run: node --experimental-default-type=module --test tests/server-mode-firestore-persistence.test.mjs
 

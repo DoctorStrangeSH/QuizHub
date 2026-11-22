@@ -1,11 +1,30 @@
-# Ephemeral credentials created by google-github-actions/auth
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+functions/.env
+functions/.env.*
+!functions/.env.example
 gha-creds-*.json
 
-# Local Firebase/Google Cloud state
+# Local Firebase / Google Cloud state
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
 
-# Generated Firebase Functions output and dependencies
+# Dependencies and generated build output
+node_modules/
 functions/node_modules/
 functions/dist/
+
+# Test output and generated artifacts
+coverage/
+playwright-report/
+test-results/
+artifacts/
