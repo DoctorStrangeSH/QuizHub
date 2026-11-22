@@ -15,7 +15,7 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Classic quiz reward ledger events | DONE | PR #97 merged to `main`; Question Quality, Emulator and Visual Preview passed |
 | Duel / Survival / Time Trial ledger events | DONE | PR #100 merged to `main` as `738356c`; Question Quality, Emulator and Visual Preview passed (3/3) |
 | Owner-scoped account history API | DONE | PR #101 merged as `685517c`; Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3) |
-| Account history profile UI | IN PROGRESS | Branch `feat/profile-ledger-history-ui`; owner-only responsive panel, localized filters, cursor pagination and emulator-only preview; CI pending |
+| Account history profile UI | IN PROGRESS | PR #102; owner-only responsive panel, localized filters, cursor pagination and emulator-only preview; all three CI workflows passed on head `eed160e` (final review fixes pending) |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
 | Functions deployment and browser cutover | NOT DONE | Emulator-only previews remain guarded |
