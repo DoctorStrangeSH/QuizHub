@@ -1,10 +1,10 @@
 # QuizHub V1 economy cutover audit — 2026-11-22
 
-Status: source-level audit of \`main\`. This is not a production configuration inspection, security certification, migration, or approval to deploy.
+Status: source-level audit of `main`. This is not a production configuration inspection, security certification, migration, or approval to deploy.
 
 ## Executive summary
 
-The V1 browser still uses direct Firestore writes for core economy operations. Trusted server implementations have advanced substantially and are exposed as Firebase callable previews, but the browser integration is opt-in for local emulators and the Functions fail closed outside the isolated \`demo-quizhub\` environment.
+The V1 browser still uses direct Firestore writes for core economy operations. Trusted server implementations have advanced substantially and are exposed as Firebase callable previews, but the browser integration is opt-in for local emulators and the Functions fail closed outside the isolated `demo-quizhub` environment.
 
 **Release gate: BLOCKED.** Do not describe the live economy as server-authoritative or anti-cheat protected. Do not deploy restrictive Firestore Rules or switch production clients to preview callables as part of this audit.
 
@@ -12,14 +12,14 @@ The V1 browser still uses direct Firestore writes for core economy operations. T
 
 | Flow | Current browser / production behavior | Trusted implementation | Current release state |
 |---|---|---|---|
-| Profile bootstrap | \`profile.js\` creates \`users/{uid}\` from the browser, including initial 100 coins, XP/level, owned cosmetics and social arrays | Profile-create callable and Firestore adapter | Emulator-only preview; browser production path remains legacy |
-| Classic quiz rewards | Shared \`modes/base.js::persistResults()\` computes rewards in browser and increments XP, weekly XP, coins and stats; Classic adds wins | Server question delivery, authenticated session service, idempotent claim and Firestore transaction | \`quizSessionPreview\` is emulator-only; production browser still writes directly |
-| Duel / Survival / Time Trial | Mode-specific result UI delegates reward persistence to the shared browser base; mode-specific counters are supplied as client extra data | Server-owned mode sessions, canonical answer validation, mode reward claim and ledger entry | \`quizModePreview\` is emulator-only; production browser still uses legacy reward writer |
-| Daily login | Browser reads eligibility/streak then increments coins and streak and writes \`lastDailyClaim\` | Transactional daily-login service, immutable claim receipt and \`daily_login_reward\` ledger entry | \`dailyLoginRewardPreview\` is emulator-only; production browser still uses legacy write |
-| Shop purchases / bonuses | Browser reads price/balance, then writes ownership/equipment and decrements coins; bonus expiry is client-derived | Catalog-backed transactional purchase service, idempotency receipt and \`shop_purchase\` ledger entry | \`shopPurchasePreview\` is emulator-only; production browser still uses legacy write |
+| Profile bootstrap | `profile.js` creates `users/{uid}` from the browser, including initial 100 coins, XP/level, owned cosmetics and social arrays | Profile-create callable and Firestore adapter | Emulator-only preview; browser production path remains legacy |
+| Classic quiz rewards | Shared `modes/base.js::persistResults()` computes rewards in browser and increments XP, weekly XP, coins and stats; Classic adds wins | Server question delivery, authenticated session service, idempotent claim and Firestore transaction | `quizSessionPreview` is emulator-only; production browser still writes directly |
+| Duel / Survival / Time Trial | Mode-specific result UI delegates reward persistence to the shared browser base; mode-specific counters are supplied as client extra data | Server-owned mode sessions, canonical answer validation, mode reward claim and ledger entry | `quizModePreview` is emulator-only; production browser still uses legacy reward writer |
+| Daily login | Browser reads eligibility/streak then increments coins and streak and writes `lastDailyClaim` | Transactional daily-login service, immutable claim receipt and `daily_login_reward` ledger entry | `dailyLoginRewardPreview` is emulator-only; production browser still uses legacy write |
+| Shop purchases / bonuses | Browser reads price/balance, then writes ownership/equipment and decrements coins; bonus expiry is client-derived | Catalog-backed transactional purchase service, idempotency receipt and `shop_purchase` ledger entry | `shopPurchasePreview` is emulator-only; production browser still uses legacy write |
 | Cosmetic equip | Browser updates equipped cosmetic directly | Server-side ownership-checked equip operation exists | Emulator-only shop callable; production remains legacy |
-| Achievements | Browser evaluates local profile state and writes the achievements array | Server-maintained achievement facts, unlock receipts and \`achievement_unlock\` ledger events | \`achievementUnlockPreview\` is emulator-only; production browser still uses legacy evaluation/write |
-| Daily competitive prizes | No confirmed production client claim flow in this audit | A backend \`daily-prize-service\` contract exists | No exported callable / ledger integration verified; treat as NOT RELEASE-READY |
+| Achievements | Browser evaluates local profile state and writes the achievements array | Server-maintained achievement facts, unlock receipts and `achievement_unlock` ledger events | `achievementUnlockPreview` is emulator-only; production browser still uses legacy evaluation/write |
+| Daily competitive prizes | No confirmed production client claim flow in this audit | A backend `daily-prize-service` contract exists | No exported callable / ledger integration verified; treat as NOT RELEASE-READY |
 
 ## Findings
 
@@ -29,11 +29,11 @@ The V1 browser still uses direct Firestore writes for core economy operations. T
 
 The browser still writes balances and progression directly in these modules:
 
-- \`app/modules/quiz/modes/base.js\`: XP, weekly XP, coins, completed quizzes and aggregate stats; individual modes add wins through \`extraData\`.
-- \`app/modules/profile/profile.js\`: initial profile values including 100 coins and level 1.
-- \`app/modules/shop/shop.js\`: cosmetic and bonus purchases, plus equipment changes.
-- \`app/modules/daily/daily.js\`: daily login coins, streak and last-claim timestamp.
-- \`app/modules/achievements/achievements.js\`: achievement IDs based on browser-visible profile facts.
+- `app/modules/quiz/modes/base.js`: XP, weekly XP, coins, completed quizzes and aggregate stats; individual modes add wins through `extraData`.
+- `app/modules/profile/profile.js`: initial profile values including 100 coins and level 1.
+- `app/modules/shop/shop.js`: cosmetic and bonus purchases, plus equipment changes.
+- `app/modules/daily/daily.js`: daily login coins, streak and last-claim timestamp.
+- `app/modules/achievements/achievements.js`: achievement IDs based on browser-visible profile facts.
 
 The browser has access to the public question bank and computes score/rewards. Client validation and in-memory single-flight guards do not establish trusted scoring, cross-device idempotency or fraud prevention.
 
@@ -43,19 +43,19 @@ The browser has access to the public question bank and computes score/rewards. C
 
 **Severity: High / progression correctness; migration design required**
 
-- \`advanceAchievementFacts()\` derives \`achievementFacts.level\` from server-owned cumulative XP using the V1 formula \`floor(experience / 100) + 1\`.
-- Classic and mode reward claim services update \`experience\`, \`weeklyExperience\`, \`coins\`, wins and stats, while the Firestore quiz store's allowlisted \`setUser()\` projection does not include \`level\`.
-- The legacy browser path separately calculates and writes \`users/{uid}.level\` after the reward write.
-- Achievement facts deliberately start at zero and do not import legacy client-editable profile stats. Existing \`users/{uid}.experience\` and \`level\` therefore cannot be copied into the trusted baseline without a separately reviewed migration.
+- `advanceAchievementFacts()` derives `achievementFacts.level` from server-owned cumulative XP using the V1 formula `floor(experience / 100) + 1`.
+- Classic and mode reward claim services update `experience`, `weeklyExperience`, `coins`, wins and stats, while the Firestore quiz store's allowlisted `setUser()` projection does not include `level`.
+- The legacy browser path separately calculates and writes `users/{uid}.level` after the reward write.
+- Achievement facts deliberately start at zero and do not import legacy client-editable profile stats. Existing `users/{uid}.experience` and `level` therefore cannot be copied into the trusted baseline without a separately reviewed migration.
 - `server/legacy-progression-audit.mjs` and its tests already provide a read-only legacy/trusted comparison. It intentionally returns `eligibleForAutomaticImport: false`; equality is not proof of provenance or complete ledger coverage.
 
-A trusted claim can advance server-owned facts while the visible legacy profile level remains stale. **Do not fix this by blindly writing \`achievementProgress.facts.level\` to every existing profile**: for an account with legacy XP above the trusted baseline, that could downgrade its visible level. Before cutover, define a baseline strategy (e.g. audited owner-approved migration or a separate trusted progression field), then update profile/public ranking projections atomically with the receipt. Test threshold crossings, existing high-level accounts, concurrent claims and public profile sync for Classic plus Duel/Survival/Time Trial.
+A trusted claim can advance server-owned facts while the visible legacy profile level remains stale. **Do not fix this by blindly writing `achievementProgress.facts.level` to every existing profile**: for an account with legacy XP above the trusted baseline, that could downgrade its visible level. Before cutover, define a baseline strategy (e.g. audited owner-approved migration or a separate trusted progression field), then update profile/public ranking projections atomically with the receipt. Test threshold crossings, existing high-level accounts, concurrent claims and public profile sync for Classic plus Duel/Survival/Time Trial.
 
 ### E-03 — Daily competitive prize contract is not part of the deployed callable surface
 
 **Severity: Medium / scope gate**
 
-\`server/daily-prize-service.mjs\` contains a transaction-oriented reward contract, but this audit did not find a corresponding exported callable or browser invoker in \`functions/index.mjs\`. The service also does not create an account-ledger entry. Do not count this as a delivered V1 player feature until product scope, callable transport, idempotency, ledger behavior and UI are decided.
+`server/daily-prize-service.mjs` contains a transaction-oriented reward contract, but this audit did not find a corresponding exported callable or browser invoker in `functions/index.mjs`. The service also does not create an account-ledger entry. Do not count this as a delivered V1 player feature until product scope, callable transport, idempotency, ledger behavior and UI are decided.
 
 ### E-04 — Ledger coverage is a preview contract, not yet a complete production history
 
@@ -67,7 +67,7 @@ The profile history UI is intentionally emulator-only and locked in Production u
 
 The repository's economy security documentation records that no reviewed production Rules file or privacy-safe public/private schema split is committed. Leaderboards, friend discovery and public profiles currently depend on data in the user document. Firestore Rules cannot hide individual fields within a readable document.
 
-Do not add owner-only Rules to \`users/{uid}\` until those cross-user reads and social operations have been migrated to an explicit public profile / relationship model and tested with two Auth users.
+Do not add owner-only Rules to `users/{uid}` until those cross-user reads and social operations have been migrated to an explicit public profile / relationship model and tested with two Auth users.
 
 ## Required V1 migration sequence
 
