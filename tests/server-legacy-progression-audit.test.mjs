@@ -121,3 +121,39 @@ test('reports unknown legacy achievement IDs while preserving their IDs in the s
     ));
     assert.ok(report.legacyAchievementIds.includes('legacy_event_champion'));
 });
+
+test('compares trusted and legacy counters without treating equality as proof of provenance', () => {
+    const profile = cleanProfile();
+    const facts = {
+        totalGames: 12, experience: 450, totalWins: 8,
+        perfectGames: 1, level: 5, unlockedIds: ['first_quiz']
+    };
+    const report = auditLegacyProgressionProfile({
+        uid: 'player-1', profile, existingAchievementFacts: facts
+    });
+    assert.deepEqual(report.trustedComparisons.map(x => x.status), [
+        'equal', 'equal', 'equal', 'equal', 'equal', 'equal'
+    ]);
+    assert.ok(report.warnings.some(x => x.code === 'TRUSTED_LEDGER_COVERAGE_REQUIRES_PROVENANCE'));
+    assert.equal(report.eligibleForAutomaticImport, false);
+});
+
+test('surfaces trusted/legacy divergence but never picks a winner or proposes an overwrite', () => {
+    const report = auditLegacyProgressionProfile({
+        uid: 'player-1',
+        profile: cleanProfile(),
+        existingAchievementFacts: {
+            totalGames: 2, experience: 90, totalWins: 1,
+            perfectGames: 0, level: 1, unlockedIds: ['first_quiz']
+        }
+    });
+    assert.ok(report.trustedComparisons.some(x =>
+        x.legacyField === 'experience' && x.trustedField === 'experience' && x.status === 'different'
+    ));
+    assert.ok(report.trustedComparisons.some(x =>
+        x.legacyField === 'level' && x.trustedField === 'level' && x.status === 'different'
+    ));
+    assert.equal('reconciledFacts' in report, false);
+    assert.equal('proposedAchievementFacts' in report, false);
+    assert.equal(report.eligibleForAutomaticImport, false);
+});
