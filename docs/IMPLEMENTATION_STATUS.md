@@ -1173,6 +1173,17 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Account ledger rollout remains incomplete until quiz modes, refunds (if supported in V1) and the owner-scoped paginated history reader are audited/integrated. Legacy activity remains unverified.
 
 
+## 96. Duel, Survival and Time Trial account ledger integration (2026-11-22)
+
+- PR #100 merged into `main` as `738356ce665ad2e94d6af04bee645dce44dc0ca0`. Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3 checks).
+- Added one canonical `quiz_reward` event for every successfully claimed Duel, Survival and Time Trial session.
+- Added one `achievement_unlock` event per newly unlocked achievement in those mode reward claims.
+- Ledger events are created in the same Firestore transaction as profile reward fields, achievement facts/receipts and the finalized session receipt.
+- Deterministic identity uses the session ID for mode rewards and achievement ID for unlocks; retries return the stored receipt and do not append duplicates.
+- Added adapter-level tests for mode reward deltas, achievement event metadata, zero-value unlock events and no ledger writes after invalid/corrupted claims.
+- Existing win thresholds, streak behavior, score calculation and reward amounts are unchanged.
+- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills. Legacy activity remains unverified.
+
 ## 97. Owner-scoped account ledger history API (2026-11-22)
 
 - Added a read-only history service for `accountLedger/{auth.uid}/entries`; caller identity is derived from Firebase Auth and no UID field is accepted from the client.
