@@ -134,3 +134,11 @@ Do not add owner-only Rules to `users/{uid}` until those cross-user reads and so
 - A dedicated authenticated browser invoker for `shopPurchase` is now available in source, sharing strict payload validation with the local emulator preview.
 - This is not a live client cutover: production shop UI still uses direct Firestore writes until callable deployment and coordinated Rules/client migration are reviewed.
 - Production deployment, Rules/index changes, data migration and feature-gate changes remain NOT DONE.
+
+
+## 2026-11-22 — Consumable bonus functional gap
+
+- Audited `bonus_skip` and `bonus_fifty`: both catalogue items have `duration: 0`, while the current server purchase service stores them as timed `activeBonuses` with expiry equal to the current server timestamp.
+- The shop UI's active check requires expiry greater than `Date.now()`, so these purchases cannot remain active. No consumable inventory or consume operation was found in the inspected shop and shared quiz mode modules.
+- This is a V1 blocker for those two items. Implement a server-owned consumable inventory and authenticated atomic consume flow before presenting them as functional purchases.
+- No Production or user data was changed.
