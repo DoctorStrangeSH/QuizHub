@@ -1225,3 +1225,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Confirmed remaining production browser writes for quiz rewards, profile bootstrap, shop, daily login and achievements. Server callable previews remain emulator-only.
 - Identified a progression consistency gap: server reward claims compute `achievementFacts.level`, but the trusted user projection does not update `users/{uid}.level`. Achievement facts intentionally start at zero and do not trust legacy client XP; define a safe baseline before syncing to avoid downgrading existing accounts. Fix and regression tests are NOT DONE.
 - Production Functions/Rules/index deployment, client cutover, legacy backfill, refund flow and daily competitive prize callable remain NOT DONE.
+
+
+## 101. Trusted progression baseline and atomic level projection (2026-11-22)
+
+- Started implementation on `feat/trusted-progression-baseline`; PR and final CI evidence are pending.
+- Trusted profile creation now initializes `achievementFacts/{uid}` in the same Firestore transaction as the private/public profile and nickname claim. The baseline is zero XP / level 1 and carries a server-created `baselineTrusted: true` marker.
+- The marker is preserved only when it already exists in trusted facts. Existing profiles with no marker are not automatically promoted, and their legacy `users/{uid}.level` is never overwritten by a lower trusted-from-zero level.
+- Classic and Duel / Survival / Time Trial reward claims now include the XP-derived level in the same transaction only when the trusted baseline marker is present.
+- The Firestore user projection allowlists the level field, and the optional public-profile projection receives the same level in that transaction.
+- Added unit and emulator coverage for trusted baseline creation, 99 → 100 XP threshold progression, legacy-level preservation and public-profile level sync.
+- This is a server-side emulator-preview contract only. Production Rules must explicitly deny client writes to `achievementFacts`; no Production callable, Rules, indexes, migration or client cutover was changed.
+- Existing-account baseline/backfill remains NOT DONE and requires separate provenance review. Production deployment and browser cutover remain NOT DONE.
