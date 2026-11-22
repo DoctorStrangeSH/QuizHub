@@ -1120,3 +1120,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The audit calls out a real semantic incompatibility: legacy `perfect_score` used `stats.bestStreak >= 10`, while the trusted catalog uses a server-scored perfect 10/10 game. Legacy best streak must not be converted to trusted `perfectGames`.
 - All legacy user profile fields remain untrusted until provenance is independently established. A clean audit is only a review candidate; it is not authorization to import.
 - Next: extend the dry-run audit to a complete, immutable account migration manifest and verify field-level preservation across all profile fields. Then design an explicit owner-approved baseline reconciliation. Do not run any Production reads/writes or imports.
+
+
+## 91. Trusted-vs-legacy progression comparison (2026-11-22)
+
+- Extended the read-only progression audit to compare legacy XP, game counts, wins and level with an independently supplied server-owned `achievementFacts` document.
+- Comparisons report only field names and whether values are equal/different; they do not expose another copy of private values or infer which side is authoritative.
+- A difference is not automatically an anomaly: trusted facts may cover only the period after the server ledger was introduced. Every available comparison emits an explicit coverage/provenance warning.
+- Equality is not proof of provenance. Reports remain `review_required`, `eligibleForAutomaticImport: false`; no merged facts, overwrite plan, Firestore transport or account migration is produced.
+- Added regression tests for equal counters, divergent counters, and the invariant that neither side is selected automatically.
+- No Production Firebase reads/writes, imports, deployments, Rules changes or feature-gate changes were performed.
