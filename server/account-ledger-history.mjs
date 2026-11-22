@@ -1,6 +1,6 @@
 import { validateAccountLedgerEntry } from './account-ledger-entry.mjs';
 
-const UID = /^[^/\\x00-\\x1f]{1,256}$/;
+const UID = /^[^/\x00-\x1f]{1,128}$/;
 const EVENT_TYPES = new Set([
     'quiz_reward', 'daily_login_reward', 'shop_purchase',
     'shop_refund', 'achievement_unlock'
