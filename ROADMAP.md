@@ -15,7 +15,9 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Classic quiz reward ledger events | DONE | PR #97 merged to `main`; Question Quality, Emulator and Visual Preview passed |
 | Duel / Survival / Time Trial ledger events | DONE | PR #100 merged to `main` as `738356c`; Question Quality, Emulator and Visual Preview passed (3/3) |
 | Owner-scoped account history API | DONE | PR #101 merged as `685517c`; Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3) |
-| Account history profile UI | IN PROGRESS | PR #102; owner-only responsive panel, localized filters, cursor pagination and emulator-only preview; all three CI workflows passed on head `eed160e` (final review fixes pending) |
+| Account history profile UI | DONE | PR #102 merged to `main` as `179fab0`; Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3) on final head `f1e11bd` |
+| V1 economy cutover source audit | DONE | `docs/audits/ECONOMY_V1_CUTOVER_AUDIT_2026-11-22.md`; confirms remaining direct client writes and server progression gaps |
+| Trusted progression baseline + level sync | NOT DONE | Audit finding E-02; define a safe legacy baseline before syncing `users/{uid}.level` |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
 | Functions deployment and browser cutover | NOT DONE | Emulator-only previews remain guarded |
@@ -36,11 +38,14 @@ This roadmap separates verified delivery from work that is still planned. A merg
    - Show readable reason, date, coin delta and XP delta.
    - Distinguish verified ledger events from any legacy/unverified activity.
    - Loading, empty, error and pagination states are accessible and mobile-friendly.
-4. **Production readiness**
+4. **Progression consistency**
+   - Server-owned XP, weekly XP and level must advance atomically from one canonical progression formula.
+   - Profile level, achievement facts and ledger receipt must agree after retries and concurrent claims.
+5. **Production readiness**
    - Review deployed Rules, required indexes, callable deployment, current client write paths and migration plan.
    - Do not deploy restrictive Rules or switch browser clients before all dependent flows are migrated and tested.
    - Keep production writes, migrations, deployments and feature gates unchanged until explicitly approved.
-5. **Release acceptance**
+6. **Release acceptance**
    - Run full CI and emulator suites on the final merge commit.
    - Update `docs/IMPLEMENTATION_STATUS.md` with exact evidence.
    - Mark V1 complete only after the release gates above are satisfied.
