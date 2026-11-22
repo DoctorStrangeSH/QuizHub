@@ -1304,3 +1304,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Shared strict payload validation is used by both the production transport and isolated emulator preview; client-authored prices, UIDs, bonus duration/effects and unexpected fields are rejected.
 - The production transport is deliberately not wired into the live shop UI. The current browser production path still performs legacy direct Firestore writes.
 - No Production Functions deployment, Firestore Rules/index change, live database operation, migration or feature-gate change was performed.
+
+
+## 109. Shop consumable bonus gap identified (2026-11-22)
+
+- Audited the shop catalogue and the shared Classic / Survival / Duel / Time Trial mode modules after merging the production shop transport.
+- `bonus_skip` and `bonus_fifty` are catalogue entries with `duration: 0`, but the current purchase service treats every bonus as a timed `activeBonuses[effect]` expiry and writes `serverTime + 0`.
+- The shop UI considers a bonus active only while its expiry is greater than the current time. Therefore these two purchases are immediately inactive after purchase.
+- No bonus inventory or server-authorized consume operation was found in the audited shop and quiz mode files. This is a functional economy gap: do not claim Skip / 50-50 are usable consumables in V1 yet.
+- Next: define inventory semantics, add atomic server purchase/consume operations and idempotency, then integrate the quiz UI with server-confirmed consumption and add emulator/browser tests.
+- No code behavior, Production deployment, Rules, indexes or user data were changed in this audit.
