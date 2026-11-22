@@ -184,6 +184,15 @@ export const shopPurchasePreview = onCall({
     return shopPreview(request);
 });
 
+// Production callable is staged independently from browser cutover. It uses
+// the same authenticated, catalog-priced transactional service as the preview.
+// Do not deploy or connect the browser client until Rules and migration gates pass.
+export const shopPurchase = onCall({
+    region: 'europe-west1',
+    memory: '256MiB',
+    timeoutSeconds: 30
+}, async request => shopPreview(request));
+
 
 // Daily login reward preview is emulator-only. The existing browser claim flow
 // remains unchanged until authenticated acceptance and production Rules migration.
