@@ -67,3 +67,12 @@ This preparation adds a server-side timezone preference service, a strictly emul
 - The transport is restricted to the local `demo-quizhub` project, both local hostnames, explicit `firebaseEmulator=1&profileTimeZonePreview=1` flags, and a non-anonymous account.
 - Production and non-opted-in hosts render the setting read-only with the reason; there is no insecure direct Firestore fallback.
 - The UI does not perform a bulk migration. Existing users choose and confirm their own timezone; accounts with no saved preference continue to resolve to UTC until they opt in.
+
+
+## Legacy progression baseline audit (2026-11-22)
+
+- Added a read-only `auditLegacyProgressionProfile` helper for legacy `users/{uid}` profile snapshots. It validates safe integer counters, checks game/win/answer/level consistency, retains the legacy snapshot and reports anomalies without writing data.
+- The helper intentionally returns `eligibleForAutomaticImport: false` and never proposes trusted `achievementFacts`. A profile field being internally consistent does not prove it was earned legitimately: the historical browser path could write these values.
+- Legacy and trusted achievement semantics differ for `perfect_score`: the legacy client checks `stats.bestStreak >= 10`; the trusted catalog checks a server-scored perfect quiz. Neither the legacy ID nor `bestStreak` can be translated into trusted `perfectGames`.
+- Existing `achievementFacts`, when supplied by a trusted collector, are kept separate from the legacy snapshot and validated independently.
+- This is a dry-run audit primitive only. No Firestore reads/writes, account migration, Production deployment, Rules changes or feature-gate changes are included.
