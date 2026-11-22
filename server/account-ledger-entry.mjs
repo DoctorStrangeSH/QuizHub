@@ -16,7 +16,7 @@ function safeDelta(value, field) {
 function validateInput(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('INVALID_LEDGER_ENTRY');
     const { uid, type, sourceId, occurredAt } = input;
-    if (typeof uid !== 'string' || !/^[^/\\x00-\\x1f]{1,256}$/.test(uid) || uid === '.' || uid === '..') throw new Error('INVALID_LEDGER_UID');
+    if (typeof uid !== 'string' || !/^[^/\x00-\x1f]{1,256}$/.test(uid) || uid === '.' || uid === '..') throw new Error('INVALID_LEDGER_UID');
     if (!EVENT_TYPES.has(type)) throw new Error('INVALID_LEDGER_EVENT_TYPE');
     if (typeof sourceId !== 'string' || !ID.test(sourceId)) throw new Error('INVALID_LEDGER_SOURCE_ID');
     if (!Number.isSafeInteger(occurredAt) || occurredAt < 0) throw new Error('INVALID_LEDGER_TIMESTAMP');
