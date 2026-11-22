@@ -81,6 +81,11 @@ test('invoker rejects invalid requests and malformed server projections', async 
         entryId: 'bad id', type: 'quiz_reward', occurredAt: 1760000000000, coinsDelta: 10, xpDelta: 5
     }], nextCursor: null } });
     await assert.rejects(malformed.invoker(), /INVALID_ACCOUNT_LEDGER_HISTORY_ENTRY/);
+    const invalidDate = setup({ data: { entries: [{
+        entryId: 'quiz_reward_abc123', type: 'quiz_reward', occurredAt: Number.MAX_SAFE_INTEGER,
+        coinsDelta: 10, xpDelta: 5
+    }], nextCursor: null } });
+    await assert.rejects(invalidDate.invoker(), /INVALID_ACCOUNT_LEDGER_HISTORY_ENTRY/);
 });
 
 test('profile UI renders localized locked and emulator-preview states and is owner-only', () => {
@@ -96,6 +101,8 @@ test('profile UI renders localized locked and emulator-preview states and is own
     assert.match(profile, /isOwnProfile \? renderAccountLedgerHistory/);
     assert.match(profile, /isAccountLedgerHistoryPreviewEnabled/);
     assert.match(listeners, /attachAccountLedgerHistoryListeners/);
+    assert.match(ui, /filter\.disabled = true/);
+    assert.match(ui, /filter\.disabled = false/);
     assert.match(css, /@media \(max-width: 560px\)/);
 });
 
