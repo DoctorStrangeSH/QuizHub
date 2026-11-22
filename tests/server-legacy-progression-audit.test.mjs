@@ -98,3 +98,26 @@ test('requires a valid UID and plain profile object', () => {
     assert.throws(() => auditLegacyProgressionProfile({ uid: 'player-1', profile: null }), /INVALID_LEGACY_PROFILE/);
     assert.throws(() => auditLegacyProgressionProfile({ uid: 'player-1', profile: [] }), /INVALID_LEGACY_PROFILE/);
 });
+
+test('flags malformed trusted unlock ledger instead of silently accepting it', () => {
+    const report = auditLegacyProgressionProfile({
+        uid: 'player-1',
+        profile: cleanProfile(),
+        existingAchievementFacts: { totalGames: 1, unlockedIds: 'first_quiz' }
+    });
+    assert.ok(report.anomalies.some(item =>
+        item.code === 'INVALID_EXISTING_ACHIEVEMENT_FACTS' &&
+        item.path === 'achievementFacts.unlockedIds'
+    ));
+});
+
+test('reports unknown legacy achievement IDs while preserving their IDs in the snapshot', () => {
+    const profile = cleanProfile();
+    profile.achievements.push('legacy_event_champion');
+    const report = auditLegacyProgressionProfile({ uid: 'player-1', profile });
+    assert.ok(report.warnings.some(item =>
+        item.code === 'UNKNOWN_LEGACY_ACHIEVEMENT_IDS' &&
+        item.ids.includes('legacy_event_champion')
+    ));
+    assert.ok(report.legacyAchievementIds.includes('legacy_event_champion'));
+});
