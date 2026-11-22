@@ -22,7 +22,7 @@ test('pending purchase operation ID survives a lost response and a new module in
         uid: 'player-1',
         itemId: 'theme_neon',
         storage,
-        randomUUID: () => `uuid-${++generated}`
+        randomUUID: () => `uuid-value-${++generated}`
     };
     const first = getOrCreateShopOperationId(options);
     // A retry after a timeout must reuse the original key, not create a new debit.
