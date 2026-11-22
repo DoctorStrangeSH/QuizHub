@@ -47,6 +47,7 @@ The browser has access to the public question bank and computes score/rewards. C
 - Classic and mode reward claim services update \`experience\`, \`weeklyExperience\`, \`coins\`, wins and stats, while the Firestore quiz store's allowlisted \`setUser()\` projection does not include \`level\`.
 - The legacy browser path separately calculates and writes \`users/{uid}.level\` after the reward write.
 - Achievement facts deliberately start at zero and do not import legacy client-editable profile stats. Existing \`users/{uid}.experience\` and \`level\` therefore cannot be copied into the trusted baseline without a separately reviewed migration.
+- `server/legacy-progression-audit.mjs` and its tests already provide a read-only legacy/trusted comparison. It intentionally returns `eligibleForAutomaticImport: false`; equality is not proof of provenance or complete ledger coverage.
 
 A trusted claim can advance server-owned facts while the visible legacy profile level remains stale. **Do not fix this by blindly writing \`achievementProgress.facts.level\` to every existing profile**: for an account with legacy XP above the trusted baseline, that could downgrade its visible level. Before cutover, define a baseline strategy (e.g. audited owner-approved migration or a separate trusted progression field), then update profile/public ranking projections atomically with the receipt. Test threshold crossings, existing high-level accounts, concurrent claims and public profile sync for Classic plus Duel/Survival/Time Trial.
 
