@@ -21,7 +21,7 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Server shop purchase / equip contract | DONE (preview) | Catalog-priced transaction, ownership checks, operation receipts and append-only ledger event; emulator preview remains guarded |
 | Browser shop retry idempotency | DONE (preview) | PR #105 merged to `main` as `2525025`; all 3 CI workflows passed |
 | Production shop callable source | DONE (staged) | PR #106 merged as `38f2487`; all 3 CI workflows passed; deployment/client cutover remain NOT DONE |
-| Production shop browser transport | IN PROGRESS | Strict authenticated client invoker for `shopPurchase` added; not wired into live UI until callable deployment and coordinated Rules/client cutover |
+| Production shop browser transport | DONE (staged) | PR #107 merged to `main` as `f66d13c`; all 3 CI workflows passed (3/3); invoker remains intentionally unwired pending deployment and coordinated Rules/client cutover |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
 | Functions deployment and browser cutover | NOT DONE | Emulator-only previews remain guarded |
