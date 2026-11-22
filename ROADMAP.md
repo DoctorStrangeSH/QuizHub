@@ -18,6 +18,8 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Account history profile UI | DONE | PR #102 merged to `main` as `179fab0`; Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3) on final head `f1e11bd` |
 | V1 economy cutover source audit | DONE | `docs/audits/ECONOMY_V1_CUTOVER_AUDIT_2026-11-22.md`; confirms remaining direct client writes and server progression gaps |
 | Trusted baseline for new profiles + atomic level sync | DONE (preview) | PR #104 merged to `main` as `e77a0f9`; all 3 CI workflows passed on final head; legacy profiles remain untouched |
+| Server shop purchase / equip contract | DONE (preview) | Catalog-priced transaction, ownership checks, operation receipts and append-only ledger event; emulator preview remains guarded |
+| Browser shop retry idempotency | IN PROGRESS | Persist pending operation ID per signed-in user + item; retry after ambiguous network result reuses the same server idempotency key |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
 | Functions deployment and browser cutover | NOT DONE | Emulator-only previews remain guarded |
