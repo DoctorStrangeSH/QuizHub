@@ -1162,12 +1162,23 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Next: wire the existing trusted quiz-reward, daily-login and achievement-unlock transactions to the same append-only ledger contract (each in the exact balance/reward transaction), then implement and test an owner-scoped paginated history reader. Preserve legacy activity as explicitly unverified.
 
 
-## 96. Duel, Survival and Time Trial account ledger integration (2026-11-22)
+## 95. Achievement unlock account ledger integration (2026-11-22)
 
-- Added one canonical `quiz_reward` event for every successfully claimed Duel, Survival and Time Trial session.
-- Added one `achievement_unlock` event per newly unlocked achievement in those mode reward claims.
-- Ledger events are created in the same Firestore transaction as profile reward fields, achievement facts/receipts and the finalized session receipt.
-- Deterministic identity uses the session ID for mode rewards and achievement ID for unlocks; retries return the stored receipt and do not append duplicates.
-- Added adapter-level tests for mode reward deltas, achievement event metadata, zero-value unlock events and no ledger writes after invalid/corrupted claims.
-- Existing win thresholds, streak behavior, score calculation and reward amounts are unchanged.
-- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills. Legacy activity remains unverified.
+- Added canonical `achievement_unlock` ledger events to the trusted achievement evaluation transaction.
+- Each newly unlocked achievement creates one deterministic per-account event keyed by achievement ID; existing unlock receipts and profile achievement IDs remain intact.
+- Ledger event records zero coin/XP delta and the achievement ID, so unlock history is auditable without implying a currency grant.
+- Firestore writer uses create-only semantics in the same native transaction as achievement facts, profile projection and immutable unlock receipts.
+- Added unit and Firestore adapter coverage for exact event count, event shape and idempotent concurrent evaluations.
+- No Production Firebase reads/writes, Rules/index changes, deployments, migrations, Auth changes or backfills.
+- Account ledger rollout remains incomplete until quiz modes, refunds (if supported in V1) and the owner-scoped paginated history reader are audited/integrated. Legacy activity remains unverified.
+
+
+## 97. Owner-scoped account ledger history API (2026-11-22)
+
+- Added a read-only history service for `accountLedger/{auth.uid}/entries`; caller identity is derived from Firebase Auth and no UID field is accepted from the client.
+- Added stable cursor pagination ordered by `occurredAt DESC, entryId DESC`, with page sizes capped at 50 and an optional allowlisted event-type filter.
+- Cursor tokens are versioned and bound to the active filter; malformed tokens, forged owners and corrupt/foreign ledger documents are rejected.
+- Responses project only approved event fields and never expose raw Firestore documents or internal metadata.
+- Added a callable adapter and an emulator-only `accountLedgerHistoryPreviewCallable`; it refuses non-isolated/non-demo Firebase environments.
+- Added unit/callable tests for owner derivation, UID injection, filtering, equal-timestamp page boundaries, empty history, malformed cursors and data-integrity checks.
+- Production indexes/rules, Functions deployment, browser UI, backfill and client cutover remain NOT DONE. Legacy client-side activity is not merged into verified ledger history.
