@@ -20,13 +20,14 @@ function makeStore() {
     const sessions = new Map();
     const facts = new Map();
     const receipts = new Set();
+    const ledgerEntries = new Map();
     const users = new Map([['user-1', {
         experience: 0, weeklyExperience: 0, coins: 0,
         quizzesCompleted: 0, stats: {}
     }]]);
     let queue = Promise.resolve();
     return {
-        sessions, users,
+        sessions, users, ledgerEntries,
         runTransaction(callback) {
             const task = queue.then(async () => {
                 const staged = new Map();
@@ -37,7 +38,12 @@ function makeStore() {
                     setAchievementFacts: async (id, value) => { staged.set(`f:${id}`, structuredClone(value)); },
                     createAchievementReceipts: async (id, ids) => { for (const achievementId of ids) staged.set(`r:${id}:${achievementId}`, true); },
                     setSession: async (id, value) => { staged.set(`s:${id}`, structuredClone(value)); },
-                    setUser: async (id, value) => { staged.set(`u:${id}`, structuredClone(value)); }
+                    setUser: async (id, value) => { staged.set(`u:${id}`, structuredClone(value)); },
+                    createLedgerEntry: async entry => {
+                        const key = `l:${entry.uid}:${entry.entryId}`;
+                        if (ledgerEntries.has(key) || staged.has(key)) throw new Error('LEDGER_ENTRY_EXISTS');
+                        staged.set(key, structuredClone(entry));
+                    }
                 };
                 const result = await callback(tx);
                 for (const [key, value] of staged) {
@@ -45,6 +51,7 @@ function makeStore() {
                     else if (key.startsWith('u:')) users.set(key.slice(2), value);
                     else if (key.startsWith('f:')) facts.set(key.slice(2), value);
                     else if (key.startsWith('r:')) receipts.add(key.slice(2));
+                    else if (key.startsWith('l:')) ledgerEntries.set(key, value);
                 }
                 return result;
             });
@@ -97,6 +104,7 @@ test('complete backend quiz flow hides answers and grants once', async () => {
     assert.equal(store.users.get('user-1').quizzesCompleted, 1);
     assert.equal(store.users.get('user-1').wins, 1);
     assert.equal(store.users.get('user-1').stats.totalWins, 1);
+    assert.equal(store.ledgerEntries.size, 1, 'a completed quiz appends one account ledger event');
     assert.deepEqual(store.users.get('user-1').achievements, ['first_quiz', 'first_win']);
 });
 
