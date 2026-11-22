@@ -126,3 +126,11 @@ Do not add owner-only Rules to `users/{uid}` until those cross-user reads and so
 - The local emulator preview and production transport now share the same payload validator.
 - Tests verify the production callable name, signed-in requirement and rejection of client-supplied prices, UIDs, bonus duration/effect and malformed item IDs.
 - The transport is deliberately not connected to the live shop UI. Production continues using legacy direct Firestore writes until the callable is deployed and the coordinated client + Rules migration is reviewed and approved.
+
+
+## 2026-11-22 — Production shop browser transport merged
+
+- PR #107 merged to `main` as `f66d13c`; all 3 final-head CI workflows passed.
+- A dedicated authenticated browser invoker for `shopPurchase` is now available in source, sharing strict payload validation with the local emulator preview.
+- This is not a live client cutover: production shop UI still uses direct Firestore writes until callable deployment and coordinated Rules/client migration are reviewed.
+- Production deployment, Rules/index changes, data migration and feature-gate changes remain NOT DONE.
