@@ -1217,11 +1217,11 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 
 ## 100. Account ledger history UI and V1 economy audit (2026-11-22)
 
-- PR #102 merged to \`main\` as \`179fab0\`.
-- The final PR head \`f1e11bd\` passed Question Quality, Firebase Emulator Integration and Visual Preview (3/3).
+- PR #102 merged to `main` as `179fab0`.
+- The final PR head `f1e11bd` passed Question Quality, Firebase Emulator Integration and Visual Preview (3/3).
 - Added owner-only localized responsive history UI with filter, cursor pagination, empty/loading/error/retry states and bounded response validation.
 - Added a fail-closed local demo emulator preview guard; Production remains locked and no Production callable is invoked.
-- Reviewed the V1 economy source paths and recorded current client writes, trusted preview coverage and cutover blockers in \`docs/audits/ECONOMY_V1_CUTOVER_AUDIT_2026-11-22.md\`.
+- Reviewed the V1 economy source paths and recorded current client writes, trusted preview coverage and cutover blockers in `docs/audits/ECONOMY_V1_CUTOVER_AUDIT_2026-11-22.md`.
 - Confirmed remaining production browser writes for quiz rewards, profile bootstrap, shop, daily login and achievements. Server callable previews remain emulator-only.
 - Identified a progression consistency gap: server reward claims compute `achievementFacts.level`, but the trusted user projection does not update `users/{uid}.level`. Achievement facts intentionally start at zero and do not trust legacy client XP; define a safe baseline before syncing to avoid downgrading existing accounts. Fix and regression tests are NOT DONE.
 - Production Functions/Rules/index deployment, client cutover, legacy backfill, refund flow and daily competitive prize callable remain NOT DONE.
