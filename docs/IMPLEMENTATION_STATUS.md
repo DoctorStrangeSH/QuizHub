@@ -1210,7 +1210,7 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added an owner-only activity-history panel to the private profile; public profile cards do not render the panel.
 - Added Russian and English copy, operation-type filters, date/time display, separate coin and XP deltas, empty/loading/error/retry states and cursor-based "load more" pagination.
 - Added responsive layouts for narrow screens and accessible labels/status announcements.
-- Client calls only the authenticated \`accountLedgerHistoryPreviewCallable\`; the invoker validates response fields and strips unapproved identifiers before rendering.
+- Client calls only the authenticated `accountLedgerHistoryPreviewCallable`; the invoker validates response fields and strips unapproved identifiers before rendering.
 - History reads remain opt-in only on localhost with the demo Firebase project, explicit emulator and feature query flags, and a signed-in non-anonymous account.
 - Production currently displays a clear locked state; no Production callable is invoked and no unverified legacy client activity is presented as verified history.
-- Added client boundary/response validation tests. Production Functions deployment, index/Rules review, production browser cutover and legacy import remain NOT DONE.
+- Added client boundary/response validation tests, including bounded JavaScript date validation and disabled filters during in-flight requests. Production Functions deployment, index/Rules review, production browser cutover and legacy import remain NOT DONE.
