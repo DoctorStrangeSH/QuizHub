@@ -1,3 +1,5 @@
+import { validateShopCallableRequest } from './shop-callable-request.js';
+
 /**
  * Shop callable transport is restricted to the isolated local demo project.
  * No caller-supplied price, owner UID or bonus duration is accepted.
@@ -33,17 +35,7 @@ export function createFirebaseShopInvoker({
     const callable = httpsCallable(functions, 'shopPurchasePreview');
 
     return async function invokeShop(operation, payload) {
-        if (!['purchase', 'equip'].includes(operation) ||
-            !payload || typeof payload !== 'object' || Array.isArray(payload)) {
-            throw new Error('INVALID_SHOP_REQUEST');
-        }
-        const allowed = operation === 'purchase' ? ['itemId', 'operationId'] : ['itemId'];
-        if (Object.keys(payload).some(key => !allowed.includes(key)) ||
-            typeof payload.itemId !== 'string' || !payload.itemId ||
-            (operation === 'purchase' &&
-                (typeof payload.operationId !== 'string' || !/^[A-Za-z0-9_-]{8,128}$/.test(payload.operationId)))) {
-            throw new Error('INVALID_SHOP_REQUEST');
-        }
-        return callable({ operation, payload });
+        const validatedPayload = validateShopCallableRequest(operation, payload);
+        return callable({ operation, payload: validatedPayload });
     };
 }
