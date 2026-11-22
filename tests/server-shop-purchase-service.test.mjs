@@ -18,7 +18,7 @@ function makeStore(users) {
                     async getPurchase(uid, id) { return structuredClone(purchases.get(uid + '/' + id) ?? null); },
                     async setUserPatch(uid, patch) { writes.push(() => { store.users[uid] = { ...store.users[uid], ...structuredClone(patch) }; }); },
                     async setPurchase(uid, id, receipt) { writes.push(() => { purchases.set(uid + '/' + id, structuredClone(receipt)); }); },
-                    async createLedgerEntry(entry) { writes.push(() => { if (ledger.has(entry.uid + '/' + entry.entryId)) throw new Error('LEDGER_ENTRY_EXISTS'); ledger.set(entry.uid + '/' + entry.entryId), structuredClone(entry)); }); }
+                    async createLedgerEntry(entry) { writes.push(() => { if (ledger.has(entry.uid + '/' + entry.entryId)) throw new Error('LEDGER_ENTRY_EXISTS'); ledger.set(entry.uid + '/' + entry.entryId, structuredClone(entry)); }); }
                 };
                 const result = await callback(tx);
                 writes.forEach(write => write());
