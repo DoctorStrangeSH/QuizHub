@@ -1130,3 +1130,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Equality is not proof of provenance. Reports remain `review_required`, `eligibleForAutomaticImport: false`; no merged facts, overwrite plan, Firestore transport or account migration is produced.
 - Added regression tests for equal counters, divergent counters, and the invariant that neither side is selected automatically.
 - No Production Firebase reads/writes, imports, deployments, Rules changes or feature-gate changes were performed.
+
+
+## 92. Legacy wallet and cosmetic inventory audit (2026-11-22)
+
+- PR #93 merged into `main` as `32927598d97d1d6c15ac093012eb231d20a015d7`. Question Quality, Firebase Emulator Integration and Visual Preview passed.
+- Added `auditLegacyEconomyProfile`, a pure in-memory audit for legacy coin balances, owned themes/frames/particles, equipped cosmetics, active bonuses and an optional purchase-receipt snapshot.
+- The audit flags unsafe balances, malformed/duplicate item IDs and equipped items absent from the corresponding owned list. Unknown historical item IDs are preserved rather than discarded, so retired cosmetics are not silently lost.
+- Receipt references are structurally checked only; the audit does not prove payment, purchase legitimacy or entitlement. Legacy wallet and inventory fields remain untrusted and every report stays `review_required` / `eligibleForAutomaticImport: false`.
+- Added unit tests and CI coverage. No Firestore reads/writes, imports, Production deployment, Rules changes or feature-gate changes.
