@@ -1294,3 +1294,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added tests for production callable selection, signed-out callers, malformed item IDs and forged economy fields.
 - This is transport preparation only. The live shop UI remains on its existing production direct-write path; the production transport is not wired or feature-enabled because Functions have not been deployed.
 - No Production Functions, Firestore Rules, indexes, live data or feature gates were changed. Coordinated cutover remains blocked on owner-approved environment/Rules evidence, deployed callable availability, migration and rollback review.
+
+
+## 108. Production shop browser transport merged (2026-11-22)
+
+- PR #107 merged to `main` as `f66d13cfc66de20789126a38a7287e163cb3d048`.
+- Final-head CI passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview (3/3).
+- Added a dedicated authenticated browser transport for the staged `shopPurchase` callable.
+- Shared strict payload validation is used by both the production transport and isolated emulator preview; client-authored prices, UIDs, bonus duration/effects and unexpected fields are rejected.
+- The production transport is deliberately not wired into the live shop UI. The current browser production path still performs legacy direct Firestore writes.
+- No Production Functions deployment, Firestore Rules/index change, live database operation, migration or feature-gate change was performed.
