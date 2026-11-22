@@ -103,5 +103,5 @@ test('history panel never uses direct Firestore reads or displays unverified leg
     const ui = readFileSync(new URL('../app/modules/profile/account-ledger-history.js', import.meta.url), 'utf8');
     assert.match(ui, /accountLedgerHistoryPreviewCallable/);
     assert.doesNotMatch(ui, /getDocs|collection\(db|onSnapshot/);
-    assert.match(ui, /No unverified legacy records/);
+    assert.match(ui, /Старые неподтверждённые записи/);
 });
