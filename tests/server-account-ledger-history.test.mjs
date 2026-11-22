@@ -14,33 +14,36 @@ function fixture(entries = []) {
                 queryCalls.push({ owner });
                 return { collection(sub) {
                     assert.equal(sub, 'entries');
-                    return {
+                    let cursor = null;
+                    let typeFilter = null;
+                    const query = {
                         where(field, op, value) {
                             queryCalls.push({ field, op, value });
-                            return this;
+                            if (field === 'type' && op === '==') typeFilter = value;
+                            return query;
                         },
                         orderBy(field, direction) {
                             queryCalls.push({ field, direction });
-                            return this;
+                            return query;
                         },
                         startAfter(occurredAt, entryId) {
                             queryCalls.push({ occurredAt, entryId });
-                            this.cursor = { occurredAt, entryId };
-                            return this;
+                            cursor = { occurredAt, entryId };
+                            return query;
                         },
                         limit(size) {
                             return { async get() {
                                 let values = [...docs.values()];
-                                const typeFilter = queryCalls.findLast(x => x.field === 'type')?.value;
                                 if (typeFilter) values = values.filter(x => x.type === typeFilter);
                                 values.sort((a,b) => b.occurredAt-a.occurredAt || b.entryId.localeCompare(a.entryId));
-                                if (this.cursor) values = values.filter(x =>
-                                    x.occurredAt < this.cursor.occurredAt ||
-                                    (x.occurredAt === this.cursor.occurredAt && x.entryId < this.cursor.entryId));
+                                if (cursor) values = values.filter(x =>
+                                    x.occurredAt < cursor.occurredAt ||
+                                    (x.occurredAt === cursor.occurredAt && x.entryId < cursor.entryId));
                                 return { docs: values.slice(0,size).map(value => ({ id:value.entryId, data:()=>value })) };
                             }};
                         }
                     };
+                    return query;
                 }};
             }};
         }
