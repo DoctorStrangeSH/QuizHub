@@ -140,6 +140,7 @@ export function attachAccountLedgerHistoryListeners() {
     const load = async ({ append = false } = {}) => {
         if (loading) return;
         loading = true;
+        filter.disabled = true;
         more.disabled = true;
         more.textContent = messages.loadingMore;
         status.textContent = append ? '' : messages.loading;
@@ -169,6 +170,7 @@ export function attachAccountLedgerHistoryListeners() {
             }
         } finally {
             loading = false;
+            filter.disabled = false;
             more.disabled = false;
             more.textContent = messages.more;
         }
