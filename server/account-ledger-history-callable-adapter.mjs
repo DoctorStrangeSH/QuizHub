@@ -1,3 +1,5 @@
+import { readAccountLedgerHistory } from './account-ledger-history.mjs';
+
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
 const TYPES = new Set([
     'quiz_reward', 'daily_login_reward', 'shop_purchase',
@@ -55,8 +57,7 @@ export function createAccountLedgerHistoryCallableAdapter({ read, HttpsError }) 
 
 export function createFirestoreAccountLedgerHistoryCallable({ db, HttpsError }) {
     return createAccountLedgerHistoryCallableAdapter({
-        read: args => import('./account-ledger-history.mjs').then(({ readAccountLedgerHistory }) =>
-            readAccountLedgerHistory(db, args)),
+        read: args => readAccountLedgerHistory(db, args),
         HttpsError
     });
 }
