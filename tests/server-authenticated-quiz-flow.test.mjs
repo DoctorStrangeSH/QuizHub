@@ -8,19 +8,25 @@ function atomicMemoryStore() {
     const sessions = new Map();
     const facts = new Map();
     const unlockReceipts = new Set();
+    const ledgerEntries = new Map();
     const users = new Map([
         ['alice', { experience: 0, weeklyExperience: 0, coins: 0, quizzesCompleted: 0, stats: {} }],
         ['bob', { experience: 0, weeklyExperience: 0, coins: 0, quizzesCompleted: 0, stats: {} }]
     ]);
     let queue = Promise.resolve();
     return {
-        sessions, users, facts, unlockReceipts,
+        sessions, users, facts, unlockReceipts, ledgerEntries,
         runTransaction(operation) {
             const result = queue.then(async () => {
                 const staged = new Map();
                 const tx = {
                     getSession: async id => structuredClone(staged.get('s:' + id) ?? sessions.get(id)),
                     setSession: async (id, value) => { staged.set('s:' + id, structuredClone(value)); },
+                    createLedgerEntry: async entry => {
+                        const key = 'l:' + entry.uid + ':' + entry.entryId;
+                        if (ledgerEntries.has(key) || staged.has(key)) throw new Error('LEDGER_ENTRY_EXISTS');
+                        staged.set(key, structuredClone(entry));
+                    },
                     getUser: async id => structuredClone(staged.get('u:' + id) ?? users.get(id)),
                     getAchievementFacts: async id => structuredClone(staged.get('f:' + id) ?? facts.get(id) ?? null),
                     setAchievementFacts: async (id, value) => { staged.set('f:' + id, structuredClone(value)); },
@@ -33,6 +39,7 @@ function atomicMemoryStore() {
                     else if (key.startsWith('u:')) users.set(key.slice(2), value);
                     else if (key.startsWith('f:')) facts.set(key.slice(2), value);
                     else if (key.startsWith('r:')) unlockReceipts.add(key.slice(2));
+                    else if (key.startsWith('l:')) ledgerEntries.set(key, value);
                 }
                 return answer;
             });
@@ -88,6 +95,12 @@ test('authenticated request -> answer -> claim is owner-bound and awards once', 
     assert.equal(store.users.get('alice').quizzesCompleted, 1);
     assert.equal(store.users.get('bob').coins, 0);
     assert.equal(store.users.get('bob').quizzesCompleted, 0);
+    assert.equal(store.ledgerEntries.size, 1);
+    const [ledgerEvent] = store.ledgerEntries.values();
+    assert.equal(ledgerEvent.type, 'quiz_reward');
+    assert.equal(ledgerEvent.sourceId, started.sessionId);
+    assert.equal(ledgerEvent.coinsDelta, first.coins);
+    assert.equal(ledgerEvent.xpDelta, first.xp);
 
     const resumed = await request('resume', { sessionId: started.sessionId }, alice(4000));
     assert.equal(resumed.status, 'completed');
