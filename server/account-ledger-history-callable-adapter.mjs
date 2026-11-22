@@ -1,6 +1,6 @@
 import { readAccountLedgerHistory } from './account-ledger-history.mjs';
 
-const UID = /^[A-Za-z0-9_-]{1,128}$/;
+const UID = /^(?!\\.{1,2}$)[^/\\x00-\\x1f]{1,128}$/;
 const TYPES = new Set([
     'quiz_reward', 'daily_login_reward', 'shop_purchase',
     'shop_refund', 'achievement_unlock'
