@@ -92,3 +92,11 @@ This preparation adds a server-side timezone preference service, a strictly emul
 - Unsafe/negative balances, malformed inventories, duplicate IDs and equipped cosmetics absent from owned lists are reported. Unknown item IDs are preserved because retired/event catalog entries may no longer exist in the current client catalog.
 - Purchase receipt references are checked for matching UID, unique operation ID, item ID, purchase kind and safe non-negative coin debit/resulting balance. This is not proof of a successful payment or valid entitlement. Receipt/payment evidence must be independently verified before any balance or ownership migration.
 - All reports remain `review_required`, `eligibleForAutomaticImport: false`. No database transport or import is included.
+
+
+## Append-only account ledger contract (2026-11-22)
+
+- V1 event types: `quiz_reward`, `daily_login_reward`, `shop_purchase`, `shop_refund`, `achievement_unlock`.
+- Each entry contains the owning UID, deterministic event ID, source operation ID, server timestamp and signed XP/coin deltas; shop events additionally require an item ID and achievement events require an achievement ID.
+- The deterministic ID is derived from event type + source ID. The writer must use Firestore `create` in the same transaction as the balance/entitlement mutation; never overwrite an existing ledger event or perform a second non-atomic write.
+- This schema commit does not write entries. The next implementation step must wire all trusted reward paths atomically and provide an owner-only paginated reader. Existing legacy client mutations are not retroactively trusted or represented as verified ledger entries.
