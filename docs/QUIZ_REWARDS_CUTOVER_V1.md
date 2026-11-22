@@ -90,5 +90,5 @@ This preparation adds a server-side timezone preference service, a strictly emul
 
 - A read-only `auditLegacyEconomyProfile` helper now inspects old coin balance, owned themes/frames/particles, equipped cosmetics, active bonuses and optional purchase-receipt references.
 - Unsafe/negative balances, malformed inventories, duplicate IDs and equipped cosmetics absent from owned lists are reported. Unknown item IDs are preserved because retired/event catalog entries may no longer exist in the current client catalog.
-- Purchase receipt references are only structurally checked; this is not proof of a successful payment or valid entitlement. Receipt/payment evidence must be independently verified before any balance or ownership migration.
+- Purchase receipt references are checked for matching UID, unique operation ID, item ID, purchase kind and safe non-negative coin debit/resulting balance. This is not proof of a successful payment or valid entitlement. Receipt/payment evidence must be independently verified before any balance or ownership migration.
 - All reports remain `review_required`, `eligibleForAutomaticImport: false`. No database transport or import is included.
