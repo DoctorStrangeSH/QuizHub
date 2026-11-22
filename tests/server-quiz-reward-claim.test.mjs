@@ -60,7 +60,7 @@ const claim = (store, uid = 'player') =>
     claimSessionReward({ store, sessionId: 'session-1', uid, at: 4000 });
 
 test('first claim credits the server-scored result exactly once', async () => {
-    const { store, users, facts, unlockReceipts } = setup();
+    const { store, users, facts, unlockReceipts, ledger } = setup();
     const receipt = await claim(store);
     assert.equal(receipt.alreadyClaimed, false);
     assert.equal(receipt.score, 30);
@@ -146,7 +146,7 @@ test('tampered logged points are ignored and malformed answers fail closed', asy
 });
 
 test('failed transaction does not mark reward claimed or update balance', async () => {
-    const { store, sessions, users } = setup();
+    const { store, sessions, users, ledger } = setup();
     users.delete('player');
     await assert.rejects(claim(store), /USER_NOT_FOUND/);
     assert.equal(sessions.get('session-1').finalized, false);
