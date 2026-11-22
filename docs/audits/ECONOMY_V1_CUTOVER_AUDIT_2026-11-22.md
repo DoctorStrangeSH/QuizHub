@@ -111,3 +111,10 @@ Do not add owner-only Rules to `users/{uid}` until those cross-user reads and so
 - The emulator integration suite is redirected to exercise the staged callable contract end-to-end.
 - This does **not** mean the callable is deployed. The browser still uses legacy direct Firestore writes outside the explicit local preview.
 - Production Rules/indexes review, Functions deployment, client cutover, migration and rollback plan remain open gates. No live production data or configuration was touched.
+
+
+## 2026-11-22 — Staged shop callable merged
+
+- PR #106 merged to `main` as `38f2487`; all three CI workflows passed on the final head.
+- The staged `shopPurchase` export is covered by an end-to-end Auth + Functions + Firestore Emulator test. The separate emulator-only preview guard remains intact.
+- Production deployment, browser client migration, Rules/index review, rollback plan and owner-approved cutover remain NOT DONE. The current browser production path still writes shop changes directly to Firestore.
