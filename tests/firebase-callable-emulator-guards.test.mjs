@@ -39,7 +39,8 @@ test('every exported callable preview fails closed outside the isolated Firebase
 
     for (let index = 0; index < previewDeclarations.length; index++) {
         const declaration = previewDeclarations[index];
-        const end = previewDeclarations[index + 1]?.index ?? source.length;
+        const allIndex = declarations.findIndex(match => match.index === declaration.index);
+        const end = declarations[allIndex + 1]?.index ?? source.length;
         const body = source.slice(declaration.index, end);
         const name = declaration[1];
         const label = 'Callable ' + name + ': ';
