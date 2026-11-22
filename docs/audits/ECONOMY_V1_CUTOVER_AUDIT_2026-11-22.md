@@ -39,16 +39,16 @@ The browser has access to the public question bank and computes score/rewards. C
 
 **Required action:** migrate each live browser flow to its authenticated server callable, verify receipts and UI state, then review/deploy Rules only after every dependent read/write is covered.
 
-### E-02 — Server-owned level is computed but not synchronized to the user profile
+### E-02 — Trusted progression facts and visible profile level are not yet reconciled
 
-**Severity: High / progression correctness**
+**Severity: High / progression correctness; migration design required**
 
 - \`advanceAchievementFacts()\` derives \`achievementFacts.level\` from server-owned cumulative XP using the V1 formula \`floor(experience / 100) + 1\`.
-- Classic and mode reward claim services update \`experience\`, \`weeklyExperience\`, \`coins\`, wins and stats.
-- The Firestore quiz store's allowlisted \`setUser()\` projection does not include \`level\`.
-- The browser legacy path separately calculates and writes \`users/{uid}.level\` after the reward write.
+- Classic and mode reward claim services update \`experience\`, \`weeklyExperience\`, \`coins\`, wins and stats, while the Firestore quiz store's allowlisted \`setUser()\` projection does not include \`level\`.
+- The legacy browser path separately calculates and writes \`users/{uid}.level\` after the reward write.
+- Achievement facts deliberately start at zero and do not import legacy client-editable profile stats. Existing \`users/{uid}.experience\` and \`level\` therefore cannot be copied into the trusted baseline without a separately reviewed migration.
 
-Therefore, if the trusted quiz claim path is used, server-owned achievement facts can advance while the profile's visible \`level\` remains stale. This must be resolved before any production cutover. The fix must update level atomically with the XP/balance/session receipt, preserve unrelated profile fields and cover Classic plus Duel/Survival/Time Trial.
+A trusted claim can advance server-owned facts while the visible legacy profile level remains stale. **Do not fix this by blindly writing \`achievementProgress.facts.level\` to every existing profile**: for an account with legacy XP above the trusted baseline, that could downgrade its visible level. Before cutover, define a baseline strategy (e.g. audited owner-approved migration or a separate trusted progression field), then update profile/public ranking projections atomically with the receipt. Test threshold crossings, existing high-level accounts, concurrent claims and public profile sync for Classic plus Duel/Survival/Time Trial.
 
 ### E-03 — Daily competitive prize contract is not part of the deployed callable surface
 
