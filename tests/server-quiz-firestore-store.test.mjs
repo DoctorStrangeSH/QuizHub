@@ -152,6 +152,11 @@ test('opt-in reward claim atomically refreshes a privacy-safe public ranking pro
     assert.equal('email' in profile, false);
     assert.equal('coins' in profile, false);
     assert.equal(db.records.get('users/alice').email, 'private@example.test');
+    const ledgerPath = 'accountLedger/alice/entries/' + 'quiz_reward_' + (await import('node:crypto')).createHash('sha256').update('quiz_reward:session_pub').digest('hex').slice(0, 40);
+    const ledgerEvent = db.records.get(ledgerPath);
+    assert.ok(ledgerEvent);
+    assert.equal(ledgerEvent.type, 'quiz_reward');
+    assert.equal(ledgerEvent.sourceId, 'session_pub');
     const before = db.mutations.length;
     assert.equal((await claimSessionReward({ store, uid: 'alice', sessionId: 'session_pub', at: 3000 })).alreadyClaimed, true);
     assert.equal(db.mutations.length, before, 'replayed claims must not republish the profile');
