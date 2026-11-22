@@ -22,6 +22,7 @@ This roadmap separates verified delivery from work that is still planned. A merg
 | Browser shop retry idempotency | DONE (preview) | PR #105 merged to `main` as `2525025`; all 3 CI workflows passed |
 | Production shop callable source | DONE (staged) | PR #106 merged as `38f2487`; all 3 CI workflows passed; deployment/client cutover remain NOT DONE |
 | Production shop browser transport | DONE (staged) | PR #107 merged to `main` as `f66d13c`; all 3 CI workflows passed (3/3); invoker remains intentionally unwired pending deployment and coordinated Rules/client cutover |
+| Consumable shop bonuses (Skip / 50-50) | BLOCKED / FIX REQUIRED | Audit found zero-duration bonuses are written as immediately-expired timestamps; no inventory/consume path found in the audited shop and quiz mode modules. Define and implement consumable inventory before V1 acceptance |
 | Refund event integration | NOT DONE / V1 SCOPE REVIEW | Confirm whether refunds exist in V1 before implementing |
 | Production Firestore indexes and Rules review | NOT DONE | Requires owner-approved read-only production evidence and coordinated client migration |
 | Functions deployment and browser cutover | NOT DONE | Emulator-only previews remain guarded |
