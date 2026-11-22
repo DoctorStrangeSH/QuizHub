@@ -160,10 +160,9 @@ test('Survival updates best streak using max semantics and does not increment wi
     assert.equal(user.wins, 2);
     assert.equal(user.stats.totalWins, 2);
     const events = [...db.records.entries()].filter(([path]) => path.startsWith('accountLedger/player/entries/'));
-    assert.equal(events.length, 1);
-    assert.equal(events[0][1].type, 'quiz_reward');
-    assert.equal(events[0][1].coinsDelta, receipt.coins);
-    assert.equal(events[0][1].xpDelta, receipt.xp);
+    assert.equal(events.length, 2);
+    assert.ok(events.some(([, event]) => event.type === 'quiz_reward' && event.coinsDelta === receipt.coins && event.xpDelta === receipt.xp));
+    assert.ok(events.some(([, event]) => event.type === 'achievement_unlock' && event.achievementId === 'first_quiz'));
 });
 
 test('Time Trial applies strict 70 percent win threshold and server-scored rewards', async () => {
@@ -191,9 +190,11 @@ test('Time Trial applies strict 70 percent win threshold and server-scored rewar
     assert.equal(db.records.get('achievementFacts/player').perfectGames, 1);
     assert.equal(db.records.get('users/player').wins, 3);
     const events = [...db.records.entries()].filter(([path]) => path.startsWith('accountLedger/player/entries/'));
-    assert.equal(events.length, 3);
+    assert.equal(events.length, 4);
     assert.ok(events.some(([, event]) => event.type === 'quiz_reward' && event.coinsDelta === receipt.coins && event.xpDelta === receipt.xp));
-    assert.ok(events.some(([, event]) => event.type === 'achievement_unlock' && event.achievementId === 'perfect_score'));
+    for (const achievementId of ['first_quiz', 'first_win', 'perfect_score']) {
+        assert.ok(events.some(([, event]) => event.type === 'achievement_unlock' && event.achievementId === achievementId));
+    }
 });
 
 test('foreign owner, incomplete run and corrupted mode log cannot claim rewards', async () => {
