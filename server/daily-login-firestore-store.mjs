@@ -1,3 +1,5 @@
+import { createAccountLedgerFirestoreWriter } from './account-ledger-firestore-writer.mjs';
+
 const UID = /^[^/\x00-\x1f]{1,256}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 function parseKey(key) {
@@ -31,7 +33,9 @@ export function createDailyLoginFirestoreStore(db) {
     return {
         runTransaction(callback) {
             if (typeof callback !== 'function') throw new Error('INVALID_TRANSACTION_CALLBACK');
-            return db.runTransaction(async native => callback({
+            return db.runTransaction(async native => {
+                const ledger = createAccountLedgerFirestoreWriter(db, native);
+                return callback({
                 getDailyLoginClaim: async key => data(await native.get(claimRef(key))),
                 getUser: async uid => data(await native.get(userRef(uid))),
                 setUserPatch: async (uid, patch) => {
@@ -43,8 +47,10 @@ export function createDailyLoginFirestoreStore(db) {
                 },
                 setDailyLoginClaim: async (key, receipt) => {
                     native.create(claimRef(key), receipt);
-                }
-            }));
+                },
+                createLedgerEntry: async entry => ledger.create(entry)
+                });
+            });
         }
     };
 }
