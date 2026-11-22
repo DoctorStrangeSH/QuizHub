@@ -17,9 +17,11 @@ function clone(value) {
 
 function makeStore(users) {
     const claims = new Map();
+    const ledger = new Map();
     let queue = Promise.resolve();
+    const uidEntryKey = (uid, id) => uid + ':' + id;
     const store = {
-        users: Object.fromEntries(Object.entries(users).map(([uid, user]) => [uid, clone(user)])), claims,
+        users: Object.fromEntries(Object.entries(users).map(([uid, user]) => [uid, clone(user)])), claims, ledger,
         runTransaction(callback) {
             const task = queue.then(async () => {
                 const userWrites = new Map(), claimWrites = new Map();
@@ -27,7 +29,12 @@ function makeStore(users) {
                     async getDailyLoginClaim(key) { return clone(claimWrites.get(key) ?? claims.get(key) ?? null); },
                     async getUser(uid) { return clone(userWrites.get(uid) ?? store.users[uid] ?? null); },
                     async setUserPatch(uid, patch) { userWrites.set(uid, { ...store.users[uid], ...clone(patch) }); },
-                    async setDailyLoginClaim(key, receipt) { claimWrites.set(key, clone(receipt)); }
+                    async setDailyLoginClaim(key, receipt) { claimWrites.set(key, clone(receipt)); },
+                    async createLedgerEntry(entry) {
+                        const key = uidEntryKey(entry.uid, entry.entryId);
+                        if (ledger.has(key)) throw new Error('LEDGER_ENTRY_EXISTS');
+                        ledger.set(key, clone(entry));
+                    }
                 };
                 const result = await callback(tx);
                 for (const [uid, value] of userWrites) store.users[uid] = value;
@@ -57,6 +64,13 @@ test('first claim awards day one and stores a durable receipt', async () => {
     assert.equal(store.users.alice.nickname, 'Alice');
     assert.equal(store.users.alice.coins, 110);
     assert.equal(store.claims.size, 1);
+    assert.equal(store.ledger.size, 1);
+    const event = [...store.ledger.values()][0];
+    assert.equal(event.type, 'daily_login_reward');
+    assert.equal(event.uid, 'alice');
+    assert.equal(event.coinsDelta, 10);
+    assert.equal(event.xpDelta, 0);
+    assert.equal(event.sourceId, '2026-11-20');
 });
 
 test('same-day retries, including concurrent requests, credit exactly once', async () => {
@@ -70,6 +84,7 @@ test('same-day retries, including concurrent requests, credit exactly once', asy
     assert.equal(store.users.alice.coins, 130);
     assert.equal(store.users.alice.dailyStreak, 3);
     assert.equal(store.claims.size, 1);
+    assert.equal(store.ledger.size, 1);
 });
 
 test('consecutive UTC day increments streak and skipped day resets it', async () => {
@@ -105,4 +120,5 @@ test('rejects missing profile, invalid identity and invalid time without writes'
     await assert.rejects(service.claim({ uid: 'alice', now: NaN }), /INVALID_SERVER_TIME/);
     assert.equal(store.users.alice.coins, 5);
     assert.equal(store.claims.size, 0);
+    assert.equal(store.ledger.size, 0);
 });
