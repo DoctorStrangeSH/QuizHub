@@ -1148,3 +1148,15 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Entry IDs are deterministic from event type + source operation, so transaction retries resolve to the same document identity. The validator enforces owner, event-specific delta direction, safe integer amounts, timestamp and required item/achievement references.
 - This PR defines the event contract only. It does not yet write ledger entries, expose a history endpoint/UI, backfill old account activity or change Firestore Rules. Existing receipts remain the current sources of truth.
 - Next: wire ledger document creation into each existing reward/purchase transaction (same atomic transaction as the balance mutation), then add an owner-scoped paginated read adapter and tests. Keep legacy client-side history clearly separate and unverified.
+
+
+
+## 94. Atomic shop purchase ledger integration (2026-11-22)
+
+- PR #95 merged into `main` as `83b7703acbfe2cfd7a4d84df85f46f06e4ae05ac`. Question Quality, Firebase Emulator Integration and Visual Preview passed (3/3 checks).
+- Added a create-only Firestore ledger writer under the owning account's `accountLedger/{uid}/entries/{entryId}` path. The writer validates the canonical V1 event before scheduling a Firestore `create`.
+- Shop purchases now append a deterministic `shop_purchase` event in the same Firestore transaction as the coin debit, ownership update and purchase receipt. A retry uses the same event ID; it cannot silently overwrite an existing ledger event.
+- Added unit coverage for event validation, deterministic identity, forged identity rejection, create-only writer behavior and atomic shop purchase integration.
+- Scope remains intentionally partial: quiz rewards, daily login rewards, refunds and achievement unlocks are not yet wired to the ledger; no history endpoint/UI or backfill is included.
+- No Production Firebase reads/writes, Rules/index changes, Functions deployment, migration/import, Auth changes or feature-flag changes were made.
+- Next: wire the existing trusted quiz-reward, daily-login and achievement-unlock transactions to the same append-only ledger contract (each in the exact balance/reward transaction), then implement and test an owner-scoped paginated history reader. Preserve legacy activity as explicitly unverified.
