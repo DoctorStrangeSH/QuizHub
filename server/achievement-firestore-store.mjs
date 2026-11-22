@@ -24,12 +24,13 @@ export function createAchievementFirestoreStore(db) {
                 getUser: async uid => data(await native.get(userRef(uid))),
                 setAchievementFacts: async (uid, facts) => {
                     if (!facts || typeof facts !== 'object' || Array.isArray(facts) ||
-                        Object.keys(facts).some(key => !['totalGames', 'experience', 'totalWins', 'perfectGames', 'level', 'unlockedIds'].includes(key)) ||
+                        Object.keys(facts).some(key => !['totalGames', 'experience', 'totalWins', 'perfectGames', 'level', 'unlockedIds', 'baselineTrusted'].includes(key)) ||
                         !Number.isSafeInteger(facts.totalGames) || facts.totalGames < 0 ||
                         !Number.isSafeInteger(facts.experience) || facts.experience < 0 ||
                         (facts.totalWins !== undefined && (!Number.isSafeInteger(facts.totalWins) || facts.totalWins < 0)) ||
                         (facts.perfectGames !== undefined && (!Number.isSafeInteger(facts.perfectGames) || facts.perfectGames < 0)) ||
                         (facts.level !== undefined && (!Number.isSafeInteger(facts.level) || facts.level < 1)) ||
+                        (facts.baselineTrusted !== undefined && typeof facts.baselineTrusted !== 'boolean') ||
                         !Array.isArray(facts.unlockedIds) || facts.unlockedIds.some(id => typeof id !== 'string' || !/^[a-z0-9_]{1,64}$/.test(id))) {
                         throw new Error('INVALID_ACHIEVEMENT_FACTS');
                     }

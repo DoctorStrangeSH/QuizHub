@@ -17,7 +17,8 @@ test('Firestore emulator: concurrent registrations reserve one nickname and do n
     const refs = [
         db.collection('users').doc(uidA), db.collection('users').doc(uidB),
         db.collection('publicProfiles').doc(uidA), db.collection('publicProfiles').doc(uidB),
-        db.collection('nicknameClaims').doc(nickname)
+        db.collection('nicknameClaims').doc(nickname),
+        db.collection('achievementFacts').doc(uidA), db.collection('achievementFacts').doc(uidB)
     ];
     try {
         const results = await Promise.allSettled([
@@ -32,6 +33,11 @@ test('Firestore emulator: concurrent registrations reserve one nickname and do n
         const privateProfile = (await db.collection('users').doc(owner).get()).data();
         const publicProfile = (await db.collection('publicProfiles').doc(owner).get()).data();
         assert.equal(privateProfile.coins, 100);
+        const progressionFacts = (await db.collection('achievementFacts').doc(owner).get()).data();
+        assert.deepEqual(progressionFacts, {
+            totalGames: 0, experience: 0, totalWins: 0, perfectGames: 0,
+            level: 1, unlockedIds: [], baselineTrusted: true
+        });
         assert.match(privateProfile.email, /@private\.test$/);
         assert.equal(publicProfile.uid, owner);
         assert.equal(publicProfile.nicknameLower, nickname);
@@ -70,7 +76,7 @@ test('Firestore emulator: invalid inputs and preexisting records cannot be repla
         assert.equal((await userRef.get()).exists, false);
         assert.equal((await claimRef.get()).data().uid, 'another_owner');
     } finally {
-        await Promise.all([userRef.delete(), claimRef.delete()]);
+        await Promise.all([userRef.delete(), claimRef.delete(), db.collection('achievementFacts').doc(uid).delete()]);
         await db.terminate();
         await deleteApp(app);
     }

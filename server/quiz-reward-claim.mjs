@@ -58,6 +58,7 @@ export async function claimSessionReward({ store, sessionId, uid, at }) {
         });
         const nextUser = {
             ...user,
+            ...(achievementProgress.facts.baselineTrusted === true ? { level: achievementProgress.facts.level } : {}),
             achievements: achievementProgress.achievements,
             experience: add(user.experience, xp),
             weeklyExperience: add(user.weeklyExperience, xp),

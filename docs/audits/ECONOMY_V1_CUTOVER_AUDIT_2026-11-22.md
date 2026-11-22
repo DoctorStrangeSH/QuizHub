@@ -49,7 +49,7 @@ The browser has access to the public question bank and computes score/rewards. C
 - Achievement facts deliberately start at zero and do not import legacy client-editable profile stats. Existing `users/{uid}.experience` and `level` therefore cannot be copied into the trusted baseline without a separately reviewed migration.
 - `server/legacy-progression-audit.mjs` and its tests already provide a read-only legacy/trusted comparison. It intentionally returns `eligibleForAutomaticImport: false`; equality is not proof of provenance or complete ledger coverage.
 
-A trusted claim can advance server-owned facts while the visible legacy profile level remains stale. **Do not fix this by blindly writing `achievementProgress.facts.level` to every existing profile**: for an account with legacy XP above the trusted baseline, that could downgrade its visible level. Before cutover, define a baseline strategy (e.g. audited owner-approved migration or a separate trusted progression field), then update profile/public ranking projections atomically with the receipt. Test threshold crossings, existing high-level accounts, concurrent claims and public profile sync for Classic plus Duel/Survival/Time Trial.
+A trusted claim could advance server-owned facts while the visible legacy profile level remained stale. The preview implementation now resolves this for **new profiles only**: the trusted registration transaction creates `achievementFacts/{uid}` with zero XP, level 1 and `baselineTrusted: true`; Classic and all server-mode reward claims mirror the derived level into `users/{uid}.level` only when that marker is present, in the same transaction as the claim and ledger receipt. When public-profile sync is enabled, the projection receives the same level in that transaction. Existing legacy profiles without the marker retain their existing visible level; their client-editable XP/level are not imported or overwritten. Unit/emulator tests cover trusted baseline creation, 99 → 100 XP progression, legacy-level preservation and public projection sync. This remains emulator-preview code: production Rules must deny client writes to `achievementFacts`, and no production deployment/cutover has occurred. A reviewed baseline or explicit migration for existing accounts remains NOT DONE.
 
 ### E-03 — Daily competitive prize contract is not part of the deployed callable surface
 
@@ -71,7 +71,7 @@ Do not add owner-only Rules to `users/{uid}` until those cross-user reads and so
 
 ## Required V1 migration sequence
 
-1. **Close the progression contract:** define one shared level formula and update level atomically in Classic and all server-mode reward claims; test threshold crossings, repeated claims and concurrent sessions.
+1. **Close the progression contract:** shared level formula and atomic sync for trusted new-account baselines are implemented in the pending preview PR; legacy-account baseline review, complete concurrent-session evidence and production Rules remain release gates.
 2. **Complete trusted profile bootstrap:** migrate new-account creation without allowing initial coin resets or losing legacy fields.
 3. **Cut over quiz modes:** move Classic, Duel, Survival and Time Trial browser start/answer/resume/claim to authenticated callable receipts; ensure client cannot submit score, XP, coins, multipliers or answer keys.
 4. **Cut over shop:** server-owned catalog price, atomic balance/ownership mutation, stable operation IDs, duplicate retry behavior and owned-item equip validation.

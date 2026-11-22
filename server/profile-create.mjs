@@ -17,12 +17,14 @@ export async function createPlayerProfile(db, { uid, nickname, email = null, tim
     const userRef = db.collection('users').doc(uid);
     const publicRef = db.collection('publicProfiles').doc(uid);
     const claimRef = db.collection('nicknameClaims').doc(normalized);
+    const factsRef = db.collection('achievementFacts').doc(uid);
 
     return db.runTransaction(async tx => {
         const userSnapshot = await tx.get(userRef);
         const publicSnapshot = await tx.get(publicRef);
         const claimSnapshot = await tx.get(claimRef);
-        if (userSnapshot.exists || publicSnapshot.exists) throw new Error('PROFILE_ALREADY_EXISTS');
+        const factsSnapshot = await tx.get(factsRef);
+        if (userSnapshot.exists || publicSnapshot.exists || factsSnapshot.exists) throw new Error('PROFILE_ALREADY_EXISTS');
         if (claimSnapshot.exists) throw new Error('NICKNAME_TAKEN');
 
         const profile = {
@@ -49,6 +51,12 @@ export async function createPlayerProfile(db, { uid, nickname, email = null, tim
         tx.create(userRef, profile);
         tx.create(publicRef, buildPublicProfile(uid, profile));
         tx.create(claimRef, { uid });
+        // New accounts receive a trusted zero-XP baseline. Legacy accounts are
+        // deliberately not backfilled from client-editable users.level/experience.
+        tx.create(factsRef, {
+            totalGames: 0, experience: 0, totalWins: 0, perfectGames: 0,
+            level: 1, unlockedIds: [], baselineTrusted: true
+        });
         return { status: 'created', uid, nickname };
     });
 }
