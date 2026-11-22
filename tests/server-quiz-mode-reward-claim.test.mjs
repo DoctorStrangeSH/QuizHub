@@ -306,16 +306,19 @@ test('mode reward claims sync level only for trusted registration baselines', as
         difficulty: 'easy', count: 1, now: 1000
     });
     await answerAll(service, started, 1);
+    db.records.get('users/player').nickname = 'Player';
     db.records.set('achievementFacts/player', {
         totalGames: 0, experience: 90, totalWins: 0, perfectGames: 0,
         level: 1, unlockedIds: [], baselineTrusted: true
     });
+    const syncedStore = createQuizFirestoreStore(db, { syncPublicProfiles: true });
     const receipt = await claimModeSessionReward({
-        store, uid: 'player', sessionId: started.sessionId, at: 3000
+        store: syncedStore, uid: 'player', sessionId: started.sessionId, at: 3000
     });
     assert.equal(receipt.xp, 10);
     assert.equal(db.records.get('achievementFacts/player').level, 2);
     assert.equal(db.records.get('users/player').level, 2);
+    assert.equal(db.records.get('publicProfiles/player').level, 2);
 });
 
 test('mode reward claims preserve unverified legacy levels', async () => {
