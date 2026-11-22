@@ -133,6 +133,39 @@ export function auditLegacyProgressionProfile({ uid, profile, existingAchievemen
         warnings.push({ code: 'NO_EXISTING_TRUSTED_ACHIEVEMENT_FACTS' });
     }
 
+    // This is a comparison aid only. Trusted facts may cover a shorter
+    // period than legacy profile counters; equality does not prove provenance,
+    // and divergence must never be resolved by overwriting either side.
+    const trustedComparisons = [];
+    if (existingFacts) {
+        const mappings = [
+            ['experience', 'experience'],
+            ['quizzesCompleted', 'totalGames'],
+            ['stats.totalGames', 'totalGames'],
+            ['wins', 'totalWins'],
+            ['stats.totalWins', 'totalWins'],
+            ['level', 'level']
+        ];
+        for (const [legacyKey, trustedKey] of mappings) {
+            const legacyValue = counters[legacyKey];
+            const trustedValue = existingFacts[trustedKey];
+            if (legacyValue !== null && Number.isSafeInteger(legacyValue) && legacyValue >= 0 &&
+                Number.isSafeInteger(trustedValue) && trustedValue >= 0) {
+                trustedComparisons.push({
+                    legacyField: legacyKey,
+                    trustedField: trustedKey,
+                    status: legacyValue === trustedValue ? 'equal' : 'different'
+                });
+            }
+        }
+        if (trustedComparisons.length) {
+            warnings.push({
+                code: 'TRUSTED_LEDGER_COVERAGE_REQUIRES_PROVENANCE',
+                action: 'A comparison is not proof of matching coverage. Establish the trusted ledger start point before reconciling or importing.'
+            });
+        }
+    }
+
     const legacySnapshot = {};
     for (const key of COUNTER_FIELDS) {
         if (profile[key] !== undefined) legacySnapshot[key] = profile[key];
@@ -149,6 +182,7 @@ export function auditLegacyProgressionProfile({ uid, profile, existingAchievemen
         observedCounters: counters,
         legacyAchievementIds,
         existingAchievementFacts: existingFacts,
+        trustedComparisons,
         blockers: [...new Set(blockers)],
         anomalies,
         warnings
