@@ -7,7 +7,19 @@ function fixture() {
     const created = [];
     const db = {
         collection(name) {
-            return { doc(id) { return { collection(sub) { return { doc(entryId) { return { path: name + '/' + id + '/' + sub + '/' + entryId }; } }; } }; }
+            return {
+                doc(id) {
+                    return {
+                        collection(sub) {
+                            return {
+                                doc(entryId) {
+                                    return { path: name + '/' + id + '/' + sub + '/' + entryId };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
         }
     };
     const native = { create(ref, value) { created.push({ path: ref.path, value: structuredClone(value) }); } };
