@@ -1237,3 +1237,24 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit and emulator coverage for trusted baseline creation, 99 → 100 XP threshold progression, legacy-level preservation and public-profile level sync.
 - This is a server-side emulator-preview contract only. Production Rules must explicitly deny client writes to `achievementFacts`; no Production callable, Rules, indexes, migration or client cutover was changed.
 - Existing-account baseline/backfill remains NOT DONE and requires separate provenance review. Production deployment and browser cutover remain NOT DONE.
+
+
+## 102. Trusted progression baseline and atomic level sync — merged (2026-11-22)
+
+- PR #104 merged to `main` as `e77a0f94eb77bf2afc205a5dcc98b45c67066815`.
+- Final-head CI passed: Question Quality, Firebase Emulator Integration and QuizHub Visual Preview (3/3).
+- New trusted profile creation writes the zero-XP `achievementFacts` baseline in the same transaction as private/public profile and nickname claim.
+- Classic and Duel / Survival / Time Trial claims mirror server-derived level to the private profile only when the server-created `baselineTrusted` marker exists; optional public-profile sync uses the same transaction.
+- Regression tests cover trusted and legacy profiles, threshold crossing and public projection.
+- This remains emulator-preview implementation. Production Rules, Functions deployment, client cutover and existing-account migration remain NOT DONE.
+
+
+## 103. Shop purchase retry safety (2026-11-22)
+
+- Confirmed PR #104 is merged and its final-head Question Quality, Firebase Emulator Integration and Visual Preview workflows all passed.
+- Audited the existing shop preview contract: server catalog prices, authenticated UID, atomic balance/ownership/equipment mutation, operation receipts, append-only purchase ledger event and ownership-checked equip are already implemented and covered by unit + emulator tests.
+- Found a browser retry gap: each click generated a fresh operation ID. If the server committed a purchase but the response was lost, a manual retry could use a new key and return ITEM_ALREADY_OWNED instead of the original receipt. The balance was protected, but recovery UX was poor.
+- Added a small browser helper that persists one pending operation ID per account/item and reuses it after network ambiguity. The key is cleared only after a structurally valid server receipt; storage failures fall back to same-tab memory.
+- Added tests for retry reuse, module reload persistence, account/item isolation, invalid stored keys, receipt clearing and storage failure.
+- Work is on `fix/shop-retry-idempotency`; PR and CI evidence are pending.
+- This only improves the explicit local emulator preview path. Production still uses the legacy direct Firestore writes; no production client cutover, Rules change or deployment was made.
