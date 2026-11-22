@@ -1139,3 +1139,12 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - The audit flags unsafe balances, malformed/duplicate item IDs and equipped items absent from the corresponding owned list. Unknown historical item IDs are preserved rather than discarded, so retired cosmetics are not silently lost.
 - Receipt references are checked for matching UID, unique operation ID, item ID, purchase kind and safe non-negative coin debit/resulting balance. This is structural validation only: it does not prove payment, purchase legitimacy or entitlement. Legacy wallet and inventory fields remain untrusted and every report stays `review_required` / `eligibleForAutomaticImport: false`.
 - Added unit tests and CI coverage. No Firestore reads/writes, imports, Production deployment, Rules changes or feature-gate changes.
+
+
+## 93. Append-only account ledger event contract (2026-11-22)
+
+- PR #94 merged into `main` as `e3391f10711bbc57244d315100308e1a362f3257`. Question Quality, Firebase Emulator Integration and Visual Preview passed after correcting the duplicate-receipt assertion.
+- Added `server/account-ledger-entry.mjs` with a canonical V1 schema for quiz rewards, daily login rewards, shop purchases, refunds and achievement unlocks.
+- Entry IDs are deterministic from event type + source operation, so transaction retries resolve to the same document identity. The validator enforces owner, event-specific delta direction, safe integer amounts, timestamp and required item/achievement references.
+- This PR defines the event contract only. It does not yet write ledger entries, expose a history endpoint/UI, backfill old account activity or change Firestore Rules. Existing receipts remain the current sources of truth.
+- Next: wire ledger document creation into each existing reward/purchase transaction (same atomic transaction as the balance mutation), then add an owner-scoped paginated read adapter and tests. Keep legacy client-side history clearly separate and unverified.
