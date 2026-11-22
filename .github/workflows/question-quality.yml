@@ -209,8 +209,12 @@ jobs:
         run: node --experimental-default-type=module --test tests/client-shop-invoker.test.mjs
       - name: Syntax-check shop browser module
         run: node --check app/modules/shop/shop.js
-      - name: Test daily login reward service and callable
+      - name: Test daily login reward service, ledger integration and callable
         run: node --experimental-default-type=module --test tests/server-daily-login-reward-service.test.mjs tests/server-daily-login-firestore-store.test.mjs tests/server-daily-login-callable.test.mjs
+      - name: Syntax-check daily login ledger integration
+        run: |
+          node --check server/daily-login-reward-service.mjs
+          node --check server/daily-login-firestore-store.mjs
       - name: Test local browser daily login preview transport and receipt mapping
         run: node --experimental-default-type=module --test tests/client-daily-login-invoker.test.mjs
       - name: Syntax-check daily login browser module
