@@ -82,6 +82,8 @@ jobs:
         run: node --experimental-default-type=module --test tests/legacy-account-audit.test.mjs
       - name: Audit legacy progression baseline without writes
         run: node --experimental-default-type=module --test tests/server-legacy-progression-audit.test.mjs
+      - name: Audit legacy wallet and cosmetic inventory without writes
+        run: node --experimental-default-type=module --test tests/server-legacy-economy-audit.test.mjs
       - name: Verify legacy private, social and game data preservation
         run: node --experimental-default-type=module --test tests/legacy-data-preservation.test.mjs
       - name: Verify repository-derived Firestore migration inventory
