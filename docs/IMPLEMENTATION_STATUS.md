@@ -1110,3 +1110,13 @@ Until these are reviewed, do not deploy restrictive Rules, migrate live profiles
 - Added unit coverage for localization, owner-only rendering contract, IANA validation, emulator opt-in, payload/receipt validation and absence of direct client timezone writes.
 - Production callable enablement, real-account opt-in, migration/backfill, and release acceptance remain blocked on Stage 0 evidence and explicit approval.
 - No deployed Firebase Rules/Functions, live Firestore data, indexes, Auth settings, balances or feature flags were changed.
+
+
+## 90. Profile timezone UI merged; legacy progression baseline audit started (2026-11-22)
+
+- PR #91 was merged into `main` as `a92a230f4accda215bf75be7fdd34c3fe70d782c`. Question Quality, Firebase Emulator Integration and QuizHub Visual Preview all passed on the final PR head.
+- The owner-only bilingual timezone settings card is now in `main`. Its write action remains restricted to the isolated `demo-quizhub` emulator preview. No Production callable, Rules or data changes were made.
+- Added a read-only legacy progression audit in `server/legacy-progression-audit.mjs`. It snapshots the legacy counters and achievement IDs, reports cross-field inconsistencies, and deliberately never creates or proposes trusted `achievementFacts`.
+- The audit calls out a real semantic incompatibility: legacy `perfect_score` used `stats.bestStreak >= 10`, while the trusted catalog uses a server-scored perfect 10/10 game. Legacy best streak must not be converted to trusted `perfectGames`.
+- All legacy user profile fields remain untrusted until provenance is independently established. A clean audit is only a review candidate; it is not authorization to import.
+- Next: extend the dry-run audit to a complete, immutable account migration manifest and verify field-level preservation across all profile fields. Then design an explicit owner-approved baseline reconciliation. Do not run any Production reads/writes or imports.
