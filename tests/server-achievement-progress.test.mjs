@@ -41,3 +41,24 @@ test('legacy client-maintained profile level is never imported into trusted fact
     assert.equal(result.facts.level, 1);
     assert.equal(result.newlyUnlocked.includes('level_five'), false);
 });
+
+test('trusted registration baseline marker survives progression updates', () => {
+    const result = advanceAchievementFacts({
+        previousFacts: { totalGames: 0, experience: 90, totalWins: 0, perfectGames: 0, unlockedIds: [], baselineTrusted: true },
+        previousAchievements: [],
+        experienceDelta: 10
+    });
+    assert.equal(result.facts.experience, 100);
+    assert.equal(result.facts.level, 2);
+    assert.equal(result.facts.baselineTrusted, true);
+});
+
+test('legacy facts never gain a trusted baseline from a reward claim', () => {
+    const result = advanceAchievementFacts({
+        previousFacts: { totalGames: 0, experience: 90, totalWins: 0, perfectGames: 0, unlockedIds: [] },
+        previousAchievements: [],
+        experienceDelta: 10
+    });
+    assert.equal(result.facts.level, 2);
+    assert.equal(Object.hasOwn(result.facts, 'baselineTrusted'), false);
+});
